@@ -23,7 +23,6 @@ setUpDockerComposeDotEnv() {
         echo "HOST_USER=${USER}"
         echo "TEST_FILE=${TEST_FILE}"
         echo "PHP_XDEBUG_ON=${PHP_XDEBUG_ON}"
-        echo "PHP_XDEBUG_PORT=${PHP_XDEBUG_PORT}"
         echo "DOCKER_PHP_IMAGE=${DOCKER_PHP_IMAGE}"
         echo "EXTRA_TEST_OPTIONS=${EXTRA_TEST_OPTIONS}"
         echo "SCRIPT_VERBOSE=${SCRIPT_VERBOSE}"
@@ -120,10 +119,6 @@ Options:
         useful if a local PhpStorm instance is listening on default xdebug port 9003. A different port
         can be selected with -y
 
-    -y <port>
-        Send xdebug information to a different port than default 9003 if an IDE like PhpStorm
-        is not listening on default port.
-
     -n
         Only with -s cgl
         Activate dry-run in CGL check that does not actively change files and only prints broken ones.
@@ -170,7 +165,6 @@ TEST_SUITE="unit"
 DBMS="sqlite"
 PHP_VERSION="7.4"
 PHP_XDEBUG_ON=0
-PHP_XDEBUG_PORT=9003
 EXTRA_TEST_OPTIONS=""
 SCRIPT_VERBOSE=0
 CGLCHECK_DRY_RUN=""
@@ -182,7 +176,7 @@ OPTIND=1
 # Array for invalid options
 INVALID_OPTIONS=();
 # Simple option parsing based on getopts (! not getopt)
-while getopts ":s:a:d:p:e:xy:nhuv" OPT; do
+while getopts ":s:a:d:p:e:xnhuv" OPT; do
     case ${OPT} in
         s)
             TEST_SUITE=${OPTARG}
@@ -204,9 +198,6 @@ while getopts ":s:a:d:p:e:xy:nhuv" OPT; do
             ;;
         x)
             PHP_XDEBUG_ON=1
-            ;;
-        y)
-            PHP_XDEBUG_PORT=${OPTARG}
             ;;
         h)
             echo "${HELP}"

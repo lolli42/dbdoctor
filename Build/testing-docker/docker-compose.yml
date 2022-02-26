@@ -58,7 +58,7 @@ services:
         else
           XDEBUG_MODE=\"debug,develop\" \
           XDEBUG_TRIGGER=\"foo\" \
-          XDEBUG_CONFIG=\"client_port=${PHP_XDEBUG_PORT} client_host=host.docker.internal\" \
+          XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
           $${COMMAND};
         fi
       "
@@ -98,7 +98,7 @@ services:
         else
           XDEBUG_MODE=\"debug,develop\" \
           XDEBUG_TRIGGER=\"foo\" \
-          XDEBUG_CONFIG=\"client_port=${PHP_XDEBUG_PORT} client_host=host.docker.internal\" \
+          XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
           $${COMMAND};
         fi
       "
@@ -138,7 +138,7 @@ services:
         else
           XDEBUG_MODE=\"debug,develop\" \
           XDEBUG_TRIGGER=\"foo\" \
-          XDEBUG_CONFIG=\"client_port=${PHP_XDEBUG_PORT} client_host=host.docker.internal\" \
+          XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
           $${COMMAND};
         fi
       "
@@ -167,7 +167,7 @@ services:
         else
           XDEBUG_MODE=\"debug,develop\" \
           XDEBUG_TRIGGER=\"foo\" \
-          XDEBUG_CONFIG=\"client_port=${PHP_XDEBUG_PORT} client_host=host.docker.internal\" \
+          XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
           $${COMMAND};
         fi
       "
@@ -196,7 +196,7 @@ services:
         else
           XDEBUG_MODE=\"debug,develop\" \
           XDEBUG_TRIGGER=\"foo\" \
-          XDEBUG_CONFIG=\"client_port=${PHP_XDEBUG_PORT} client_host=host.docker.internal\" \
+          XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
           PHP_CS_FIXER_ALLOW_XDEBUG=1 \
           .Build/bin/php-cs-fixer fix \
             -v \
@@ -273,7 +273,7 @@ services:
         else
           XDEBUG_MODE=\"debug,develop\" \
           XDEBUG_TRIGGER=\"foo\" \
-          XDEBUG_CONFIG=\"client_port=${PHP_XDEBUG_PORT} client_host=host.docker.internal\" \
+          XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
           bin/phpunit -c Web/typo3conf/ext/dbhealth/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
         fi
       "
@@ -311,7 +311,7 @@ services:
         else
           XDEBUG_MODE=\"debug,develop\" \
           XDEBUG_TRIGGER=\"foo\" \
-          XDEBUG_CONFIG=\"client_port=${PHP_XDEBUG_PORT} client_host=host.docker.internal\" \
+          XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
           bin/phpunit -c Web/typo3conf/ext/dbhealth/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
         fi
       "
@@ -349,7 +349,7 @@ services:
         else
           XDEBUG_MODE=\"debug,develop\" \
           XDEBUG_TRIGGER=\"foo\" \
-          XDEBUG_CONFIG=\"client_port=${PHP_XDEBUG_PORT} client_host=host.docker.internal\" \
+          XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
           bin/phpunit -c Web/typo3conf/ext/dbhealth/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-postgres ${TEST_FILE};
         fi
       "
@@ -378,7 +378,7 @@ services:
         else
           XDEBUG_MODE=\"debug,develop\" \
           XDEBUG_TRIGGER=\"foo\" \
-          XDEBUG_CONFIG=\"client_port=${PHP_XDEBUG_PORT} client_host=host.docker.internal\" \
+          XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
           bin/phpunit -c Web/typo3conf/ext/dbhealth/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-sqlite ${TEST_FILE};
         fi
       "
@@ -450,7 +450,7 @@ services:
         else
           XDEBUG_MODE=\"debug,develop\" \
           XDEBUG_TRIGGER=\"foo\" \
-          XDEBUG_CONFIG=\"client_port=${PHP_XDEBUG_PORT} client_host=host.docker.internal\" \
+          XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
           .Build/bin/phpunit -c Build/UnitTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
         fi
       "
