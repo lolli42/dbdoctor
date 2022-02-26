@@ -1,4 +1,5 @@
 .Build/
+.cache/
 .idea/
 Build/testing-docker/.env
 composer.lock
