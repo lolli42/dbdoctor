@@ -1,13 +1,13 @@
 TYPO3 DB health
 ===============
 
-# Mission statement
+# Mission
 
 The mission of this extension is to find database inconsistencies that may
 have been introduced in a living TYPO3 instance over time, and to fix them.
 
 As example, when a page tree is deleted by an editor, it sometimes happens
-that most pages ar properly set to deleted, but some pages are missed, or a
+that most pages are properly set to deleted, but some pages are missed, or a
 content element on one page is not deleted. This leads to orphan pages or
 content elements in the database.
 
@@ -15,7 +15,7 @@ There can be many reasons to end up with invalid database state like the above:
 TYPO3 in general has no referential integrity constrains on database tables,
 inconsistencies can be triggered by a dying PHP process, a lost DB connection, a
 core bug, a buggy extension, a broken deployment, and more. Long living active
-instances that were upgraded  through multiple major core versions tend to end up
+instances that were upgraded through multiple major core versions tend to end up
 with something that isn't quite right anymore.
 
 Such inconsistencies can lead to further issues. For instance if a page

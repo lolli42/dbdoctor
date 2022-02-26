@@ -1,0 +1,14 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  Lolli\Dbhealth\:
+    resource: '../Classes/*'
+
+  Lolli\Dbhealth\Commands\HealthCommand:
+    tags:
+      - name: 'console.command'
+        command: 'dbhealth:health'
+        description: 'Find and optionally fix database inconsistencies.'

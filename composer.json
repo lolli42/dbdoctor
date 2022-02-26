@@ -1,0 +1,48 @@
+{
+  "name": "lolli/dbhealth",
+  "type": "typo3-cms-extension",
+  "description": "TYPO3 Database health - Find and fix TYPO3 database inconsistencies",
+  "homepage": "https://github.com/lolli42/dbhealth",
+  "authors": [
+    {
+      "name": "Christian Kuhn",
+      "role": "Developer"
+    }
+  ],
+  "license": [
+    "GPL-2.0-or-later"
+  ],
+  "require": {
+    "typo3/cms-core": "^11.5 || ^12.0 || 12.0.*@dev"
+  },
+  "config": {
+    "sort-packages": true,
+    "vendor-dir": ".Build/vendor",
+    "bin-dir": ".Build/bin"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9",
+    "typo3/tailor": "^1.4.0",
+    "typo3/testing-framework": "^6.15.3"
+  },
+  "autoload": {
+    "psr-4": {
+      "Lolli\\Dbhealth\\": "Classes/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Lolli\\Dbhealth\\Tests\\": "Tests/"
+    }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "0.x-dev"
+    },
+    "typo3/cms": {
+      "app-dir": ".Build",
+      "web-dir": ".Build/Web",
+      "extension-key": "dbhealth"
+    }
+  }
+}
