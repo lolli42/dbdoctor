@@ -17,8 +17,6 @@ namespace Lolli\Dbhealth\Health;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Doctrine\DBAL\DBALException;
-use Doctrine\DBAL\Driver\Exception;
 use Lolli\Dbhealth\Helper\TableHelper;
 use Lolli\Dbhealth\Helper\TcaHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
