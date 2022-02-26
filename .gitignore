@@ -1,3 +1,5 @@
 .Build/
 .idea/
+Build/testing-docker/.env
 composer.lock
+Tests/Acceptance/Support/_generated/

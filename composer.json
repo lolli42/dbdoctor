@@ -13,15 +13,26 @@
     "GPL-2.0-or-later"
   ],
   "require": {
+    "php": "^7.4 || ^8.0",
     "typo3/cms-core": "^11.5 || ^12.0 || 12.0.*@dev"
   },
   "config": {
     "sort-packages": true,
     "vendor-dir": ".Build/vendor",
-    "bin-dir": ".Build/bin"
+    "bin-dir": ".Build/bin",
+    "allow-plugins": {
+      "typo3/class-alias-loader": true,
+      "typo3/cms-composer-installers": true
+    }
   },
   "require-dev": {
+    "codeception/codeception": "^4.1",
+    "codeception/module-asserts": "^2.0",
+    "codeception/module-cli": "^1.1",
+    "phpstan/phpstan": "^1.4.6",
     "phpunit/phpunit": "^9",
+    "typo3/cms-composer-installers": "^3.0",
+    "typo3/coding-standards": "^0.5.0",
     "typo3/tailor": "^1.4.0",
     "typo3/testing-framework": "^6.15.3"
   },

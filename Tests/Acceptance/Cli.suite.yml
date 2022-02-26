@@ -1,0 +1,7 @@
+class_name: CliTester
+modules:
+  enabled:
+    - Asserts
+
+groups:
+  AcceptanceTests-Job-*: AcceptanceTests-Job-*

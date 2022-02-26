@@ -1,4 +1,5 @@
 <?php
+
 $EM_CONF['dbhealth'] = [
     'title' => 'TYPO3 Database health',
     'description' => 'Find and fix TYPO3 database inconsistencies',

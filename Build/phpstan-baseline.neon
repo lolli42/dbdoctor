@@ -1,0 +1,12 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Method Lolli\\\\Dbhealth\\\\Commands\\\\HealthCommand\\:\\:configure\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: ../Classes/Commands/HealthCommand.php
+
+		-
+			message: "#^Method Lolli\\\\Dbhealth\\\\Helper\\\\TableHelper\\:\\:tableExistsInDatabase\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: ../Classes/Helper/TableHelper.php
+
