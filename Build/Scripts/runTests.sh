@@ -75,7 +75,6 @@ Options:
             - cgl: cgl test and fix all php files
             - clean: clean up build and testing related files
             - composerUpdate: "composer update", handy if host has no PHP
-            - composerValidate: "composer validate"
             - functional: functional tests
             - lint: PHP linting
             - phpstan: phpstan analyze
@@ -315,12 +314,6 @@ case ${TEST_SUITE} in
         docker-compose run composer_update
         cp ../../composer.json ../../composer.json.testing
         mv ../../composer.json.orig ../../composer.json
-        SUITE_EXIT_CODE=$?
-        docker-compose down
-        ;;
-    composerValidate)
-        setUpDockerComposeDotEnv
-        docker-compose run composer_validate
         SUITE_EXIT_CODE=$?
         docker-compose down
         ;;

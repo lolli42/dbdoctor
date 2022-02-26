@@ -231,23 +231,6 @@ services:
         composer update --no-progress --no-interaction;
       "
 
-  composer_validate:
-    image: typo3/core-testing-${DOCKER_PHP_IMAGE}:latest
-    user: "${HOST_UID}"
-    volumes:
-      - ${ROOT_DIR}:${ROOT_DIR}
-    working_dir: ${ROOT_DIR}
-    environment:
-      COMPOSER_CACHE_DIR: ".cache/composer"
-    command: >
-      /bin/sh -c "
-        if [ ${SCRIPT_VERBOSE} -eq 1 ]; then
-          set -x
-        fi
-        php -v | grep '^PHP';
-        composer validate;
-      "
-
   functional_mariadb10:
     image: typo3/core-testing-${DOCKER_PHP_IMAGE}:latest
     user: "${HOST_UID}"
