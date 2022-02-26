@@ -21,10 +21,7 @@ use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 class DummyTest extends FunctionalTestCase
 {
-    /**
-     * @var string[] Have dbhealth loaded
-     */
-    protected $testExtensionsToLoad = [
+    protected array $testExtensionsToLoad = [
         'typo3conf/ext/dbhealth',
     ];
 
