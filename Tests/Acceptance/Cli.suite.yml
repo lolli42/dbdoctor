@@ -3,5 +3,9 @@ modules:
   enabled:
     - Asserts
 
+extensions:
+    enabled:
+        - Lolli\Dbhealth\Tests\Acceptance\Support\Extension\BackendDbhealthEnvironment
+
 groups:
   AcceptanceTests-Job-*: AcceptanceTests-Job-*

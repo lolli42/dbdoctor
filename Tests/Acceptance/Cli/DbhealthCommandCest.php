@@ -21,7 +21,7 @@ use Lolli\Dbhealth\Tests\Acceptance\Support\CliTester;
 
 class DbhealthCommandCest
 {
-    protected string $command = 'bin/typo3 dbhealth:health ';
+    protected string $command = '../../../../../bin/typo3 dbhealth:health ';
 
     /**
      * @param CliTester $I
