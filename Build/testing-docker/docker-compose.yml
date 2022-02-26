@@ -213,13 +213,21 @@ services:
       - ${ROOT_DIR}:${ROOT_DIR}
     working_dir: ${ROOT_DIR}
     environment:
-      COMPOSER_CACHE_DIR: ".Build/.cache/composer"
+      COMPOSER_CACHE_DIR: ".cache/composer"
     command: >
       /bin/sh -c "
         if [ ${SCRIPT_VERBOSE} -eq 1 ]; then
           set -x
         fi
         php -v | grep '^PHP';
+        if [ ${TYPO3_VERSION} -eq 11 ]; then
+            composer req typo3/cms-core:^11.5
+        fi
+        if [ ${TYPO3_VERSION} -eq 12 ]; then
+            composer config minimum-stability dev
+            composer req --dev typo3/testing-framework:dev-main --no-update
+            composer req typo3/cms-core:~12.0@dev -W
+        fi
         composer update --no-progress --no-interaction;
       "
 
@@ -230,7 +238,7 @@ services:
       - ${ROOT_DIR}:${ROOT_DIR}
     working_dir: ${ROOT_DIR}
     environment:
-      COMPOSER_CACHE_DIR: ".Build/.cache/composer"
+      COMPOSER_CACHE_DIR: ".cache/composer"
     command: >
       /bin/sh -c "
         if [ ${SCRIPT_VERBOSE} -eq 1 ]; then

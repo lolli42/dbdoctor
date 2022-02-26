@@ -22,6 +22,7 @@ setUpDockerComposeDotEnv() {
         echo "ROOT_DIR=${ROOT_DIR}"
         echo "HOST_USER=${USER}"
         echo "TEST_FILE=${TEST_FILE}"
+        echo "TYPO3_VERSION=${TYPO3_VERSION}"
         echo "PHP_XDEBUG_ON=${PHP_XDEBUG_ON}"
         echo "DOCKER_PHP_IMAGE=${DOCKER_PHP_IMAGE}"
         echo "EXTRA_TEST_OPTIONS=${EXTRA_TEST_OPTIONS}"
@@ -106,6 +107,12 @@ Options:
             - 8.0: use PHP 8.0
             - 8.1: use PHP 8.1
 
+    -t <11|12>
+        Only with -s composerUpdate
+        Specifies the TYPO3 core major version to be used
+            - 11 (default): use TYPO3 core v11
+            - 12: Use TYPO3 core v12
+
     -e "<phpunit or codeception options>"
         Only with -s acceptance|functional|unit
         Additional options to send to phpunit (unit & functional tests) or codeception (acceptance
@@ -164,6 +171,7 @@ fi
 TEST_SUITE="unit"
 DBMS="sqlite"
 PHP_VERSION="7.4"
+TYPO3_VERSION="11"
 PHP_XDEBUG_ON=0
 EXTRA_TEST_OPTIONS=""
 SCRIPT_VERBOSE=0
@@ -176,7 +184,7 @@ OPTIND=1
 # Array for invalid options
 INVALID_OPTIONS=();
 # Simple option parsing based on getopts (! not getopt)
-while getopts ":s:a:d:p:e:xnhuv" OPT; do
+while getopts ":s:a:d:p:t:e:xnhuv" OPT; do
     case ${OPT} in
         s)
             TEST_SUITE=${OPTARG}
@@ -190,6 +198,12 @@ while getopts ":s:a:d:p:e:xnhuv" OPT; do
         p)
             PHP_VERSION=${OPTARG}
             if ! [[ ${PHP_VERSION} =~ ^(7.4|8.0|8.1)$ ]]; then
+                INVALID_OPTIONS+=("p ${OPTARG}")
+            fi
+            ;;
+        t)
+            TYPO3_VERSION=${OPTARG}
+            if ! [[ ${TYPO3_VERSION} =~ ^(11|12)$ ]]; then
                 INVALID_OPTIONS+=("p ${OPTARG}")
             fi
             ;;
@@ -290,11 +304,17 @@ case ${TEST_SUITE} in
         docker-compose down
         ;;
     clean)
-        rm -rf ../../composer.lock ../../.Build/ ../../.cache/ ../../Tests/Acceptance/Support/_generated/
+        rm -rf ../../composer.lock ../../.Build/ ../../Tests/Acceptance/Support/_generated/ ../../composer.json.testing
         ;;
     composerUpdate)
         setUpDockerComposeDotEnv
+        cp ../../composer.json ../../composer.json.orig
+        if [ -f "../../composer.json.testing" ]; then
+            cp ../../composer.json ../../composer.json.orig
+        fi
         docker-compose run composer_update
+        cp ../../composer.json ../../composer.json.testing
+        mv ../../composer.json.orig ../../composer.json
         SUITE_EXIT_CODE=$?
         docker-compose down
         ;;
