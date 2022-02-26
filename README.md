@@ -1,3 +1,6 @@
+[![tests core v11](https://github.com/lolli42/dbhealth/actions/workflows/testscorev11.yml/badge.svg)]
+[![tests core v12](https://github.com/lolli42/dbhealth/actions/workflows/testscorev12.yml/badge.svg)]
+
 TYPO3 DB health
 ===============
 
