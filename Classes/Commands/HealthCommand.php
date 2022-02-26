@@ -17,6 +17,7 @@ namespace Lolli\Dbhealth\Commands;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbhealth\Health\HealthFactoryInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -27,7 +28,15 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  */
 class HealthCommand extends Command
 {
-    public function configure()
+    private HealthFactoryInterface $healthFactory;
+
+    public function __construct(HealthFactoryInterface $healthFactory)
+    {
+        $this->healthFactory = $healthFactory;
+        parent::__construct();
+    }
+
+    public function configure(): void
     {
         $this->setHelp('More help here');
     }
@@ -37,6 +46,11 @@ class HealthCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $io->title($this->getDescription());
         $io->writeln('foo');
+
+        foreach ($this->healthFactory->getNext() as $healthInstance) {
+            $healthInstance->process($io);
+        }
+
         return 0;
     }
 }

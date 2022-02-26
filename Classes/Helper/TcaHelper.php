@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lolli\Tests\Unit;
+namespace Lolli\Dbhealth\Helper;
 
-/**
+/*
  * This file is part of the TYPO3 CMS project.
  *
  * It is free software; you can redistribute it and/or modify it under
@@ -17,15 +17,17 @@ namespace Lolli\Tests\Unit;
  * The TYPO3 project - inspiring people to share!
  */
 
-use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
-
-class DummyTest extends UnitTestCase
+class TcaHelper
 {
     /**
-     * @test
+     * @return iterable<string>
      */
-    public function dummy(): void
+    public function getNextWorkspaceEnabledTcaTable(): iterable
     {
-        self::assertTrue(true);
+        foreach ($GLOBALS['TCA'] as $tableName => $config) {
+            if ($config['ctrl']['versioningWS'] ?? false) {
+                yield $tableName;
+            }
+        }
     }
 }

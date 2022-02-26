@@ -28,7 +28,9 @@ class TableHelper
         $this->connectionPool = $connectionPool;
     }
 
-    public function tableExistsInDatabase(string $tableName)
+    public function tableExistsInDatabase(string $tableName): bool
     {
+        $connection = $this->connectionPool->getConnectionForTable($tableName);
+        return $connection->getSchemaManager()->tablesExist($tableName);
     }
 }

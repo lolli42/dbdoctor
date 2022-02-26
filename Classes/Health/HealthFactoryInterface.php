@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lolli\Dbhealth\Tests\Functional;
+namespace Lolli\Dbhealth\Health;
 
 /*
  * This file is part of the TYPO3 CMS project.
@@ -17,19 +17,10 @@ namespace Lolli\Dbhealth\Tests\Functional;
  * The TYPO3 project - inspiring people to share!
  */
 
-use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
-
-class DummyTest extends FunctionalTestCase
+interface HealthFactoryInterface
 {
-    protected array $testExtensionsToLoad = [
-        'typo3conf/ext/dbhealth',
-    ];
-
     /**
-     * @test
+     * @return iterable<HealthInterface>
      */
-    public function dummy(): void
-    {
-        self::assertTrue(true);
-    }
+    public function getNext(): iterable;
 }
