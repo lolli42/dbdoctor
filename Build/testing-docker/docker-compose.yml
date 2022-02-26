@@ -402,7 +402,7 @@ services:
         fi
         mkdir -p .Build/.cache
         php -v | grep '^PHP';
-        php -dxdebug.mode=off .Build/bin/phpstan analyze -c Build/phpstan.neon
+        php -dxdebug.mode=off .Build/bin/phpstan analyze -c Build/phpstan.neon --no-progress
       "
 
   phpstan_generate_baseline:

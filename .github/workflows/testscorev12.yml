@@ -8,7 +8,7 @@ on:
 
 jobs:
   testsuite:
-    name: all tests with core v11
+    name: all tests with core v12
     runs-on: ubuntu-20.04
     strategy:
       matrix:
