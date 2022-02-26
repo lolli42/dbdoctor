@@ -47,9 +47,6 @@ class DanglingWorkspaceRecords implements HealthInterface
         $this->connectionPool = $connectionPool;
     }
 
-    /**
-     * @throws DBALException|Exception
-     */
     public function process(SymfonyStyle $io): void
     {
         $allowedWorkspaces = [];
