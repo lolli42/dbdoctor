@@ -31,30 +31,30 @@ class TcaHelperTest extends UnitTestCase
             'workspaceEnabled1' => [
                 'ctrl' => [
                     'versioningWS' => true,
-                ]
+                ],
             ],
             'workspaceEnabled2' => [
                 'ctrl' => [
                     'versioningWS' => 1,
-                ]
+                ],
             ],
             'noWorkspace1' => [
                 'ctrl' => [
                     'versioningWS' => false,
-                ]
+                ],
             ],
             'noWorkspace2' => [
                 'ctrl' => [
                     'versioningWS' => 0,
-                ]
+                ],
             ],
             'noWorkspace3' => [
-                'ctrl' => []
+                'ctrl' => [],
             ],
             'workspaceEnabled3' => [
                 'ctrl' => [
                     'versioningWS' => true,
-                ]
+                ],
             ],
         ];
         $subject = new TcaHelper();
