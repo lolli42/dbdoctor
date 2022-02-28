@@ -18,6 +18,7 @@ namespace Lolli\Dbhealth\Commands;
  */
 
 use Lolli\Dbhealth\Health\HealthFactoryInterface;
+use Lolli\Dbhealth\Health\HealthInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -45,10 +46,14 @@ class HealthCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $io->title($this->getDescription());
-        $io->writeln('foo');
 
         foreach ($this->healthFactory->getNext() as $healthInstance) {
-            $healthInstance->process($io);
+            $healthInstance->header($io);
+            $result = $healthInstance->process($io, $this);
+            if ($result === HealthInterface::RESULT_ABORT) {
+                $io->warning('Aborting ...');
+                break;
+            }
         }
 
         return 0;

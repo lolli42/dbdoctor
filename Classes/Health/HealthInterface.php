@@ -17,9 +17,16 @@ namespace Lolli\Dbhealth\Health;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbhealth\Commands\HealthCommand;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 interface HealthInterface
 {
-    public function process(SymfonyStyle $io): void;
+    public const RESULT_OK = 0;
+    public const RESULT_ABORT = 1;
+
+    public function header(SymfonyStyle $io): void;
+    public function process(SymfonyStyle $io, HealthCommand $command): int;
 }

@@ -17,8 +17,14 @@ namespace Lolli\Dbhealth\Health;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbhealth\Commands\HealthCommand;
+use Lolli\Dbhealth\Helper\PagesHelper;
+use Lolli\Dbhealth\Helper\RecordHelper;
 use Lolli\Dbhealth\Helper\TableHelper;
 use Lolli\Dbhealth\Helper\TcaHelper;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\ChoiceQuestion;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
@@ -31,21 +37,38 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
  */
 class DanglingWorkspaceRecords implements HealthInterface
 {
-    protected TableHelper $tableHelper;
-    protected TcaHelper $tcaHelper;
-    protected ConnectionPool $connectionPool;
+    private TableHelper $tableHelper;
+    private TcaHelper $tcaHelper;
+    private RecordHelper $recordHelper;
+    private PagesHelper $pagesHelper;
+    private ConnectionPool $connectionPool;
 
     public function __construct(
         TableHelper $tableHelper,
         TcaHelper $tcaHelper,
+        RecordHelper $recordHelper,
+        PagesHelper $pagesHelper,
         ConnectionPool $connectionPool
     ) {
         $this->tableHelper = $tableHelper;
         $this->tcaHelper = $tcaHelper;
+        $this->recordHelper = $recordHelper;
+        $this->pagesHelper = $pagesHelper;
         $this->connectionPool = $connectionPool;
     }
 
-    public function process(SymfonyStyle $io): void
+    public function header(SymfonyStyle $io): void
+    {
+        $io->section('Scan for workspace records of deleted sys_workspace\'s');
+        $io->text([
+            'When a workspace (table "sys_workspace") is deleted, all existing workspace overlays',
+            'in all tables of this workspace are discarded (= removed from DB). When this goes wrong,',
+            'or if the workspace extension is removed, the system ends up with "dangling" workspace',
+            'records in tables. This health check finds those records and allows removal.'
+        ]);
+    }
+
+    public function process(SymfonyStyle $io, HealthCommand $command): int
     {
         $allowedWorkspaces = [];
         $deletedWorkspaces = [];
@@ -67,10 +90,7 @@ class DanglingWorkspaceRecords implements HealthInterface
         // t3ver_wsid=0 are *always* allowed, of course.
         $allowedWorkspacesUids = array_merge([0], array_keys($allowedWorkspaces));
 
-        var_dump($allowedWorkspaces);
-        var_dump($allowedWorkspacesUids);
-        var_dump($deletedWorkspaces);
-
+        $danglingRows = [];
         foreach ($this->tcaHelper->getNextWorkspaceEnabledTcaTable() as $tableName) {
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             // Since workspace records have no deleted=1, we remove all restrictions here: If a sys_workspace
@@ -82,8 +102,95 @@ class DanglingWorkspaceRecords implements HealthInterface
                 )
                 ->executeQuery();
             while ($row = $result->fetchAssociative()) {
-                var_dump($row);
+                $danglingRows[$tableName][$row['uid']] = $row;
             }
+        }
+
+        $this->outputMainSummary($io, $danglingRows);
+
+        if (empty($danglingRows)) {
+            return self::RESULT_OK;
+        }
+
+        while (true) {
+            switch ($io->ask('<info>Remove records [y,a,p,r,?]?</info> ', '?')) {
+                case 'y':
+                    break 2;
+                case 'a':
+                    return self::RESULT_ABORT;
+                case 'p':
+                    $this->outputAffectedPages($io, $danglingRows);
+                    break;
+                case 'r':
+                    $this->outputRecordDetails($io, $danglingRows);
+                    break;
+                case 'h':
+                default:
+                    $io->text([
+                        '    y - remove (DELETE, no soft-delete!) records',
+                        '    a - abort now',
+                        '    p - show affected pages',
+                        '    r - show record details',
+                        '    ? - print help'
+                    ]);
+                    break;
+            }
+        }
+
+
+        if (count($danglingRows)) {
+            foreach ($danglingRows as $tableName => $places) {
+                $io->writeln('Found x in' . count($places));
+            }
+        }
+        /**
+        $helper = $command->getHelper('question');
+        $question->setErrorMessage('Color %s is invalid.');
+        $color = $helper->ask($input, $output, $question);
+        $output->writeln('You have just selected: '.$color);
+         */
+    }
+
+    private function outputMainSummary(SymfonyStyle $io, array $danglingRows): void
+    {
+        if (!count($danglingRows)) {
+            $io->success('No workspace records from deleted workspaces');
+        } else {
+            $ioText = [
+                'Found workspace records from deleted workspaces in ' . count($danglingRows) . ' tables:'
+            ];
+            $tablesString = '';
+            foreach ($danglingRows as $tableName => $rows) {
+                if (!empty($tablesString)) {
+                    $tablesString .= "\n";
+                }
+                $tablesString .= '"' . $tableName . '": ' . count($rows) . ' records';
+            }
+            $ioText[] = $tablesString;
+            $io->warning($ioText);
+        }
+    }
+
+    private function outputAffectedPages(SymfonyStyle $io, array $danglingRows): void
+    {
+        $fields = [
+            'uid',
+            'records',
+            'path'
+        ];
+        $pagesDetails = $this->pagesHelper->getPagesDetails($danglingRows);
+        $io->table($fields, $pagesDetails);
+    }
+
+    private function outputRecordDetails(SymfonyStyle $io, array $danglingRows): void
+    {
+        foreach ($danglingRows as $tableName => $rows) {
+            $io->note('Table "' . $tableName . '":');
+            $recordDetails = $this->recordHelper->getRecordDetailsForTable($tableName, $rows);
+            //$fields = array_keys(current($recordDetails));
+            $fields = ['foo', 'bar'];
+            //var_dump($fields); die();
+            $io->table($fields, $recordDetails);
         }
     }
 }

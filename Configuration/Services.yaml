@@ -11,4 +11,4 @@ services:
     tags:
       - name: 'console.command'
         command: 'dbhealth:health'
-        description: 'Find and optionally fix database inconsistencies.'
+        description: 'Find and optionally fix database inconsistencies'
