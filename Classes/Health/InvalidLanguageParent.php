@@ -20,7 +20,6 @@ namespace Lolli\Dbhealth\Health;
 use Lolli\Dbhealth\Commands\HealthCommand;
 use Lolli\Dbhealth\Exception\NoSuchRecordException;
 use Lolli\Dbhealth\Helper\RecordsHelper;
-use Lolli\Dbhealth\Helper\TableHelper;
 use Lolli\Dbhealth\Helper\TcaHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\ConnectionPool;
@@ -48,7 +47,7 @@ class InvalidLanguageParent extends AbstractHealth implements HealthInterface
             'database field "transOrigPointerField" (DB field name usually "l10n_parent" or "l18n_parent").',
             'This field points to a default language record. This health check verifies if that target',
             'exists in the database, is on the same page, and the deleted flag is in sync. Having "dangling"',
-            'localized records on a page can otherwise trigger various issue when the page is copied or similar.'
+            'localized records on a page can otherwise trigger various issue when the page is copied or similar.',
         ]);
     }
 
