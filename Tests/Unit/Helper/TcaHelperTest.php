@@ -274,11 +274,19 @@ class TcaHelperTest extends UnitTestCase
     /**
      * @test
      */
+    public function getTypeFieldReturnsNullForColonTypes(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['type'] = 'foo:bar';
+        self::assertNull((new TcaHelper())->getTypeField('foo'));
+    }
+
+    /**
+     * @test
+     */
     public function getTypeFieldReturnsNull(): void
     {
         self::assertNull((new TcaHelper())->getTypeField('foo'));
     }
-
     /**
      * @test
      */

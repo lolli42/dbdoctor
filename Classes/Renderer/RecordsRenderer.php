@@ -185,7 +185,7 @@ class RecordsRenderer
                 }
                 $row[$workspaceIdField] = $this->workspaceCache[$workspaceUid];
             } else {
-                $row[$workspaceIdField] = '[0]';
+                $row[$workspaceIdField] = '[0]Live';
             }
         }
         return $row;

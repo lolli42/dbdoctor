@@ -90,7 +90,12 @@ class TcaHelper
 
     public function getTypeField(string $tableName): ?string
     {
-        return ($GLOBALS['TCA'][$tableName]['ctrl']['type'] ?? null) ?: null;
+        if (empty($GLOBALS['TCA'][$tableName]['ctrl']['type'])
+            || str_contains($GLOBALS['TCA'][$tableName]['ctrl']['type'], ':')
+        ) {
+            return null;
+        }
+        return $GLOBALS['TCA'][$tableName]['ctrl']['type'];
     }
 
     /**
