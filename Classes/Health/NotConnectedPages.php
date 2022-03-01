@@ -19,10 +19,6 @@ namespace Lolli\Dbhealth\Health;
 
 use Lolli\Dbhealth\Commands\HealthCommand;
 use Lolli\Dbhealth\Helper\PagesRootlineHelper;
-use Lolli\Dbhealth\Helper\RecordsHelper;
-use Lolli\Dbhealth\Renderer\AffectedPagesRenderer;
-use Lolli\Dbhealth\Renderer\RecordsRenderer;
-use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
@@ -30,16 +26,13 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
  * An important early check: Find pages that have no proper connection
  * to the tree root.
  */
-class NotConnectedPages implements HealthInterface
+class NotConnectedPages extends AbstractHealth implements HealthInterface
 {
-    private ContainerInterface $container;
     private ConnectionPool $connectionPool;
 
     public function __construct(
-        ContainerInterface $container,
         ConnectionPool $connectionPool
     ) {
-        $this->container = $container;
         $this->connectionPool = $connectionPool;
     }
 
@@ -125,25 +118,6 @@ class NotConnectedPages implements HealthInterface
     /**
      * @param array<string, array<int, array<string, int|string>>> $danglingPages
      */
-    private function deleteRecords(SymfonyStyle $io, array $danglingPages): void
-    {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
-        foreach ($danglingPages as $tableName => $rows) {
-            $io->note('Deleting records on table: ' . $tableName);
-            $count = 0;
-            foreach ($rows as $row) {
-                $sql = $recordsHelper->deleteTcaRecord($tableName, (int)$row['uid']);
-                $io->text($sql);
-                $count ++;
-            }
-            $io->warning('Deleted "' . $count . '" records from "' . $tableName . '" table');
-        }
-    }
-
-    /**
-     * @param array<string, array<int, array<string, int|string>>> $danglingPages
-     */
     private function outputMainSummary(SymfonyStyle $io, array $danglingPages): void
     {
         if (!count($danglingPages['pages'])) {
@@ -153,37 +127,6 @@ class NotConnectedPages implements HealthInterface
                 'Found "' . count($danglingPages['pages']) . '" record in table "pages" without connection to the tree root',
             ];
             $io->warning($ioText);
-        }
-    }
-
-    /**
-     * @param array<string, array<int, array<string, int|string>>> $danglingPages
-     */
-    private function outputAffectedPages(SymfonyStyle $io, array $danglingPages): void
-    {
-        /** @var AffectedPagesRenderer $affectedPagesRenderer */
-        $affectedPagesRenderer = $this->container->get(AffectedPagesRenderer::class);
-        $io->note('Found records per page:');
-        $io->table(
-            $affectedPagesRenderer->getHeader($danglingPages),
-            $affectedPagesRenderer->getRows($danglingPages)
-        );
-    }
-
-    /**
-     * @param array<string, array<int, array<string, int|string>>> $danglingPages
-     */
-    private function outputRecordDetails(SymfonyStyle $io, array $danglingPages): void
-    {
-        /** @var RecordsRenderer $recordsRenderer */
-        $recordsRenderer = $this->container->get(RecordsRenderer::class);
-        foreach ($danglingPages as $tableName => $rows) {
-            $uidArray = array_column($rows, 'uid');
-            $io->note('Table "' . $tableName . '":');
-            $io->table(
-                $recordsRenderer->getHeader($tableName),
-                $recordsRenderer->getRows($tableName, $uidArray)
-            );
         }
     }
 }

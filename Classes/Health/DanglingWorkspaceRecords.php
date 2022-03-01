@@ -20,8 +20,6 @@ namespace Lolli\Dbhealth\Health;
 use Lolli\Dbhealth\Commands\HealthCommand;
 use Lolli\Dbhealth\Helper\TableHelper;
 use Lolli\Dbhealth\Helper\TcaHelper;
-use Lolli\Dbhealth\Renderer\AffectedPagesRenderer;
-use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -34,20 +32,17 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  *
  * This class looks for workspace records in all tables which may have been missed.
  */
-class DanglingWorkspaceRecords implements HealthInterface
+class DanglingWorkspaceRecords extends AbstractHealth implements HealthInterface
 {
-    private ContainerInterface $container;
     private TableHelper $tableHelper;
     private TcaHelper $tcaHelper;
     private ConnectionPool $connectionPool;
 
     public function __construct(
-        ContainerInterface $container,
         TableHelper $tableHelper,
         TcaHelper $tcaHelper,
         ConnectionPool $connectionPool
     ) {
-        $this->container = $container;
         $this->tableHelper = $tableHelper;
         $this->tcaHelper = $tcaHelper;
         $this->connectionPool = $connectionPool;
@@ -75,7 +70,13 @@ class DanglingWorkspaceRecords implements HealthInterface
         while (true) {
             switch ($io->ask('<info>Remove records [y,a,r,p,d,?]?</info> ', '?')) {
                 case 'y':
-                    break 2;
+                    $this->deleteRecords($io, $danglingRows);
+                    $danglingRows = $this->getDanglingRows();
+                    $this->outputMainSummary($io, $danglingRows);
+                    if (empty($danglingRows['pages'])) {
+                        return self::RESULT_OK;
+                    }
+                    break;
                 case 'a':
                     return self::RESULT_ABORT;
                 case 'r':
@@ -104,8 +105,6 @@ class DanglingWorkspaceRecords implements HealthInterface
                     break;
             }
         }
-
-        return self::RESULT_ABORT;
     }
 
     /**
@@ -146,7 +145,7 @@ class DanglingWorkspaceRecords implements HealthInterface
             /** @var DeletedRestriction $deletedRestriction */
             $deletedRestriction = GeneralUtility::makeInstance(DeletedRestriction::class);
             $queryBuilder->getRestrictions()->removeAll()->add($deletedRestriction);
-            // Note we're NOT fetching deleted=1 records here: A sys_workspace being deleted gets all it's elements
+            // Note we're NOT allowing deleted=1 records here: A sys_workspace being deleted gets all it's elements
             // discarded (= removed) by the default core implementation, so we treat those as 'dangling'.
             $result = $queryBuilder->select('uid', 'title')->from('sys_workspace')->executeQuery();
             while ($row = $result->fetchAssociative()) {
@@ -177,32 +176,6 @@ class DanglingWorkspaceRecords implements HealthInterface
             }
             $ioText[] = $tablesString;
             $io->warning($ioText);
-        }
-    }
-
-    /**
-     * @param array<string, array<int, array<string, int|string>>> $danglingRows
-     */
-    private function outputAffectedPages(SymfonyStyle $io, array $danglingRows): void
-    {
-        $io->note('Found records per page:');
-        /** @var AffectedPagesRenderer $affectedPagesHelper */
-        $affectedPagesHelper = $this->container->get(AffectedPagesRenderer::class);
-        $io->table($affectedPagesHelper->getHeader($danglingRows), $affectedPagesHelper->getRows($danglingRows));
-    }
-
-    /**
-     * @param array<string, array<int, array<string, int|string>>> $danglingRows
-     */
-    private function outputRecordDetails(SymfonyStyle $io, array $danglingRows): void
-    {
-        foreach ($danglingRows as $tableName => $rows) {
-            $io->note('Table "' . $tableName . '":');
-            // $recordDetails = $this->recordHelper->getRecordDetailsForTable($tableName, $rows);
-            //$fields = array_keys(current($recordDetails));
-            $fields = ['foo', 'bar'];
-            //var_dump($fields); die();
-            //$io->table($recordDetails, $recordDetails);
         }
     }
 }
