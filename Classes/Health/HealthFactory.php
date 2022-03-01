@@ -25,6 +25,7 @@ class HealthFactory implements HealthFactoryInterface
      * @var string[]
      */
     private array $healthClasses = [
+        NotConnectedPages::class,
         DanglingWorkspaceRecords::class,
     ];
 

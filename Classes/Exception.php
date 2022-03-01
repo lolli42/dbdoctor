@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-namespace Lolli\Dbhealth\Health;
-
 /*
  * This file is part of the TYPO3 CMS project.
  *
@@ -17,14 +15,8 @@ namespace Lolli\Dbhealth\Health;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbhealth\Commands\HealthCommand;
-use Symfony\Component\Console\Style\SymfonyStyle;
+namespace Lolli\Dbhealth;
 
-interface HealthInterface
+class Exception extends \Exception
 {
-    public const RESULT_OK = 0;
-    public const RESULT_ABORT = 1;
-
-    public function header(SymfonyStyle $io): void;
-    public function process(SymfonyStyle $io, HealthCommand $command): int;
 }

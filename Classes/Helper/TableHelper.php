@@ -21,7 +21,7 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 
 class TableHelper
 {
-    protected ConnectionPool $connectionPool;
+    private ConnectionPool $connectionPool;
 
     public function __construct(ConnectionPool $connectionPool)
     {
@@ -31,6 +31,6 @@ class TableHelper
     public function tableExistsInDatabase(string $tableName): bool
     {
         $connection = $this->connectionPool->getConnectionForTable($tableName);
-        return $connection->getSchemaManager()->tablesExist($tableName);
+        return $connection->createSchemaManager()->tablesExist($tableName);
     }
 }

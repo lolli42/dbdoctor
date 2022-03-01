@@ -1,2 +1,12 @@
 parameters:
 	ignoreErrors:
+		-
+			message: "#^PHPDoc tag @var for variable \\$statement has no value type specified in iterable type Doctrine\\\\DBAL\\\\Statement\\.$#"
+			count: 1
+			path: ../Classes/Helper/RecordsHelper.php
+
+		-
+			message: "#^Property Lolli\\\\Dbhealth\\\\Helper\\\\RecordsHelper\\:\\:\\$preparedStatements type has no value type specified in iterable type Doctrine\\\\DBAL\\\\Statement\\.$#"
+			count: 1
+			path: ../Classes/Helper/RecordsHelper.php
+

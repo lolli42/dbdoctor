@@ -69,4 +69,169 @@ class TcaHelperTest extends UnitTestCase
         ];
         self::assertSame($expected, $result);
     }
+
+    /**
+     * @test
+     */
+    public function getDeletedFieldReturnsField(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['delete'] = 'deletedField';
+        self::assertSame('deletedField', (new TcaHelper())->getDeletedField('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getDeletedFieldReturnsNull(): void
+    {
+        self::assertNull((new TcaHelper())->getDeletedField('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getCreateUserIdFieldReturnsField(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['cruser_id'] = 'cruserIdField';
+        self::assertSame('cruserIdField', (new TcaHelper())->getCreateUserIdField('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getCreateUserIdFieldReturnsNull(): void
+    {
+        self::assertNull((new TcaHelper())->getCreateUserIdField('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getTimestampFieldReturnsField(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['tstamp'] = 'tstampField';
+        self::assertSame('tstampField', (new TcaHelper())->getTimestampField('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getTimestampFieldReturnsNull(): void
+    {
+        self::assertNull((new TcaHelper())->getTimestampField('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getLanguageFieldReturnsField(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['languageField'] = 'langField';
+        self::assertSame('langField', (new TcaHelper())->getLanguageField('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getLanguageFieldReturnsNull(): void
+    {
+        self::assertNull((new TcaHelper())->getLanguageField('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getWorkspaceIdFieldReturnsFieldWithTrue(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['versioningWS'] = true;
+        self::assertSame('t3ver_wsid', (new TcaHelper())->getWorkspaceIdField('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getWorkspaceIdFieldReturnsFieldWithOne(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['versioningWS'] = 1;
+        self::assertSame('t3ver_wsid', (new TcaHelper())->getWorkspaceIdField('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getLanguageFieldReturnsNullWithNull(): void
+    {
+        self::assertNull((new TcaHelper())->getWorkspaceIdField('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getLanguageFieldReturnsNullWithFalse(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['versioningWS'] = false;
+        self::assertNull((new TcaHelper())->getWorkspaceIdField('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getLanguageFieldReturnsNullWithZero(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['versioningWS'] = 0;
+        self::assertNull((new TcaHelper())->getWorkspaceIdField('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getTypeFieldReturnsField(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['type'] = 'typeField';
+        self::assertSame('typeField', (new TcaHelper())->getTypeField('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getTypeFieldReturnsNull(): void
+    {
+        self::assertNull((new TcaHelper())->getTypeField('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getLabelFieldsReturnsNull(): void
+    {
+        self::assertNull((new TcaHelper())->getLabelFields('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getLabelFieldsReturnsLabel(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['label'] = 'labelField';
+        self::assertSame(['labelField'], (new TcaHelper())->getLabelFields('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getLabelFieldsReturnsLabelAlt(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['label_alt'] = 'field1, field2, , field3 ';
+        self::assertSame(['field1', 'field2', 'field3'], (new TcaHelper())->getLabelFields('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getLabelFieldsReturnsCombinedLabelAndLabelAlt(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['label'] = 'labelField';
+        $GLOBALS['TCA']['foo']['ctrl']['label_alt'] = 'labelAlt1, labelAlt2';
+        self::assertSame(['labelField', 'labelAlt1', 'labelAlt2'], (new TcaHelper())->getLabelFields('foo'));
+    }
 }

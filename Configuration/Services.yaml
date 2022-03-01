@@ -7,6 +7,30 @@ services:
   Lolli\Dbhealth\:
     resource: '../Classes/*'
 
+  Lolli\Dbhealth\Helper\PagesRootlineHelper:
+    public: true
+    shared: false
+
+  Lolli\Dbhealth\Helper\RecordsHelper:
+    public: true
+    shared: false
+
+  Lolli\Dbhealth\Helper\TcaHelper:
+    public: true
+    shared: false
+
+  Lolli\Dbhealth\Helper\TableHelper:
+    public: true
+    shared: false
+
+  Lolli\Dbhealth\Renderer\AffectedPagesRenderer:
+    public: true
+    shared: false
+
+  Lolli\Dbhealth\Renderer\RecordsRenderer:
+    public: true
+    shared: false
+
   Lolli\Dbhealth\Commands\HealthCommand:
     tags:
       - name: 'console.command'
