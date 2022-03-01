@@ -41,24 +41,23 @@ class AbstractHealth
     protected function outputAffectedPages(SymfonyStyle $io, array $danglingRows): void
     {
         $io->note('Found records per page:');
-        /** @var AffectedPagesRenderer $affectedPagesHelper */
         $affectedPagesHelper = $this->container->get(AffectedPagesRenderer::class);
         $io->table($affectedPagesHelper->getHeader($danglingRows), $affectedPagesHelper->getRows($danglingRows));
     }
 
     /**
      * @param array<string, array<int, array<string, int|string>>> $danglingRows
+     * @param array<int, string> $extraFields
      */
-    protected function outputRecordDetails(SymfonyStyle $io, array $danglingRows): void
+    protected function outputRecordDetails(SymfonyStyle $io, array $danglingRows, string $reasonField = '', array $extraFields = []): void
     {
         /** @var RecordsRenderer $recordsRenderer */
         $recordsRenderer = $this->container->get(RecordsRenderer::class);
         foreach ($danglingRows as $tableName => $rows) {
-            $uidArray = array_column($rows, 'uid');
             $io->note('Table "' . $tableName . '":');
             $io->table(
-                $recordsRenderer->getHeader($tableName),
-                $recordsRenderer->getRows($tableName, $uidArray)
+                $recordsRenderer->getHeader($tableName, $reasonField, $extraFields),
+                $recordsRenderer->getRows($tableName, $rows, $reasonField, $extraFields)
             );
         }
     }
@@ -68,7 +67,6 @@ class AbstractHealth
      */
     protected function deleteRecords(SymfonyStyle $io, array $danglingPages): void
     {
-        /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         foreach ($danglingPages as $tableName => $rows) {
             $io->note('Deleting records on table: ' . $tableName);

@@ -99,7 +99,6 @@ class NotConnectedPages extends AbstractHealth implements HealthInterface
      */
     private function getDanglingPages(): array
     {
-        /** @var PagesRootlineHelper $pagesRootlineHelper */
         $pagesRootlineHelper = $this->container->get(PagesRootlineHelper::class);
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         $queryBuilder->getRestrictions()->removeAll();

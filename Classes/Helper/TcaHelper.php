@@ -33,6 +33,31 @@ class TcaHelper
         }
     }
 
+    /**
+     * @return iterable<string>
+     */
+    public function getNextLanguageAwareTcaTable(): iterable
+    {
+        foreach ($GLOBALS['TCA'] as $tableName => $config) {
+            if (($config['ctrl']['languageField'] ?? false)
+                && ($config['ctrl']['transOrigPointerField'] ?? false)
+            ) {
+                yield $tableName;
+            }
+        }
+    }
+
+    public function getFieldNameByCtrlName(string $tableName, string $ctrlName): string
+    {
+        if (empty($GLOBALS['TCA'][$tableName]['ctrl'][$ctrlName])) {
+            throw new \RuntimeException(
+                'Name "' . $ctrlName . '" in TCA ctrl of table "' . $tableName . '" not found',
+                1646162580
+            );
+        }
+        return $GLOBALS['TCA'][$tableName]['ctrl'][$ctrlName];
+    }
+
     public function getDeletedField(string $tableName): ?string
     {
         return ($GLOBALS['TCA'][$tableName]['ctrl']['delete'] ?? null) ?: null;
@@ -51,6 +76,11 @@ class TcaHelper
     public function getLanguageField(string $tableName): ?string
     {
         return ($GLOBALS['TCA'][$tableName]['ctrl']['languageField'] ?? null) ?: null;
+    }
+
+    public function getTranslationParentField(string $tableName): ?string
+    {
+        return ($GLOBALS['TCA'][$tableName]['ctrl']['transOrigPointerField'] ?? null) ?: null;
     }
 
     public function getWorkspaceIdField(string $tableName): ?string

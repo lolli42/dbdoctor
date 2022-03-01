@@ -44,23 +44,33 @@ class RecordsRenderer
     }
 
     /**
+     * @param array<int, string> $extraFields
      * @return string[]
      */
-    public function getHeader(string $tableName): array
+    public function getHeader(string $tableName, string $reasonField = '', array $extraFields = []): array
     {
-        return $this->getRelevantFieldNames($tableName);
+        $fields = $this->getRelevantFieldNames($tableName, $extraFields);
+        if ($reasonField) {
+            $fields = array_merge(['reason'], $fields);
+        }
+        return $fields;
     }
 
     /**
-     * @param array<int, int|string> $recordUids
+     * @param array<int, array<string, int|string>> $incomingRows
+     * @param array<int, string> $extraFields
      * @return array<int, array<string, int|string>>
      */
-    public function getRows(string $tableName, array $recordUids): array
+    public function getRows(string $tableName, array $incomingRows, string $reasonField = '', array $extraFields = []): array
     {
-        $fields = $this->getRelevantFieldNames($tableName);
+        $fields = $this->getRelevantFieldNames($tableName, $extraFields);
         $rows = [];
-        foreach ($recordUids as $uid) {
-            $row = $this->recordsHelper->getRecord($tableName, $fields, (int)$uid);
+        foreach ($incomingRows as $incomingRow) {
+            $row = $this->recordsHelper->getRecord($tableName, $fields, (int)$incomingRow['uid']);
+            if ($reasonField) {
+                $reason = ['reason' => $incomingRow['_reasonBroken']];
+                $row = array_merge($reason, $row);
+            }
             $row = $this->humanReadableTimestamp($tableName, $row);
             $row = $this->resolveCrUser($tableName, $row);
             $row = $this->resolveWorkspace($tableName, $row);
@@ -70,14 +80,20 @@ class RecordsRenderer
     }
 
     /**
+     * @param array<int, string> $extraFields
      * @return string[]
      */
-    private function getRelevantFieldNames(string $tableName): array
+    private function getRelevantFieldNames(string $tableName, array $extraFields): array
     {
         $fields = [
             'uid',
             'pid',
         ];
+        if (!empty($extraFields)) {
+            foreach ($extraFields as $extraField) {
+                $fields = array_merge($fields, [$this->tcaHelper->getFieldNameByCtrlName($tableName, $extraField)]);
+            }
+        }
         if ($field = $this->tcaHelper->getDeletedField($tableName)) {
             $fields[] = $field;
         }

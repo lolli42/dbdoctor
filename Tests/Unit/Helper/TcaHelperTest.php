@@ -73,6 +73,69 @@ class TcaHelperTest extends UnitTestCase
     /**
      * @test
      */
+    public function getNextLanguageAwareTcaTableReturnsLanguageAwareEnabledTcaTables(): void
+    {
+        $GLOBALS['TCA'] = [
+            'languageAware1' => [
+                'ctrl' => [
+                    'languageField' => 'sys_language_uid',
+                    'transOrigPointerField' => 'l18n_parent',
+                ],
+            ],
+            'notAware1' => [
+                'ctrl' => [],
+            ],
+            'notAware2' => [
+                'ctrl' => [
+                    'languageField' => 'sys_language_uid',
+                ],
+            ],
+            'notAware3' => [
+                'ctrl' => [
+                    'transOrigPointerField' => 'l18n_parent',
+                ],
+            ],
+            'languageAware2' => [
+                'ctrl' => [
+                    'languageField' => 'sys_language_uid',
+                    'transOrigPointerField' => 'l18n_parent',
+                ],
+            ],
+        ];
+        $subject = new TcaHelper();
+        $result = [];
+        foreach ($subject->getNextLanguageAwareTcaTable() as $table) {
+            $result[] = $table;
+        }
+        $expected = [
+            'languageAware1',
+            'languageAware2',
+        ];
+        self::assertSame($expected, $result);
+    }
+
+    /**
+     * @test
+     */
+    public function getFieldNameByCtrlNameReturnsName(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['bar'] = 'baz';
+        self::assertSame('baz', (new TcaHelper())->getFieldNameByCtrlName('foo', 'bar'));
+    }
+
+    /**
+     * @test
+     */
+    public function getFieldNameByCtrlNameThrows(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionCode(1646162580);
+        (new TcaHelper())->getFieldNameByCtrlName('foo', 'bar');
+    }
+
+    /**
+     * @test
+     */
     public function getDeletedFieldReturnsField(): void
     {
         $GLOBALS['TCA']['foo']['ctrl']['delete'] = 'deletedField';
@@ -141,6 +204,23 @@ class TcaHelperTest extends UnitTestCase
     /**
      * @test
      */
+    public function getTranslationParentFieldReturnsField(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['transOrigPointerField'] = 'l10n_parent';
+        self::assertSame('l10n_parent', (new TcaHelper())->getTranslationParentField('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getTranslationParentFieldReturnsNull(): void
+    {
+        self::assertNull((new TcaHelper())->getTranslationParentField('foo'));
+    }
+
+    /**
+     * @test
+     */
     public function getWorkspaceIdFieldReturnsFieldWithTrue(): void
     {
         $GLOBALS['TCA']['foo']['ctrl']['versioningWS'] = true;
@@ -159,7 +239,7 @@ class TcaHelperTest extends UnitTestCase
     /**
      * @test
      */
-    public function getLanguageFieldReturnsNullWithNull(): void
+    public function getWorkspaceFieldReturnsNullWithNull(): void
     {
         self::assertNull((new TcaHelper())->getWorkspaceIdField('foo'));
     }
@@ -167,7 +247,7 @@ class TcaHelperTest extends UnitTestCase
     /**
      * @test
      */
-    public function getLanguageFieldReturnsNullWithFalse(): void
+    public function getWorkspaceFieldReturnsNullWithFalse(): void
     {
         $GLOBALS['TCA']['foo']['ctrl']['versioningWS'] = false;
         self::assertNull((new TcaHelper())->getWorkspaceIdField('foo'));
@@ -176,7 +256,7 @@ class TcaHelperTest extends UnitTestCase
     /**
      * @test
      */
-    public function getLanguageFieldReturnsNullWithZero(): void
+    public function getWorkspaceFieldReturnsNullWithZero(): void
     {
         $GLOBALS['TCA']['foo']['ctrl']['versioningWS'] = 0;
         self::assertNull((new TcaHelper())->getWorkspaceIdField('foo'));

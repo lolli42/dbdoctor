@@ -18,6 +18,8 @@ namespace Lolli\Dbhealth\Health;
  */
 
 use Lolli\Dbhealth\Commands\HealthCommand;
+use Lolli\Dbhealth\Exception\NoSuchRecordException;
+use Lolli\Dbhealth\Helper\RecordsHelper;
 use Lolli\Dbhealth\Helper\TableHelper;
 use Lolli\Dbhealth\Helper\TcaHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -26,13 +28,9 @@ use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
- * There is a hook in ext:workspaces that discards (= remove from DB) all existing workspace
- * records of a workspace, when the workspace record itself (table sys_workspace) is removed
- * or set to deleted=1.
- *
- * This class looks for workspace records in all tables which may have been missed.
+ * Check if translated records point to existing records.
  */
-class DanglingWorkspaceRecords extends AbstractHealth implements HealthInterface
+class InvalidLanguageParent extends AbstractHealth implements HealthInterface
 {
     private ConnectionPool $connectionPool;
 
@@ -44,12 +42,13 @@ class DanglingWorkspaceRecords extends AbstractHealth implements HealthInterface
 
     public function header(SymfonyStyle $io): void
     {
-        $io->section('Scan for workspace records of deleted sys_workspace\'s');
+        $io->section('Scan for record translations with invalid parent');
         $io->text([
-            'When a workspace (table "sys_workspace") is deleted, all existing workspace overlays',
-            'in all tables of this workspace are discarded (= removed from DB). When this goes wrong,',
-            'or if the workspace extension is removed, the system ends up with "dangling" workspace',
-            'records in tables. This health check finds those records and allows removal.',
+            'Record translations ("translate" / "connected" mode, as opposed to "free" mode) use the',
+            'database field "transOrigPointerField" (DB field name usually "l10n_parent" or "l18n_parent").',
+            'This field points to a default language record. This health check verifies if that target',
+            'exists in the database, is on the same page, and the deleted flag is in sync. Having "dangling"',
+            'localized records on a page can otherwise trigger various issue when the page is copied or similar.'
         ]);
     }
 
@@ -84,7 +83,7 @@ class DanglingWorkspaceRecords extends AbstractHealth implements HealthInterface
                     $this->outputAffectedPages($io, $danglingRows);
                     break;
                 case 'd':
-                    $this->outputRecordDetails($io, $danglingRows);
+                    $this->outputRecordDetails($io, $danglingRows, '_reasonBroken', ['transOrigPointerField']);
                     break;
                 case 'h':
                 default:
@@ -106,49 +105,63 @@ class DanglingWorkspaceRecords extends AbstractHealth implements HealthInterface
      */
     private function getDanglingRows(): array
     {
-        $allowedWorkspacesUids = $this->getAllowedWorkspaces();
-        $danglingRows = [];
+        /** @var TcaHelper $tcaHelper */
         $tcaHelper = $this->container->get(TcaHelper::class);
-        foreach ($tcaHelper->getNextWorkspaceEnabledTcaTable() as $tableName) {
+        /** @var RecordsHelper $recordsHelper */
+        $recordsHelper = $this->container->get(RecordsHelper::class);
+
+        $danglingRows = [];
+        foreach ($tcaHelper->getNextLanguageAwareTcaTable() as $tableName) {
+            /** @var string $languageField */
+            $languageField = $tcaHelper->getLanguageField($tableName);
+            /** @var string $translationParentField */
+            $translationParentField = $tcaHelper->getTranslationParentField($tableName);
+            $deletedField = $tcaHelper->getDeletedField($tableName);
+
+            $parentRowFields = [
+                'uid',
+                'pid',
+                $languageField,
+            ];
+            if ($deletedField) {
+                $parentRowFields[] = $deletedField;
+            }
+
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
-            // Since workspace records have no deleted=1, we remove all restrictions here: If a sys_workspace
-            // has been removed at some point, there shouldn't be *any* records assigned to this workspace.
-            $queryBuilder->getRestrictions()->removeAll();
-            $result = $queryBuilder->select('uid', 'pid', 't3ver_wsid')->from($tableName)
+            $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
+            // Query could be potentially optimized with a self-join, but well ...
+            $result = $queryBuilder->select('uid', 'pid', $translationParentField)->from($tableName)
                 ->where(
-                    $queryBuilder->expr()->notIn('t3ver_wsid', $queryBuilder->quoteArrayBasedValueListToIntegerList($allowedWorkspacesUids))
+                    // localized records
+                    $queryBuilder->expr()->gt($languageField, $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)),
+                    // in 'connected' mode
+                    $queryBuilder->expr()->gt($translationParentField, $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT))
                 )
                 ->orderBy('uid')
                 ->executeQuery();
-            while ($row = $result->fetchAssociative()) {
-                /** @var array<string, int|string> $row */
-                $danglingRows[$tableName][(int)$row['uid']] = $row;
+
+            while ($localizedRow = $result->fetchAssociative()) {
+                /** @var array<string, int|string> $localizedRow */
+                $broken = false;
+                try {
+                    $parentRow = $recordsHelper->getRecord($tableName, $parentRowFields, (int)$localizedRow[$translationParentField]);
+                    if ($deletedField && (int)$parentRow[$deletedField] === 1) {
+                        $broken = true;
+                        $localizedRow['_reasonBroken'] = 'Parent set to deleted';
+                    } elseif ((int)$localizedRow['pid'] !== (int)$parentRow['pid']) {
+                        $broken = true;
+                        $localizedRow['_reasonBroken'] = 'Parent is on different page';
+                    }
+                } catch (NoSuchRecordException $e) {
+                    $broken = true;
+                    $localizedRow['_reasonBroken'] = 'Missing parent';
+                }
+                if ($broken) {
+                    $danglingRows[$tableName][(int)$localizedRow['uid']] = $localizedRow;
+                }
             }
         }
         return $danglingRows;
-    }
-
-    /**
-     * @return array<int, int|string>
-     */
-    private function getAllowedWorkspaces(): array
-    {
-        $allowedWorkspaces = [];
-        $tableHelper = $this->container->get(TableHelper::class);
-        if ($tableHelper->tableExistsInDatabase('sys_workspace')) {
-            // List of active workspaces.
-            $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_workspace');
-            $deletedRestriction = GeneralUtility::makeInstance(DeletedRestriction::class);
-            $queryBuilder->getRestrictions()->removeAll()->add($deletedRestriction);
-            // Note we're NOT allowing deleted=1 records here: A sys_workspace being deleted gets all it's elements
-            // discarded (= removed) by the default core implementation, so we treat those as 'dangling'.
-            $result = $queryBuilder->select('uid', 'title')->from('sys_workspace')->executeQuery();
-            while ($row = $result->fetchAssociative()) {
-                $allowedWorkspaces[$row['uid']] = $row;
-            }
-        }
-        // t3ver_wsid=0 are *always* allowed, of course.
-        return array_merge([0], array_keys($allowedWorkspaces));
     }
 
     /**
@@ -157,10 +170,10 @@ class DanglingWorkspaceRecords extends AbstractHealth implements HealthInterface
     private function outputMainSummary(SymfonyStyle $io, array $danglingRows): void
     {
         if (!count($danglingRows)) {
-            $io->success('No workspace records from deleted workspaces');
+            $io->success('No localized records with invalid parent');
         } else {
             $ioText = [
-                'Found workspace records from deleted workspaces in ' . count($danglingRows) . ' tables:',
+                'Found localized records with invalid parent in ' . count($danglingRows) . ' tables:',
             ];
             $tablesString = '';
             foreach ($danglingRows as $tableName => $rows) {

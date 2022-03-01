@@ -73,6 +73,10 @@ composer require --dev lolli/dbhealth
 * It's probably not a bad idea to look at not-yet done upgrade wizards before using
   the extensions CLI command.
 
+* [!!!] Run the reference index updater when this command finished! It is very likely
+  it will update something since. A clean reference index becomes more and more important
+  with younger core versions. Reminder: command `bin/typo3 referenceindex:update`.
+
 
 # Usage
 
@@ -105,6 +109,13 @@ manually on a different server.
 * Dangling workspace records: When a workspace is deleted all records in all
   tables assigned to this workspace are usually removed. If that fails, those
   records are left over. The check finds those records and allows deletion.
+
+* Record translations with invalid parent: Record translations ("translate" / "connected" mode,
+  as opposed to "free" mode) use the database field "transOrigPointerField" (DB field name usually
+  "l10n_parent" or "l18n_parent"). This field points to a default language record. This health check
+  verifies if that target exists in the database, is on the same page, and the deleted flag is in
+  sync. Having "dangling" localized records on a page can otherwise trigger various issue when the
+  page is copied or similar.
 
 # FAQ
 

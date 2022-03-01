@@ -39,6 +39,7 @@ class RecordsHelper
     /**
      * @param array<int, string> $fields
      * @return array<string, int|string>
+     * @throws NoSuchRecordException
      */
     public function getRecord(string $tableName, array $fields, int $uid): array
     {
@@ -80,7 +81,6 @@ class RecordsHelper
             $this->preparedStatements[$statementHash]['sqlString'] = $queryBuilder->getSQL();
             $this->preparedStatements[$statementHash]['statement'] = $queryBuilder->prepare();
         }
-        /** @var Statement $statement */
         $statement = $this->preparedStatements[$statementHash]['statement'];
         $sqlString = $this->preparedStatements[$statementHash]['sqlString'];
         $sqlString = str_replace('= ?', '= ' . $uid, $sqlString);
