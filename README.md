@@ -40,3 +40,77 @@ This extension is not a substitution auf `lowlevel` commands (yet), it's more an
 incubator to see if a certain strategy dealing with inconsistencies actually works
 out in projects. It will grow over time. Maybe it ends up in the core, or the core
 refers to this extension as "maintenance" extensions in the future. We'll see.
+
+
+# Installation
+
+## Composer
+
+You probably want to install this as `--dev` dependency. The extension currently
+supports TYPO3 v11 and TYPO3 v12:
+
+```
+composer require --dev lolli/dbhealth
+```
+
+## TYPO3 Extension Repository
+
+[No upload yet] For non-composer projects, the extension is available in TER as extension key
+`dbhealth` and can be installed using the extension manager.
+
+
+# Preparation
+
+* [!!!] 💣 Create a fresh database backup dump whenever dealing with the extension.
+  Ensure the recovery strategy works. Both the extension and the user can potentially
+  get something wrong. We are dealing with low level database stuff here after all,
+  so things can potentially go south rather quickly.
+
+* [!!!] 💣 Make sure the database analyzer is happy and needs no new fields or tables.
+  There will be a check in the future to verify this early, but for now, **do not use
+  the CLI interface with incomplete database analyzer**.
+
+* It's probably not a bad idea to look at not-yet done upgrade wizards before using
+  the extensions CLI command.
+
+
+# Usage
+
+```
+bin/typo3 dbhealth:health
+```
+
+The interface looks like this:
+
+![](Documentation/cli-example.png)
+
+The main command is a chain of single checks. They are done one by one. Affected
+record details can be shown on a per-page and a per-record basis to give a quick
+overview. The interface allows to delete or (maybe later, depending on use case)
+affected records.
+
+In the example above, eight pages are found that have no connection to the
+tree-root anymore. A help is selected, then an overview to show more record
+details. Finally, the records are deleted and the next check is called. The
+delete queries are shown, which can become handy if those should be executed
+manually on a different server.
+
+# Existing health checks
+
+* Not connected pages: Pages are a tree. When a node in this tree is deleted,
+  sub pages should be deleted along with this. If this fails, sub pages no
+  longer have a connection to the tree root. The check finds those pages and
+  allows deletion.
+
+* Dangling workspace records: When a workspace is deleted all records in all
+  tables assigned to this workspace are usually removed. If that fails, those
+  records are left over. The check finds those records and allows deletion.
+
+# FAQ
+
+* Will the functionality be made available in a backend GUI?
+  > No. CLI is the only sane way for this kind of things.
+
+* Will support for TYPO3 v10 or other core versions added?
+  > No. TYPO3 v11 had quite a few DB changes and it is not planned to implement
+  > a v10 backwards compatible layer.
