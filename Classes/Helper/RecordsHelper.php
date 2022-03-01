@@ -26,7 +26,6 @@ class RecordsHelper
 {
     /**
      * @var array<string, array{string, sqlString: string, statement: Statement}>
-     * @phpstan-ignore-next-line - docrine/dbal 2.13 triggers here with core v11
      */
     private array $preparedStatements = [];
 
@@ -82,7 +81,6 @@ class RecordsHelper
             $this->preparedStatements[$statementHash]['statement'] = $queryBuilder->prepare();
         }
         /** @var Statement $statement */
-        // @phpstan-ignore-next-line - docrine/dbal 2.13 triggers here with core v11
         $statement = $this->preparedStatements[$statementHash]['statement'];
         $sqlString = $this->preparedStatements[$statementHash]['sqlString'];
         $sqlString = str_replace('= ?', '= ' . $uid, $sqlString);
