@@ -87,7 +87,7 @@ The interface looks like this:
 The main command is a chain of single checks. They are done one by one. Affected
 record details can be shown on a per-page and a per-record basis to give a quick
 overview. The interface allows to delete or (maybe later, depending on use case)
-affected records.
+update affected records.
 
 In the example above, eight pages are found that have no connection to the
 tree-root anymore. A help is selected, then an overview to show more record
@@ -111,6 +111,6 @@ manually on a different server.
 * Will the functionality be made available in a backend GUI?
   > No. CLI is the only sane way for this kind of things.
 
-* Will support for TYPO3 v10 or other core versions added?
-  > No. TYPO3 v11 had quite a few DB changes and it is not planned to implement
+* Will support for TYPO3 v10 or other older core versions added?
+  > No. TYPO3 v11 had quite a few DB changes, and it is not planned to implement
   > a v10 backwards compatible layer.
