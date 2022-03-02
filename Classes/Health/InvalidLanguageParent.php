@@ -17,7 +17,6 @@ namespace Lolli\Dbhealth\Health;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbhealth\Commands\HealthCommand;
 use Lolli\Dbhealth\Exception\NoSuchRecordException;
 use Lolli\Dbhealth\Helper\RecordsHelper;
 use Lolli\Dbhealth\Helper\TcaHelper;
@@ -51,7 +50,7 @@ class InvalidLanguageParent extends AbstractHealth implements HealthInterface
         ]);
     }
 
-    public function process(SymfonyStyle $io, HealthCommand $command): int
+    public function process(SymfonyStyle $io): int
     {
         $danglingRows = $this->getDanglingRows();
         $this->outputMainSummary($io, $danglingRows);

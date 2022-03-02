@@ -49,7 +49,7 @@ class HealthCommand extends Command
 
         foreach ($this->healthFactory->getNext() as $healthInstance) {
             $healthInstance->header($io);
-            $result = $healthInstance->process($io, $this);
+            $result = $healthInstance->process($io);
             if ($result === HealthInterface::RESULT_ABORT) {
                 $io->warning('Aborting ...');
                 break;

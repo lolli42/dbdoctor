@@ -17,7 +17,6 @@ namespace Lolli\Dbhealth\Health;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbhealth\Commands\HealthCommand;
 use Lolli\Dbhealth\Helper\TableHelper;
 use Lolli\Dbhealth\Helper\TcaHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -53,7 +52,7 @@ class DanglingWorkspaceRecords extends AbstractHealth implements HealthInterface
         ]);
     }
 
-    public function process(SymfonyStyle $io, HealthCommand $command): int
+    public function process(SymfonyStyle $io): int
     {
         $danglingRows = $this->getDanglingRows();
         $this->outputMainSummary($io, $danglingRows);

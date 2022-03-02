@@ -17,7 +17,6 @@ namespace Lolli\Dbhealth\Health;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbhealth\Commands\HealthCommand;
 use Lolli\Dbhealth\Helper\PagesRootlineHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\ConnectionPool;
@@ -46,7 +45,7 @@ class NotConnectedPages extends AbstractHealth implements HealthInterface
         ]);
     }
 
-    public function process(SymfonyStyle $io, HealthCommand $command): int
+    public function process(SymfonyStyle $io): int
     {
         $danglingPages = $this->getDanglingPages();
         $this->outputMainSummary($io, $danglingPages);
