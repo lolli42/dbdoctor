@@ -17,6 +17,9 @@ namespace Lolli\Dbhealth\Health;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbhealth\Exception\NoSuchRecordException;
+use Lolli\Dbhealth\Exception\NoSuchTableException;
+use Lolli\Dbhealth\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
@@ -73,7 +76,7 @@ class DanglingSysFileReferenceRecords extends AbstractHealth implements HealthIn
                     $this->outputAffectedPages($io, $danglingRows);
                     break;
                 case 'd':
-                    $this->outputRecordDetails($io, $danglingRows);
+                    $this->outputRecordDetails($io, $danglingRows, '', [], ['uid_local', 'table_local', 'uid_foreign', 'tablenames']);
                     break;
                 case 'h':
                 default:
@@ -95,14 +98,24 @@ class DanglingSysFileReferenceRecords extends AbstractHealth implements HealthIn
      */
     private function getDanglingRows(): array
     {
+        /** @var RecordsHelper $recordsHelper */
+        $recordsHelper = $this->container->get(RecordsHelper::class);
         $danglingRows = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
-        // Yes, we fetch deleted=1 records here, too. If it's relation is broken, they should vanish, too.
+        // We fetch deleted=1 records here, too. If it's relation is broken, they should vanish, too.
         $queryBuilder->getRestrictions()->removeAll();
         $result = $queryBuilder->select('uid', 'pid', 'uid_local', 'table_local', 'uid_foreign', 'tablenames')
-            ->orderBy('uid');
+            ->from('sys_file_reference')
+            ->orderBy('uid')
+            ->executeQuery();
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
+            try {
+                $recordsHelper->getRecord((string)$row['table_local'], ['uid'], (int)$row['uid_local']);
+                $recordsHelper->getRecord((string)$row['tablenames'], ['uid'], (int)$row['uid_foreign']);
+            } catch (NoSuchRecordException|NoSuchTableException $e) {
+                $danglingRows['sys_file_reference'][] = $row;
+            }
         }
         return $danglingRows;
     }

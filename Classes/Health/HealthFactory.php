@@ -28,7 +28,7 @@ class HealthFactory implements HealthFactoryInterface
         NotConnectedPages::class,
         DanglingWorkspaceRecords::class,
         InvalidTableLocalInSysFileReferenceRecords::class,
-        // DanglingSysFileReferenceRecords::class,
+        DanglingSysFileReferenceRecords::class,
         InvalidLanguageParent::class,
     ];
 

@@ -19,7 +19,9 @@ namespace Lolli\Dbhealth\Helper;
 
 use Doctrine\DBAL\Statement;
 use Lolli\Dbhealth\Exception\NoSuchRecordException;
+use Lolli\Dbhealth\Exception\NoSuchTableException;
 use Lolli\Dbhealth\Exception\UnexpectedNumberOfAffectedRowsException;
+use Psr\Container\ContainerInterface;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
 class RecordsHelper
@@ -29,10 +31,14 @@ class RecordsHelper
      */
     private array $preparedStatements = [];
 
+    private ContainerInterface $container;
     private ConnectionPool $connectionPool;
 
-    public function __construct(ConnectionPool $connectionPool)
-    {
+    public function __construct(
+        ContainerInterface $container,
+        ConnectionPool $connectionPool
+    ) {
+        $this->container = $container;
         $this->connectionPool = $connectionPool;
     }
 
@@ -40,11 +46,17 @@ class RecordsHelper
      * @param array<int, string> $fields
      * @return array<string, int|string>
      * @throws NoSuchRecordException
+     * @throws NoSuchTableException
      */
     public function getRecord(string $tableName, array $fields, int $uid): array
     {
         $statementHash = md5('select' . $tableName . implode($fields));
         if (!isset($this->preparedStatements[$statementHash])) {
+            /** @var TableHelper $tableHelper */
+            $tableHelper = $this->container->get(TableHelper::class);
+            if (!$tableHelper->tableExistsInDatabase($tableName)) {
+                throw new NoSuchTableException('Table "' . $tableName . '" does not exist.');
+            }
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             $queryBuilder->getRestrictions()->removeAll();
             $queryBuilder
@@ -63,7 +75,7 @@ class RecordsHelper
         /** @var array<string, int|string> $record */
         $record = array_pop($record);
         if (!is_array($record)) {
-            throw new NoSuchRecordException('record with uid "' . $uid . '" in table "' . $tableName . '" not found', 1646121410);
+            throw new NoSuchRecordException('Record with uid "' . $uid . '" in table "' . $tableName . '" not found', 1646121410);
         }
         return $record;
     }

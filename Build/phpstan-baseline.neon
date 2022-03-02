@@ -1,7 +1,2 @@
 parameters:
 	ignoreErrors:
-		-
-			message: "#^Call to an undefined method TYPO3\\\\CMS\\\\Core\\\\Database\\\\Query\\\\QueryBuilder\\:\\:fetchAssociative\\(\\)\\.$#"
-			count: 1
-			path: ../Classes/Health/DanglingSysFileReferenceRecords.php
-

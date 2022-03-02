@@ -1,0 +1,17 @@
+"sys_file_reference"
+,"uid","pid","uid_local","table_local","uid_foreign","tablenames","title"
+,1,1,1,"sys_file",1,"tt_content","Ok file"
+,2,1,2,"sys_file",1,"tt_content","local missing"
+,3,1,1,"sys_file_foo",1,"tt_content","local table missing"
+,4,1,1,"sys_file",2,"tt_content","foreign missing"
+,5,1,1,"sys_file",1,"tt_content_foo","foreign table missing"
+"sys_file"
+,"uid","name"
+,1,"ok ref"
+# 2 does not exist
+,3,"ok ref"
+"tt_content"
+,"uid","header"
+,1,"ok ref"
+# 2 does not exist
+,3,"ok ref"

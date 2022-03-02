@@ -19,6 +19,7 @@ namespace Lolli\Dbhealth\Renderer;
 
 use Lolli\Dbhealth\Exception\NoSuchRecordException;
 use Lolli\Dbhealth\Helper\RecordsHelper;
+use Lolli\Dbhealth\Helper\TableHelper;
 use Lolli\Dbhealth\Helper\TcaHelper;
 
 class RecordsRenderer
@@ -34,13 +35,16 @@ class RecordsRenderer
 
     private RecordsHelper $recordsHelper;
     private TcaHelper $tcaHelper;
+    private TableHelper $tableHelper;
 
     public function __construct(
         RecordsHelper $recordsHelper,
-        TcaHelper $tcaHelper
+        TcaHelper $tcaHelper,
+        TableHelper $tableHelper
     ) {
         $this->recordsHelper = $recordsHelper;
         $this->tcaHelper = $tcaHelper;
+        $this->tableHelper = $tableHelper;
     }
 
     /**
@@ -81,6 +85,20 @@ class RecordsRenderer
             if ($reasonField) {
                 $reason = ['reason' => $incomingRow['_reasonBroken']];
                 $row = array_merge($reason, $row);
+            }
+            if ($tableName === 'sys_file_reference'
+                && isset($row['uid_local']) && isset($row['table_local'])
+                && isset($row['uid_foreign']) && isset($row['tablenames'])
+            ) {
+                // Maybe make this more generic, we 'll see.
+                $row['table_local'] = $this->resolveRelationTable((string)$row['table_local']);
+                if ($this->tableHelper->tableExistsInDatabase((string)$row['table_local'])) {
+                    $row['uid_local'] = $this->resolveRelation((string)$row['table_local'], (int)($row['uid_local']));
+                }
+                $row['tablenames'] = $this->resolveRelationTable((string)$row['tablenames']);
+                if ($this->tableHelper->tableExistsInDatabase((string)$row['tablenames'])) {
+                    $row['uid_foreign'] = $this->resolveRelation((string)$row['tablenames'], (int)($row['uid_foreign']));
+                }
             }
             $row = $this->humanReadableTimestamp($tableName, $row);
             $row = $this->resolveCrUser($tableName, $row);
@@ -213,5 +231,23 @@ class RecordsRenderer
             }
         }
         return $row;
+    }
+
+    private function resolveRelation(string $tableName, int $uid): string
+    {
+        try {
+            $this->recordsHelper->getRecord($tableName, ['uid'], $uid);
+        } catch (NoSuchRecordException $e) {
+            return '[<comment>missing</comment>]' . $uid;
+        }
+        return (string)$uid;
+    }
+
+    private function resolveRelationTable(string $tableName): string
+    {
+        if (!$this->tableHelper->tableExistsInDatabase($tableName)) {
+            return '[<comment>missing</comment>]' . $tableName;
+        }
+        return $tableName;
     }
 }
