@@ -29,6 +29,7 @@ have to do time-consuming debug sessions to find out what went wrong.
 This extension provides a CLI command that tries to find various such inconsistencies
 and gives admins options to fix them.
 
+
 # Alternatives
 
 We're not aware of other open extensions that try to achieve the same in a similar
@@ -99,23 +100,16 @@ details. Finally, the records are deleted and the next check is called. The
 delete queries are shown, which can become handy if those should be executed
 manually on a different server.
 
+
 # Existing health checks
 
-* Not connected pages: Pages are a tree. When a node in this tree is deleted,
-  sub pages should be deleted along with this. If this fails, sub pages no
-  longer have a connection to the tree root. The check finds those pages and
-  allows deletion.
+Single tests are described in details when running the CLI command. Rough overview:
 
-* Dangling workspace records: When a workspace is deleted all records in all
-  tables assigned to this workspace are usually removed. If that fails, those
-  records are left over. The check finds those records and allows deletion.
+* General page tree integrity checks
+* Various FAL related sys_file_reference and friends checks
+* Various language handling related checks
+* Tons of workspace related checks
 
-* Record translations with invalid parent: Record translations ("translate" / "connected" mode,
-  as opposed to "free" mode) use the database field "transOrigPointerField" (DB field name usually
-  "l10n_parent" or "l18n_parent"). This field points to a default language record. This health check
-  verifies if that target exists in the database, is on the same page, and the deleted flag is in
-  sync. Having "dangling" localized records on a page can otherwise trigger various issue when the
-  page is copied or similar.
 
 # FAQ
 

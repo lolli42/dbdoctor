@@ -27,6 +27,8 @@ class HealthFactory implements HealthFactoryInterface
     private array $healthClasses = [
         NotConnectedPages::class,
         DanglingWorkspaceRecords::class,
+        InvalidTableLocalInSysFileReferenceRecords::class,
+        // DanglingSysFileReferenceRecords::class,
         InvalidLanguageParent::class,
     ];
 

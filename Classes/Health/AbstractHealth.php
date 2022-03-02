@@ -38,37 +38,67 @@ class AbstractHealth
     /**
      * @param array<string, array<int, array<string, int|string>>> $danglingRows
      */
+    protected function outputMainSummary(SymfonyStyle $io, array $danglingRows): void
+    {
+        if (!count($danglingRows)) {
+            $io->success('No affected records found');
+        } else {
+            $ioText = [
+                'Found affected records in ' . count($danglingRows) . ' tables:',
+            ];
+            $tablesString = '';
+            foreach ($danglingRows as $tableName => $rows) {
+                if (!empty($tablesString)) {
+                    $tablesString .= "\n";
+                }
+                $tablesString .= '"' . $tableName . '": ' . count($rows) . ' records';
+            }
+            $ioText[] = $tablesString;
+            $io->warning($ioText);
+        }
+    }
+
+    /**
+     * @param array<string, array<int, array<string, int|string>>> $danglingRows
+     */
     protected function outputAffectedPages(SymfonyStyle $io, array $danglingRows): void
     {
         $io->note('Found records per page:');
+        /** @var AffectedPagesRenderer $affectedPagesHelper */
         $affectedPagesHelper = $this->container->get(AffectedPagesRenderer::class);
         $io->table($affectedPagesHelper->getHeader($danglingRows), $affectedPagesHelper->getRows($danglingRows));
     }
 
     /**
      * @param array<string, array<int, array<string, int|string>>> $danglingRows
-     * @param array<int, string> $extraFields
+     * @param array<int, string> $extraCtrlFields
+     * @param array<int, string> $extraDbFields
      */
-    protected function outputRecordDetails(SymfonyStyle $io, array $danglingRows, string $reasonField = '', array $extraFields = []): void
-    {
+    protected function outputRecordDetails(
+        SymfonyStyle $io,
+        array $danglingRows,
+        string $reasonField = '',
+        array $extraCtrlFields = [],
+        array $extraDbFields = [],
+    ): void {
         /** @var RecordsRenderer $recordsRenderer */
         $recordsRenderer = $this->container->get(RecordsRenderer::class);
         foreach ($danglingRows as $tableName => $rows) {
             $io->note('Table "' . $tableName . '":');
             $io->table(
-                $recordsRenderer->getHeader($tableName, $reasonField, $extraFields),
-                $recordsRenderer->getRows($tableName, $rows, $reasonField, $extraFields)
+                $recordsRenderer->getHeader($tableName, $reasonField, $extraCtrlFields, $extraDbFields),
+                $recordsRenderer->getRows($tableName, $rows, $reasonField, $extraCtrlFields, $extraDbFields)
             );
         }
     }
 
     /**
-     * @param array<string, array<int, array<string, int|string>>> $danglingPages
+     * @param array<string, array<int, array<string, int|string>>> $danglingRows
      */
-    protected function deleteRecords(SymfonyStyle $io, array $danglingPages): void
+    protected function deleteRecords(SymfonyStyle $io, array $danglingRows): void
     {
         $recordsHelper = $this->container->get(RecordsHelper::class);
-        foreach ($danglingPages as $tableName => $rows) {
+        foreach ($danglingRows as $tableName => $rows) {
             $io->note('Deleting records on table: ' . $tableName);
             $count = 0;
             foreach ($rows as $row) {
@@ -78,5 +108,23 @@ class AbstractHealth
             }
             $io->warning('Deleted "' . $count . '" records from "' . $tableName . '" table');
         }
+    }
+
+    /**
+     * @param array<int, array<string, int|string>> $rows
+     * @param array<string, array<string, int|string>> $fields
+     */
+    protected function updateRecords(SymfonyStyle $io, string $tableName, array $rows, array $fields): void
+    {
+        /** @var RecordsHelper $recordsHelper */
+        $recordsHelper = $this->container->get(RecordsHelper::class);
+        $io->note('Update records on table: ' . $tableName);
+        $count = 0;
+        foreach ($rows as $row) {
+            $sql = $recordsHelper->updateTcaRecord($tableName, (int)$row['uid'], $fields);
+            $io->text($sql);
+            $count++;
+        }
+        $io->warning('Update "' . $count . '" records from "' . $tableName . '" table');
     }
 }

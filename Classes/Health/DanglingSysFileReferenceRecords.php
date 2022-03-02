@@ -17,15 +17,13 @@ namespace Lolli\Dbhealth\Health;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbhealth\Helper\PagesRootlineHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
 /**
- * An important early check: Find pages that have no proper connection
- * to the tree root.
+ * sys_file_reference rows where either uid_local or uid_foreign does not exist.
  */
-class NotConnectedPages extends AbstractHealth implements HealthInterface
+class DanglingSysFileReferenceRecords extends AbstractHealth implements HealthInterface
 {
     private ConnectionPool $connectionPool;
 
@@ -37,46 +35,45 @@ class NotConnectedPages extends AbstractHealth implements HealthInterface
 
     public function header(SymfonyStyle $io): void
     {
-        $io->section('Scan for pages tree integrity');
+        $io->section('Scan for orphan sys_file_reference records');
         $io->text([
-            '[DELETE] This health check finds pages with their "pid" set to pages that do not',
-            'exist in the database. Pages without proper connection to the tree root are never',
-            'shown in the backend. They should be deleted.',
+            'A basic check for sys_file_reference: the records referenced in uid_local and uid_foreign',
+            'must exist, otherwise that sys_file_reference row is obsolete and should be removed.',
         ]);
     }
 
     public function process(SymfonyStyle $io): int
     {
-        $danglingPages = $this->getDanglingPages();
-        $this->outputMainSummary($io, $danglingPages);
-        if (empty($danglingPages)) {
+        $danglingRows = $this->getDanglingRows();
+        $this->outputMainSummary($io, $danglingRows);
+        if (empty($danglingRows)) {
             return self::RESULT_OK;
         }
 
         while (true) {
             switch ($io->ask('<info>Remove records [y,a,r,p,d,?]?</info> ', '?')) {
                 case 'y':
-                    $this->deleteRecords($io, $danglingPages);
-                    $danglingPages = $this->getDanglingPages();
-                    $this->outputMainSummary($io, $danglingPages);
-                    if (empty($danglingPages)) {
+                    $this->deleteRecords($io, $danglingRows);
+                    $danglingRows = $this->getDanglingRows();
+                    $this->outputMainSummary($io, $danglingRows);
+                    if (empty($danglingRows['pages'])) {
                         return self::RESULT_OK;
                     }
                     break;
                 case 'a':
                     return self::RESULT_ABORT;
                 case 'r':
-                    $danglingPages = $this->getDanglingPages();
-                    $this->outputMainSummary($io, $danglingPages);
-                    if (empty($danglingPages)) {
+                    $danglingRows = $this->getDanglingRows();
+                    $this->outputMainSummary($io, $danglingRows);
+                    if (empty($danglingRows)) {
                         return self::RESULT_OK;
                     }
                     break;
                 case 'p':
-                    $this->outputAffectedPages($io, $danglingPages);
+                    $this->outputAffectedPages($io, $danglingRows);
                     break;
                 case 'd':
-                    $this->outputRecordDetails($io, $danglingPages);
+                    $this->outputRecordDetails($io, $danglingRows);
                     break;
                 case 'h':
                 default:
@@ -96,20 +93,17 @@ class NotConnectedPages extends AbstractHealth implements HealthInterface
     /**
      * @return array<string, array<int, array<string, int|string>>>
      */
-    private function getDanglingPages(): array
+    private function getDanglingRows(): array
     {
-        $pagesRootlineHelper = $this->container->get(PagesRootlineHelper::class);
-        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
+        $danglingRows = [];
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
+        // Yes, we fetch deleted=1 records here, too. If it's relation is broken, they should vanish, too.
         $queryBuilder->getRestrictions()->removeAll();
-        $result = $queryBuilder->select('uid', 'pid')->from('pages')->orderBy('uid')->executeQuery();
-        $danglingPages = [];
+        $result = $queryBuilder->select('uid', 'pid', 'uid_local', 'table_local', 'uid_foreign', 'tablenames')
+            ->orderBy('uid');
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
-            $isInRootline = $pagesRootlineHelper->isInRootline((int)$row['uid']);
-            if (!$isInRootline) {
-                $danglingPages['pages'][] = $row;
-            }
         }
-        return $danglingPages;
+        return $danglingRows;
     }
 }

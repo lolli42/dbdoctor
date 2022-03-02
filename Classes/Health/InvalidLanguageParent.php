@@ -161,27 +161,4 @@ class InvalidLanguageParent extends AbstractHealth implements HealthInterface
         }
         return $danglingRows;
     }
-
-    /**
-     * @param array<string, array<int, array<string, int|string>>> $danglingRows
-     */
-    private function outputMainSummary(SymfonyStyle $io, array $danglingRows): void
-    {
-        if (!count($danglingRows)) {
-            $io->success('No localized records with invalid parent');
-        } else {
-            $ioText = [
-                'Found localized records with invalid parent in ' . count($danglingRows) . ' tables:',
-            ];
-            $tablesString = '';
-            foreach ($danglingRows as $tableName => $rows) {
-                if (!empty($tablesString)) {
-                    $tablesString .= "\n";
-                }
-                $tablesString .= '"' . $tableName . '": ' . count($rows) . ' records';
-            }
-            $ioText[] = $tablesString;
-            $io->warning($ioText);
-        }
-    }
 }

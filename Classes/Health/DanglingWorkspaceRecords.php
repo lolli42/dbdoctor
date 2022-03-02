@@ -45,10 +45,10 @@ class DanglingWorkspaceRecords extends AbstractHealth implements HealthInterface
     {
         $io->section('Scan for workspace records of deleted sys_workspace\'s');
         $io->text([
-            'When a workspace (table "sys_workspace") is deleted, all existing workspace overlays',
-            'in all tables of this workspace are discarded (= removed from DB). When this goes wrong,',
-            'or if the workspace extension is removed, the system ends up with "dangling" workspace',
-            'records in tables. This health check finds those records and allows removal.',
+            '[DELETE] When a workspace (table "sys_workspace") is deleted, all existing workspace',
+            'overlays in all tables of this workspace are discarded (= removed from DB). When this',
+            'goes wrong, or if the workspace extension is removed, the system ends up with "dangling"',
+            'workspace records in tables. This health check finds those records and allows removal.',
         ]);
     }
 
@@ -66,7 +66,7 @@ class DanglingWorkspaceRecords extends AbstractHealth implements HealthInterface
                     $this->deleteRecords($io, $danglingRows);
                     $danglingRows = $this->getDanglingRows();
                     $this->outputMainSummary($io, $danglingRows);
-                    if (empty($danglingRows['pages'])) {
+                    if (empty($danglingRows)) {
                         return self::RESULT_OK;
                     }
                     break;
@@ -148,28 +148,5 @@ class DanglingWorkspaceRecords extends AbstractHealth implements HealthInterface
         }
         // t3ver_wsid=0 are *always* allowed, of course.
         return array_merge([0], array_keys($allowedWorkspaces));
-    }
-
-    /**
-     * @param array<string, array<int, array<string, int|string>>> $danglingRows
-     */
-    private function outputMainSummary(SymfonyStyle $io, array $danglingRows): void
-    {
-        if (!count($danglingRows)) {
-            $io->success('No workspace records from deleted workspaces');
-        } else {
-            $ioText = [
-                'Found workspace records from deleted workspaces in ' . count($danglingRows) . ' tables:',
-            ];
-            $tablesString = '';
-            foreach ($danglingRows as $tableName => $rows) {
-                if (!empty($tablesString)) {
-                    $tablesString .= "\n";
-                }
-                $tablesString .= '"' . $tableName . '": ' . count($rows) . ' records';
-            }
-            $ioText[] = $tablesString;
-            $io->warning($ioText);
-        }
     }
 }

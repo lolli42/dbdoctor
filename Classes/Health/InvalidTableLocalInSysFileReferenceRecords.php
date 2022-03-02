@@ -17,15 +17,13 @@ namespace Lolli\Dbhealth\Health;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbhealth\Helper\PagesRootlineHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
 /**
- * An important early check: Find pages that have no proper connection
- * to the tree root.
+ * All records in sys_file_reference must have table_local set to 'sys_file'
  */
-class NotConnectedPages extends AbstractHealth implements HealthInterface
+class InvalidTableLocalInSysFileReferenceRecords extends AbstractHealth implements HealthInterface
 {
     private ConnectionPool $connectionPool;
 
@@ -37,51 +35,55 @@ class NotConnectedPages extends AbstractHealth implements HealthInterface
 
     public function header(SymfonyStyle $io): void
     {
-        $io->section('Scan for pages tree integrity');
+        $io->section('Scan for sys_file_reference_records with broken table_local field');
         $io->text([
-            '[DELETE] This health check finds pages with their "pid" set to pages that do not',
-            'exist in the database. Pages without proper connection to the tree root are never',
-            'shown in the backend. They should be deleted.',
+            '[UPDATE] Records in "sys_file_reference" must have field "table_local" set to',
+            '"sys_file", no exceptions. This check verifies this and can update non-compliant rows.',
         ]);
     }
 
     public function process(SymfonyStyle $io): int
     {
-        $danglingPages = $this->getDanglingPages();
-        $this->outputMainSummary($io, $danglingPages);
-        if (empty($danglingPages)) {
+        $danglingRows = $this->getAffectedRows();
+        $this->outputMainSummary($io, $danglingRows);
+        if (empty($danglingRows)) {
             return self::RESULT_OK;
         }
 
         while (true) {
             switch ($io->ask('<info>Remove records [y,a,r,p,d,?]?</info> ', '?')) {
                 case 'y':
-                    $this->deleteRecords($io, $danglingPages);
-                    $danglingPages = $this->getDanglingPages();
-                    $this->outputMainSummary($io, $danglingPages);
-                    if (empty($danglingPages)) {
+                    $this->updateRecords(
+                        $io,
+                        'sys_file_reference',
+                        $danglingRows['sys_file_reference'],
+                        ['table_local' => ['value' => 'sys_file', 'type' => \PDO::PARAM_STR]]
+                    );
+                    $danglingRows = $this->getAffectedRows();
+                    $this->outputMainSummary($io, $danglingRows);
+                    if (empty($danglingRows)) {
                         return self::RESULT_OK;
                     }
                     break;
                 case 'a':
                     return self::RESULT_ABORT;
                 case 'r':
-                    $danglingPages = $this->getDanglingPages();
-                    $this->outputMainSummary($io, $danglingPages);
-                    if (empty($danglingPages)) {
+                    $danglingRows = $this->getAffectedRows();
+                    $this->outputMainSummary($io, $danglingRows);
+                    if (empty($danglingRows)) {
                         return self::RESULT_OK;
                     }
                     break;
                 case 'p':
-                    $this->outputAffectedPages($io, $danglingPages);
+                    $this->outputAffectedPages($io, $danglingRows);
                     break;
                 case 'd':
-                    $this->outputRecordDetails($io, $danglingPages);
+                    $this->outputRecordDetails($io, $danglingRows, '', [], ['uid_local', 'table_local', 'uid_foreign', 'tablenames']);
                     break;
                 case 'h':
                 default:
                     $io->text([
-                        '    y - remove (DELETE, no soft-delete!) records',
+                        '    y - update records, setting table_local to "sys_file" ',
                         '    a - abort now',
                         '    r - reload possibly changed data',
                         '    p - show record per page',
@@ -96,20 +98,21 @@ class NotConnectedPages extends AbstractHealth implements HealthInterface
     /**
      * @return array<string, array<int, array<string, int|string>>>
      */
-    private function getDanglingPages(): array
+    private function getAffectedRows(): array
     {
-        $pagesRootlineHelper = $this->container->get(PagesRootlineHelper::class);
-        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
+        $tableRows = [];
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
         $queryBuilder->getRestrictions()->removeAll();
-        $result = $queryBuilder->select('uid', 'pid')->from('pages')->orderBy('uid')->executeQuery();
-        $danglingPages = [];
+        $result = $queryBuilder->select('uid', 'pid')->from('sys_file_reference')
+            ->where(
+                $queryBuilder->expr()->neq('table_local', $queryBuilder->createNamedParameter('sys_file'))
+            )
+            ->orderBy('uid')
+            ->executeQuery();
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
-            $isInRootline = $pagesRootlineHelper->isInRootline((int)$row['uid']);
-            if (!$isInRootline) {
-                $danglingPages['pages'][] = $row;
-            }
+            $tableRows['sys_file_reference'][] = $row;
         }
-        return $danglingPages;
+        return $tableRows;
     }
 }

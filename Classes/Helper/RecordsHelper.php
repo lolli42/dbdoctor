@@ -56,7 +56,7 @@ class RecordsHelper
             $this->preparedStatements[$statementHash]['statement'] = $queryBuilder->prepare();
         }
         $statement = $this->preparedStatements[$statementHash]['statement'];
-        $statement->bindParam(1, $uid);
+        $statement->bindParam(1, $uid, \PDO::PARAM_INT);
         $result = $statement->executeQuery();
         $record = $result->fetchAllAssociative();
         $result->free();
@@ -85,7 +85,7 @@ class RecordsHelper
         $sqlString = $this->preparedStatements[$statementHash]['sqlString'];
         $sqlString = str_replace('= ?', '= ' . $uid, $sqlString);
         $sqlString .= ';';
-        $statement->bindParam(1, $uid);
+        $statement->bindParam(1, $uid, \PDO::PARAM_INT);
         $affectedRows = $statement->executeStatement();
         if ($affectedRows !== 1) {
             throw new UnexpectedNumberOfAffectedRowsException(
@@ -94,5 +94,56 @@ class RecordsHelper
             );
         }
         return $sqlString;
+    }
+
+    /**
+     * @param array<string, array<string, int|string>> $fields
+     */
+    public function updateTcaRecord(string $tableName, int $uid, array $fields): string
+    {
+        $statementHash = md5('update' . $tableName . implode('', array_keys($fields)));
+        if (!isset($this->preparedStatements[$statementHash])) {
+            $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
+            $queryBuilder->update($tableName);
+            foreach ($fields as $fieldName => $valueAndType) {
+                $queryBuilder->set($fieldName, '?', false);
+            }
+            $queryBuilder->where(
+                $queryBuilder->expr()->eq('uid', $queryBuilder->createPositionalParameter(0, \PDO::PARAM_INT))
+            );
+            $this->preparedStatements[$statementHash]['sqlString'] = $queryBuilder->getSQL();
+            $this->preparedStatements[$statementHash]['statement'] = $queryBuilder->prepare();
+        }
+        /** @var Statement $statement */
+        $statement = $this->preparedStatements[$statementHash]['statement'];
+        $sqlString = $this->preparedStatements[$statementHash]['sqlString'];
+        $currentParam = 1;
+        foreach ($fields as $fieldName => $valueAndType) {
+            $statement->bindParam($currentParam, $valueAndType['value'], (int)$valueAndType['type']);
+            if ($valueAndType['type'] === \PDO::PARAM_STR) {
+                $sqlValue = '\'' . $valueAndType['value'] . '\'';
+            } else {
+                $sqlValue = (string)$valueAndType['value'];
+            }
+            $sqlString = $this->strReplaceFirst('= ?', '= ' . $sqlValue, $sqlString);
+            $currentParam++;
+        }
+        $statement->bindParam($currentParam, $uid, \PDO::PARAM_INT);
+        $sqlString = $this->strReplaceFirst('= ?', '= ' . $uid, $sqlString);
+        $sqlString .= ';';
+        $affectedRows = $statement->executeStatement();
+        if ($affectedRows !== 1) {
+            throw new UnexpectedNumberOfAffectedRowsException(
+                'Delete query "' . $sqlString . '" had "' . $affectedRows . '" affected rows, 1 expected.',
+                1646228188
+            );
+        }
+        return $sqlString;
+    }
+
+    private function strReplaceFirst(string $search, string $replace, string $subject): string
+    {
+        $search = '/' . preg_quote($search, '/') . '/';
+        return (string)preg_replace($search, $replace, $subject, 1);
     }
 }

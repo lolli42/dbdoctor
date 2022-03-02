@@ -221,11 +221,13 @@ services:
         fi
         php -v | grep '^PHP';
         if [ ${TYPO3_VERSION} -eq 11 ]; then
-            composer req typo3/cms-core:^11.5
+              composer req --dev typo3/cms-workspaces:^11.5 --no-update
+              composer req typo3/cms-core:^11.5
         fi
         if [ ${TYPO3_VERSION} -eq 12 ]; then
             composer config minimum-stability dev
             composer req --dev typo3/testing-framework:dev-main --no-update
+            composer req --dev typo3/cms-workspaces:~12.0@dev --no-update
             composer req typo3/cms-core:~12.0@dev -W
         fi
         composer update --no-progress --no-interaction;

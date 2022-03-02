@@ -44,12 +44,17 @@ class RecordsRenderer
     }
 
     /**
-     * @param array<int, string> $extraFields
+     * @param array<int, string> $extraCtrlFields
+     * @param array<int, string> $extraDbFields
      * @return string[]
      */
-    public function getHeader(string $tableName, string $reasonField = '', array $extraFields = []): array
-    {
-        $fields = $this->getRelevantFieldNames($tableName, $extraFields);
+    public function getHeader(
+        string $tableName,
+        string $reasonField = '',
+        array $extraCtrlFields = [],
+        array $extraDbFields = [],
+    ): array {
+        $fields = $this->getRelevantFieldNames($tableName, $extraCtrlFields, $extraDbFields);
         if ($reasonField) {
             $fields = array_merge(['reason'], $fields);
         }
@@ -58,12 +63,18 @@ class RecordsRenderer
 
     /**
      * @param array<int, array<string, int|string>> $incomingRows
-     * @param array<int, string> $extraFields
+     * @param array<int, string> $extraCtrlFields
+     * @param array<int, string> $extraDbFields
      * @return array<int, array<string, int|string>>
      */
-    public function getRows(string $tableName, array $incomingRows, string $reasonField = '', array $extraFields = []): array
-    {
-        $fields = $this->getRelevantFieldNames($tableName, $extraFields);
+    public function getRows(
+        string $tableName,
+        array $incomingRows,
+        string $reasonField = '',
+        array $extraCtrlFields = [],
+        array $extraDbFields = [],
+    ): array {
+        $fields = $this->getRelevantFieldNames($tableName, $extraCtrlFields, $extraDbFields);
         $rows = [];
         foreach ($incomingRows as $incomingRow) {
             $row = $this->recordsHelper->getRecord($tableName, $fields, (int)$incomingRow['uid']);
@@ -80,40 +91,53 @@ class RecordsRenderer
     }
 
     /**
-     * @param array<int, string> $extraFields
+     * @param array<int, string> $extraCtrlFields
+     * @param array<int, string> $extraDbFields
      * @return string[]
      */
-    private function getRelevantFieldNames(string $tableName, array $extraFields): array
+    private function getRelevantFieldNames(string $tableName, array $extraCtrlFields, array $extraDbFields): array
     {
-        $fields = [
-            'uid',
-            'pid',
-        ];
-        if (!empty($extraFields)) {
-            foreach ($extraFields as $extraField) {
-                $fields = array_merge($fields, [$this->tcaHelper->getFieldNameByCtrlName($tableName, $extraField)]);
+        $fields = $this->addField([], 'uid');
+        $fields = $this->addField($fields, 'pid');
+        if (!empty($extraCtrlFields)) {
+            foreach ($extraCtrlFields as $extraField) {
+                $fields = $this->addField($fields, $this->tcaHelper->getFieldNameByCtrlName($tableName, $extraField));
             }
         }
-        if ($field = $this->tcaHelper->getDeletedField($tableName)) {
-            $fields[] = $field;
+        $fields = $this->addFields($fields, $extraDbFields);
+        $fields = $this->addField($fields, $this->tcaHelper->getDeletedField($tableName));
+        $fields = $this->addField($fields, $this->tcaHelper->getCreateUserIdField($tableName));
+        $fields = $this->addField($fields, $this->tcaHelper->getTimestampField($tableName));
+        $fields = $this->addField($fields, $this->tcaHelper->getLanguageField($tableName));
+        $fields = $this->addField($fields, $this->tcaHelper->getWorkspaceIdField($tableName));
+        $fields = $this->addField($fields, $this->tcaHelper->getTypeField($tableName));
+        $fields = $this->addFields($fields, $this->tcaHelper->getLabelFields($tableName));
+        return $fields;
+    }
+
+    /**
+     * @param array<int, string> $fields
+     * @param array<int, string> $additions
+     * @return string[]
+     */
+    private function addFields(array $fields, ?array $additions): array
+    {
+        if (!empty($additions)) {
+            foreach ($additions as $labelField) {
+                $fields = $this->addField($fields, $labelField);
+            }
         }
-        if ($field = $this->tcaHelper->getCreateUserIdField($tableName)) {
+        return $fields;
+    }
+
+    /**
+     * @param array<int, string> $fields
+     * @return string[]
+     */
+    private function addField(array $fields, ?string $field): array
+    {
+        if ($field && !in_array($field, $fields)) {
             $fields[] = $field;
-        }
-        if ($field = $this->tcaHelper->getTimestampField($tableName)) {
-            $fields[] = $field;
-        }
-        if ($field = $this->tcaHelper->getLanguageField($tableName)) {
-            $fields[] = $field;
-        }
-        if ($field = $this->tcaHelper->getWorkspaceIdField($tableName)) {
-            $fields[] = $field;
-        }
-        if ($field = $this->tcaHelper->getTypeField($tableName)) {
-            $fields[] = $field;
-        }
-        if ($field = $this->tcaHelper->getLabelFields($tableName)) {
-            $fields = array_merge($fields, $field);
         }
         return $fields;
     }
