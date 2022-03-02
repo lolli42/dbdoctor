@@ -245,6 +245,9 @@ class RecordsRenderer
 
     private function resolveRelationTable(string $tableName): string
     {
+        if (empty($tableName)) {
+            return '[<comment>empty</comment>]' . $tableName;
+        }
         if (!$this->tableHelper->tableExistsInDatabase($tableName)) {
             return '[<comment>missing</comment>]' . $tableName;
         }
