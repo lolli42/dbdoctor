@@ -52,7 +52,7 @@ class RecordsRenderer
         string $tableName,
         string $reasonField = '',
         array $extraCtrlFields = [],
-        array $extraDbFields = [],
+        array $extraDbFields = []
     ): array {
         $fields = $this->getRelevantFieldNames($tableName, $extraCtrlFields, $extraDbFields);
         if ($reasonField) {
@@ -72,7 +72,7 @@ class RecordsRenderer
         array $incomingRows,
         string $reasonField = '',
         array $extraCtrlFields = [],
-        array $extraDbFields = [],
+        array $extraDbFields = []
     ): array {
         $fields = $this->getRelevantFieldNames($tableName, $extraCtrlFields, $extraDbFields);
         $rows = [];

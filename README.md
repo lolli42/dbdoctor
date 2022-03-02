@@ -37,7 +37,7 @@ systematic way. The core `lowlevel` extension comes with a couple of commands th
 try to clean up various DB state, but their codebase is rather rotten and hard to
 maintain.
 
-This extension is not a substitution auf `lowlevel` commands (yet), it's more an
+This extension is not a substitution of `lowlevel` commands (yet?), it's more an
 incubator to see if a certain strategy dealing with inconsistencies actually works
 out in projects. It will grow over time. Maybe it ends up in the core, or the core
 refers to this extension as "maintenance" extensions in the future. We'll see.
@@ -62,7 +62,7 @@ composer require --dev lolli/dbhealth
 
 # Preparation
 
-* [!!!] 💣 Create a fresh database backup dump whenever dealing with the extension.
+* [!!!] 💣 **Create a fresh database backup dump before using the CLI interface.**
   Ensure the recovery strategy works. Both the extension and the user can potentially
   get something wrong. We are dealing with low level database stuff here after all,
   so things can potentially go south rather quickly.
@@ -75,7 +75,7 @@ composer require --dev lolli/dbhealth
   the extensions CLI command.
 
 * [!!!] Run the reference index updater when this command finished! It is very likely
-  it will update something since. A clean reference index becomes more and more important
+  it will update something. A clean reference index becomes more and more important
   with younger core versions. Reminder: command `bin/typo3 referenceindex:update`.
 
 
