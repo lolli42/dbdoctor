@@ -79,7 +79,7 @@ class AbstractHealth
         array $danglingRows,
         string $reasonField = '',
         array $extraCtrlFields = [],
-        array $extraDbFields = [],
+        array $extraDbFields = []
     ): void {
         /** @var RecordsRenderer $recordsRenderer */
         $recordsRenderer = $this->container->get(RecordsRenderer::class);
