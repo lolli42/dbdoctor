@@ -37,8 +37,10 @@ class PagesRootlineHelperTest extends FunctionalTestCase
         self::assertTrue($subject->isInRootline(1));
         self::assertTrue($subject->isInRootline(2));
         self::assertTrue($subject->isInRootline(3));
+        self::assertFalse($subject->isInRootline(4));
         self::assertFalse($subject->isInRootline(5));
         self::assertFalse($subject->isInRootline(6));
+        self::assertFalse($subject->isInRootline(7));
         self::assertFalse($subject->isInRootline(8));
         self::assertFalse($subject->isInRootline(9));
     }
@@ -136,6 +138,18 @@ class PagesRootlineHelperTest extends FunctionalTestCase
                 't3ver_wsid' => 0,
                 'title' => 'RECORD DOES NOT EXIST',
             ],
+        ];
+        self::assertEquals($expected, $subject->getRootline(4));
+
+        $expected = [
+            0 => [
+                '_isMissing' => true,
+                'uid' => 4,
+                'pid' => 0,
+                'deleted' => true,
+                't3ver_wsid' => 0,
+                'title' => 'RECORD DOES NOT EXIST',
+            ],
             1 => [
                 '_isMissing' => false,
                 'uid' => 5,
@@ -174,6 +188,18 @@ class PagesRootlineHelperTest extends FunctionalTestCase
             ],
         ];
         self::assertEquals($expected, $subject->getRootline(6));
+
+        $expected = [
+            0 => [
+                '_isMissing' => true,
+                'uid' => 7,
+                'pid' => 0,
+                'deleted' => true,
+                't3ver_wsid' => 0,
+                'title' => 'RECORD DOES NOT EXIST',
+            ],
+        ];
+        self::assertEquals($expected, $subject->getRootline(7));
 
         $expected = [
             0 => [

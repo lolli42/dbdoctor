@@ -76,7 +76,7 @@ class PagesRootlineHelper
                 $rootline,
                 [
                     '_isMissing' => true,
-                    'uid' => (int)$rootline[0]['pid'],
+                    'uid' => (int)($rootline[0]['pid'] ?? $uid),
                     'pid' => 0,
                     'deleted' => true,
                     't3ver_wsid' => 0,
