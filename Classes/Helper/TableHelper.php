@@ -30,6 +30,9 @@ class TableHelper
 
     public function tableExistsInDatabase(string $tableName): bool
     {
+        if (empty($tableName)) {
+            return false;
+        }
         $connection = $this->connectionPool->getConnectionForTable($tableName);
         return $connection->createSchemaManager()->tablesExist($tableName);
     }

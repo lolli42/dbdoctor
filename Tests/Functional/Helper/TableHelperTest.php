@@ -40,6 +40,16 @@ class TableHelperTest extends FunctionalTestCase
     /**
      * @test
      */
+    public function tableExistsInDatabaseReturnFalseForEmptyString(): void
+    {
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = $this->getContainer()->get(ConnectionPool::class);
+        self::assertFalse((new TableHelper($connectionPool))->tableExistsInDatabase(''));
+    }
+
+    /**
+     * @test
+     */
     public function tableExistsInDatabaseReturnFalseForNotExistingTable(): void
     {
         /** @var ConnectionPool $connectionPool */
