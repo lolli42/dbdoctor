@@ -75,13 +75,13 @@ class PagesRootlineHelper
             array_unshift(
                 $rootline,
                 [
-                        '_isMissing' => true,
-                        'uid' => (int)$rootline[0]['pid'],
-                        'pid' => 0,
-                        'deleted' => true,
-                        't3ver_wsid' => 0,
-                        'title' => 'RECORD DOES NOT EXIST',
-                    ]
+                    '_isMissing' => true,
+                    'uid' => (int)$rootline[0]['pid'],
+                    'pid' => 0,
+                    'deleted' => true,
+                    't3ver_wsid' => 0,
+                    'title' => 'RECORD DOES NOT EXIST',
+                ]
             );
             return $rootline;
         }
