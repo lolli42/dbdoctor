@@ -21,21 +21,12 @@ use Lolli\Dbhealth\Exception\NoSuchRecordException;
 use Lolli\Dbhealth\Exception\NoSuchTableException;
 use Lolli\Dbhealth\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use TYPO3\CMS\Core\Database\ConnectionPool;
 
 /**
  * sys_file_reference rows where either uid_local or uid_foreign does not exist.
  */
-class SysFileReferenceDangling extends AbstractHealth implements HealthInterface
+class SysFileReferenceDangling extends AbstractHealth implements HealthInterface, HealthDeleteInterface
 {
-    private ConnectionPool $connectionPool;
-
-    public function __construct(
-        ConnectionPool $connectionPool
-    ) {
-        $this->connectionPool = $connectionPool;
-    }
-
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for orphan sys_file_reference records');
@@ -46,58 +37,7 @@ class SysFileReferenceDangling extends AbstractHealth implements HealthInterface
         ]);
     }
 
-    public function process(SymfonyStyle $io): int
-    {
-        $danglingRows = $this->getDanglingRows();
-        $this->outputMainSummary($io, $danglingRows);
-        if (empty($danglingRows)) {
-            return self::RESULT_OK;
-        }
-
-        while (true) {
-            switch ($io->ask('<info>Remove records [y,a,r,p,d,?]?</info> ', '?')) {
-                case 'y':
-                    $this->deleteRecords($io, $danglingRows);
-                    $danglingRows = $this->getDanglingRows();
-                    $this->outputMainSummary($io, $danglingRows);
-                    if (empty($danglingRows['pages'])) {
-                        return self::RESULT_OK;
-                    }
-                    break;
-                case 'a':
-                    return self::RESULT_ABORT;
-                case 'r':
-                    $danglingRows = $this->getDanglingRows();
-                    $this->outputMainSummary($io, $danglingRows);
-                    if (empty($danglingRows)) {
-                        return self::RESULT_OK;
-                    }
-                    break;
-                case 'p':
-                    $this->outputAffectedPages($io, $danglingRows);
-                    break;
-                case 'd':
-                    $this->outputRecordDetails($io, $danglingRows, '', [], ['table_local', 'uid_local', 'tablenames', 'uid_foreign']);
-                    break;
-                case 'h':
-                default:
-                    $io->text([
-                        '    y - DELETE - no soft-delete - records',
-                        '    a - abort now',
-                        '    r - reload possibly changed data',
-                        '    p - show record per page',
-                        '    d - show record details',
-                        '    ? - print help',
-                    ]);
-                    break;
-            }
-        }
-    }
-
-    /**
-     * @return array<string, array<int, array<string, int|string>>>
-     */
-    private function getDanglingRows(): array
+    protected function getAffectedRecords(): array
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
@@ -119,5 +59,15 @@ class SysFileReferenceDangling extends AbstractHealth implements HealthInterface
             }
         }
         return $danglingRows;
+    }
+
+    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    {
+        $this->deleteRecords($io, $simulate, $affectedRecords);
+    }
+
+    protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
+    {
+        $this->outputRecordDetails($io, $affectedRecords, '', [], ['table_local', 'uid_local', 'tablenames', 'uid_foreign']);
     }
 }

@@ -80,7 +80,7 @@ class RecordsHelper
         return $record;
     }
 
-    public function deleteTcaRecord(string $tableName, int $uid): string
+    public function deleteTcaRecord(bool $simulate, string $tableName, int $uid): string
     {
         $statementHash = md5('delete' . $tableName);
         if (!isset($this->preparedStatements[$statementHash])) {
@@ -97,13 +97,15 @@ class RecordsHelper
         $sqlString = $this->preparedStatements[$statementHash]['sqlString'];
         $sqlString = str_replace('= ?', '= ' . $uid, $sqlString);
         $sqlString .= ';';
-        $statement->bindParam(1, $uid, \PDO::PARAM_INT);
-        $affectedRows = $statement->executeStatement();
-        if ($affectedRows !== 1) {
-            throw new UnexpectedNumberOfAffectedRowsException(
-                'Delete query "' . $sqlString . '" had "' . $affectedRows . '" affected rows, 1 expected.',
-                1646137196
-            );
+        if (!$simulate) {
+            $statement->bindParam(1, $uid, \PDO::PARAM_INT);
+            $affectedRows = $statement->executeStatement();
+            if ($affectedRows !== 1) {
+                throw new UnexpectedNumberOfAffectedRowsException(
+                    'Delete query "' . $sqlString . '" had "' . $affectedRows . '" affected rows, 1 expected.',
+                    1646137196
+                );
+            }
         }
         return $sqlString;
     }
@@ -111,7 +113,7 @@ class RecordsHelper
     /**
      * @param array<string, array<string, int|string>> $fields
      */
-    public function updateTcaRecord(string $tableName, int $uid, array $fields): string
+    public function updateTcaRecord(bool $simulate, string $tableName, int $uid, array $fields): string
     {
         $statementHash = md5('update' . $tableName . implode('', array_keys($fields)));
         if (!isset($this->preparedStatements[$statementHash])) {
@@ -130,25 +132,29 @@ class RecordsHelper
         $statement = $this->preparedStatements[$statementHash]['statement'];
         $sqlString = $this->preparedStatements[$statementHash]['sqlString'];
         $currentParam = 1;
-        foreach ($fields as $fieldName => $valueAndType) {
-            $statement->bindParam($currentParam, $valueAndType['value'], (int)$valueAndType['type']);
+        foreach ($fields as $valueAndType) {
             if ($valueAndType['type'] === \PDO::PARAM_STR) {
                 $sqlValue = '\'' . $valueAndType['value'] . '\'';
             } else {
                 $sqlValue = (string)$valueAndType['value'];
             }
             $sqlString = $this->strReplaceFirst('= ?', '= ' . $sqlValue, $sqlString);
+            if (!$simulate) {
+                $statement->bindParam($currentParam, $valueAndType['value'], (int)$valueAndType['type']);
+            }
             $currentParam++;
         }
-        $statement->bindParam($currentParam, $uid, \PDO::PARAM_INT);
         $sqlString = $this->strReplaceFirst('= ?', '= ' . $uid, $sqlString);
         $sqlString .= ';';
-        $affectedRows = $statement->executeStatement();
-        if ($affectedRows !== 1) {
-            throw new UnexpectedNumberOfAffectedRowsException(
-                'Delete query "' . $sqlString . '" had "' . $affectedRows . '" affected rows, 1 expected.',
-                1646228188
-            );
+        if (!$simulate) {
+            $statement->bindParam($currentParam, $uid, \PDO::PARAM_INT);
+            $affectedRows = $statement->executeStatement();
+            if ($affectedRows !== 1) {
+                throw new UnexpectedNumberOfAffectedRowsException(
+                    'Delete query "' . $sqlString . '" had "' . $affectedRows . '" affected rows, 1 expected.',
+                    1646228188
+                );
+            }
         }
         return $sqlString;
     }

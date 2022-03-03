@@ -42,10 +42,10 @@ class SysFileReferenceDanglingTest extends FunctionalTestCase
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingImport.csv');
         $io = $this->prophesize(SymfonyStyle::class);
-        $io->ask(Argument::cetera())->willReturn('y');
+        $io->ask(Argument::cetera())->willReturn('e');
         /** @var SysFileReferenceDangling $subject */
         $subject = $this->get(SysFileReferenceDangling::class);
-        $subject->process($io->reveal());
+        $subject->handle($io->reveal(), false);
         $io->warning(Argument::cetera())->shouldHaveBeenCalled();
         $io->note(Argument::cetera())->shouldHaveBeenCalled();
         $io->success(Argument::cetera())->shouldHaveBeenCalled();

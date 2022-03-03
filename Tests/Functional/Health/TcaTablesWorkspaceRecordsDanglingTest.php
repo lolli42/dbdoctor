@@ -42,10 +42,10 @@ class TcaTablesWorkspaceRecordsDanglingTest extends FunctionalTestCase
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesWorkspaceRecordsDanglingImport.csv');
         $io = $this->prophesize(SymfonyStyle::class);
-        $io->ask(Argument::cetera())->willReturn('y');
+        $io->ask(Argument::cetera())->willReturn('e');
         /** @var TcaTablesWorkspaceRecordsDangling $subject */
         $subject = $this->get(TcaTablesWorkspaceRecordsDangling::class);
-        $subject->process($io->reveal());
+        $subject->handle($io->reveal(), false);
         $io->warning(Argument::cetera())->shouldHaveBeenCalled();
         $io->note(Argument::cetera())->shouldHaveBeenCalled();
         $io->success(Argument::cetera())->shouldHaveBeenCalled();

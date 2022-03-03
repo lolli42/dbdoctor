@@ -21,28 +21,19 @@ use Lolli\Dbhealth\Exception\NoSuchRecordException;
 use Lolli\Dbhealth\Helper\RecordsHelper;
 use Lolli\Dbhealth\Helper\TcaHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Check if translated records point to existing records.
  */
-class InvalidLanguageParent extends AbstractHealth implements HealthInterface
+class InvalidLanguageParent extends AbstractHealth implements HealthInterface, HealthDeleteInterface
 {
-    private ConnectionPool $connectionPool;
-
-    public function __construct(
-        ConnectionPool $connectionPool
-    ) {
-        $this->connectionPool = $connectionPool;
-    }
-
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for record translations with invalid parent');
         $io->text([
-            'Record translations ("translate" / "connected" mode, as opposed to "free" mode) use the',
+            '[DELETE] Record translations ("translate" / "connected" mode, as opposed to "free" mode) use the',
             'database field "transOrigPointerField" (DB field name usually "l10n_parent" or "l18n_parent").',
             'This field points to a default language record. This health check verifies if that target',
             'exists in the database, is on the same page, and the deleted flag is in sync. Having "dangling"',
@@ -50,58 +41,7 @@ class InvalidLanguageParent extends AbstractHealth implements HealthInterface
         ]);
     }
 
-    public function process(SymfonyStyle $io): int
-    {
-        $danglingRows = $this->getDanglingRows();
-        $this->outputMainSummary($io, $danglingRows);
-        if (empty($danglingRows)) {
-            return self::RESULT_OK;
-        }
-
-        while (true) {
-            switch ($io->ask('<info>Remove records [y,a,r,p,d,?]?</info> ', '?')) {
-                case 'y':
-                    $this->deleteRecords($io, $danglingRows);
-                    $danglingRows = $this->getDanglingRows();
-                    $this->outputMainSummary($io, $danglingRows);
-                    if (empty($danglingRows['pages'])) {
-                        return self::RESULT_OK;
-                    }
-                    break;
-                case 'a':
-                    return self::RESULT_ABORT;
-                case 'r':
-                    $danglingRows = $this->getDanglingRows();
-                    $this->outputMainSummary($io, $danglingRows);
-                    if (empty($danglingRows)) {
-                        return self::RESULT_OK;
-                    }
-                    break;
-                case 'p':
-                    $this->outputAffectedPages($io, $danglingRows);
-                    break;
-                case 'd':
-                    $this->outputRecordDetails($io, $danglingRows, '_reasonBroken', ['transOrigPointerField']);
-                    break;
-                case 'h':
-                default:
-                    $io->text([
-                        '    y - remove (DELETE, no soft-delete!) records',
-                        '    a - abort now',
-                        '    r - reload possibly changed data',
-                        '    p - show record per page',
-                        '    d - show record details',
-                        '    ? - print help',
-                    ]);
-                    break;
-            }
-        }
-    }
-
-    /**
-     * @return array<string, array<int, array<string, int|string>>>
-     */
-    private function getDanglingRows(): array
+    protected function getAffectedRecords(): array
     {
         /** @var TcaHelper $tcaHelper */
         $tcaHelper = $this->container->get(TcaHelper::class);
@@ -160,5 +100,10 @@ class InvalidLanguageParent extends AbstractHealth implements HealthInterface
             }
         }
         return $danglingRows;
+    }
+
+    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    {
+        $this->deleteRecords($io, $simulate, $affectedRecords);
     }
 }

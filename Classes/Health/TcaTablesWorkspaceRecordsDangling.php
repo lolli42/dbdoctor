@@ -20,7 +20,6 @@ namespace Lolli\Dbhealth\Health;
 use Lolli\Dbhealth\Helper\TableHelper;
 use Lolli\Dbhealth\Helper\TcaHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -31,16 +30,8 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  *
  * This class looks for workspace records in all tables which may have been missed.
  */
-class TcaTablesWorkspaceRecordsDangling extends AbstractHealth implements HealthInterface
+class TcaTablesWorkspaceRecordsDangling extends AbstractHealth implements HealthInterface, HealthDeleteInterface
 {
-    private ConnectionPool $connectionPool;
-
-    public function __construct(
-        ConnectionPool $connectionPool
-    ) {
-        $this->connectionPool = $connectionPool;
-    }
-
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for workspace records of deleted sys_workspace\'s');
@@ -52,58 +43,7 @@ class TcaTablesWorkspaceRecordsDangling extends AbstractHealth implements Health
         ]);
     }
 
-    public function process(SymfonyStyle $io): int
-    {
-        $danglingRows = $this->getDanglingRows();
-        $this->outputMainSummary($io, $danglingRows);
-        if (empty($danglingRows)) {
-            return self::RESULT_OK;
-        }
-
-        while (true) {
-            switch ($io->ask('<info>Remove records [y,a,r,p,d,?]?</info> ', '?')) {
-                case 'y':
-                    $this->deleteRecords($io, $danglingRows);
-                    $danglingRows = $this->getDanglingRows();
-                    $this->outputMainSummary($io, $danglingRows);
-                    if (empty($danglingRows)) {
-                        return self::RESULT_OK;
-                    }
-                    break;
-                case 'a':
-                    return self::RESULT_ABORT;
-                case 'r':
-                    $danglingRows = $this->getDanglingRows();
-                    $this->outputMainSummary($io, $danglingRows);
-                    if (empty($danglingRows)) {
-                        return self::RESULT_OK;
-                    }
-                    break;
-                case 'p':
-                    $this->outputAffectedPages($io, $danglingRows);
-                    break;
-                case 'd':
-                    $this->outputRecordDetails($io, $danglingRows);
-                    break;
-                case 'h':
-                default:
-                    $io->text([
-                        '    y - DELETE - no soft-delete - records',
-                        '    a - abort now',
-                        '    r - reload possibly changed data',
-                        '    p - show record per page',
-                        '    d - show record details',
-                        '    ? - print help',
-                    ]);
-                    break;
-            }
-        }
-    }
-
-    /**
-     * @return array<string, array<int, array<string, int|string>>>
-     */
-    private function getDanglingRows(): array
+    protected function getAffectedRecords(): array
     {
         $allowedWorkspacesUids = $this->getAllowedWorkspaces();
         $danglingRows = [];
@@ -148,5 +88,10 @@ class TcaTablesWorkspaceRecordsDangling extends AbstractHealth implements Health
         }
         // t3ver_wsid=0 are *always* allowed, of course.
         return array_merge([0], array_keys($allowedWorkspaces));
+    }
+
+    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    {
+        $this->deleteRecords($io, $simulate, $affectedRecords);
     }
 }

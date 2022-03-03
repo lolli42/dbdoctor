@@ -17,14 +17,9 @@ namespace Lolli\Dbhealth\Health;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Symfony\Component\Console\Style\SymfonyStyle;
-
-interface HealthInterface
+/**
+ * A health check that performs DELETE queries
+ */
+interface HealthDeleteInterface
 {
-    public const RESULT_OK = 0;
-    public const RESULT_BROKEN = 1;
-    public const RESULT_ABORT = 2;
-
-    public function header(SymfonyStyle $io): void;
-    public function handle(SymfonyStyle $io, bool $simulate): int;
 }

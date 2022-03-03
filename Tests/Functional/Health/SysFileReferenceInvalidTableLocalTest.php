@@ -38,10 +38,10 @@ class SysFileReferenceInvalidTableLocalTest extends FunctionalTestCase
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceInvalidTableLocalImport.csv');
         $io = $this->prophesize(SymfonyStyle::class);
-        $io->ask(Argument::cetera())->willReturn('y');
+        $io->ask(Argument::cetera())->willReturn('e');
         /** @var SysFileReferenceInvalidTableLocal $subject */
         $subject = $this->get(SysFileReferenceInvalidTableLocal::class);
-        $subject->process($io->reveal());
+        $subject->handle($io->reveal(), false);
         $io->warning(Argument::cetera())->shouldHaveBeenCalled();
         $io->note(Argument::cetera())->shouldHaveBeenCalled();
         $io->success(Argument::cetera())->shouldHaveBeenCalled();
