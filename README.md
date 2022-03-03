@@ -60,9 +60,6 @@ check finished, effectively using the PHP garbage collection. All-in-all, this c
 should be  relatively quick even for big-sized instances, but it will hammer the
 database a lot.
 
-Note data-changing ("execute") queries are currently *not* encapsulated in a
-transaction. This may follow as future feature, though.
-
 
 # Installation
 
