@@ -29,7 +29,7 @@ class HealthFactory implements HealthFactoryInterface
         DanglingWorkspaceRecords::class,
         InvalidTableLocalInSysFileReferenceRecords::class,
         DanglingSysFileReferenceRecords::class,
-        // InvalidPidInSysFileReferenceRecords::class,
+        InvalidPidInSysFileReferenceRecords::class,
         // InvalidLanguageParent::class,
     ];
 

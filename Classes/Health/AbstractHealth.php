@@ -114,17 +114,30 @@ class AbstractHealth
      * @param array<int, array<string, int|string>> $rows
      * @param array<string, array<string, int|string>> $fields
      */
-    protected function updateRecords(SymfonyStyle $io, string $tableName, array $rows, array $fields): void
+    protected function updateAllRecords(SymfonyStyle $io, string $tableName, array $rows, array $fields): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         $io->note('Update records on table: ' . $tableName);
         $count = 0;
         foreach ($rows as $row) {
-            $sql = $recordsHelper->updateTcaRecord($tableName, (int)$row['uid'], $fields);
-            $io->text($sql);
+            $this->updateSingleTcaRecord($io, $recordsHelper, $tableName, (int)$row['uid'], $fields);
             $count++;
         }
         $io->warning('Update "' . $count . '" records from "' . $tableName . '" table');
+    }
+
+    /**
+     * @param array<string, array<string, int|string>> $fields
+     */
+    protected function updateSingleTcaRecord(
+        SymfonyStyle $io,
+        RecordsHelper $recordsHelper,
+        string $tableName,
+        int $uid,
+        array $fields
+    ): void {
+        $sql = $recordsHelper->updateTcaRecord($tableName, $uid, $fields);
+        $io->text($sql);
     }
 }

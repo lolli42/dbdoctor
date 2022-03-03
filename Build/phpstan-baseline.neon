@@ -1,17 +1,2 @@
 parameters:
 	ignoreErrors:
-		-
-			message: "#^Cannot cast mixed to int\\.$#"
-			count: 4
-			path: ../Classes/Health/InvalidPidInSysFileReferenceRecords.php
-
-		-
-			message: "#^Cannot cast mixed to string\\.$#"
-			count: 1
-			path: ../Classes/Health/InvalidPidInSysFileReferenceRecords.php
-
-		-
-			message: "#^Method Lolli\\\\Dbhealth\\\\Health\\\\InvalidPidInSysFileReferenceRecords\\:\\:getAffectedRows\\(\\) should return array\\<string, array\\<int, array\\<string, int\\|string\\>\\>\\> but returns array\\<string, array\\<int, array\\<string, mixed\\>\\>\\>\\.$#"
-			count: 1
-			path: ../Classes/Health/InvalidPidInSysFileReferenceRecords.php
-

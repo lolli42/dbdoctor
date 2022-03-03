@@ -53,7 +53,7 @@ class InvalidTableLocalInSysFileReferenceRecords extends AbstractHealth implemen
         while (true) {
             switch ($io->ask('<info>Remove records [y,a,r,p,d,?]?</info> ', '?')) {
                 case 'y':
-                    $this->updateRecords(
+                    $this->updateAllRecords(
                         $io,
                         'sys_file_reference',
                         $danglingRows['sys_file_reference'],

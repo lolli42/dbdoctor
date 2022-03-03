@@ -17,7 +17,10 @@ namespace Lolli\Dbhealth\Health;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbhealth\Exception\NoSuchRecordException;
+use Lolli\Dbhealth\Exception\NoSuchTableException;
 use Lolli\Dbhealth\Helper\RecordsHelper;
+use Lolli\Dbhealth\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
@@ -58,8 +61,7 @@ class InvalidPidInSysFileReferenceRecords extends AbstractHealth implements Heal
                     $this->updateRecords(
                         $io,
                         'sys_file_reference',
-                        $danglingRows['sys_file_reference'],
-                        ['table_local' => ['value' => 'sys_file', 'type' => \PDO::PARAM_STR]]
+                        $danglingRows['sys_file_reference']
                     );
                     $danglingRows = $this->getAffectedRows();
                     $this->outputMainSummary($io, $danglingRows);
@@ -104,22 +106,32 @@ class InvalidPidInSysFileReferenceRecords extends AbstractHealth implements Heal
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
+        /** @var TableHelper $tableHelper */
+        $tableHelper = $this->container->get(TableHelper::class);
         $tableRows = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
         $queryBuilder->getRestrictions()->removeAll();
-        $result = $queryBuilder->select('uid', 'pid', 'uid_foreign', 'tablenames')->from('sys_file_reference')
+        $result = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'uid_foreign', 'tablenames')->from('sys_file_reference')
             ->orderBy('uid')
             ->executeQuery();
         while ($row = $result->fetchAssociative()) {
-            if ($row['tablenames'] === 'pages') {
-                // For sys_file_reference's attached to pages records, it's simple: "pid"
-                // and "uid_foreign" muste be the same.
-                // @todo: not if the're page translations.
-                if ((int)$row['uid_foreign'] !== (int)$row['pid']) {
+            /** @var array<string, int|string> $row */
+            if ((string)$row['tablenames'] === 'pages') {
+                if ((int)$row['uid_foreign'] !== (int)$row['pid']
+                    && (int)$row['sys_language_uid'] === 0
+                ) {
+                    // For sys_file_reference's attached to pages records, it's simple: "pid"
+                    // and "uid_foreign" must be the same, if we're dealing with sys_language_uid=0 records
                     $tableRows['sys_file_reference'][] = $row;
                 }
             } else {
-                $referencingRecord = $recordsHelper->getRecord((string)$row['tablenames'], ['pid'], (int)$row['uid_foreign']);
+                try {
+                    $referencingRecord = $recordsHelper->getRecord((string)$row['tablenames'], ['pid'], (int)$row['uid_foreign']);
+                } catch (NoSuchRecordException|NoSuchTableException $e) {
+                    // Table and record existence has been checked by SysFileReferenceDangling already.
+                    // This can only happen if such a broken record has been added meanwhile, ignore it now.
+                    continue;
+                }
                 if ((int)$row['pid'] !== (int)$referencingRecord['pid']) {
                     /** @var array<string, int|string> $row */
                     $tableRows['sys_file_reference'][] = $row;
@@ -127,5 +139,38 @@ class InvalidPidInSysFileReferenceRecords extends AbstractHealth implements Heal
             }
         }
         return $tableRows;
+    }
+
+    /**
+     * @param array<int, array<string, int|string>> $rows
+     */
+    private function updateRecords(SymfonyStyle $io, string $tableName, array $rows): void
+    {
+        /** @var RecordsHelper $recordsHelper */
+        $recordsHelper = $this->container->get(RecordsHelper::class);
+        $io->note('Update records on table: ' . $tableName);
+        $count = 0;
+        foreach ($rows as $row) {
+            if ($row['tablenames'] === 'pages') {
+                $fields = [
+                    'uid_foreign' => [
+                        'value' => (int)$row['pid'],
+                        'type' => \PDO::PARAM_INT,
+                    ],
+                ];
+                $this->updateSingleTcaRecord($io, $recordsHelper, $tableName, (int)$row['uid'], $fields);
+            } else {
+                $referencingRecord = $recordsHelper->getRecord((string)$row['tablenames'], ['pid'], (int)$row['uid_foreign']);
+                $fields = [
+                    'uid_foreign' => [
+                        'value' => (int)$referencingRecord['pid'],
+                        'type' => \PDO::PARAM_INT,
+                    ],
+                ];
+                $this->updateSingleTcaRecord($io, $recordsHelper, $tableName, (int)$row['uid'], $fields);
+            }
+            $count++;
+        }
+        $io->warning('Update "' . $count . '" records from "' . $tableName . '" table');
     }
 }
