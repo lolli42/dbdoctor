@@ -24,7 +24,7 @@ with something that isn't quite right anymore.
 Such inconsistencies can lead to further issues. For instance if a page
 is copied that has an orphaned localized record, the system tends to mess up
 localizations of the copied page, too. Editors then stumble and TYPO3 agencies
-have to do time-consuming debug sessions to find out what went wrong.
+have to do time-consuming debugging sessions to find out what went wrong.
 
 This extension provides a CLI command that tries to find various such inconsistencies
 and gives admins options to fix them.
