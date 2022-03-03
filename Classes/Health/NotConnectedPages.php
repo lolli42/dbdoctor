@@ -81,7 +81,7 @@ class NotConnectedPages extends AbstractHealth implements HealthInterface
                 case 'h':
                 default:
                     $io->text([
-                        '    y - remove (DELETE, no soft-delete!) records',
+                        '    y - DELETE - no soft-delete - records',
                         '    a - abort now',
                         '    r - reload possibly changed data',
                         '    p - show record per page',

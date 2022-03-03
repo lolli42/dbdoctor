@@ -29,7 +29,8 @@ class HealthFactory implements HealthFactoryInterface
         DanglingWorkspaceRecords::class,
         InvalidTableLocalInSysFileReferenceRecords::class,
         DanglingSysFileReferenceRecords::class,
-        InvalidLanguageParent::class,
+        // InvalidPidInSysFileReferenceRecords::class,
+        // InvalidLanguageParent::class,
     ];
 
     private ContainerInterface $container;

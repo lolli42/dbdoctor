@@ -21,7 +21,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
 /**
- * All records in sys_file_reference must have table_local set to 'sys_file'
+ * All records in sys_file_reference must point to existing records on left and right side.
  */
 class InvalidTableLocalInSysFileReferenceRecords extends AbstractHealth implements HealthInterface
 {
@@ -78,12 +78,12 @@ class InvalidTableLocalInSysFileReferenceRecords extends AbstractHealth implemen
                     $this->outputAffectedPages($io, $danglingRows);
                     break;
                 case 'd':
-                    $this->outputRecordDetails($io, $danglingRows, '', [], ['uid_local', 'table_local', 'uid_foreign', 'tablenames']);
+                    $this->outputRecordDetails($io, $danglingRows, '', [], ['table_local', 'uid_local', 'tablenames', 'uid_foreign']);
                     break;
                 case 'h':
                 default:
                     $io->text([
-                        '    y - update records, setting table_local to "sys_file" ',
+                        '    y - UPDATE records: Set "table_local" = "sys_file" ',
                         '    a - abort now',
                         '    r - reload possibly changed data',
                         '    p - show record per page',
