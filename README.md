@@ -47,10 +47,13 @@ refers to this extension as "maintenance" extensions in the future. We'll see.
 
 The strategy of this command is to check for single things one-at-a-time and to
 fix them before going to the next check. Updates and deletes of not-ok records
-are done with low-level database queries directly, not using the DataHandler. Single
-checks are carefully crafted and the order in which they are executed is important.
-It can happen that a single check is run multiple times in the chain. Single
-checks rather try to avoid memory consumption at the cost of more queries being
+are done with low-level database queries directly, not using the DataHandler.
+
+Single checks are carefully crafted and functional tested and the order in which
+they are executed is important. It can happen that a single check is run multiple
+times in the chain.
+
+Single checks rather try to avoid memory consumption at the cost of more queries being
 executed. Queries are often performed as prepared statements to re-use them often
 in a single check. Statements are properly closed when a single check finished,
 effectively using the PHP garbage collection. All-in-all, this command should be
