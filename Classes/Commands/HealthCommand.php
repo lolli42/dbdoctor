@@ -26,6 +26,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Utility\PathUtility;
 
 /**
  * Main CLI entry point
@@ -49,6 +50,12 @@ class HealthCommand extends Command
             'interactive|check|execute - check: run all checks but no DB changes, execute: blindly execute all changes (!)',
             'interactive'
         );
+        $this->addOption(
+            'file',
+            'f',
+            InputOption::VALUE_OPTIONAL,
+            'log execute queries to a given absolute file'
+        );
         $this->setHelp('This is an interactive command to go through a list of database health checks finding inconsistencies.');
     }
 
@@ -69,6 +76,27 @@ class HealthCommand extends Command
             return HealthInterface::RESULT_ERROR;
         }
 
+        $file = (string)$input->getOption('file'); /** @phpstan-ignore-line */
+        if ($file && $mode === HealthInterface::MODE_CHECK) {
+            $io->error('Option "--file" not available with "--mode check"');
+            return HealthInterface::RESULT_ERROR;
+        }
+        if ($file) {
+            if (!PathUtility::isAbsolutePath($file)) {
+                $io->error('Invalid file "' . $file . '". Must be an absolute path.');
+                return HealthInterface::RESULT_ERROR;
+            }
+            if (file_exists($file)) {
+                $io->error('Invalid file "' . $file . '". File exists already.');
+                return HealthInterface::RESULT_ERROR;
+            }
+            $touchFile = file_put_contents($file, '');
+            if ($touchFile === false) {
+                $io->error('Invalid file "' . $file . '". Unable to create.');
+                return HealthInterface::RESULT_ERROR;
+            }
+        }
+
         $result = HealthInterface::RESULT_OK;
         foreach ($this->healthFactory->getNext() as $healthInstance) {
             /** @var HealthInterface $healthInstance */
@@ -84,12 +112,31 @@ class HealthCommand extends Command
                 );
             }
             $healthInstance->header($io);
-            $result |= $healthInstance->handle($io, $mode);
+            $result |= $healthInstance->handle($io, $mode, $file);
             if (($result & HealthInterface::RESULT_ABORT) === HealthInterface::RESULT_ABORT) {
                 $io->warning('Aborting ...');
+                $result |= $this->removeEmptyFile($io, $file);
                 return $result;
             }
         }
+        $result |= $this->removeEmptyFile($io, $file);
         return $result;
+    }
+
+    /**
+     * There is no point in keeping an empty sql file.
+     * File position has been validated before.
+     */
+    private function removeEmptyFile(SymfonyStyle $io, string $file): int
+    {
+        $result = true;
+        if (filesize($file) === 0) {
+            $result = unlink($file);
+        }
+        if (!$result) {
+            $io->error('Unable to remove empty file "' . $file . '".');
+            return HealthInterface::RESULT_ERROR;
+        }
+        return HealthInterface::RESULT_OK;
     }
 }

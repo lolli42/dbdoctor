@@ -46,7 +46,7 @@ class SysFileReferenceDanglingTest extends FunctionalTestCase
         $io->ask(Argument::cetera())->willReturn('e');
         /** @var SysFileReferenceDangling $subject */
         $subject = $this->get(SysFileReferenceDangling::class);
-        $subject->handle($io->reveal(), HealthInterface::MODE_EXECUTE);
+        $subject->handle($io->reveal(), HealthInterface::MODE_EXECUTE, '');
         $io->warning(Argument::cetera())->shouldHaveBeenCalled();
         $io->note(Argument::cetera())->shouldHaveBeenCalled();
         $io->text(Argument::cetera())->shouldHaveBeenCalled();

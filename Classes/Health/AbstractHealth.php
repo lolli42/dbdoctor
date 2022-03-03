@@ -29,6 +29,8 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
  */
 abstract class AbstractHealth
 {
+    private string $file;
+
     protected ContainerInterface $container;
     protected ConnectionPool $connectionPool;
 
@@ -42,8 +44,9 @@ abstract class AbstractHealth
         $this->connectionPool = $connectionPool;
     }
 
-    public function handle(SymfonyStyle $io, int $mode): int
+    public function handle(SymfonyStyle $io, int $mode, string $file): int
     {
+        $this->file = $file;
         if ($mode === HealthInterface::MODE_CHECK) {
             return $this->check($io);
         }
@@ -228,7 +231,7 @@ abstract class AbstractHealth
             $count = 0;
             foreach ($rows as $row) {
                 $sql = $recordsHelper->deleteTcaRecord($simulate, $tableName, (int)$row['uid']);
-                $io->text($sql);
+                $this->logAndOutputSql($io, $simulate, $sql);
                 $count ++;
             }
             if ($simulate) {
@@ -276,6 +279,14 @@ abstract class AbstractHealth
         array $fields
     ): void {
         $sql = $recordsHelper->updateTcaRecord($simulate, $tableName, $uid, $fields);
+        $this->logAndOutputSql($io, $simulate, $sql);
+    }
+
+    private function logAndOutputSql(SymfonyStyle $io, bool $simulate, string $sql): void
+    {
+        if ($this->file && !$simulate) {
+            file_put_contents($this->file, $sql . "\n", \FILE_APPEND);
+        }
         $io->text($sql);
     }
 

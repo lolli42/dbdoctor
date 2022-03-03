@@ -65,7 +65,7 @@ You probably want to install this as `--dev` dependency. The extension currently
 supports TYPO3 v11 and TYPO3 v12:
 
 ```
-composer require --dev lolli/dbhealth
+$ composer require --dev lolli/dbhealth
 ```
 
 ## TYPO3 Extension Repository
@@ -99,7 +99,7 @@ instance. As such, a few things should be kept in mind:
 # Usage
 
 ```
-bin/typo3 dbhealth:health
+$ bin/typo3 dbhealth:health
 ```
 
 The interface looks like this:
@@ -130,13 +130,13 @@ prompting for user input after each failed check.
 
 * Help overview:
   ```
-  bin/typo3 dbhealth:health -h
+  $ bin/typo3 dbhealth:health -h
   ```
   Left to the reader to find out what is done here :P
 
 * Interactive mode: `--mode interactive` or `-m interactive` or option not given:
   ```
-  bin/typo3 dbhealth:health -m interactive
+  $ bin/typo3 dbhealth:health -m interactive
   ```
   The default mode: Perform checks one-by-one and have an interactive interface
   to see affected record details, show pages with affected records, simulate
@@ -144,18 +144,33 @@ prompting for user input after each failed check.
 
 * Check mode: `--mode check` or `-m check`:
   ```
-  bin/typo3 dbhealth:health -m check
+  $ bin/typo3 dbhealth:health -m check
   ```
-  Run all checks but don't perform any DB changes. Returns 0 (zero) if some check
+  Run all checks but don't perform any DB changes. Returns 0 (zero) if some checks
   found something and non-zero if something was found by any check. Useful to run
   as cron job to see if check "go red" over time after everything has been fixed once.
 
 * Execute mode: `--mode execute` or `-m execute`:
   ```
-  bin/typo3 dbhealth:health -m execute
+  $ bin/typo3 dbhealth:health -m execute
   ```
   Blindly execute all checks without further questions! Destructive auto-operation if
   you trust the command enough, which you shouldn't ;-) Did you create a DB backup before?
+
+* Log execute queries to file: `--file` or `-f`:
+  ```
+  $ bin/typo3 dbhealth:health -f /tmp/foo.sql
+  ```
+  ```
+  $ bin/typo3 dbhealth:health -f /tmp/dbhealth-changes-my-instance-`date +%Y-%m-%d-%H-%M-%S`.sql
+  ```
+  Log all data changing queries to a file. The argument must be an *absolute file name*.
+  **Never put such a file into the public web folder of your instance**. This is available in
+  "interactive" and "execute" mode. Data changing queries are not only displayed, but also
+  logged to a file. This can be useful if the command has been executed on a staging system
+  using a current live database image: The queries can be reviewed again and then executed
+  on a live instance using something like `mysql my_database < file.sql` or similar for other
+  DBMS.
 
 
 # Existing health checks

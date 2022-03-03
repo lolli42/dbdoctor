@@ -46,7 +46,7 @@ class TcaTablesWorkspaceRecordsDanglingTest extends FunctionalTestCase
         $io->ask(Argument::cetera())->willReturn('e');
         /** @var TcaTablesWorkspaceRecordsDangling $subject */
         $subject = $this->get(TcaTablesWorkspaceRecordsDangling::class);
-        $subject->handle($io->reveal(), HealthInterface::MODE_EXECUTE);
+        $subject->handle($io->reveal(), HealthInterface::MODE_EXECUTE, '');
         $io->warning(Argument::cetera())->shouldHaveBeenCalled();
         $io->note(Argument::cetera())->shouldHaveBeenCalled();
         $io->text(Argument::cetera())->shouldHaveBeenCalled();

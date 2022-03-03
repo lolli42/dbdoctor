@@ -42,7 +42,7 @@ class PagesBrokenTreeTest extends FunctionalTestCase
         $io->ask(Argument::cetera())->willReturn('e');
         /** @var PagesBrokenTree $subject */
         $subject = $this->get(PagesBrokenTree::class);
-        $subject->handle($io->reveal(), HealthInterface::MODE_EXECUTE);
+        $subject->handle($io->reveal(), HealthInterface::MODE_EXECUTE, '');
         $io->warning(Argument::cetera())->shouldHaveBeenCalled();
         $io->note(Argument::cetera())->shouldHaveBeenCalled();
         $io->text(Argument::cetera())->shouldHaveBeenCalled();

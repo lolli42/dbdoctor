@@ -35,5 +35,5 @@ interface HealthInterface
     public const RESULT_ERROR = 4;
 
     public function header(SymfonyStyle $io): void;
-    public function handle(SymfonyStyle $io, int $mode): int;
+    public function handle(SymfonyStyle $io, int $mode, string $file): int;
 }
