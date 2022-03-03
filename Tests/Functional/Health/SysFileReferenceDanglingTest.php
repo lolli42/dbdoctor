@@ -17,13 +17,13 @@ namespace Lolli\Dbhealth\Tests\Functional\Health;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbhealth\Health\DanglingSysFileReferenceRecords;
+use Lolli\Dbhealth\Health\SysFileReferenceDangling;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
-class DanglingSysFileReferenceRecordsTest extends FunctionalTestCase
+class SysFileReferenceDanglingTest extends FunctionalTestCase
 {
     use ProphecyTrait;
 
@@ -40,16 +40,16 @@ class DanglingSysFileReferenceRecordsTest extends FunctionalTestCase
      */
     public function fixBrokenRecords(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/../Fixtures/DanglingSysFileReferenceRecordsImport.csv');
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingImport.csv');
         $io = $this->prophesize(SymfonyStyle::class);
         $io->ask(Argument::cetera())->willReturn('y');
-        /** @var DanglingSysFileReferenceRecords $subject */
-        $subject = $this->get(DanglingSysFileReferenceRecords::class);
+        /** @var SysFileReferenceDangling $subject */
+        $subject = $this->get(SysFileReferenceDangling::class);
         $subject->process($io->reveal());
         $io->warning(Argument::cetera())->shouldHaveBeenCalled();
         $io->note(Argument::cetera())->shouldHaveBeenCalled();
         $io->success(Argument::cetera())->shouldHaveBeenCalled();
         $io->text(Argument::cetera())->shouldHaveBeenCalled();
-        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/DanglingSysFileReferenceRecordsFixed.csv');
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingFixed.csv');
     }
 }

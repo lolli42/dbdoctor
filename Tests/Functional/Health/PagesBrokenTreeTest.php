@@ -17,19 +17,15 @@ namespace Lolli\Dbhealth\Tests\Functional\Health;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbhealth\Health\DanglingWorkspaceRecords;
+use Lolli\Dbhealth\Health\PagesBrokenTree;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
-class DanglingWorkspaceRecordsTest extends FunctionalTestCase
+class PagesBrokenTreeTest extends FunctionalTestCase
 {
     use ProphecyTrait;
-
-    protected array $coreExtensionsToLoad = [
-        'workspaces',
-    ];
 
     protected array $testExtensionsToLoad = [
         'typo3conf/ext/dbhealth',
@@ -40,16 +36,16 @@ class DanglingWorkspaceRecordsTest extends FunctionalTestCase
      */
     public function fixBrokenRecords(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/../Fixtures/DanglingWorkspaceRecordsImport.csv');
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/PagesBrokenTreeImport.csv');
         $io = $this->prophesize(SymfonyStyle::class);
         $io->ask(Argument::cetera())->willReturn('y');
-        /** @var DanglingWorkspaceRecords $subject */
-        $subject = $this->get(DanglingWorkspaceRecords::class);
+        /** @var PagesBrokenTree $subject */
+        $subject = $this->get(PagesBrokenTree::class);
         $subject->process($io->reveal());
         $io->warning(Argument::cetera())->shouldHaveBeenCalled();
         $io->note(Argument::cetera())->shouldHaveBeenCalled();
         $io->success(Argument::cetera())->shouldHaveBeenCalled();
         $io->text(Argument::cetera())->shouldHaveBeenCalled();
-        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/DanglingWorkspaceRecordsFixed.csv');
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/PagesBrokenTreeFixed.csv');
     }
 }

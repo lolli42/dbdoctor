@@ -17,15 +17,19 @@ namespace Lolli\Dbhealth\Tests\Functional\Health;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbhealth\Health\InvalidTableLocalInSysFileReferenceRecords;
+use Lolli\Dbhealth\Health\TcaTablesWorkspaceRecordsDangling;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
-class InvalidTableLocalInSysFileReferenceRecordsTest extends FunctionalTestCase
+class TcaTablesWorkspaceRecordsDanglingTest extends FunctionalTestCase
 {
     use ProphecyTrait;
+
+    protected array $coreExtensionsToLoad = [
+        'workspaces',
+    ];
 
     protected array $testExtensionsToLoad = [
         'typo3conf/ext/dbhealth',
@@ -36,16 +40,16 @@ class InvalidTableLocalInSysFileReferenceRecordsTest extends FunctionalTestCase
      */
     public function fixBrokenRecords(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/../Fixtures/InvalidTableLocalInSysFileReferenceRecordsImport.csv');
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesWorkspaceRecordsDanglingImport.csv');
         $io = $this->prophesize(SymfonyStyle::class);
         $io->ask(Argument::cetera())->willReturn('y');
-        /** @var InvalidTableLocalInSysFileReferenceRecords $subject */
-        $subject = $this->get(InvalidTableLocalInSysFileReferenceRecords::class);
+        /** @var TcaTablesWorkspaceRecordsDangling $subject */
+        $subject = $this->get(TcaTablesWorkspaceRecordsDangling::class);
         $subject->process($io->reveal());
         $io->warning(Argument::cetera())->shouldHaveBeenCalled();
         $io->note(Argument::cetera())->shouldHaveBeenCalled();
         $io->success(Argument::cetera())->shouldHaveBeenCalled();
         $io->text(Argument::cetera())->shouldHaveBeenCalled();
-        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/InvalidTableLocalInSysFileReferenceRecordsFixed.csv');
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesWorkspaceRecordsDanglingFixed.csv');
     }
 }

@@ -25,7 +25,7 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
  * An important early check: Find pages that have no proper connection
  * to the tree root.
  */
-class NotConnectedPages extends AbstractHealth implements HealthInterface
+class PagesBrokenTree extends AbstractHealth implements HealthInterface
 {
     private ConnectionPool $connectionPool;
 

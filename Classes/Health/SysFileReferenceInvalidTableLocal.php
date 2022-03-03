@@ -17,16 +17,13 @@ namespace Lolli\Dbhealth\Health;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbhealth\Exception\NoSuchRecordException;
-use Lolli\Dbhealth\Exception\NoSuchTableException;
-use Lolli\Dbhealth\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
 /**
- * sys_file_reference rows where either uid_local or uid_foreign does not exist.
+ * All records in sys_file_reference must point to existing records on left and right side.
  */
-class DanglingSysFileReferenceRecords extends AbstractHealth implements HealthInterface
+class SysFileReferenceInvalidTableLocal extends AbstractHealth implements HealthInterface
 {
     private ConnectionPool $connectionPool;
 
@@ -38,17 +35,16 @@ class DanglingSysFileReferenceRecords extends AbstractHealth implements HealthIn
 
     public function header(SymfonyStyle $io): void
     {
-        $io->section('Scan for orphan sys_file_reference records');
+        $io->section('Scan for sys_file_reference_records with broken table_local field');
         $io->text([
-            '[DELETE] A basic check for sys_file_reference: the records referenced in uid_local',
-            'and uid_foreign must exist, otherwise that sys_file_reference row is obsolete and',
-            'should be removed.',
+            '[UPDATE] Records in "sys_file_reference" must have field "table_local" set to',
+            '"sys_file", no exceptions. This check verifies this and can update non-compliant rows.',
         ]);
     }
 
     public function process(SymfonyStyle $io): int
     {
-        $danglingRows = $this->getDanglingRows();
+        $danglingRows = $this->getAffectedRows();
         $this->outputMainSummary($io, $danglingRows);
         if (empty($danglingRows)) {
             return self::RESULT_OK;
@@ -57,17 +53,22 @@ class DanglingSysFileReferenceRecords extends AbstractHealth implements HealthIn
         while (true) {
             switch ($io->ask('<info>Remove records [y,a,r,p,d,?]?</info> ', '?')) {
                 case 'y':
-                    $this->deleteRecords($io, $danglingRows);
-                    $danglingRows = $this->getDanglingRows();
+                    $this->updateAllRecords(
+                        $io,
+                        'sys_file_reference',
+                        $danglingRows['sys_file_reference'],
+                        ['table_local' => ['value' => 'sys_file', 'type' => \PDO::PARAM_STR]]
+                    );
+                    $danglingRows = $this->getAffectedRows();
                     $this->outputMainSummary($io, $danglingRows);
-                    if (empty($danglingRows['pages'])) {
+                    if (empty($danglingRows)) {
                         return self::RESULT_OK;
                     }
                     break;
                 case 'a':
                     return self::RESULT_ABORT;
                 case 'r':
-                    $danglingRows = $this->getDanglingRows();
+                    $danglingRows = $this->getAffectedRows();
                     $this->outputMainSummary($io, $danglingRows);
                     if (empty($danglingRows)) {
                         return self::RESULT_OK;
@@ -82,7 +83,7 @@ class DanglingSysFileReferenceRecords extends AbstractHealth implements HealthIn
                 case 'h':
                 default:
                     $io->text([
-                        '    y - DELETE - no soft-delete - records',
+                        '    y - UPDATE records: Set "table_local" = "sys_file" ',
                         '    a - abort now',
                         '    r - reload possibly changed data',
                         '    p - show record per page',
@@ -97,27 +98,21 @@ class DanglingSysFileReferenceRecords extends AbstractHealth implements HealthIn
     /**
      * @return array<string, array<int, array<string, int|string>>>
      */
-    private function getDanglingRows(): array
+    private function getAffectedRows(): array
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
-        $danglingRows = [];
+        $tableRows = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
-        // We fetch deleted=1 records here, too. If it's relation is broken, they should vanish, too.
         $queryBuilder->getRestrictions()->removeAll();
-        $result = $queryBuilder->select('uid', 'pid', 'uid_local', 'table_local', 'uid_foreign', 'tablenames')
-            ->from('sys_file_reference')
+        $result = $queryBuilder->select('uid', 'pid')->from('sys_file_reference')
+            ->where(
+                $queryBuilder->expr()->neq('table_local', $queryBuilder->createNamedParameter('sys_file'))
+            )
             ->orderBy('uid')
             ->executeQuery();
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
-            try {
-                $recordsHelper->getRecord((string)$row['table_local'], ['uid'], (int)$row['uid_local']);
-                $recordsHelper->getRecord((string)$row['tablenames'], ['uid'], (int)$row['uid_foreign']);
-            } catch (NoSuchRecordException|NoSuchTableException $e) {
-                $danglingRows['sys_file_reference'][] = $row;
-            }
+            $tableRows['sys_file_reference'][] = $row;
         }
-        return $danglingRows;
+        return $tableRows;
     }
 }

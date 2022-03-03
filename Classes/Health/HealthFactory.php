@@ -25,11 +25,11 @@ class HealthFactory implements HealthFactoryInterface
      * @var string[]
      */
     private array $healthClasses = [
-        NotConnectedPages::class,
-        DanglingWorkspaceRecords::class,
-        InvalidTableLocalInSysFileReferenceRecords::class,
-        DanglingSysFileReferenceRecords::class,
-        InvalidPidInSysFileReferenceRecords::class,
+        PagesBrokenTree::class,
+        TcaTablesWorkspaceRecordsDangling::class,
+        SysFileReferenceInvalidTableLocal::class,
+        SysFileReferenceDangling::class,
+        SysFileReferenceInvalidPid::class,
         // InvalidLanguageParent::class,
     ];
 

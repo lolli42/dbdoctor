@@ -17,13 +17,13 @@ namespace Lolli\Dbhealth\Tests\Functional\Health;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbhealth\Health\NotConnectedPages;
+use Lolli\Dbhealth\Health\SysFileReferenceInvalidTableLocal;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
-class NotConnectedPagesTest extends FunctionalTestCase
+class SysFileReferenceInvalidTableLocalTest extends FunctionalTestCase
 {
     use ProphecyTrait;
 
@@ -36,16 +36,16 @@ class NotConnectedPagesTest extends FunctionalTestCase
      */
     public function fixBrokenRecords(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/../Fixtures/BrokenPagesRootlineImport.csv');
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceInvalidTableLocalImport.csv');
         $io = $this->prophesize(SymfonyStyle::class);
         $io->ask(Argument::cetera())->willReturn('y');
-        /** @var NotConnectedPages $subject */
-        $subject = $this->get(NotConnectedPages::class);
+        /** @var SysFileReferenceInvalidTableLocal $subject */
+        $subject = $this->get(SysFileReferenceInvalidTableLocal::class);
         $subject->process($io->reveal());
         $io->warning(Argument::cetera())->shouldHaveBeenCalled();
         $io->note(Argument::cetera())->shouldHaveBeenCalled();
         $io->success(Argument::cetera())->shouldHaveBeenCalled();
         $io->text(Argument::cetera())->shouldHaveBeenCalled();
-        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/BrokenPagesRootlineFixed.csv');
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceInvalidTableLocalFixed.csv');
     }
 }

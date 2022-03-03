@@ -27,7 +27,7 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 /**
  * All records in sys_file_reference must be on same pid as the parent record.
  */
-class InvalidPidInSysFileReferenceRecords extends AbstractHealth implements HealthInterface
+class SysFileReferenceInvalidPid extends AbstractHealth implements HealthInterface
 {
     private ConnectionPool $connectionPool;
 
@@ -153,8 +153,8 @@ class InvalidPidInSysFileReferenceRecords extends AbstractHealth implements Heal
         foreach ($rows as $row) {
             if ($row['tablenames'] === 'pages') {
                 $fields = [
-                    'uid_foreign' => [
-                        'value' => (int)$row['pid'],
+                    'pid' => [
+                        'value' => (int)$row['uid_foreign'],
                         'type' => \PDO::PARAM_INT,
                     ],
                 ];
@@ -162,7 +162,7 @@ class InvalidPidInSysFileReferenceRecords extends AbstractHealth implements Heal
             } else {
                 $referencingRecord = $recordsHelper->getRecord((string)$row['tablenames'], ['pid'], (int)$row['uid_foreign']);
                 $fields = [
-                    'uid_foreign' => [
+                    'pid' => [
                         'value' => (int)$referencingRecord['pid'],
                         'type' => \PDO::PARAM_INT,
                     ],

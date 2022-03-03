@@ -31,7 +31,7 @@ class PagesRootlineHelperTest extends FunctionalTestCase
      */
     public function isInRootline(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/../Fixtures/BrokenPagesRootlineImport.csv');
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/PagesBrokenTreeImport.csv');
         /** @var PagesRootlineHelper $subject */
         $subject = $this->get(PagesRootlineHelper::class);
         self::assertTrue($subject->isInRootline(1));
@@ -50,7 +50,7 @@ class PagesRootlineHelperTest extends FunctionalTestCase
      */
     public function getRootline(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/../Fixtures/BrokenPagesRootlineImport.csv');
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/PagesBrokenTreeImport.csv');
         /** @var PagesRootlineHelper $subject */
         $subject = $this->get(PagesRootlineHelper::class);
         $expected = [
