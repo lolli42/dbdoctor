@@ -129,6 +129,9 @@ class HealthCommand extends Command
      */
     private function removeEmptyFile(SymfonyStyle $io, string $file): int
     {
+        if (empty($file)) {
+            return HealthInterface::RESULT_OK;
+        }
         $result = true;
         if (filesize($file) === 0) {
             $result = unlink($file);
