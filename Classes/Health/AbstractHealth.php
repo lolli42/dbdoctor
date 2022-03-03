@@ -42,26 +42,39 @@ abstract class AbstractHealth
         $this->connectionPool = $connectionPool;
     }
 
-    public function handle(SymfonyStyle $io, bool $simulate): int
+    public function handle(SymfonyStyle $io, int $mode): int
     {
-        if ($simulate) {
-            return $this->simulate($io);
+        if ($mode === HealthInterface::MODE_CHECK) {
+            return $this->check($io);
+        }
+        if ($mode === HealthInterface::MODE_EXECUTE) {
+            return $this->execute($io);
         }
         return $this->interactive($io);
     }
 
-    protected function simulate(SymfonyStyle $io): int
+    private function check(SymfonyStyle $io): int
     {
         $affectedRecords = $this->getAffectedRecords();
         $this->outputMainSummary($io, $affectedRecords);
         if (empty($affectedRecords)) {
             return HealthInterface::RESULT_OK;
         }
-        $this->processRecords($io, true, $affectedRecords);
         return HealthInterface::RESULT_BROKEN;
     }
 
-    protected function interactive(SymfonyStyle $io): int
+    private function execute(SymfonyStyle $io): int
+    {
+        $affectedRecords = $this->getAffectedRecords();
+        $this->outputMainSummary($io, $affectedRecords);
+        if (empty($affectedRecords)) {
+            return HealthInterface::RESULT_OK;
+        }
+        $this->processRecords($io, false, $affectedRecords);
+        return HealthInterface::RESULT_BROKEN;
+    }
+
+    private function interactive(SymfonyStyle $io): int
     {
         $affectedRecords = $this->getAffectedRecords();
         $this->outputMainSummary($io, $affectedRecords);
@@ -77,7 +90,7 @@ abstract class AbstractHealth
                     $affectedRecords = $this->getAffectedRecords();
                     $this->outputMainSummary($io, $affectedRecords);
                     if (empty($affectedRecords)) {
-                        return HealthInterface::RESULT_OK;
+                        return HealthInterface::RESULT_BROKEN;
                     }
                     break;
                 case 's':
@@ -207,14 +220,22 @@ abstract class AbstractHealth
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         foreach ($danglingRows as $tableName => $rows) {
-            $io->note('Deleting records on table: ' . $tableName);
+            if ($simulate) {
+                $io->note('[SIMULATE] deleting records on table: ' . $tableName);
+            } else {
+                $io->note('Deleting records on table: ' . $tableName);
+            }
             $count = 0;
             foreach ($rows as $row) {
                 $sql = $recordsHelper->deleteTcaRecord($simulate, $tableName, (int)$row['uid']);
                 $io->text($sql);
                 $count ++;
             }
-            $io->warning('Deleted "' . $count . '" records from "' . $tableName . '" table');
+            if ($simulate) {
+                $io->note('[SIMULATE] Deleted "' . $count . '" records from "' . $tableName . '" table');
+            } else {
+                $io->warning('Deleted "' . $count . '" records from "' . $tableName . '" table');
+            }
         }
     }
 
@@ -226,13 +247,21 @@ abstract class AbstractHealth
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
-        $io->note('Update records on table: ' . $tableName);
+        if ($simulate) {
+            $io->note('[SIMULATE] Update records on table: ' . $tableName);
+        } else {
+            $io->note('Update records on table: ' . $tableName);
+        }
         $count = 0;
         foreach ($rows as $row) {
             $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
             $count++;
         }
-        $io->warning('Update "' . $count . '" records from "' . $tableName . '" table');
+        if ($simulate) {
+            $io->note('[SIMULATE] Update "' . $count . '" records from "' . $tableName . '" table');
+        } else {
+            $io->warning('Update "' . $count . '" records from "' . $tableName . '" table');
+        }
     }
 
     /**

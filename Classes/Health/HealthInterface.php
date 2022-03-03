@@ -21,10 +21,19 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 interface HealthInterface
 {
+    public const MODE_INTERACTIVE = 0;
+    public const MODE_CHECK = 1;
+    public const MODE_EXECUTE = 2;
+
+    /** @var int Bitmask - No changes needed */
     public const RESULT_OK = 0;
+    /** @var int Bitmask - Changes needed or done */
     public const RESULT_BROKEN = 1;
+    /** @var int Bitmask - User abort */
     public const RESULT_ABORT = 2;
+    /** @var int Bitmask - Error occurred */
+    public const RESULT_ERROR = 4;
 
     public function header(SymfonyStyle $io): void;
-    public function handle(SymfonyStyle $io, bool $simulate): int;
+    public function handle(SymfonyStyle $io, int $mode): int;
 }

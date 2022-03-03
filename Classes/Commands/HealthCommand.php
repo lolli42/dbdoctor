@@ -23,6 +23,7 @@ use Lolli\Dbhealth\Health\HealthInterface;
 use Lolli\Dbhealth\Health\HealthUpdateInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -41,7 +42,13 @@ class HealthCommand extends Command
 
     public function configure(): void
     {
-        $this->addOption('simulate', null, null, 'Non interactively go through all checks and simulate queries');
+        $this->addOption(
+            'mode',
+            'm',
+            InputOption::VALUE_OPTIONAL,
+            'interactive|check|execute - check: run all checks but no DB changes, execute: blindly execute all changes (!)',
+            'interactive'
+        );
         $this->setHelp('This is an interactive command to go through a list of database health checks finding inconsistencies.');
     }
 
@@ -50,10 +57,18 @@ class HealthCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $io->title($this->getDescription());
 
-        $isSimulate = (bool)$input->getOption('simulate');
-        if ($isSimulate) {
-            $io->warning('Simulate mode. Just checking and outputting queries that would be executed.');
+        $mode = (string)$input->getOption('mode'); /** @phpstan-ignore-line */
+        if ($mode === 'interactive') {
+            $mode = HealthInterface::MODE_INTERACTIVE;
+        } elseif ($mode === 'check') {
+            $mode = HealthInterface::MODE_CHECK;
+        } elseif ($mode === 'execute') {
+            $mode = HealthInterface::MODE_EXECUTE;
+        } else {
+            $io->error('Invalid mode "' . $mode . '". Use -h for help on valid options.');
+            return HealthInterface::RESULT_ERROR;
         }
+
         $result = HealthInterface::RESULT_OK;
         foreach ($this->healthFactory->getNext() as $healthInstance) {
             /** @var HealthInterface $healthInstance */
@@ -69,12 +84,11 @@ class HealthCommand extends Command
                 );
             }
             $healthInstance->header($io);
-            $newResult = $healthInstance->handle($io, $isSimulate);
-            if ($newResult === HealthInterface::RESULT_ABORT) {
+            $result |= $healthInstance->handle($io, $mode);
+            if (($result & HealthInterface::RESULT_ABORT) === HealthInterface::RESULT_ABORT) {
                 $io->warning('Aborting ...');
-                return $newResult;
+                return $result;
             }
-            $result |= $newResult;
         }
         return $result;
     }

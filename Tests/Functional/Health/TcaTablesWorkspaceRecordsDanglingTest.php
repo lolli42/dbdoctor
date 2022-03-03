@@ -17,6 +17,7 @@ namespace Lolli\Dbhealth\Tests\Functional\Health;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbhealth\Health\HealthInterface;
 use Lolli\Dbhealth\Health\TcaTablesWorkspaceRecordsDangling;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
@@ -45,10 +46,9 @@ class TcaTablesWorkspaceRecordsDanglingTest extends FunctionalTestCase
         $io->ask(Argument::cetera())->willReturn('e');
         /** @var TcaTablesWorkspaceRecordsDangling $subject */
         $subject = $this->get(TcaTablesWorkspaceRecordsDangling::class);
-        $subject->handle($io->reveal(), false);
+        $subject->handle($io->reveal(), HealthInterface::MODE_EXECUTE);
         $io->warning(Argument::cetera())->shouldHaveBeenCalled();
         $io->note(Argument::cetera())->shouldHaveBeenCalled();
-        $io->success(Argument::cetera())->shouldHaveBeenCalled();
         $io->text(Argument::cetera())->shouldHaveBeenCalled();
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesWorkspaceRecordsDanglingFixed.csv');
     }
