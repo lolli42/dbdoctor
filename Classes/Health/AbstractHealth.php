@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lolli\Dbhealth\Health;
+namespace Lolli\Dbdoctor\Health;
 
 /*
  * This file is part of the TYPO3 CMS project.
@@ -17,9 +17,9 @@ namespace Lolli\Dbhealth\Health;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbhealth\Helper\RecordsHelper;
-use Lolli\Dbhealth\Renderer\AffectedPagesRenderer;
-use Lolli\Dbhealth\Renderer\RecordsRenderer;
+use Lolli\Dbdoctor\Helper\RecordsHelper;
+use Lolli\Dbdoctor\Renderer\AffectedPagesRenderer;
+use Lolli\Dbdoctor\Renderer\RecordsRenderer;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\ConnectionPool;

@@ -51,7 +51,7 @@ services:
         echo Database is up;
         php -v | grep '^PHP';
         mkdir -p Web/typo3temp/var/tests/
-        COMMAND=\"vendor/codeception/codeception/codecept run Cli -d -c Web/typo3conf/ext/dbhealth/Tests/codeception.yml ${TEST_FILE}\"
+        COMMAND=\"vendor/codeception/codeception/codecept run Cli -d -c Web/typo3conf/ext/dbdoctor/Tests/codeception.yml ${TEST_FILE}\"
         if [ ${PHP_XDEBUG_ON} -eq 0 ]; then
           XDEBUG_MODE=\"off\" \
           $${COMMAND};
@@ -91,7 +91,7 @@ services:
         echo Database is up;
         php -v | grep '^PHP';
         mkdir -p Web/typo3temp/var/tests/
-        COMMAND=\"vendor/codeception/codeception/codecept run Cli -d -c Web/typo3conf/ext/dbhealth/Tests/codeception.yml ${TEST_FILE}\"
+        COMMAND=\"vendor/codeception/codeception/codecept run Cli -d -c Web/typo3conf/ext/dbdoctor/Tests/codeception.yml ${TEST_FILE}\"
         if [ ${PHP_XDEBUG_ON} -eq 0 ]; then
           XDEBUG_MODE=\"off\" \
           $${COMMAND};
@@ -131,7 +131,7 @@ services:
         echo Database is up;
         php -v | grep '^PHP';
         mkdir -p Web/typo3temp/var/tests/
-        COMMAND=\"vendor/codeception/codeception/codecept run Cli -d -c Web/typo3conf/ext/dbhealth/Tests/codeception.yml ${TEST_FILE}\"
+        COMMAND=\"vendor/codeception/codeception/codecept run Cli -d -c Web/typo3conf/ext/dbdoctor/Tests/codeception.yml ${TEST_FILE}\"
         if [ ${PHP_XDEBUG_ON} -eq 0 ]; then
           XDEBUG_MODE=\"off\" \
           $${COMMAND};
@@ -160,7 +160,7 @@ services:
         fi
         php -v | grep '^PHP';
         mkdir -p Web/typo3temp/var/tests/
-        COMMAND=\"vendor/codeception/codeception/codecept run Cli -d -c Web/typo3conf/ext/dbhealth/Tests/codeception.yml ${TEST_FILE}\"
+        COMMAND=\"vendor/codeception/codeception/codecept run Cli -d -c Web/typo3conf/ext/dbdoctor/Tests/codeception.yml ${TEST_FILE}\"
         if [ ${PHP_XDEBUG_ON} -eq 0 ]; then
           XDEBUG_MODE=\"off\" \
           $${COMMAND};
@@ -262,12 +262,12 @@ services:
         php -v | grep '^PHP';
         if [ ${PHP_XDEBUG_ON} -eq 0 ]; then
           XDEBUG_MODE=\"off\" \
-          bin/phpunit -c Web/typo3conf/ext/dbhealth/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
+          bin/phpunit -c Web/typo3conf/ext/dbdoctor/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
         else
           XDEBUG_MODE=\"debug,develop\" \
           XDEBUG_TRIGGER=\"foo\" \
           XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
-          bin/phpunit -c Web/typo3conf/ext/dbhealth/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
+          bin/phpunit -c Web/typo3conf/ext/dbdoctor/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
         fi
       "
 
@@ -300,12 +300,12 @@ services:
         php -v | grep '^PHP';
         if [ ${PHP_XDEBUG_ON} -eq 0 ]; then
           XDEBUG_MODE=\"off\" \
-          bin/phpunit -c Web/typo3conf/ext/dbhealth/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
+          bin/phpunit -c Web/typo3conf/ext/dbdoctor/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
         else
           XDEBUG_MODE=\"debug,develop\" \
           XDEBUG_TRIGGER=\"foo\" \
           XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
-          bin/phpunit -c Web/typo3conf/ext/dbhealth/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
+          bin/phpunit -c Web/typo3conf/ext/dbdoctor/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
         fi
       "
 
@@ -338,12 +338,12 @@ services:
         php -v | grep '^PHP';
         if [ ${PHP_XDEBUG_ON} -eq 0 ]; then
           XDEBUG_MODE=\"off\" \
-          bin/phpunit -c Web/typo3conf/ext/dbhealth/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-postgres ${TEST_FILE};
+          bin/phpunit -c Web/typo3conf/ext/dbdoctor/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-postgres ${TEST_FILE};
         else
           XDEBUG_MODE=\"debug,develop\" \
           XDEBUG_TRIGGER=\"foo\" \
           XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
-          bin/phpunit -c Web/typo3conf/ext/dbhealth/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-postgres ${TEST_FILE};
+          bin/phpunit -c Web/typo3conf/ext/dbdoctor/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-postgres ${TEST_FILE};
         fi
       "
 
@@ -367,12 +367,12 @@ services:
         php -v | grep '^PHP';
         if [ ${PHP_XDEBUG_ON} -eq 0 ]; then
           XDEBUG_MODE=\"off\" \
-          bin/phpunit -c Web/typo3conf/ext/dbhealth/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-sqlite ${TEST_FILE};
+          bin/phpunit -c Web/typo3conf/ext/dbdoctor/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-sqlite ${TEST_FILE};
         else
           XDEBUG_MODE=\"debug,develop\" \
           XDEBUG_TRIGGER=\"foo\" \
           XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
-          bin/phpunit -c Web/typo3conf/ext/dbhealth/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-sqlite ${TEST_FILE};
+          bin/phpunit -c Web/typo3conf/ext/dbdoctor/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-sqlite ${TEST_FILE};
         fi
       "
 

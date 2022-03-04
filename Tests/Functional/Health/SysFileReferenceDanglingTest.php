@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lolli\Dbhealth\Tests\Functional\Health;
+namespace Lolli\Dbdoctor\Tests\Functional\Health;
 
 /*
  * This file is part of the TYPO3 CMS project.
@@ -17,8 +17,8 @@ namespace Lolli\Dbhealth\Tests\Functional\Health;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbhealth\Health\HealthInterface;
-use Lolli\Dbhealth\Health\SysFileReferenceDangling;
+use Lolli\Dbdoctor\Health\HealthInterface;
+use Lolli\Dbdoctor\Health\SysFileReferenceDangling;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -33,7 +33,7 @@ class SysFileReferenceDanglingTest extends FunctionalTestCase
     ];
 
     protected array $testExtensionsToLoad = [
-        'typo3conf/ext/dbhealth',
+        'typo3conf/ext/dbdoctor',
     ];
 
     /**

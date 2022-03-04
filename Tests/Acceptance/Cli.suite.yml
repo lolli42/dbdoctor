@@ -5,7 +5,7 @@ modules:
 
 extensions:
     enabled:
-        - Lolli\Dbhealth\Tests\Acceptance\Support\Extension\BackendDbhealthEnvironment
+        - Lolli\Dbdoctor\Tests\Acceptance\Support\Extension\BackendDbdoctorEnvironment
 
 groups:
   AcceptanceTests-Job-*: AcceptanceTests-Job-*

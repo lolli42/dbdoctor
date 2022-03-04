@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lolli\Dbhealth\Tests\Functional\Helper;
+namespace Lolli\Dbdoctor\Tests\Functional\Helper;
 
 /*
  * This file is part of the TYPO3 CMS project.
@@ -17,13 +17,13 @@ namespace Lolli\Dbhealth\Tests\Functional\Helper;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbhealth\Helper\PagesRootlineHelper;
+use Lolli\Dbdoctor\Helper\PagesRootlineHelper;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 class PagesRootlineHelperTest extends FunctionalTestCase
 {
     protected array $testExtensionsToLoad = [
-        'typo3conf/ext/dbhealth',
+        'typo3conf/ext/dbdoctor',
     ];
 
     /**

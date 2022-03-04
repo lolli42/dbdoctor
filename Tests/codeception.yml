@@ -1,4 +1,4 @@
-namespace: Lolli\Dbhealth\Tests\Acceptance\Support
+namespace: Lolli\Dbdoctor\Tests\Acceptance\Support
 paths:
   tests: Acceptance
   data: .

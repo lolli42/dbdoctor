@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lolli\Dbhealth\Commands;
+namespace Lolli\Dbdoctor\Commands;
 
 /*
  * This file is part of the TYPO3 CMS project.
@@ -17,10 +17,10 @@ namespace Lolli\Dbhealth\Commands;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbhealth\Health\HealthDeleteInterface;
-use Lolli\Dbhealth\Health\HealthFactoryInterface;
-use Lolli\Dbhealth\Health\HealthInterface;
-use Lolli\Dbhealth\Health\HealthUpdateInterface;
+use Lolli\Dbdoctor\Health\HealthDeleteInterface;
+use Lolli\Dbdoctor\Health\HealthFactoryInterface;
+use Lolli\Dbdoctor\Health\HealthInterface;
+use Lolli\Dbdoctor\Health\HealthUpdateInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;

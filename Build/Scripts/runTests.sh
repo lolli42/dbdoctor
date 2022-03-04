@@ -58,7 +58,7 @@ handleDbmsAndDriverOptions() {
 
 # Load help text into $HELP
 read -r -d '' HELP <<EOF
-dbhealth test runner. Execute unit test suite and some other details.
+dbdoctor test runner. Execute unit test suite and some other details.
 Also used by github for test execution.
 
 Recommended docker version is >=20.10 for xdebug break pointing to work reliably, and
@@ -252,7 +252,7 @@ DOCKER_PHP_IMAGE=`echo "php${PHP_VERSION}" | sed -e 's/\.//'`
 shift $((OPTIND - 1))
 TEST_FILE=${1}
 if [ -n "${1}" ]; then
-    TEST_FILE="Web/typo3conf/ext/dbhealth/${1}"
+    TEST_FILE="Web/typo3conf/ext/dbdoctor/${1}"
 fi
 
 if [ ${SCRIPT_VERBOSE} -eq 1 ]; then

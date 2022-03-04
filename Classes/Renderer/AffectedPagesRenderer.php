@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lolli\Dbhealth\Renderer;
+namespace Lolli\Dbdoctor\Renderer;
 
 /*
  * This file is part of the TYPO3 CMS project.
@@ -17,7 +17,7 @@ namespace Lolli\Dbhealth\Renderer;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbhealth\Helper\PagesRootlineHelper;
+use Lolli\Dbdoctor\Helper\PagesRootlineHelper;
 
 class AffectedPagesRenderer
 {

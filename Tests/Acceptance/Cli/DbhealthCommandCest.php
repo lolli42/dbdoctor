@@ -15,20 +15,20 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace Lolli\Dbhealth\Tests\Acceptance\Cli;
+namespace Lolli\Dbdoctor\Tests\Acceptance\Cli;
 
-use Lolli\Dbhealth\Tests\Acceptance\Support\CliTester;
+use Lolli\Dbdoctor\Tests\Acceptance\Support\CliTester;
 
-class DbhealthCommandCest
+class DbdoctorCommandCest
 {
-    protected string $command = '../../../../../bin/typo3 dbhealth:health ';
+    protected string $command = '../../../../../bin/typo3 dbdoctor:health ';
 
     /**
      * @param CliTester $I
      */
-    public function runDbhealthCommand(CliTester $I): void
+    public function runDbdoctorCommand(CliTester $I): void
     {
-        $I->amGoingTo('Call bin/typo3 dbhealth:health');
+        $I->amGoingTo('Call bin/typo3 dbdoctor:health');
         $I->runShellCommand($this->command);
         $I->seeInShellOutput('Find and optionally fix database inconsistencies');
     }

@@ -1,7 +1,7 @@
-![tests core v11](https://github.com/lolli42/dbhealth/actions/workflows/testscorev11.yml/badge.svg)
-![tests core v12](https://github.com/lolli42/dbhealth/actions/workflows/testscorev12.yml/badge.svg)
+![tests core v11](https://github.com/lolli42/dbdoctor/actions/workflows/testscorev11.yml/badge.svg)
+![tests core v12](https://github.com/lolli42/dbdoctor/actions/workflows/testscorev12.yml/badge.svg)
 
-TYPO3 DB health
+TYPO3 DB doctor
 ===============
 
 # Mission
@@ -69,13 +69,13 @@ You probably want to install this as `--dev` dependency. The extension currently
 supports TYPO3 v11 and TYPO3 v12:
 
 ```
-$ composer require --dev lolli/dbhealth
+$ composer require --dev lolli/dbdoctor
 ```
 
 ## TYPO3 Extension Repository
 
 [No upload yet] For non-composer projects, the extension is available in TER as extension key
-`dbhealth` and can be installed using the extension manager.
+`dbdoctor` and can be installed using the extension manager.
 
 
 # Preparation
@@ -103,7 +103,7 @@ instance. As such, a few things should be kept in mind:
 # Usage
 
 ```
-$ bin/typo3 dbhealth:health
+$ bin/typo3 dbdoctor:health
 ```
 
 The interface looks like this:
@@ -134,13 +134,13 @@ prompting for user input after each failed check.
 
 * Help overview:
   ```
-  $ bin/typo3 dbhealth:health -h
+  $ bin/typo3 dbdoctor:health -h
   ```
   Left to the reader to find out what is done here :P
 
 * Interactive mode: `--mode interactive` or `-m interactive` or option not given:
   ```
-  $ bin/typo3 dbhealth:health -m interactive
+  $ bin/typo3 dbdoctor:health -m interactive
   ```
   The default mode: Perform checks one-by-one and have an interactive interface
   to see affected record details, show pages with affected records, simulate
@@ -148,7 +148,7 @@ prompting for user input after each failed check.
 
 * Check mode: `--mode check` or `-m check`:
   ```
-  $ bin/typo3 dbhealth:health -m check
+  $ bin/typo3 dbdoctor:health -m check
   ```
   Run all checks but don't perform any DB changes. Returns 0 (zero) if some checks
   found something and non-zero if something was found by any check. Useful to run
@@ -156,17 +156,17 @@ prompting for user input after each failed check.
 
 * Execute mode: `--mode execute` or `-m execute`:
   ```
-  $ bin/typo3 dbhealth:health -m execute
+  $ bin/typo3 dbdoctor:health -m execute
   ```
   Blindly execute all checks without further questions! Destructive auto-operation if
   you trust the command enough, which you shouldn't ;-) Did you create a DB backup before?
 
 * Log execute queries to file: `--file` or `-f`:
   ```
-  $ bin/typo3 dbhealth:health -f /tmp/foo.sql
+  $ bin/typo3 dbdoctor:health -f /tmp/foo.sql
   ```
   ```
-  $ bin/typo3 dbhealth:health -f /tmp/dbhealth-changes-my-instance-`date +%Y-%m-%d-%H-%M-%S`.sql
+  $ bin/typo3 dbdoctor:health -f /tmp/dbdoctor-changes-my-instance-`date +%Y-%m-%d-%H-%M-%S`.sql
   ```
   Log all data changing queries to a file. The argument must be an *absolute file name*.
   **Never put such a file into the public web folder of your instance**. This is available in

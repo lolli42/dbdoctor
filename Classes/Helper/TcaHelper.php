@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lolli\Dbhealth\Helper;
+namespace Lolli\Dbdoctor\Helper;
 
 /*
  * This file is part of the TYPO3 CMS project.

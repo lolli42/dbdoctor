@@ -15,10 +15,10 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace Lolli\Dbhealth\Tests\Acceptance\Support;
+namespace Lolli\Dbdoctor\Tests\Acceptance\Support;
 
 use Codeception\Actor;
-use Lolli\Dbhealth\Tests\Acceptance\Support\_generated\CliTesterActions;
+use Lolli\Dbdoctor\Tests\Acceptance\Support\_generated\CliTesterActions;
 
 class CliTester extends Actor
 {

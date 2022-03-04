@@ -15,7 +15,7 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace Lolli\Dbhealth;
+namespace Lolli\Dbdoctor;
 
 class Exception extends \Exception
 {

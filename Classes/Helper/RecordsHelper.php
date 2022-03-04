@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lolli\Dbhealth\Helper;
+namespace Lolli\Dbdoctor\Helper;
 
 /*
  * This file is part of the TYPO3 CMS project.
@@ -18,9 +18,9 @@ namespace Lolli\Dbhealth\Helper;
  */
 
 use Doctrine\DBAL\Statement;
-use Lolli\Dbhealth\Exception\NoSuchRecordException;
-use Lolli\Dbhealth\Exception\NoSuchTableException;
-use Lolli\Dbhealth\Exception\UnexpectedNumberOfAffectedRowsException;
+use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Exception\NoSuchTableException;
+use Lolli\Dbdoctor\Exception\UnexpectedNumberOfAffectedRowsException;
 use Psr\Container\ContainerInterface;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 

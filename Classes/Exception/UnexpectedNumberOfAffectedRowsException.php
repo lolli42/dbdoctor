@@ -15,9 +15,9 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace Lolli\Dbhealth\Exception;
+namespace Lolli\Dbdoctor\Exception;
 
-use Lolli\Dbhealth\Exception;
+use Lolli\Dbdoctor\Exception;
 
 class UnexpectedNumberOfAffectedRowsException extends Exception
 {

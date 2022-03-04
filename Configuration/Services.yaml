@@ -4,35 +4,35 @@ services:
     autoconfigure: true
     public: false
 
-  Lolli\Dbhealth\:
+  Lolli\Dbdoctor\:
     resource: '../Classes/*'
 
-  Lolli\Dbhealth\Helper\PagesRootlineHelper:
+  Lolli\Dbdoctor\Helper\PagesRootlineHelper:
     public: true
     shared: false
 
-  Lolli\Dbhealth\Helper\RecordsHelper:
+  Lolli\Dbdoctor\Helper\RecordsHelper:
     public: true
     shared: false
 
-  Lolli\Dbhealth\Helper\TcaHelper:
+  Lolli\Dbdoctor\Helper\TcaHelper:
     public: true
     shared: false
 
-  Lolli\Dbhealth\Helper\TableHelper:
+  Lolli\Dbdoctor\Helper\TableHelper:
     public: true
     shared: false
 
-  Lolli\Dbhealth\Renderer\AffectedPagesRenderer:
+  Lolli\Dbdoctor\Renderer\AffectedPagesRenderer:
     public: true
     shared: false
 
-  Lolli\Dbhealth\Renderer\RecordsRenderer:
+  Lolli\Dbdoctor\Renderer\RecordsRenderer:
     public: true
     shared: false
 
-  Lolli\Dbhealth\Commands\HealthCommand:
+  Lolli\Dbdoctor\Commands\HealthCommand:
     tags:
       - name: 'console.command'
-        command: 'dbhealth:health'
+        command: 'dbdoctor:health'
         description: 'Find and optionally fix database inconsistencies'

@@ -1,7 +1,7 @@
 <?php
 
-$EM_CONF['dbhealth'] = [
-    'title' => 'TYPO3 Database health',
+$EM_CONF['dbdoctor'] = [
+    'title' => 'TYPO3 Database doctor',
     'description' => 'Find and fix TYPO3 database inconsistencies',
     'category' => 'misc',
     'version' => '0.0.0',

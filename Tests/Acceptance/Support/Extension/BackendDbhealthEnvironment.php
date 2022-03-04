@@ -15,11 +15,11 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace Lolli\Dbhealth\Tests\Acceptance\Support\Extension;
+namespace Lolli\Dbdoctor\Tests\Acceptance\Support\Extension;
 
 use TYPO3\TestingFramework\Core\Acceptance\Extension\BackendEnvironment;
 
-class BackendDbhealthEnvironment extends BackendEnvironment
+class BackendDbdoctorEnvironment extends BackendEnvironment
 {
     /**
      * @var array
@@ -35,7 +35,7 @@ class BackendDbhealthEnvironment extends BackendEnvironment
             'recordlist',
         ],
         'testExtensionsToLoad' => [
-            'typo3conf/ext/dbhealth',
+            'typo3conf/ext/dbdoctor',
         ],
     ];
 }

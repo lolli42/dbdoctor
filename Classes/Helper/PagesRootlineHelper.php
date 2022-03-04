@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lolli\Dbhealth\Helper;
+namespace Lolli\Dbdoctor\Helper;
 
 /*
  * This file is part of the TYPO3 CMS project.
@@ -17,8 +17,8 @@ namespace Lolli\Dbhealth\Helper;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbhealth\Exception\NoSuchPageException;
-use Lolli\Dbhealth\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Exception\NoSuchPageException;
+use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 
 class PagesRootlineHelper
 {

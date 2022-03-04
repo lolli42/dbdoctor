@@ -1,8 +1,8 @@
 {
-  "name": "lolli/dbhealth",
+  "name": "lolli/dbdoctor",
   "type": "typo3-cms-extension",
-  "description": "TYPO3 Database health - Find and fix TYPO3 database inconsistencies",
-  "homepage": "https://github.com/lolli42/dbhealth",
+  "description": "TYPO3 Database doctor - Find and fix TYPO3 database inconsistencies",
+  "homepage": "https://github.com/lolli42/dbdoctor",
   "authors": [
     {
       "name": "Christian Kuhn",
@@ -45,12 +45,12 @@
   },
   "autoload": {
     "psr-4": {
-      "Lolli\\Dbhealth\\": "Classes/"
+      "Lolli\\Dbdoctor\\": "Classes/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Lolli\\Dbhealth\\Tests\\": "Tests/"
+      "Lolli\\Dbdoctor\\Tests\\": "Tests/"
     }
   },
   "extra": {
@@ -60,7 +60,7 @@
     "typo3/cms": {
       "app-dir": ".Build",
       "web-dir": ".Build/Web",
-      "extension-key": "dbhealth"
+      "extension-key": "dbdoctor"
     }
   }
 }

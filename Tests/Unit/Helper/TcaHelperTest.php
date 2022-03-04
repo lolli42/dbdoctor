@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lolli\Dbhealth\Tests\Unit\Helper;
+namespace Lolli\Dbdoctor\Tests\Unit\Helper;
 
 /*
  * This file is part of the TYPO3 CMS project.
@@ -17,7 +17,7 @@ namespace Lolli\Dbhealth\Tests\Unit\Helper;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbhealth\Helper\TcaHelper;
+use Lolli\Dbdoctor\Helper\TcaHelper;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 class TcaHelperTest extends UnitTestCase
