@@ -19,7 +19,6 @@ namespace Lolli\Dbhealth\Tests\Functional\Health;
 
 use Lolli\Dbhealth\Health\HealthInterface;
 use Lolli\Dbhealth\Health\SysFileReferenceInvalidPid;
-use Lolli\Dbhealth\Health\SysFileReferenceInvalidTableLocal;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Style\SymfonyStyle;
