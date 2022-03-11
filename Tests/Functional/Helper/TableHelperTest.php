@@ -56,4 +56,54 @@ class TableHelperTest extends FunctionalTestCase
         $connectionPool = $this->getContainer()->get(ConnectionPool::class);
         self::assertFalse((new TableHelper($connectionPool))->tableExistsInDatabase('i_do_not_exist'));
     }
+
+    /**
+     * @test
+     */
+    public function fieldExistsInTableReturnsFalseWithEmptyTableName(): void
+    {
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = $this->getContainer()->get(ConnectionPool::class);
+        self::assertFalse((new TableHelper($connectionPool))->fieldExistsInTable('', 'foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function fieldExistsInTableReturnsFalseWithEmptyFieldName(): void
+    {
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = $this->getContainer()->get(ConnectionPool::class);
+        self::assertFalse((new TableHelper($connectionPool))->fieldExistsInTable('foo', ''));
+    }
+
+    /**
+     * @test
+     */
+    public function fieldExistsInTableReturnsFalseIfTableDoesNotExist(): void
+    {
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = $this->getContainer()->get(ConnectionPool::class);
+        self::assertFalse((new TableHelper($connectionPool))->fieldExistsInTable('table-does-not-exist', 'uid'));
+    }
+
+    /**
+     * @test
+     */
+    public function fieldExistsInTableReturnsFalseIfFieldDoesNotExist(): void
+    {
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = $this->getContainer()->get(ConnectionPool::class);
+        self::assertFalse((new TableHelper($connectionPool))->fieldExistsInTable('pages', 'field-does-not-exist'));
+    }
+
+    /**
+     * @test
+     */
+    public function fieldExistsInTableReturnsTrueIfFieldDoesExist(): void
+    {
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = $this->getContainer()->get(ConnectionPool::class);
+        self::assertTrue((new TableHelper($connectionPool))->fieldExistsInTable('pages', 'title'));
+    }
 }
