@@ -31,7 +31,7 @@ class HealthFactory implements HealthFactoryInterface
         SysFileReferenceDangling::class,
         SysFileReferenceInvalidPid::class,
         SysFileReferenceInvalidFieldname::class,
-        // InvalidLanguageParent::class,
+        // TcaTablesInvalidLanguageParent::class,
     ];
 
     private ContainerInterface $container;

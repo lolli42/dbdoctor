@@ -27,7 +27,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Check if translated records point to existing records.
  */
-class InvalidLanguageParent extends AbstractHealth implements HealthInterface, HealthDeleteInterface
+class TcaTablesInvalidLanguageParent extends AbstractHealth implements HealthInterface, HealthDeleteInterface
 {
     public function header(SymfonyStyle $io): void
     {
@@ -105,5 +105,10 @@ class InvalidLanguageParent extends AbstractHealth implements HealthInterface, H
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
         $this->deleteRecords($io, $simulate, $affectedRecords);
+    }
+
+    protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
+    {
+        $this->outputRecordDetails($io, $affectedRecords, '_reasonBroken');
     }
 }
