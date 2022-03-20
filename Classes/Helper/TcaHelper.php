@@ -47,6 +47,19 @@ class TcaHelper
         }
     }
 
+    /**
+     * Determine if a TCA table has at least one type='flex' field.
+     */
+    public function hasFlexField(string $tableName): bool
+    {
+        foreach (($GLOBALS['TCA'][$tableName]['columns'] ?? []) as $config) {
+            if (trim($config['config']['type'] ?? '') === 'flex') {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public function getFieldNameByCtrlName(string $tableName, string $ctrlName): string
     {
         if (empty($GLOBALS['TCA'][$tableName]['ctrl'][$ctrlName])) {

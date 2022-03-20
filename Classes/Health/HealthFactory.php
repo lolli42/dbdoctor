@@ -30,6 +30,7 @@ class HealthFactory implements HealthFactoryInterface
         SysFileReferenceInvalidTableLocal::class,
         SysFileReferenceDangling::class,
         SysFileReferenceInvalidPid::class,
+        SysFileReferenceInvalidFieldname::class,
         // InvalidLanguageParent::class,
     ];
 

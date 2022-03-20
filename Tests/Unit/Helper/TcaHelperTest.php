@@ -115,6 +115,107 @@ class TcaHelperTest extends UnitTestCase
     }
 
     /**
+     * @return array<string, array<mixed>>
+     */
+    public function hasFlexFieldDataProvider(): array
+    {
+        return [
+            'fieldName empty' => [
+                [],
+                '',
+                false,
+            ],
+            'table does not exist' => [
+                [],
+                'bar',
+                false,
+            ],
+            'empty columns' => [
+                [
+                    'foo' => [
+                        'ctrl' => [],
+                        'columns' => [],
+                    ],
+                ],
+                'foo',
+                false,
+            ],
+            'no config' => [
+                [
+                    'foo' => [
+                        'ctrl' => [],
+                        'columns' => [
+                            'field1' => [
+                            ],
+                        ],
+                    ],
+                ],
+                'foo',
+                false,
+            ],
+            'no type' => [
+                [
+                    'foo' => [
+                        'ctrl' => [],
+                        'columns' => [
+                            'field1' => [
+                                'config' => [
+
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                'foo',
+                false,
+            ],
+            'no flex type' => [
+                [
+                    'foo' => [
+                        'ctrl' => [],
+                        'columns' => [
+                            'field1' => [
+                                'config' => [
+                                    'type' => 'input',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                'foo',
+                false,
+            ],
+            'one flex type' => [
+                [
+                    'foo' => [
+                        'ctrl' => [],
+                        'columns' => [
+                            'field1' => [
+                                'config' => [
+                                    'type' => 'flex',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                'foo',
+                true,
+            ],
+        ];
+    }
+
+    /**
+     * @test
+     * @dataProvider hasFlexFieldDataProvider
+     * @param array<mixed> $tca
+     */
+    public function hasFlexField(array $tca, string $fieldName, bool $result): void
+    {
+        $GLOBALS['TCA'] = $tca;
+        self::assertSame($result, (new TcaHelper())->hasFlexField($fieldName));
+    }
+
+    /**
      * @test
      */
     public function getFieldNameByCtrlNameReturnsName(): void
