@@ -50,6 +50,9 @@ class RecordsHelper
      */
     public function getRecord(string $tableName, array $fields, int $uid): array
     {
+        if (empty($fields)) {
+            throw new \RuntimeException('Must select at least one field. Maybe uid?', 1647791187);
+        }
         $statementHash = md5('select' . $tableName . implode($fields));
         if (!isset($this->preparedStatements[$statementHash])) {
             /** @var TableHelper $tableHelper */

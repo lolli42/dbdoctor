@@ -103,6 +103,7 @@ class RecordsRenderer
             $row = $this->humanReadableTimestamp($tableName, $row);
             $row = $this->resolveCrUser($tableName, $row);
             $row = $this->resolveWorkspace($tableName, $row);
+            $row = $this->resolveTranslationParentField($tableName, $row);
             $rows[] = $row;
         }
         return $rows;
@@ -228,6 +229,24 @@ class RecordsRenderer
                 $row[$workspaceIdField] = $this->workspaceCache[$workspaceUid];
             } else {
                 $row[$workspaceIdField] = '[0]Live';
+            }
+        }
+        return $row;
+    }
+
+    /**
+     * @param array<string, int|string> $row
+     * @return array<string, int|string>
+     */
+    private function resolveTranslationParentField(string $tableName, array $row): array
+    {
+        $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
+        if ($translationParentField && array_key_exists($translationParentField, $row)) {
+            $parentUid = (int)$row[$translationParentField];
+            try {
+                $this->recordsHelper->getRecord($tableName, ['uid'], $parentUid);
+            } catch (NoSuchRecordException $e) {
+                $row[$translationParentField] = '[' . $parentUid . '|<comment>missing</comment>]';
             }
         }
         return $row;
