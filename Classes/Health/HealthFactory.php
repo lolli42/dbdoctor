@@ -25,13 +25,14 @@ class HealthFactory implements HealthFactoryInterface
      * @var string[]
      */
     private array $healthClasses = [
+        TcaTablesWorkspaceRecordsDangling::class,
         PagesBrokenTree::class,
         PagesTranslatedMissingLanguageParent::class,
         PagesTranslatedDeletedLanguageParent::class,
-        TcaTablesWorkspaceRecordsDangling::class,
         SysFileReferenceInvalidTableLocal::class,
         SysFileReferenceDangling::class,
         SysFileReferenceInvalidPid::class,
+        TcaTablesInvalidPid::class,
         SysFileReferenceInvalidFieldname::class,
         // TcaTablesInvalidLanguageParent::class,
     ];

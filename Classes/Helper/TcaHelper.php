@@ -23,6 +23,21 @@ class TcaHelper
 {
     /**
      * @return iterable<string>
+     * @param array<int, string> $ignoreTables
+     */
+    public function getNextTcaTable(array $ignoreTables = []): iterable
+    {
+        foreach (array_keys($GLOBALS['TCA'] ?? []) as $tableName) {
+            /** @var string $tableName */
+            if (in_array($tableName, $ignoreTables, true)) {
+                continue;
+            }
+            yield $tableName;
+        }
+    }
+
+    /**
+     * @return iterable<string>
      */
     public function getNextWorkspaceEnabledTcaTable(): iterable
     {

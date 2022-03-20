@@ -25,6 +25,54 @@ class TcaHelperTest extends UnitTestCase
     /**
      * @test
      */
+    public function getNextTcaTableReturnsNothingWithInvalidTca(): void
+    {
+        $GLOBALS['TCA'] = null;
+        $tables = [];
+        $subject = new TcaHelper();
+        foreach ($subject->getNextTcaTable() as $item) {
+            $tables[] = $item;
+        }
+        self::assertSame([], $tables);
+    }
+
+    /**
+     * @test
+     */
+    public function getNextTcaTableReturnsNothingWithSomeTcaTables(): void
+    {
+        $GLOBALS['TCA'] = [
+            'foo' => [],
+            'bar' => [],
+        ];
+        $subject = new TcaHelper();
+        $tables = [];
+        foreach ($subject->getNextTcaTable() as $item) {
+            $tables[] = $item;
+        }
+        self::assertSame(['foo', 'bar'], $tables);
+    }
+
+    /**
+     * @test
+     */
+    public function getNextTcaTableIgnoresTable(): void
+    {
+        $GLOBALS['TCA'] = [
+            'foo' => [],
+            'bar' => [],
+        ];
+        $subject = new TcaHelper();
+        $tables = [];
+        foreach ($subject->getNextTcaTable(['foo']) as $item) {
+            $tables[] = $item;
+        }
+        self::assertSame(['bar'], $tables);
+    }
+
+    /**
+     * @test
+     */
     public function getNextWorkspaceEnabledTcaTableReturnsWorkspaceEnabledTcaTables(): void
     {
         $GLOBALS['TCA'] = [

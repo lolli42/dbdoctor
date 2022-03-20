@@ -46,7 +46,7 @@ class TcaTablesWorkspaceRecordsDangling extends AbstractHealth implements Health
     protected function getAffectedRecords(): array
     {
         $allowedWorkspacesUids = $this->getAllowedWorkspaces();
-        $danglingRows = [];
+        $affectedRows = [];
         $tcaHelper = $this->container->get(TcaHelper::class);
         foreach ($tcaHelper->getNextWorkspaceEnabledTcaTable() as $tableName) {
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
@@ -61,10 +61,10 @@ class TcaTablesWorkspaceRecordsDangling extends AbstractHealth implements Health
                 ->executeQuery();
             while ($row = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $row */
-                $danglingRows[$tableName][(int)$row['uid']] = $row;
+                $affectedRows[$tableName][(int)$row['uid']] = $row;
             }
         }
-        return $danglingRows;
+        return $affectedRows;
     }
 
     /**

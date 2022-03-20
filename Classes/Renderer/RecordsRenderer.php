@@ -103,6 +103,7 @@ class RecordsRenderer
             $row = $this->humanReadableTimestamp($tableName, $row);
             $row = $this->resolveCrUser($tableName, $row);
             $row = $this->resolveWorkspace($tableName, $row);
+            $row = $this->resolvePid($row);
             $row = $this->resolveTranslationParentField($tableName, $row);
             $rows[] = $row;
         }
@@ -250,6 +251,24 @@ class RecordsRenderer
                 }
             } catch (NoSuchRecordException $e) {
                 $row[$translationParentField] = '[' . $parentUid . '|<comment>missing</comment>]';
+            }
+        }
+        return $row;
+    }
+
+    /**
+     * @param array<string, int|string> $row
+     * @return array<string, int|string>
+     */
+    private function resolvePid(array $row): array
+    {
+        if (array_key_exists('pid', $row) && (int)$row['pid'] !== 0
+        ) {
+            $pagesUid = (int)$row['pid'];
+            try {
+                $pagesRecord = $this->recordsHelper->getRecord('pages', ['uid'], $pagesUid);
+            } catch (NoSuchRecordException $e) {
+                $row['pid'] = '[' . $pagesUid . '|<comment>missing</comment>]';
             }
         }
         return $row;
