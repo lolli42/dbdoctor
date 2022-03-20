@@ -244,7 +244,10 @@ class RecordsRenderer
         if ($translationParentField && array_key_exists($translationParentField, $row)) {
             $parentUid = (int)$row[$translationParentField];
             try {
-                $this->recordsHelper->getRecord($tableName, ['uid'], $parentUid);
+                $parentRecord = $this->recordsHelper->getRecord($tableName, ['deleted'], $parentUid);
+                if ((bool)$parentRecord['deleted']) {
+                    $row[$translationParentField] = '[' . $parentUid . '|<info>deleted</info>]';
+                }
             } catch (NoSuchRecordException $e) {
                 $row[$translationParentField] = '[' . $parentUid . '|<comment>missing</comment>]';
             }
