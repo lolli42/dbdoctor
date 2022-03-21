@@ -33,6 +33,7 @@ class BackendDbdoctorEnvironment extends BackendEnvironment
             'install',
             'frontend',
             'recordlist',
+            'impexp',
             'workspaces',
         ],
         'testExtensionsToLoad' => [
