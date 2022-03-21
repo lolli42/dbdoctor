@@ -59,7 +59,7 @@ class PagesTranslatedLanguageParentDeleted extends AbstractHealth implements Hea
                     $affectedRecords['pages'][] = $row;
                 }
             } catch (NoSuchRecordException $e) {
-                // Earlier PagesTranslatedMissingLanguageParent should have fixed this.
+                // Earlier test should have fixed this.
                 throw new \RuntimeException(
                     'Pages record with uid="' . $row['uid'] . '" and sys_language_uid="' . $row['sys_language_uid'] . '"'
                     . ' has l10n_parent="' . $row['l10n_parent'] . '", but that record does not exist. A previous check'

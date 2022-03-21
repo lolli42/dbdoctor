@@ -266,7 +266,10 @@ class RecordsRenderer
         ) {
             $pagesUid = (int)$row['pid'];
             try {
-                $pagesRecord = $this->recordsHelper->getRecord('pages', ['uid'], $pagesUid);
+                $pagesRecord = $this->recordsHelper->getRecord('pages', ['uid', 'deleted'], $pagesUid);
+                if ((bool)$pagesRecord['deleted']) {
+                    $row['pid'] = '[' . $pagesUid . '|<info>deleted</info>]';
+                }
             } catch (NoSuchRecordException $e) {
                 $row['pid'] = '[' . $pagesUid . '|<comment>missing</comment>]';
             }
