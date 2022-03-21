@@ -18,13 +18,13 @@ namespace Lolli\Dbdoctor\Tests\Functional\Health;
  */
 
 use Lolli\Dbdoctor\Health\HealthInterface;
-use Lolli\Dbdoctor\Health\PagesTranslatedDifferentPidLanguageParent;
+use Lolli\Dbdoctor\Health\PagesTranslatedLanguageParentDeleted;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
-class PagesTranslatedDifferentPidLanguageParentTest extends FunctionalTestCase
+class PagesTranslatedLanguageParentDeletedTest extends FunctionalTestCase
 {
     use ProphecyTrait;
 
@@ -37,15 +37,15 @@ class PagesTranslatedDifferentPidLanguageParentTest extends FunctionalTestCase
      */
     public function fixBrokenRecords(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/../Fixtures/PagesTranslatedDifferentPidLanguageParentImport.csv');
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/PagesTranslatedLanguageParentDeletedImport.csv');
         $io = $this->prophesize(SymfonyStyle::class);
         $io->ask(Argument::cetera())->willReturn('e');
-        /** @var PagesTranslatedDifferentPidLanguageParent $subject */
-        $subject = $this->get(PagesTranslatedDifferentPidLanguageParent::class);
+        /** @var PagesTranslatedLanguageParentDeleted $subject */
+        $subject = $this->get(PagesTranslatedLanguageParentDeleted::class);
         $subject->handle($io->reveal(), HealthInterface::MODE_EXECUTE, '');
         $io->warning(Argument::cetera())->shouldHaveBeenCalled();
         $io->note(Argument::cetera())->shouldHaveBeenCalled();
         $io->text(Argument::cetera())->shouldHaveBeenCalled();
-        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/PagesTranslatedDifferentPidLanguageParentFixed.csv');
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/PagesTranslatedLanguageParentDeletedFixed.csv');
     }
 }

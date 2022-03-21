@@ -18,13 +18,13 @@ namespace Lolli\Dbdoctor\Tests\Functional\Health;
  */
 
 use Lolli\Dbdoctor\Health\HealthInterface;
-use Lolli\Dbdoctor\Health\TcaTablesInvalidPid;
+use Lolli\Dbdoctor\Health\PagesTranslatedLanguageParentDifferentPid;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
-class TcaTablesInvalidPidTest extends FunctionalTestCase
+class PagesTranslatedLanguageParentDifferentPidTest extends FunctionalTestCase
 {
     use ProphecyTrait;
 
@@ -37,15 +37,15 @@ class TcaTablesInvalidPidTest extends FunctionalTestCase
      */
     public function fixBrokenRecords(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesInvalidPidImport.csv');
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/PagesTranslatedLanguageParentDifferentPidImport.csv');
         $io = $this->prophesize(SymfonyStyle::class);
         $io->ask(Argument::cetera())->willReturn('e');
-        /** @var TcaTablesInvalidPid $subject */
-        $subject = $this->get(TcaTablesInvalidPid::class);
+        /** @var PagesTranslatedLanguageParentDifferentPid $subject */
+        $subject = $this->get(PagesTranslatedLanguageParentDifferentPid::class);
         $subject->handle($io->reveal(), HealthInterface::MODE_EXECUTE, '');
         $io->warning(Argument::cetera())->shouldHaveBeenCalled();
         $io->note(Argument::cetera())->shouldHaveBeenCalled();
         $io->text(Argument::cetera())->shouldHaveBeenCalled();
-        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesInvalidPidFixed.csv');
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/PagesTranslatedLanguageParentDifferentPidFixed.csv');
     }
 }

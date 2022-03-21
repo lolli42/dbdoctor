@@ -25,7 +25,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * All TCA records must point to existing pages
  */
-class TcaTablesInvalidPid extends AbstractHealth implements HealthInterface, HealthDeleteInterface
+class TcaTablesPidMissing extends AbstractHealth implements HealthInterface, HealthDeleteInterface
 {
     public function header(SymfonyStyle $io): void
     {
