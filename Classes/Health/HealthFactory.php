@@ -29,6 +29,7 @@ class HealthFactory implements HealthFactoryInterface
         PagesBrokenTree::class,
         PagesTranslatedMissingLanguageParent::class,
         PagesTranslatedDeletedLanguageParent::class,
+        PagesTranslatedDifferentPidLanguageParent::class,
         SysFileReferenceInvalidTableLocal::class,
         SysFileReferenceDangling::class,
         SysFileReferenceInvalidPid::class,
