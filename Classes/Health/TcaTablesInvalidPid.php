@@ -44,7 +44,7 @@ class TcaTablesInvalidPid extends AbstractHealth implements HealthInterface, Hea
         $recordsHelper = $this->container->get(RecordsHelper::class);
 
         $affectedRows = [];
-        foreach ($tcaHelper->getNextTcaTable(['pages']) as $tableName) {
+        foreach ($tcaHelper->getNextTcaTable(['pages', 'sys_workspace']) as $tableName) {
             // Iterate all TCA tables, but ignore pages table
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             // Consider deleted records: If the pid does not exist, they should be deleted, too.

@@ -33,6 +33,7 @@ class BackendDbdoctorEnvironment extends BackendEnvironment
             'install',
             'frontend',
             'recordlist',
+            'workspaces',
         ],
         'testExtensionsToLoad' => [
             'typo3conf/ext/dbdoctor',
