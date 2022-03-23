@@ -203,3 +203,22 @@ Single tests are described in details when running the CLI command. Rough overvi
 * Will support for TYPO3 v10 or other older core versions added?
   > No. TYPO3 v11 had quite a few DB changes, and it is not planned to implement
   > a v10 backwards compatible layer.
+
+
+# Tagging and releasing
+
+[packagist.org](https://packagist.org/packages/lolli/dbdoctor) is enabled via the casual github hook.
+TER releases are created by the "publish.yml" github workflow when tagging versions
+using [tailor](https://github.com/typo33/tailor). The commit message of the commit a tag points to is
+used as TER upload comment.
+
+Example:
+
+```
+composer install
+.Build/bin/tailor set-version 0.2.0
+git commit -am "[RELEASE] 0.2.0 Bug fixes and improved core v11 compatibility"
+git tag 0.2.0
+git push
+git push --tags
+```
