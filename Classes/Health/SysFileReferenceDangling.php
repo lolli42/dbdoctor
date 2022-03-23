@@ -68,6 +68,6 @@ class SysFileReferenceDangling extends AbstractHealth implements HealthInterface
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
     {
-        $this->outputRecordDetails($io, $affectedRecords, '', [], ['table_local', 'uid_local', 'tablenames', 'uid_foreign']);
+        $this->outputRecordDetails($io, $affectedRecords, '', [], ['table_local', 'uid_local', 'tablenames', 'uid_foreign', 'fieldname']);
     }
 }
