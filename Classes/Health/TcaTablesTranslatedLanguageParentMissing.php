@@ -21,8 +21,6 @@ use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Helper\TcaHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Tables with record translations must point to existing records in transOrigPointerField

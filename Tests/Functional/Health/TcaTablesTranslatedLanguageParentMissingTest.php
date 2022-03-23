@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\Tests\Functional\Health;
  */
 
 use Lolli\Dbdoctor\Health\HealthInterface;
-use Lolli\Dbdoctor\Health\TcaTablesPidMissing;
 use Lolli\Dbdoctor\Health\TcaTablesTranslatedLanguageParentMissing;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
