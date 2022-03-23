@@ -61,6 +61,14 @@ should be  relatively quick even for big-sized instances, but it will hammer the
 database a lot.
 
 
+# Current status
+
+First releases have been done, but we're not confident enough to have a 1.0.0, yet.
+The nature of this extension is to perform potential malicious queries, so use the
+system with care. We are however using this extension for some of our customers with
+success already.
+
+
 # Installation
 
 ## Composer
@@ -74,7 +82,7 @@ $ composer require --dev lolli/dbdoctor
 
 ## TYPO3 Extension Repository
 
-[No upload yet] For non-composer projects, the extension is available in TER as extension key
+For non-composer projects, the extension is available in TER as extension key
 `dbdoctor` and can be installed using the extension manager.
 
 
