@@ -45,18 +45,12 @@ class TcaTablesTranslatedLanguageParentMissing extends AbstractHealth implements
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
 
-        $danglingRows = [];
-        foreach ($tcaHelper->getNextLanguageAwareTcaTable() as $tableName) {
+        $affectedRows = [];
+        foreach ($tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {
             /** @var string $languageField */
             $languageField = $tcaHelper->getLanguageField($tableName);
             /** @var string $translationParentField */
             $translationParentField = $tcaHelper->getTranslationParentField($tableName);
-
-            $parentRowFields = [
-                'uid',
-                'pid',
-                $languageField,
-            ];
 
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             // Handle deleted=1 records too: If their language parent is gone, they shouldn't exist anymore, too.
@@ -74,13 +68,13 @@ class TcaTablesTranslatedLanguageParentMissing extends AbstractHealth implements
             while ($localizedRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $localizedRow */
                 try {
-                    $recordsHelper->getRecord($tableName, $parentRowFields, (int)$localizedRow[$translationParentField]);
+                    $recordsHelper->getRecord($tableName, ['uid'], (int)$localizedRow[$translationParentField]);
                 } catch (NoSuchRecordException $e) {
-                    $danglingRows[$tableName][(int)$localizedRow['uid']] = $localizedRow;
+                    $affectedRows[$tableName][(int)$localizedRow['uid']] = $localizedRow;
                 }
             }
         }
-        return $danglingRows;
+        return $affectedRows;
     }
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void

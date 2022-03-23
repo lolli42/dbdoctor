@@ -163,6 +163,23 @@ class TcaHelperTest extends UnitTestCase
     }
 
     /**
+     * @test
+     */
+    public function getNextLanguageAwareTcaTableIgnoresTable(): void
+    {
+        $GLOBALS['TCA'] = [
+            'foo' => [],
+            'bar' => [],
+        ];
+        $subject = new TcaHelper();
+        $tables = [];
+        foreach ($subject->getNextLanguageAwareTcaTable(['foo']) as $item) {
+            $tables[] = $item;
+        }
+        self::assertSame(['bar'], $tables);
+    }
+
+    /**
      * @return array<string, array<mixed>>
      */
     public function hasFlexFieldDataProvider(): array

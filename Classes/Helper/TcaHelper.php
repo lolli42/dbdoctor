@@ -49,13 +49,15 @@ class TcaHelper
     }
 
     /**
+     * @param array<int, string> $ignoreTables
      * @return iterable<string>
      */
-    public function getNextLanguageAwareTcaTable(): iterable
+    public function getNextLanguageAwareTcaTable(array $ignoreTables = []): iterable
     {
         foreach ($GLOBALS['TCA'] as $tableName => $config) {
             if (($config['ctrl']['languageField'] ?? false)
                 && ($config['ctrl']['transOrigPointerField'] ?? false)
+                && !in_array($tableName, $ignoreTables, true)
             ) {
                 yield $tableName;
             }

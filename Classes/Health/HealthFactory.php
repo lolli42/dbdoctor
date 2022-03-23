@@ -37,6 +37,10 @@ class HealthFactory implements HealthFactoryInterface
         SysFileReferenceInvalidFieldname::class,
         TcaTablesPidDeleted::class,
         TcaTablesTranslatedLanguageParentMissing::class,
+        // Check sys_file_reference pointing to not existing records *again*:
+        // TcaTablesTranslatedLanguageParentMissing may have deleted some.
+        SysFileReferenceDangling::class,
+        TcaTablesTranslatedLanguageParentDeleted::class,
         // TcaTablesInvalidLanguageParent::class,
     ];
 
