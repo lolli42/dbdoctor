@@ -41,6 +41,7 @@ class HealthFactory implements HealthFactoryInterface
         // TcaTablesTranslatedLanguageParentMissing may have deleted some.
         SysFileReferenceDangling::class,
         TcaTablesTranslatedLanguageParentDeleted::class,
+        TcaTablesTranslatedLanguageParentDifferentPid::class,
         // TcaTablesInvalidLanguageParent::class,
     ];
 

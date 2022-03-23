@@ -168,8 +168,18 @@ class TcaHelperTest extends UnitTestCase
     public function getNextLanguageAwareTcaTableIgnoresTable(): void
     {
         $GLOBALS['TCA'] = [
-            'foo' => [],
-            'bar' => [],
+            'foo' => [
+                'ctrl' => [
+                    'languageField' => 'sys_language_uid',
+                    'transOrigPointerField' => 'l18n_parent',
+                ],
+            ],
+            'bar' => [
+                'ctrl' => [
+                    'languageField' => 'sys_language_uid',
+                    'transOrigPointerField' => 'l18n_parent',
+                ],
+            ],
         ];
         $subject = new TcaHelper();
         $tables = [];
@@ -314,6 +324,23 @@ class TcaHelperTest extends UnitTestCase
     public function getDeletedFieldReturnsNull(): void
     {
         self::assertNull((new TcaHelper())->getDeletedField('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getHiddenFieldReturnsField(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['enablecolumns']['disabled'] = 'hiddenField';
+        self::assertSame('hiddenField', (new TcaHelper())->getHiddenField('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getHiddenFieldReturnsNull(): void
+    {
+        self::assertNull((new TcaHelper())->getHiddenField('foo'));
     }
 
     /**

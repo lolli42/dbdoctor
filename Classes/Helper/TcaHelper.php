@@ -93,6 +93,11 @@ class TcaHelper
         return ($GLOBALS['TCA'][$tableName]['ctrl']['delete'] ?? null) ?: null;
     }
 
+    public function getHiddenField(string $tableName): ?string
+    {
+        return ($GLOBALS['TCA'][$tableName]['ctrl']['enablecolumns']['disabled'] ?? null) ?: null;
+    }
+
     public function getCreateUserIdField(string $tableName): ?string
     {
         return ($GLOBALS['TCA'][$tableName]['ctrl']['cruser_id'] ?? null) ?: null;
