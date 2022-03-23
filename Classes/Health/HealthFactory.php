@@ -36,6 +36,7 @@ class HealthFactory implements HealthFactoryInterface
         TcaTablesPidMissing::class,
         SysFileReferenceInvalidFieldname::class,
         TcaTablesPidDeleted::class,
+        TcaTablesTranslatedLanguageParentMissing::class,
         // TcaTablesInvalidLanguageParent::class,
     ];
 
