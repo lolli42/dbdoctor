@@ -118,6 +118,10 @@ The interface looks like this:
 
 ![](Documentation/cli-example.png)
 
+Note the above image is notoriously outdated, the interface of the current version
+may look slightly different. We're too lazy to update the image often, but it should
+give a solid idea on how the interface looks like.
+
 The main command is a chain of single checks. They are done one by one. Affected
 record details can be shown on a per-page and a per-record basis to give a quick
 overview. The interface allows deleting or updating of affected records, depending
