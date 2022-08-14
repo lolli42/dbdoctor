@@ -198,7 +198,7 @@ Single tests are described in details when running the CLI command. Rough overvi
 # FAQ
 
 * Will the functionality be made available in a backend GUI?
-  > No. CLI is the only sane way for this kind of things.
+  > No. CLI is the only sane way for these kind of things.
 
 * Will support for TYPO3 v10 or other older core versions added?
   > No. TYPO3 v11 had quite a few DB changes, and it is not planned to implement
@@ -209,7 +209,7 @@ Single tests are described in details when running the CLI command. Rough overvi
 
 [packagist.org](https://packagist.org/packages/lolli/dbdoctor) is enabled via the casual github hook.
 TER releases are created by the "publish.yml" github workflow when tagging versions
-using [tailor](https://github.com/typo33/tailor). The commit message of the commit a tag points to is
+using [tailor](https://github.com/typo33/tailor). The commit message of the tagged commit is
 used as TER upload comment.
 
 Example:
