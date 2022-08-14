@@ -91,10 +91,10 @@ For non-composer projects, the extension is available in TER as extension key
 The nature of the CLI command is to perform destructive database operations on your
 instance. As such, a few things should be kept in mind:
 
-* [!!!] 💣 **Create a fresh database backup dump before using the CLI interface.**
-  Ensure the recovery strategy works. Both the extension and the user can potentially
+* [!!!] 💣 **Create a fresh database backup dump before and after using the CLI interface.**
+  Ensure the recovery strategy actually works: Both the extension and the user can potentially
   get something wrong. We are dealing with low level database stuff here after all,
-  so things can potentially go south rather quickly.
+  so things can potentially go south rather quickly. See the "Further hints" section below, too.
 
 * [!!!] 💣 Make sure the database analyzer is happy and needs no new fields or tables.
   There will be a check in the future to verify this early, but for now, **do not use
@@ -197,6 +197,39 @@ Single tests are described in details when running the CLI command. Rough overvi
 * Various FAL related sys_file_reference and friends checks
 * Various language handling related checks
 * Tons of workspace related checks
+
+
+# Further hints
+
+We highly encourage admins to back up databases when working with dbdoctor. Some basic rules
+regarding SQL dumps must not be forgotten when doing this:
+
+* When dumping an existing MySQL / MariaDB database *before and after* executing the CLI command,
+  it can be helpful to toggle-off the "extended inserts" option: `mysqldump` by default merges
+  multiple INSERT statements into one call for efficiency and speed. This is both quicker to dump and
+  to import, and consumes less disk space.
+
+  However, when looking for single DB changes, it is much more convenient to turn this off and have
+  one line for each inserted row. Tools like `diff` are then far easier to grasp when searching for
+  something that eventually went wrong. Example shell commands:
+  ```
+  $ mysqldump --skip-extended-insert myDatabase > /tmp/myDatabase-`date +%Y-%m-%d-%H-%M-%S`-dbdoctor-before.sql
+  $ bin/typo3 dbdoctor:health
+  $ mysqldump --skip-extended-insert myDatabase > /tmp/myDatabase-`date +%Y-%m-%d-%H-%M-%S`-dbdoctor-after.sql
+  ```
+  It's always possible to deviate from with when you know what you're doing, though.
+
+* When dumping databases, it is a **crucial security measure** to **never** put such dumps into
+  a public directory accessible by a web server or some third party server user. Violating this
+  basic rule is a common source of data leaks in the wild! There is no excuse to get this wrong.
+  It is also a good idea to put SQL files at a place that is rotated into backups to allow debugging
+  later in case issues only pop up after a while. To follow GDPR rules, those files should still be
+  removed at some point!
+
+* When dumping databases, it is often a good idea to gzip .sql files: This typically reduces file size
+  by around factor eight. Lets safe some precious server disk and backup size! It's also possible to
+  directly 'pipe' to gzip when dumping. Either do that, or remember to gzip stuff before logging out
+  of a system.
 
 
 # FAQ
