@@ -29,7 +29,18 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
  */
 abstract class AbstractHealth
 {
-    private string $file;
+    /**
+     * Set to an absolute, not-empty file path string when sql command should be logged.
+     */
+    private string $sqlDumpFile;
+
+    /**
+     * Set to true as soon as a health check got a first change and wrote a comment
+     * "Triggered by" to $sqlDumpFile. This helps to find out which specific health check
+     * triggered a change when reading the dump file. It is used to ensure this comment
+     * header is only wrote once per single health check on first SQL change.
+     */
+    private bool $sqlDumpFileHeaderWritten = false;
 
     protected ContainerInterface $container;
     protected ConnectionPool $connectionPool;
@@ -46,7 +57,7 @@ abstract class AbstractHealth
 
     public function handle(SymfonyStyle $io, int $mode, string $file): int
     {
-        $this->file = $file;
+        $this->sqlDumpFile = $file;
         if ($mode === HealthInterface::MODE_CHECK) {
             return $this->check($io);
         }
@@ -284,8 +295,14 @@ abstract class AbstractHealth
 
     private function logAndOutputSql(SymfonyStyle $io, bool $simulate, string $sql): void
     {
-        if ($this->file && !$simulate) {
-            file_put_contents($this->file, $sql . "\n", \FILE_APPEND);
+        if ($this->sqlDumpFile && !$simulate) {
+            if (!$this->sqlDumpFileHeaderWritten) {
+                // Write a header to the dump file before first row is logged
+                file_put_contents($this->sqlDumpFile, '# Triggered by ' . static::class . "\n", \FILE_APPEND);
+                $this->sqlDumpFileHeaderWritten = true;
+            }
+            // Write that statement to file
+            file_put_contents($this->sqlDumpFile, $sql . "\n", \FILE_APPEND);
         }
         $io->text($sql);
     }
