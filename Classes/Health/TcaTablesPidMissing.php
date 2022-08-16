@@ -32,7 +32,7 @@ class TcaTablesPidMissing extends AbstractHealth implements HealthInterface, Hea
         $io->section('Scan for records on not existing pages');
         $io->text([
             '[DELETE] TCA records have a pid field set to a single page. This page must exist.',
-            'Records on pages that do not exist anymore should be deleted.',
+            '         Records on pages that do not exist anymore should be deleted.',
         ]);
     }
 

@@ -34,11 +34,11 @@ class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth imple
         $io->section('Scan for record translations on wrong pid');
         $io->text([
             '[UPDATE] Record translations use the TCA ctrl field "transOrigPointerField"',
-            '(DB field name usually "l10n_parent" or "l18n_parent"). This field points to a',
-            'default language record. This health check verifies translated records are on',
-            'the same pid as the default language record. It will move affected records, or',
-            'set them to deleted or remove them if there is another translation of that record',
-            'on the correct pid.',
+            '         (DB field name usually "l10n_parent" or "l18n_parent"). This field points to a',
+            '         default language record. This health check verifies translated records are on',
+            '         the same pid as the default language record. It will move affected records, or',
+            '         set them to deleted or remove them if there is another translation of that record',
+            '         on the correct pid.',
         ]);
     }
 

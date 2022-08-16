@@ -30,8 +30,8 @@ class PagesBrokenTree extends AbstractHealth implements HealthInterface, HealthD
         $io->section('Check page tree integrity');
         $io->text([
             '[DELETE] This health check finds "pages" records with their "pid" set to pages that do',
-            'not exist in the database. Pages without proper connection to the tree root are never',
-            'shown in the backend. They should be deleted.',
+            '         not exist in the database. Pages without proper connection to the tree root are never',
+            '         shown in the backend. They should be deleted.',
         ]);
     }
 

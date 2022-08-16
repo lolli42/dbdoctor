@@ -34,9 +34,9 @@ class TcaTablesTranslatedLanguageParentDeleted extends AbstractHealth implements
         $io->section('Scan for not-deleted record translations with deleted parent');
         $io->text([
             '[UPDATE] Record translations use the TCA ctrl field "transOrigPointerField"',
-            '(DB field name usually "l10n_parent" or "l18n_parent"). This field points to a',
-            'default language record. This health check verifies that target is not deleted=1 in the database.',
-            'Affected records are set deleted=1, too.',
+            '         (DB field name usually "l10n_parent" or "l18n_parent"). This field points to a',
+            '         default language record. This health check verifies that target is not deleted=1 in the database.',
+            '         Affected records are set deleted=1, too.',
         ]);
     }
 

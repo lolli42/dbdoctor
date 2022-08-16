@@ -32,8 +32,8 @@ class SysFileReferenceDangling extends AbstractHealth implements HealthInterface
         $io->section('Scan for orphan sys_file_reference records');
         $io->text([
             '[DELETE] A basic check for sys_file_reference: the records referenced in uid_local',
-            'and uid_foreign must exist, otherwise that sys_file_reference row is obsolete and',
-            'should be removed.',
+            '         and uid_foreign must exist, otherwise that sys_file_reference row is obsolete and',
+            '         should be removed.',
         ]);
     }
 
