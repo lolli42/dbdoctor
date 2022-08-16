@@ -31,8 +31,8 @@ class SysFileReferenceInvalidFieldname extends AbstractHealth implements HealthI
         $io->section('Scan for sys_file_reference_records with invalid foreign fieldname');
         $io->text([
             '[DELETE] Records in "sys_file_reference" point to a foreign table in "tablenames" and',
-            'a foreign field in "fieldname". This check verifies the "fieldname" exists in the foreign',
-            'table, and deletes sys_file_reference records that points to invalid "fieldname".',
+            '         a foreign field in "fieldname". This check verifies the "fieldname" exists in the foreign',
+            '         table, and deletes sys_file_reference records that point to invalid "fieldname".',
         ]);
     }
 

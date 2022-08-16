@@ -34,8 +34,8 @@ class TcaTablesPidDeleted extends AbstractHealth implements HealthInterface, Hea
         $io->section('Scan for not-deleted records on pages set to deleted');
         $io->text([
             '[UPDATE] TCA records have a pid field set to a single page. This page must exist.',
-            'This scan finds deleted=0 records pointing to pages having deleted=1. Those',
-            'records are set to deleted=1, too.',
+            '         This scan finds deleted=0 records pointing to pages having deleted=1. Those',
+            '         records are set to deleted=1, too.',
         ]);
     }
 

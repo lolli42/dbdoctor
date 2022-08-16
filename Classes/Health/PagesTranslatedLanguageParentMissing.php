@@ -31,8 +31,8 @@ class PagesTranslatedLanguageParentMissing extends AbstractHealth implements Hea
         $io->section('Check pages with missing language parent');
         $io->text([
             '[DELETE] This health check finds translated "pages" records (sys_language_uid > 0) with',
-            'their default language record (l10n_parent field) not existing in the database.',
-            'Those translated pages are never shown in backend and frontend and should be deleted.',
+            '         their default language record (l10n_parent field) not existing in the database.',
+            '         Those translated pages are never shown in backend and frontend and should be deleted.',
         ]);
     }
 

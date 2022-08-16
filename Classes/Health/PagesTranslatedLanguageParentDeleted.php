@@ -33,8 +33,8 @@ class PagesTranslatedLanguageParentDeleted extends AbstractHealth implements Hea
         $io->section('Check pages with deleted language parent');
         $io->text([
             '[DELETE] This health check finds translated and not deleted "pages" records (sys_language_uid > 0)',
-            'with their default language record (l10n_parent field) set to deleted.',
-            'Those translated pages are never shown in backend and frontend and should be set to deleted, too.',
+            '         with their default language record (l10n_parent field) set to deleted.',
+            '         Those translated pages are never shown in backend and frontend and should be set to deleted, too.',
         ]);
     }
 

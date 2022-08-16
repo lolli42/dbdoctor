@@ -34,10 +34,10 @@ class TcaTablesInvalidLanguageParent extends AbstractHealth implements HealthInt
         $io->section('Scan for record translations with invalid parent');
         $io->text([
             '[DELETE] Record translations ("translate" / "connected" mode, as opposed to "free" mode) use the',
-            'database field "transOrigPointerField" (DB field name usually "l10n_parent" or "l18n_parent").',
-            'This field points to a default language record. This health check verifies if that target',
-            'exists in the database, is on the same page, and the deleted flag is in sync. Having "dangling"',
-            'localized records on a page can otherwise trigger various issue when the page is copied or similar.',
+            '         database field "transOrigPointerField" (DB field name usually "l10n_parent" or "l18n_parent").',
+            '         This field points to a default language record. This health check verifies if that target',
+            '         exists in the database, is on the same page, and the deleted flag is in sync. Having "dangling"',
+            '         localized records on a page can otherwise trigger various issue when the page is copied or similar.',
         ]);
     }
 
