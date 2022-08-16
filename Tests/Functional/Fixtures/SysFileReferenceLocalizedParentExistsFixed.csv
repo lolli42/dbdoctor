@@ -1,0 +1,7 @@
+"sys_file_reference"
+,"uid","pid","sys_language_uid","l10n_parent","deleted","uid_local","table_local","uid_foreign","tablenames","title"
+,1,1,0,0,0,1,"sys_file",1,"pages","Ok pages lang 0"
+,2,1,1,1,0,1,"sys_file",1,"pages","Ok pages lang 1"
+"pages"
+,"uid","pid","title"
+,1,1,"page 1"
