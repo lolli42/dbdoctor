@@ -1,3 +1,5 @@
+actor: CliTester
+# @todo: Next one is obsolete when codeception 4 is dropped
 class_name: CliTester
 modules:
   enabled:

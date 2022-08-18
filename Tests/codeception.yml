@@ -2,7 +2,9 @@ namespace: Lolli\Dbdoctor\Tests\Acceptance\Support
 paths:
   tests: Acceptance
   data: .
+  # @todo: Next one is obsolete when codeception 4 is dropped
   log: ../.Build/Web/typo3temp/var/tests/AcceptanceReports
+  output: ../.Build/Web/typo3temp/var/tests/AcceptanceReports
   support: Acceptance/Support
 settings:
   colors: true
