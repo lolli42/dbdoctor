@@ -253,10 +253,13 @@ used as TER upload comment.
 Example:
 
 ```
-composer install
-.Build/bin/tailor set-version 0.2.0
-git commit -am "[RELEASE] 0.2.0 Bug fixes and improved core v11 compatibility"
-git tag 0.2.0
+Build/Scripts/runTests.sh -s clean
+Build/Scripts/runTests.sh -s composerUpdate
+composer req --dev typo3/tailor
+.Build/bin/tailor set-version 0.3.1
+composer rem --dev typo3/tailor
+git commit -am "[RELEASE] 0.3.1 Release related fix"
+git tag 0.3.1
 git push
 git push --tags
 ```
