@@ -193,10 +193,11 @@ prompting for user input after each failed check.
 
 Single tests are described in details when running the CLI command. Rough overview:
 
-* General page tree integrity checks
-* Various FAL related sys_file_reference and friends checks
-* Various language handling related checks
-* Tons of workspace related checks
+* Page tree integrity checks
+* FAL related sys_file_reference and friends checks
+* Language handling related checks
+* Workspace related checks
+* Inline parent-child relation related checks
 
 
 # Further hints
