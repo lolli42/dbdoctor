@@ -50,6 +50,8 @@ class HealthFactory implements HealthFactoryInterface
         // TcaTablesInvalidLanguageParent::class,
         InlineForeignFieldChildrenParentMissing::class,
         InlineForeignFieldChildrenParentDeleted::class,
+        // @todo: Maybe that's not a good position when we start scanning for records translated more than once (issue #9)?
+        InlineForeignFieldChildrenParentLanguageDifferent::class,
     ];
 
     private ContainerInterface $container;
