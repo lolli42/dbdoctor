@@ -65,6 +65,45 @@ class TcaHelper
     }
 
     /**
+     * @param array<int, string> $ignoreTables
+     * @return iterable<array<string, string>>
+     */
+    public function getNextInlineForeignFieldChildTcaTable(array $ignoreTables = []): iterable
+    {
+        $inlineChildTables = [];
+        foreach ($GLOBALS['TCA'] as $config) {
+            foreach (($config['columns'] ?? []) as $columnConfig) {
+                if (is_array($columnConfig['config'] ?? false)
+                    && ($columnConfig['config']['type'] ?? '') === 'inline'
+                    && (!empty($columnConfig['config']['foreign_table'] ?? ''))
+                    && (!empty($columnConfig['config']['foreign_field'] ?? ''))
+                    // We require foreign_table_field being set - at least for now.
+                    && (!empty($columnConfig['config']['foreign_table_field'] ?? ''))
+                    // Checking existence of TCA definition of the two fields in child table *may* not be strictly required?
+                    // We keep it for now, though.
+                    && (!empty($GLOBALS['TCA'][$columnConfig['config']['foreign_table']]['columns'][$columnConfig['config']['foreign_field']]))
+                    && (!empty($GLOBALS['TCA'][$columnConfig['config']['foreign_table']]['columns'][$columnConfig['config']['foreign_table_field']]))
+                    // Not found yet
+                    // Note we're not handling the case "two different parents use different foreign_field / foreign_table_field of child": It's unsure
+                    // if that works at all. If that happens, first one wins for now.
+                    && (!isset($inlineChildTables[$columnConfig['config']['foreign_table']]))
+                    // Not ignored
+                    && !in_array($columnConfig['config']['foreign_table'], $ignoreTables, true)
+                ) {
+                    $inlineChildTables[$columnConfig['config']['foreign_table']] = [
+                        'tableName' => $columnConfig['config']['foreign_table'],
+                        'fieldNameOfParentTableUid' => $columnConfig['config']['foreign_field'],
+                        'fieldNameOfParentTableName' => $columnConfig['config']['foreign_table_field'],
+                    ];
+                }
+            }
+        }
+        foreach ($inlineChildTables as $childTable) {
+            yield $childTable;
+        }
+    }
+
+    /**
      * Determine if a TCA table has at least one type='flex' field.
      */
     public function hasFlexField(string $tableName): bool

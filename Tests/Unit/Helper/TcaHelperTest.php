@@ -190,6 +190,360 @@ class TcaHelperTest extends UnitTestCase
     }
 
     /**
+     * @return iterable<array<mixed>>
+     */
+    public function getNextInlineForeignFieldChildTcaTableDataProvider(): iterable
+    {
+        yield 'empty' => [
+            [],
+            [],
+            [],
+        ];
+
+        yield 'one child, incomplete parent' => [
+            [
+                'parent_table' => [
+                    'columns' => [
+                        'inline_parent' => [
+                            'config' => [
+                                'type' => 'inline',
+                                'foreign_table' => 'child_table',
+                                'foreign_field' => 'parent_uid',
+                            ],
+                        ],
+                    ],
+                ],
+                'child_table' => [
+                    'columns' => [
+                        'foreign_uid' => [
+                            'config' => [
+                                'type' => 'passthrough',
+                            ],
+                        ],
+                        'foreign_field' => [
+                            'config' => [
+                                'type' => 'passthrough',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            [],
+            [],
+        ];
+
+        yield 'one child, incomplete child' => [
+            [
+                'parent_table' => [
+                    'columns' => [
+                        'inline_parent' => [
+                            'config' => [
+                                'type' => 'inline',
+                                'foreign_table' => 'child_table',
+                                'foreign_field' => 'parent_uid',
+                                'foreign_table_field' => 'parent_table_name_field',
+                            ],
+                        ],
+                    ],
+                ],
+                'child_table' => [
+                    'columns' => [
+                        'parent_uid' => [
+                            'config' => [
+                                'type' => 'passthrough',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            [],
+            [],
+        ];
+
+        yield 'one child' => [
+            [
+                'parent_table' => [
+                    'columns' => [
+                        'inline_parent' => [
+                            'config' => [
+                                'type' => 'inline',
+                                'foreign_table' => 'child_table',
+                                'foreign_field' => 'parent_uid',
+                                'foreign_table_field' => 'parent_table_name_field',
+                            ],
+                        ],
+                    ],
+                ],
+                'child_table' => [
+                    'columns' => [
+                        'parent_uid' => [
+                            'config' => [
+                                'type' => 'passthrough',
+                            ],
+                        ],
+                        'parent_table_name_field' => [
+                            'config' => [
+                                'type' => 'passthrough',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                [
+                    'tableName' => 'child_table',
+                    'fieldNameOfParentTableUid' => 'parent_uid',
+                    'fieldNameOfParentTableName' => 'parent_table_name_field',
+                ],
+            ],
+            [],
+        ];
+
+        yield 'two children' => [
+            [
+                'parent_table' => [
+                    'columns' => [
+                        'inline_parent_1' => [
+                            'config' => [
+                                'type' => 'inline',
+                                'foreign_table' => 'child_table_1',
+                                'foreign_field' => 'parent_uid',
+                                'foreign_table_field' => 'parent_table_name_field',
+                            ],
+                        ],
+                        'inline_parent_2' => [
+                            'config' => [
+                                'type' => 'inline',
+                                'foreign_table' => 'child_table_2',
+                                'foreign_field' => 'parent_uid',
+                                'foreign_table_field' => 'parent_table_name_field',
+                            ],
+                        ],
+                    ],
+                ],
+                'child_table_1' => [
+                    'columns' => [
+                        'parent_uid' => [
+                            'config' => [
+                                'type' => 'passthrough',
+                            ],
+                        ],
+                        'parent_table_name_field' => [
+                            'config' => [
+                                'type' => 'passthrough',
+                            ],
+                        ],
+                    ],
+                ],
+                'child_table_2' => [
+                    'columns' => [
+                        'parent_uid' => [
+                            'config' => [
+                                'type' => 'passthrough',
+                            ],
+                        ],
+                        'parent_table_name_field' => [
+                            'config' => [
+                                'type' => 'passthrough',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                [
+                    'tableName' => 'child_table_1',
+                    'fieldNameOfParentTableUid' => 'parent_uid',
+                    'fieldNameOfParentTableName' => 'parent_table_name_field',
+                ],
+                [
+                    'tableName' => 'child_table_2',
+                    'fieldNameOfParentTableUid' => 'parent_uid',
+                    'fieldNameOfParentTableName' => 'parent_table_name_field',
+                ],
+            ],
+            [],
+        ];
+
+        yield 'two children, one ignored' => [
+            [
+                'parent_table' => [
+                    'columns' => [
+                        'inline_parent_1' => [
+                            'config' => [
+                                'type' => 'inline',
+                                'foreign_table' => 'child_table_1',
+                                'foreign_field' => 'parent_uid',
+                                'foreign_table_field' => 'parent_table_name_field',
+                            ],
+                        ],
+                        'inline_parent_2' => [
+                            'config' => [
+                                'type' => 'inline',
+                                'foreign_table' => 'child_table_2',
+                                'foreign_field' => 'parent_uid',
+                                'foreign_table_field' => 'parent_table_name_field',
+                            ],
+                        ],
+                    ],
+                ],
+                'child_table_1' => [
+                    'columns' => [
+                        'parent_uid' => [
+                            'config' => [
+                                'type' => 'passthrough',
+                            ],
+                        ],
+                        'parent_table_name_field' => [
+                            'config' => [
+                                'type' => 'passthrough',
+                            ],
+                        ],
+                    ],
+                ],
+                'child_table_2' => [
+                    'columns' => [
+                        'parent_uid' => [
+                            'config' => [
+                                'type' => 'passthrough',
+                            ],
+                        ],
+                        'parent_table_name_field' => [
+                            'config' => [
+                                'type' => 'passthrough',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                [
+                    'tableName' => 'child_table_2',
+                    'fieldNameOfParentTableUid' => 'parent_uid',
+                    'fieldNameOfParentTableName' => 'parent_table_name_field',
+                ],
+            ],
+            ['child_table_1'],
+        ];
+
+        yield 'one child, referenced twice from same parent table' => [
+            [
+                'parent_table' => [
+                    'columns' => [
+                        'inline_parent_1' => [
+                            'config' => [
+                                'type' => 'inline',
+                                'foreign_table' => 'child_table_1',
+                                'foreign_field' => 'parent_uid',
+                                'foreign_table_field' => 'parent_table_name_field',
+                            ],
+                        ],
+                        'inline_parent_2' => [
+                            'config' => [
+                                'type' => 'inline',
+                                'foreign_table' => 'child_table_1',
+                                'foreign_field' => 'parent_uid',
+                                'foreign_table_field' => 'parent_table_name_field',
+                            ],
+                        ],
+                    ],
+                ],
+                'child_table_1' => [
+                    'columns' => [
+                        'parent_uid' => [
+                            'config' => [
+                                'type' => 'passthrough',
+                            ],
+                        ],
+                        'parent_table_name_field' => [
+                            'config' => [
+                                'type' => 'passthrough',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                [
+                    'tableName' => 'child_table_1',
+                    'fieldNameOfParentTableUid' => 'parent_uid',
+                    'fieldNameOfParentTableName' => 'parent_table_name_field',
+                ],
+            ],
+            [],
+        ];
+
+        yield 'one child, referenced twice from different parent tables' => [
+            [
+                'parent_table_1' => [
+                    'columns' => [
+                        'inline_parent_1' => [
+                            'config' => [
+                                'type' => 'inline',
+                                'foreign_table' => 'child_table_1',
+                                'foreign_field' => 'parent_uid',
+                                'foreign_table_field' => 'parent_table_name_field',
+                            ],
+                        ],
+                    ],
+                ],
+                'parent_table_2' => [
+                    'columns' => [
+                        'inline_parent_1' => [
+                            'config' => [
+                                'type' => 'inline',
+                                'foreign_table' => 'child_table_1',
+                                'foreign_field' => 'parent_uid',
+                                'foreign_table_field' => 'parent_table_name_field',
+                            ],
+                        ],
+                    ],
+                ],
+                'child_table_1' => [
+                    'columns' => [
+                        'parent_uid' => [
+                            'config' => [
+                                'type' => 'passthrough',
+                            ],
+                        ],
+                        'parent_table_name_field' => [
+                            'config' => [
+                                'type' => 'passthrough',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            [
+                [
+                    'tableName' => 'child_table_1',
+                    'fieldNameOfParentTableUid' => 'parent_uid',
+                    'fieldNameOfParentTableName' => 'parent_table_name_field',
+                ],
+            ],
+            [],
+        ];
+    }
+
+    /**
+     * @test
+     * @dataProvider getNextInlineForeignFieldChildTcaTableDataProvider
+     * @param array<mixed> $tca
+     * @param array<mixed> $expected
+     * @param array<int, string> $ignoredTables
+     */
+    public function getNextInlineForeignFieldChildTcaTable(array $tca, array $expected, array $ignoredTables): void
+    {
+        $GLOBALS['TCA'] = $tca;
+        $subject = new TcaHelper();
+        $result = [];
+        foreach ($subject->getNextInlineForeignFieldChildTcaTable($ignoredTables) as $item) {
+            $result[] = $item;
+        }
+        self::assertSame($expected, $result);
+    }
+
+    /**
      * @return array<string, array<mixed>>
      */
     public function hasFlexFieldDataProvider(): array
