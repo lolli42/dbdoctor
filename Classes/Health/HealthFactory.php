@@ -49,6 +49,7 @@ class HealthFactory implements HealthFactoryInterface
         TcaTablesTranslatedLanguageParentDifferentPid::class,
         // TcaTablesInvalidLanguageParent::class,
         InlineForeignFieldChildrenParentMissing::class,
+        InlineForeignFieldChildrenParentDeleted::class,
     ];
 
     private ContainerInterface $container;
