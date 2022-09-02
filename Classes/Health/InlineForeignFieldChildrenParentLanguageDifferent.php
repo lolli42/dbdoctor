@@ -68,7 +68,7 @@ class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHealth i
                 if (empty($inlineChildRow[$fieldNameOfParentTableName])
                     || (int)($inlineChildRow[$fieldNameOfParentTableUid]) === 0
                     // Parent TCA table must be defined and table must exist
-                    || !is_array($GLOBALS['TCA'][$inlineChildRow[$fieldNameOfParentTableName]])
+                    || !is_array($GLOBALS['TCA'][$inlineChildRow[$fieldNameOfParentTableName]] ?? false)
                     || !$tableHelper->tableExistsInDatabase((string)$inlineChildRow[$fieldNameOfParentTableName])
                 ) {
                     // This was handled by previous InlineForeignFieldChildrenParentMissing already.

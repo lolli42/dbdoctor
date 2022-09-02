@@ -24,7 +24,9 @@
         </testsuite>
     </testsuites>
     <php>
+        <const name="TYPO3_TESTING_FUNCTIONAL_REMOVE_ERROR_HANDLER" value="true" />
         <ini name="display_errors" value="1" />
+        <ini name="error_reporting" value="E_ALL" />
         <env name="TYPO3_CONTEXT" value="Testing" />
     </php>
 </phpunit>
