@@ -2,8 +2,8 @@
 ,"uid","pid","title"
 ,1,1,"page 1"
 "sys_file_reference"
-,"uid","pid","sys_language_uid","l10n_parent","deleted","uid_local","table_local","uid_foreign","tablenames","title"
-,1,1,0,0,0,1,"sys_file",1,"tt_content","Ok tt_content 1"
+,"uid","pid","sys_language_uid","l10n_parent","deleted","uid_local","uid_foreign","tablenames","title"
+,1,1,0,0,0,1,1,"tt_content","Ok tt_content 1"
 "tt_content"
 ,"uid","pid"
 ,1,1
