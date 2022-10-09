@@ -19,15 +19,11 @@ namespace Lolli\Dbdoctor\Tests\Functional\Health;
 
 use Lolli\Dbdoctor\Health\HealthInterface;
 use Lolli\Dbdoctor\Health\TcaTablesWorkspaceRecordsDangling;
-use Prophecy\Argument;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 class TcaTablesWorkspaceRecordsDanglingTest extends FunctionalTestCase
 {
-    use ProphecyTrait;
-
     protected array $coreExtensionsToLoad = [
         'workspaces',
     ];
@@ -42,14 +38,11 @@ class TcaTablesWorkspaceRecordsDanglingTest extends FunctionalTestCase
     public function fixBrokenRecords(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesWorkspaceRecordsDanglingImport.csv');
-        $io = $this->prophesize(SymfonyStyle::class);
-        $io->ask(Argument::cetera())->willReturn('e');
+        $io = $this->getMockBuilder(SymfonyStyle::class)->disableOriginalConstructor()->getMock();
+        $io->expects(self::atLeastOnce())->method('warning');
         /** @var TcaTablesWorkspaceRecordsDangling $subject */
         $subject = $this->get(TcaTablesWorkspaceRecordsDangling::class);
-        $subject->handle($io->reveal(), HealthInterface::MODE_EXECUTE, '');
-        $io->warning(Argument::cetera())->shouldHaveBeenCalled();
-        $io->note(Argument::cetera())->shouldHaveBeenCalled();
-        $io->text(Argument::cetera())->shouldHaveBeenCalled();
+        $subject->handle($io, HealthInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesWorkspaceRecordsDanglingFixed.csv');
     }
 }

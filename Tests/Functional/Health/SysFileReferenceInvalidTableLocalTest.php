@@ -19,16 +19,12 @@ namespace Lolli\Dbdoctor\Tests\Functional\Health;
 
 use Lolli\Dbdoctor\Health\HealthInterface;
 use Lolli\Dbdoctor\Health\SysFileReferenceInvalidTableLocal;
-use Prophecy\Argument;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 class SysFileReferenceInvalidTableLocalTest extends FunctionalTestCase
 {
-    use ProphecyTrait;
-
     protected array $testExtensionsToLoad = [
         'typo3conf/ext/dbdoctor',
     ];
@@ -42,14 +38,11 @@ class SysFileReferenceInvalidTableLocalTest extends FunctionalTestCase
             self::markTestSkipped();
         }
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceInvalidTableLocalImport.csv');
-        $io = $this->prophesize(SymfonyStyle::class);
-        $io->ask(Argument::cetera())->willReturn('e');
+        $io = $this->getMockBuilder(SymfonyStyle::class)->disableOriginalConstructor()->getMock();
+        $io->expects(self::atLeastOnce())->method('warning');
         /** @var SysFileReferenceInvalidTableLocal $subject */
         $subject = $this->get(SysFileReferenceInvalidTableLocal::class);
-        $subject->handle($io->reveal(), HealthInterface::MODE_EXECUTE, '');
-        $io->warning(Argument::cetera())->shouldHaveBeenCalled();
-        $io->note(Argument::cetera())->shouldHaveBeenCalled();
-        $io->text(Argument::cetera())->shouldHaveBeenCalled();
+        $subject->handle($io, HealthInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceInvalidTableLocalFixed.csv');
     }
 }
