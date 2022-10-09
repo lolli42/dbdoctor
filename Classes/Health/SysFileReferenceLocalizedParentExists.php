@@ -70,6 +70,6 @@ class SysFileReferenceLocalizedParentExists extends AbstractHealth implements He
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
     {
-        $this->outputRecordDetails($io, $affectedRecords, '', [], ['sys_language_uid', 'l10n_parent', 'deleted', 'tablenames', 'uid_foreign', 'fieldname', 'uid_local', 'table_local' ]);
+        $this->outputRecordDetails($io, $affectedRecords, '', [], ['sys_language_uid', 'l10n_parent', 'deleted', 'tablenames', 'uid_foreign', 'fieldname', 'uid_local']);
     }
 }

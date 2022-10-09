@@ -89,6 +89,6 @@ class SysFileReferenceLocalizedFieldSync extends AbstractHealth implements Healt
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
     {
-        $this->outputRecordDetails($io, $affectedRecords, '', [], ['sys_language_uid', 'l10n_parent', 'deleted', 'tablenames', 'fieldname', 'uid_foreign', 'uid_local', 'table_local' ]);
+        $this->outputRecordDetails($io, $affectedRecords, '', [], ['sys_language_uid', 'l10n_parent', 'deleted', 'tablenames', 'fieldname', 'uid_foreign', 'uid_local']);
     }
 }

@@ -108,6 +108,6 @@ class SysFileReferenceInvalidPid extends AbstractHealth implements HealthInterfa
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
     {
-        $this->outputRecordDetails($io, $affectedRecords, '', [], ['tablenames', 'uid_foreign', 'fieldname', 'uid_local', 'table_local' ]);
+        $this->outputRecordDetails($io, $affectedRecords, '', [], ['tablenames', 'uid_foreign', 'fieldname', 'uid_local']);
     }
 }
