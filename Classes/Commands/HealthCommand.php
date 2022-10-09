@@ -116,10 +116,12 @@ class HealthCommand extends Command
             if (($result & HealthInterface::RESULT_ABORT) === HealthInterface::RESULT_ABORT) {
                 $io->warning('Aborting ...');
                 $result |= $this->removeEmptyFile($io, $file);
+                $this->outputSysRefIndexWarning($io, $mode, $result);
                 return $result;
             }
         }
         $result |= $this->removeEmptyFile($io, $file);
+        $this->outputSysRefIndexWarning($io, $mode, $result);
         return $result;
     }
 
@@ -141,5 +143,16 @@ class HealthCommand extends Command
             return HealthInterface::RESULT_ERROR;
         }
         return HealthInterface::RESULT_OK;
+    }
+
+    private function outputSysRefIndexWarning(SymfonyStyle $io, int $mode, int $result): void
+    {
+        if (($mode === HealthInterface::MODE_INTERACTIVE || $mode === HealthInterface::MODE_EXECUTE)
+            && (($result & HealthInterface::RESULT_BROKEN) === HealthInterface::RESULT_BROKEN)
+        ) {
+            $io->warning(
+                'DB doctor updated something. Remember to run "bin/typo3 referenceindex:update" to update reference index.'
+            );
+        }
     }
 }
