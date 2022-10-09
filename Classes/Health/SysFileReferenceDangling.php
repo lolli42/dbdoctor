@@ -45,14 +45,14 @@ class SysFileReferenceDangling extends AbstractHealth implements HealthInterface
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
         // We fetch deleted=1 records here, too. If it's relation is broken, they should vanish, too.
         $queryBuilder->getRestrictions()->removeAll();
-        $result = $queryBuilder->select('uid', 'pid', 'uid_local', 'table_local', 'uid_foreign', 'tablenames')
+        $result = $queryBuilder->select('uid', 'pid', 'uid_local', 'uid_foreign', 'tablenames')
             ->from('sys_file_reference')
             ->orderBy('uid')
             ->executeQuery();
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
-                $recordsHelper->getRecord((string)$row['table_local'], ['uid'], (int)$row['uid_local']);
+                $recordsHelper->getRecord('sys_file', ['uid'], (int)$row['uid_local']);
                 $recordsHelper->getRecord((string)$row['tablenames'], ['uid'], (int)$row['uid_foreign']);
             } catch (NoSuchRecordException|NoSuchTableException $e) {
                 $danglingRows['sys_file_reference'][] = $row;
@@ -68,6 +68,6 @@ class SysFileReferenceDangling extends AbstractHealth implements HealthInterface
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
     {
-        $this->outputRecordDetails($io, $affectedRecords, '', [], ['table_local', 'uid_local', 'tablenames', 'uid_foreign', 'fieldname']);
+        $this->outputRecordDetails($io, $affectedRecords, '', [], ['uid_local', 'tablenames', 'uid_foreign', 'fieldname']);
     }
 }
