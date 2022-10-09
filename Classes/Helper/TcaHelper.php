@@ -74,7 +74,7 @@ class TcaHelper
         foreach ($GLOBALS['TCA'] as $config) {
             foreach (($config['columns'] ?? []) as $columnConfig) {
                 if (is_array($columnConfig['config'] ?? false)
-                    && ($columnConfig['config']['type'] ?? '') === 'inline'
+                    && in_array(($columnConfig['config']['type'] ?? ''), ['inline', 'file'], true)
                     && (!empty($columnConfig['config']['foreign_table'] ?? ''))
                     && (!empty($columnConfig['config']['foreign_field'] ?? ''))
                     // We require foreign_table_field being set - at least for now.

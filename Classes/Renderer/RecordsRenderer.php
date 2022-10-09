@@ -162,7 +162,7 @@ class RecordsRenderer
      */
     private function addField(array $fields, ?string $field): array
     {
-        if ($field && !in_array($field, $fields)) {
+        if ($field && !in_array($field, $fields, true)) {
             $fields[] = $field;
         }
         return $fields;
