@@ -87,13 +87,19 @@ class RecordsRenderer
                 $row = array_merge($reason, $row);
             }
             if ($tableName === 'sys_file_reference'
-                && isset($row['uid_local']) && isset($row['table_local'])
+                && isset($row['uid_local'])
                 && isset($row['uid_foreign']) && isset($row['tablenames'])
             ) {
                 // Maybe make this more generic, we 'll see.
-                $row['table_local'] = $this->resolveRelationTable((string)$row['table_local']);
-                if ($this->tableHelper->tableExistsInDatabase((string)$row['table_local'])) {
-                    $row['uid_local'] = $this->resolveRelation((string)$row['table_local'], (int)($row['uid_local']));
+                if (isset($row['table_local'])) {
+                    // v11 compat layer which still has table_local field in sys_file_reference
+                    // @todo: Remove when v11 compat is dropped from extension
+                    $row['table_local'] = $this->resolveRelationTable((string)$row['table_local']);
+                    if ($this->tableHelper->tableExistsInDatabase((string)$row['table_local'])) {
+                        $row['uid_local'] = $this->resolveRelation((string)$row['table_local'], (int)($row['uid_local']));
+                    }
+                } else {
+                    $row['uid_local'] = $this->resolveRelation('sys_file', (int)($row['uid_local']));
                 }
                 $row['tablenames'] = $this->resolveRelationTable((string)$row['tablenames']);
                 if ($this->tableHelper->tableExistsInDatabase((string)$row['tablenames'])) {
