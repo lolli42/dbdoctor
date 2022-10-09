@@ -39,7 +39,7 @@ class SysFileReferenceInvalidTableLocalTest extends FunctionalTestCase
     public function fixBrokenRecords(): void
     {
         if ((new Typo3Version())->getMajorVersion() >= 12) {
-            $this->markTestSkipped();
+            self::markTestSkipped();
         }
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceInvalidTableLocalImport.csv');
         $io = $this->prophesize(SymfonyStyle::class);

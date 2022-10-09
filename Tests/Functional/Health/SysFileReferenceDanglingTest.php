@@ -22,6 +22,7 @@ use Lolli\Dbdoctor\Health\SysFileReferenceDangling;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 class SysFileReferenceDanglingTest extends FunctionalTestCase
@@ -41,7 +42,11 @@ class SysFileReferenceDanglingTest extends FunctionalTestCase
      */
     public function fixBrokenRecords(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingImport.csv');
+        if ((new Typo3Version())->getMajorVersion() >= 12) {
+            $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingImport.csv');
+        } else {
+            $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingImportV11.csv');
+        }
         $io = $this->prophesize(SymfonyStyle::class);
         $io->ask(Argument::cetera())->willReturn('e');
         /** @var SysFileReferenceDangling $subject */
@@ -50,6 +55,10 @@ class SysFileReferenceDanglingTest extends FunctionalTestCase
         $io->warning(Argument::cetera())->shouldHaveBeenCalled();
         $io->note(Argument::cetera())->shouldHaveBeenCalled();
         $io->text(Argument::cetera())->shouldHaveBeenCalled();
-        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingFixed.csv');
+        if ((new Typo3Version())->getMajorVersion() >= 12) {
+            $this->assertCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingFixed.csv');
+        } else {
+            $this->assertCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingFixedV11.csv');
+        }
     }
 }
