@@ -19,16 +19,12 @@ namespace Lolli\Dbdoctor\Tests\Functional\Health;
 
 use Lolli\Dbdoctor\Health\HealthInterface;
 use Lolli\Dbdoctor\Health\SysFileReferenceDangling;
-use Prophecy\Argument;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 class SysFileReferenceDanglingTest extends FunctionalTestCase
 {
-    use ProphecyTrait;
-
     protected array $coreExtensionsToLoad = [
         'workspaces',
     ];
@@ -47,14 +43,11 @@ class SysFileReferenceDanglingTest extends FunctionalTestCase
         } else {
             $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingImportV11.csv');
         }
-        $io = $this->prophesize(SymfonyStyle::class);
-        $io->ask(Argument::cetera())->willReturn('e');
+        $io = $this->getMockBuilder(SymfonyStyle::class)->disableOriginalConstructor()->getMock();
+        $io->expects(self::atLeastOnce())->method('warning');
         /** @var SysFileReferenceDangling $subject */
         $subject = $this->get(SysFileReferenceDangling::class);
-        $subject->handle($io->reveal(), HealthInterface::MODE_EXECUTE, '');
-        $io->warning(Argument::cetera())->shouldHaveBeenCalled();
-        $io->note(Argument::cetera())->shouldHaveBeenCalled();
-        $io->text(Argument::cetera())->shouldHaveBeenCalled();
+        $subject->handle($io, HealthInterface::MODE_EXECUTE, '');
         if ((new Typo3Version())->getMajorVersion() >= 12) {
             $this->assertCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingFixed.csv');
         } else {

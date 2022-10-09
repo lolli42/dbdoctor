@@ -19,15 +19,11 @@ namespace Lolli\Dbdoctor\Tests\Functional\Health;
 
 use Lolli\Dbdoctor\Health\HealthInterface;
 use Lolli\Dbdoctor\Health\TcaTablesTranslatedLanguageParentDifferentPid;
-use Prophecy\Argument;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 class TcaTablesTranslatedLanguageParentDifferentPidTest extends FunctionalTestCase
 {
-    use ProphecyTrait;
-
     protected array $testExtensionsToLoad = [
         'typo3conf/ext/dbdoctor',
     ];
@@ -38,14 +34,11 @@ class TcaTablesTranslatedLanguageParentDifferentPidTest extends FunctionalTestCa
     public function fixBrokenRecords(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidImport.csv');
-        $io = $this->prophesize(SymfonyStyle::class);
-        $io->ask(Argument::cetera())->willReturn('e');
+        $io = $this->getMockBuilder(SymfonyStyle::class)->disableOriginalConstructor()->getMock();
+        $io->expects(self::atLeastOnce())->method('warning');
         /** @var TcaTablesTranslatedLanguageParentDifferentPid $subject */
         $subject = $this->get(TcaTablesTranslatedLanguageParentDifferentPid::class);
-        $subject->handle($io->reveal(), HealthInterface::MODE_EXECUTE, '');
-        $io->warning(Argument::cetera())->shouldHaveBeenCalled();
-        // $io->note(Argument::cetera())->shouldHaveBeenCalled();
-        $io->text(Argument::cetera())->shouldHaveBeenCalled();
+        $subject->handle($io, HealthInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidFixed.csv');
     }
 
@@ -56,14 +49,11 @@ class TcaTablesTranslatedLanguageParentDifferentPidTest extends FunctionalTestCa
     {
         unset($GLOBALS['TCA']['tt_content']['ctrl']['enablecolumns']['disabled']);
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidTtContentNotHiddenAwareImport.csv');
-        $io = $this->prophesize(SymfonyStyle::class);
-        $io->ask(Argument::cetera())->willReturn('e');
+        $io = $this->getMockBuilder(SymfonyStyle::class)->disableOriginalConstructor()->getMock();
+        $io->expects(self::atLeastOnce())->method('warning');
         /** @var TcaTablesTranslatedLanguageParentDifferentPid $subject */
         $subject = $this->get(TcaTablesTranslatedLanguageParentDifferentPid::class);
-        $subject->handle($io->reveal(), HealthInterface::MODE_EXECUTE, '');
-        $io->warning(Argument::cetera())->shouldHaveBeenCalled();
-        // $io->note(Argument::cetera())->shouldHaveBeenCalled();
-        $io->text(Argument::cetera())->shouldHaveBeenCalled();
+        $subject->handle($io, HealthInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidTtContentNotHiddenAwareFixed.csv');
     }
 
@@ -75,14 +65,11 @@ class TcaTablesTranslatedLanguageParentDifferentPidTest extends FunctionalTestCa
         unset($GLOBALS['TCA']['tt_content']['ctrl']['enablecolumns']['disabled']);
         unset($GLOBALS['TCA']['tt_content']['ctrl']['delete']);
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidTtContentNotHiddenNotDeleteAwareImport.csv');
-        $io = $this->prophesize(SymfonyStyle::class);
-        $io->ask(Argument::cetera())->willReturn('e');
+        $io = $this->getMockBuilder(SymfonyStyle::class)->disableOriginalConstructor()->getMock();
+        $io->expects(self::atLeastOnce())->method('warning');
         /** @var TcaTablesTranslatedLanguageParentDifferentPid $subject */
         $subject = $this->get(TcaTablesTranslatedLanguageParentDifferentPid::class);
-        $subject->handle($io->reveal(), HealthInterface::MODE_EXECUTE, '');
-        $io->warning(Argument::cetera())->shouldHaveBeenCalled();
-        $io->note(Argument::cetera())->shouldHaveBeenCalled();
-        $io->text(Argument::cetera())->shouldHaveBeenCalled();
+        $subject->handle($io, HealthInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidTtContentNotHiddenNotDeleteAwareFixed.csv');
     }
 }

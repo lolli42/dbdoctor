@@ -19,15 +19,11 @@ namespace Lolli\Dbdoctor\Tests\Functional\Health;
 
 use Lolli\Dbdoctor\Health\HealthInterface;
 use Lolli\Dbdoctor\Health\TcaTablesTranslatedParentInvalidPointer;
-use Prophecy\Argument;
-use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 class TcaTablesTranslatedParentInvalidPointerTest extends FunctionalTestCase
 {
-    use ProphecyTrait;
-
     protected array $testExtensionsToLoad = [
         'typo3conf/ext/dbdoctor',
     ];
@@ -38,13 +34,11 @@ class TcaTablesTranslatedParentInvalidPointerTest extends FunctionalTestCase
     public function fixBrokenRecords(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentInvalidPointerImport.csv');
-        $io = $this->prophesize(SymfonyStyle::class);
-        $io->ask(Argument::cetera())->willReturn('e');
+        $io = $this->getMockBuilder(SymfonyStyle::class)->disableOriginalConstructor()->getMock();
+        $io->expects(self::atLeastOnce())->method('warning');
         /** @var TcaTablesTranslatedParentInvalidPointer $subject */
         $subject = $this->get(TcaTablesTranslatedParentInvalidPointer::class);
-        $subject->handle($io->reveal(), HealthInterface::MODE_EXECUTE, '');
-        $io->warning(Argument::cetera())->shouldHaveBeenCalled();
-        $io->text(Argument::cetera())->shouldHaveBeenCalled();
+        $subject->handle($io, HealthInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentInvalidPointerFixed.csv');
     }
 }

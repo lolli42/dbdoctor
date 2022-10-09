@@ -3,7 +3,6 @@ includes:
   - ../.Build/vendor/bnf/phpstan-psr-container/extension.neon
   - ../.Build/vendor/friendsoftypo3/phpstan-typo3/extension.neon
   - ../.Build/vendor/phpstan/phpstan-phpunit/extension.neon
-  - ../.Build/vendor/jangregor/phpstan-prophecy/extension.neon
 
 parameters:
   level: max
