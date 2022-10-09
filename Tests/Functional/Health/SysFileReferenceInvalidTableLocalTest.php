@@ -22,6 +22,7 @@ use Lolli\Dbdoctor\Health\SysFileReferenceInvalidTableLocal;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 class SysFileReferenceInvalidTableLocalTest extends FunctionalTestCase
@@ -37,6 +38,9 @@ class SysFileReferenceInvalidTableLocalTest extends FunctionalTestCase
      */
     public function fixBrokenRecords(): void
     {
+        if ((new Typo3Version())->getMajorVersion() >= 12) {
+            $this->markTestSkipped();
+        }
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceInvalidTableLocalImport.csv');
         $io = $this->prophesize(SymfonyStyle::class);
         $io->ask(Argument::cetera())->willReturn('e');

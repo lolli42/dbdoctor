@@ -32,6 +32,7 @@ class HealthFactory implements HealthFactoryInterface
         PagesTranslatedLanguageParentDifferentPid::class,
         // This one is relatively early since it is rather safe and prevents loops on checks below.
         TcaTablesTranslatedParentInvalidPointer::class,
+        // @todo: Next one is skipped in v12 and can be dropped when v11 compat is removed from extension.
         SysFileReferenceInvalidTableLocal::class,
         SysFileReferenceLocalizedParentExists::class,
         SysFileReferenceLocalizedParentDeleted::class,
