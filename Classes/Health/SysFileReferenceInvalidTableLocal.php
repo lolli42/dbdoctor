@@ -18,23 +18,37 @@ namespace Lolli\Dbdoctor\Health;
  */
 
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Information\Typo3Version;
 
 /**
- * All records in sys_file_reference must point to existing records on left and right side.
+ * All records in "sys_file_reference" have "table_local" set to "sys_file".
+ *
+ * Note core v12 no longer provides field "table_local", this check is skipped in v12.
  */
 class SysFileReferenceInvalidTableLocal extends AbstractHealth implements HealthInterface, HealthUpdateInterface
 {
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for sys_file_reference_records with broken table_local field');
-        $io->text([
-            '[UPDATE] Records in "sys_file_reference" must have field "table_local" set to',
-            '         "sys_file", no exceptions. This check verifies this and can update non-compliant rows.',
-        ]);
+        if ((new Typo3Version())->getMajorVersion() >= 12) {
+            $io->text([
+                '[SKIPPED] This check is obsolete with core v12.',
+            ]);
+        } else {
+            $io->text([
+                '[UPDATE] Records in "sys_file_reference" must have field "table_local" set to',
+                '         "sys_file". This check verifies this and can update non-compliant rows.',
+                '         "sys_file". This check verifies this and can update non-compliant rows.',
+            ]);
+        }
     }
 
     protected function getAffectedRecords(): array
     {
+        if ((new Typo3Version())->getMajorVersion() >= 12) {
+            return [];
+        }
+
         $tableRows = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
         $queryBuilder->getRestrictions()->removeAll();
