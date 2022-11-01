@@ -38,7 +38,6 @@ class SysFileReferenceInvalidTableLocal extends AbstractHealth implements Health
             $io->text([
                 '[UPDATE] Records in "sys_file_reference" must have field "table_local" set to',
                 '         "sys_file". This check verifies this and can update non-compliant rows.',
-                '         "sys_file". This check verifies this and can update non-compliant rows.',
             ]);
         }
     }
