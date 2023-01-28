@@ -22,8 +22,7 @@
     "bin-dir": ".Build/bin",
     "allow-plugins": {
       "typo3/class-alias-loader": true,
-      "typo3/cms-composer-installers": true,
-      "sbuerk/typo3-cmscomposerinstallers-testingframework-bridge": true
+      "typo3/cms-composer-installers": true
     }
   },
   "require-dev": {
