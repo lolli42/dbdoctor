@@ -36,7 +36,7 @@ services:
       typo3DatabaseHost: mariadb10
     volumes:
       - ${ROOT_DIR}:${ROOT_DIR}
-    working_dir: ${ROOT_DIR}/.Build
+    working_dir: ${ROOT_DIR}/
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command: >
@@ -50,8 +50,8 @@ services:
         done;
         echo Database is up;
         php -v | grep '^PHP';
-        mkdir -p Web/typo3temp/var/tests/
-        COMMAND=\"vendor/codeception/codeception/codecept run Cli -d -c Web/typo3conf/ext/dbdoctor/Tests/codeception.yml ${TEST_FILE}\"
+        mkdir -p .Build/Web/typo3temp/var/tests/
+        COMMAND=\".Build/vendor/codeception/codeception/codecept run Cli -d -c Tests/codeception.yml ${TEST_FILE}\"
         if [ ${PHP_XDEBUG_ON} -eq 0 ]; then
           XDEBUG_MODE=\"off\" \
           $${COMMAND};
@@ -76,7 +76,7 @@ services:
       typo3DatabaseHost: mysql80
     volumes:
       - ${ROOT_DIR}:${ROOT_DIR}
-    working_dir: ${ROOT_DIR}/.Build
+    working_dir: ${ROOT_DIR}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command: >
@@ -90,8 +90,8 @@ services:
         done;
         echo Database is up;
         php -v | grep '^PHP';
-        mkdir -p Web/typo3temp/var/tests/
-        COMMAND=\"vendor/codeception/codeception/codecept run Cli -d -c Web/typo3conf/ext/dbdoctor/Tests/codeception.yml ${TEST_FILE}\"
+        mkdir -p .Build/Web/typo3temp/var/tests/
+        COMMAND=\".Build/vendor/codeception/codeception/codecept run Cli -d -c Tests/codeception.yml ${TEST_FILE}\"
         if [ ${PHP_XDEBUG_ON} -eq 0 ]; then
           XDEBUG_MODE=\"off\" \
           $${COMMAND};
@@ -116,7 +116,7 @@ services:
       typo3DatabasePassword: funcp
     volumes:
       - ${ROOT_DIR}:${ROOT_DIR}
-    working_dir: ${ROOT_DIR}/.Build
+    working_dir: ${ROOT_DIR}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command: >
@@ -130,8 +130,8 @@ services:
         done;
         echo Database is up;
         php -v | grep '^PHP';
-        mkdir -p Web/typo3temp/var/tests/
-        COMMAND=\"vendor/codeception/codeception/codecept run Cli -d -c Web/typo3conf/ext/dbdoctor/Tests/codeception.yml ${TEST_FILE}\"
+        mkdir -p .Build/Web/typo3temp/var/tests/
+        COMMAND=\".Build/vendor/codeception/codeception/codecept run Cli -d -c Tests/codeception.yml ${TEST_FILE}\"
         if [ ${PHP_XDEBUG_ON} -eq 0 ]; then
           XDEBUG_MODE=\"off\" \
           $${COMMAND};
@@ -150,7 +150,7 @@ services:
       typo3DatabaseDriver: pdo_sqlite
     volumes:
       - ${ROOT_DIR}:${ROOT_DIR}
-    working_dir: ${ROOT_DIR}/.Build
+    working_dir: ${ROOT_DIR}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command: >
@@ -160,7 +160,7 @@ services:
         fi
         php -v | grep '^PHP';
         mkdir -p Web/typo3temp/var/tests/
-        COMMAND=\"vendor/codeception/codeception/codecept run Cli -d -c Web/typo3conf/ext/dbdoctor/Tests/codeception.yml ${TEST_FILE}\"
+        COMMAND=\".Build/vendor/codeception/codeception/codecept run Cli -d -c Tests/codeception.yml ${TEST_FILE}\"
         if [ ${PHP_XDEBUG_ON} -eq 0 ]; then
           XDEBUG_MODE=\"off\" \
           $${COMMAND};
@@ -221,7 +221,6 @@ services:
         fi
         php -v | grep '^PHP';
         if [ ${TYPO3_VERSION} -eq 11 ]; then
-              composer rem --dev "sbuerk/typo3-cmscomposerinstallers-testingframework-bridge" --no-update
               composer req --dev --no-update \
                 typo3/cms-composer-installers:^3.0 \
                 typo3/cms-workspaces:^11.5 \
@@ -231,7 +230,6 @@ services:
         if [ ${TYPO3_VERSION} -eq 12 ]; then
             composer req --dev --no-update \
                "typo3/cms-composer-installers:^5.0" \
-               "sbuerk/typo3-cmscomposerinstallers-testingframework-bridge":^0.0.1 \
                 typo3/cms-backend:~12.0@dev \
                 typo3/cms-recordlist:~12.0@dev \
                 typo3/cms-frontend:~12.0@dev \
@@ -258,7 +256,7 @@ services:
       typo3DatabaseUsername: root
       typo3DatabasePassword: funcp
       typo3DatabaseHost: mariadb10
-    working_dir: ${ROOT_DIR}/.Build
+    working_dir: ${ROOT_DIR}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command: >
@@ -274,12 +272,12 @@ services:
         php -v | grep '^PHP';
         if [ ${PHP_XDEBUG_ON} -eq 0 ]; then
           XDEBUG_MODE=\"off\" \
-          bin/phpunit -c Web/typo3conf/ext/dbdoctor/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
+          .Build/bin/phpunit -c Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
         else
           XDEBUG_MODE=\"debug,develop\" \
           XDEBUG_TRIGGER=\"foo\" \
           XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
-          bin/phpunit -c Web/typo3conf/ext/dbdoctor/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
+          .Build/bin/phpunit -c Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
         fi
       "
 
@@ -296,7 +294,7 @@ services:
       typo3DatabaseUsername: root
       typo3DatabasePassword: funcp
       typo3DatabaseHost: mysql80
-    working_dir: ${ROOT_DIR}/.Build
+    working_dir: ${ROOT_DIR}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command: >
@@ -312,12 +310,12 @@ services:
         php -v | grep '^PHP';
         if [ ${PHP_XDEBUG_ON} -eq 0 ]; then
           XDEBUG_MODE=\"off\" \
-          bin/phpunit -c Web/typo3conf/ext/dbdoctor/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
+          .Build/bin/phpunit -c Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
         else
           XDEBUG_MODE=\"debug,develop\" \
           XDEBUG_TRIGGER=\"foo\" \
           XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
-          bin/phpunit -c Web/typo3conf/ext/dbdoctor/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
+          .Build/bin/phpunit -c Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
         fi
       "
 
@@ -334,7 +332,7 @@ services:
       typo3DatabaseUsername: ${HOST_USER}
       typo3DatabaseHost: postgres10
       typo3DatabasePassword: funcp
-    working_dir: ${ROOT_DIR}/.Build
+    working_dir: ${ROOT_DIR}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command: >
@@ -350,12 +348,12 @@ services:
         php -v | grep '^PHP';
         if [ ${PHP_XDEBUG_ON} -eq 0 ]; then
           XDEBUG_MODE=\"off\" \
-          bin/phpunit -c Web/typo3conf/ext/dbdoctor/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-postgres ${TEST_FILE};
+          .Build/bin/phpunit -c Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-postgres ${TEST_FILE};
         else
           XDEBUG_MODE=\"debug,develop\" \
           XDEBUG_TRIGGER=\"foo\" \
           XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
-          bin/phpunit -c Web/typo3conf/ext/dbdoctor/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-postgres ${TEST_FILE};
+          .Build/bin/phpunit -c Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-postgres ${TEST_FILE};
         fi
       "
 
@@ -368,7 +366,7 @@ services:
       - ${ROOT_DIR}/Web/typo3temp/var/tests/functional-sqlite-dbs/:rw,noexec,nosuid,uid=${HOST_UID}
     environment:
       typo3DatabaseDriver: pdo_sqlite
-    working_dir: ${ROOT_DIR}/.Build
+    working_dir: ${ROOT_DIR}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command: >
@@ -379,12 +377,12 @@ services:
         php -v | grep '^PHP';
         if [ ${PHP_XDEBUG_ON} -eq 0 ]; then
           XDEBUG_MODE=\"off\" \
-          bin/phpunit -c Web/typo3conf/ext/dbdoctor/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-sqlite ${TEST_FILE};
+          .Build/bin/phpunit -c Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-sqlite ${TEST_FILE};
         else
           XDEBUG_MODE=\"debug,develop\" \
           XDEBUG_TRIGGER=\"foo\" \
           XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
-          bin/phpunit -c Web/typo3conf/ext/dbdoctor/Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-sqlite ${TEST_FILE};
+          .Build/bin/phpunit -c Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-sqlite ${TEST_FILE};
         fi
       "
 
