@@ -43,7 +43,7 @@ class PagesTranslatedLanguageParentDifferentPid extends AbstractHealth implement
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         // Deleted pages without valid parent page are translated, too.
         $queryBuilder->getRestrictions()->removeAll();
-        $result = $queryBuilder->select('uid', 'pid', 'l10n_parent')
+        $result = $queryBuilder->select('uid', 'pid', 'l10n_parent', 'sys_language_uid')
             ->from('pages')
             ->where($queryBuilder->expr()->gt('sys_language_uid', $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)))
             ->orderBy('uid')
