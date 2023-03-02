@@ -41,7 +41,7 @@ class PagesTranslatedLanguageParentDifferentPid extends AbstractHealth implement
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
-        // Deleted pages without valid parent page are translated, too.
+        // Deleted pages are considered as well, we remove all restrictions.
         $queryBuilder->getRestrictions()->removeAll();
         $result = $queryBuilder->select('uid', 'pid', 'l10n_parent', 'sys_language_uid')
             ->from('pages')
