@@ -23,6 +23,15 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * Remove records pointing to not existing 'fieldname' fields on foreign table
+ *
+ * @todo: This check is a bit risky and currently not enabled in HealthFactory:
+ *        - First, it gives headaches with 'flex' fields and already skips
+ *          records that point to a parent table which has *any* flex field configured.
+ *          Looking especially at you, tt_content!
+ *        - Second, the (v12 deprecated) EMU::getFileFieldTCAConfig() allowed to set
+ *          ['foreign_match_fields']['fieldname'] to something different than the
+ *          column name of the parent table. That's probably problematic to do, but it
+ *          seems at least the Backend can deal with this?
  */
 class SysFileReferenceInvalidFieldname extends AbstractHealth implements HealthInterface, HealthDeleteInterface
 {

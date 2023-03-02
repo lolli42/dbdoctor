@@ -40,7 +40,8 @@ class HealthFactory implements HealthFactoryInterface
         SysFileReferenceDangling::class,
         SysFileReferenceInvalidPid::class,
         TcaTablesPidMissing::class,
-        SysFileReferenceInvalidFieldname::class,
+        // @todo: Disabled for now, see the class comment
+        // SysFileReferenceInvalidFieldname::class,
         TcaTablesPidDeleted::class,
         TcaTablesTranslatedLanguageParentMissing::class,
         // Check sys_file_reference pointing to not existing records *again*:
