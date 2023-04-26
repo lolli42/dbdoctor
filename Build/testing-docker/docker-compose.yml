@@ -230,15 +230,9 @@ services:
         if [ ${TYPO3_VERSION} -eq 12 ]; then
             composer req --dev --no-update \
                "typo3/cms-composer-installers:^5.0" \
-                typo3/cms-backend:~12.0@dev \
-                typo3/cms-recordlist:~12.0@dev \
-                typo3/cms-frontend:~12.0@dev \
-                typo3/cms-extbase:~12.0@dev \
-                typo3/cms-fluid:~12.0@dev \
-                typo3/cms-install:~12.0@dev \
-                typo3/cms-impexp:~12.0@dev \
-                typo3/cms-workspaces:~12.0@dev
-            composer req typo3/cms-core:~12.0@dev -W --no-update
+                typo3/cms-impexp:^12.4 \
+                typo3/cms-workspaces:^12.4
+            composer req typo3/cms-core:^12.4 --no-update
         fi
         composer update --no-progress --no-interaction;
       "
