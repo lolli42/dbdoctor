@@ -18,10 +18,10 @@ namespace Lolli\Dbdoctor\Commands;
  */
 
 use Lolli\Dbdoctor\DatabaseSchema\DatabaseSchemaChecker;
-use Lolli\Dbdoctor\Health\HealthDeleteInterface;
-use Lolli\Dbdoctor\Health\HealthFactoryInterface;
-use Lolli\Dbdoctor\Health\HealthInterface;
-use Lolli\Dbdoctor\Health\HealthUpdateInterface;
+use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
+use Lolli\Dbdoctor\HealthCheck\HealthDeleteInterface;
+use Lolli\Dbdoctor\HealthCheck\HealthUpdateInterface;
+use Lolli\Dbdoctor\HealthFactory\HealthFactoryInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -71,45 +71,45 @@ class HealthCommand extends Command
 
         $mode = (string)$input->getOption('mode'); /** @phpstan-ignore-line */
         if ($mode === 'interactive') {
-            $mode = HealthInterface::MODE_INTERACTIVE;
+            $mode = HealthCheckInterface::MODE_INTERACTIVE;
         } elseif ($mode === 'check') {
-            $mode = HealthInterface::MODE_CHECK;
+            $mode = HealthCheckInterface::MODE_CHECK;
         } elseif ($mode === 'execute') {
-            $mode = HealthInterface::MODE_EXECUTE;
+            $mode = HealthCheckInterface::MODE_EXECUTE;
         } else {
             $io->error('Invalid mode "' . $mode . '". Use -h for help on valid options.');
-            return HealthInterface::RESULT_ERROR;
+            return HealthCheckInterface::RESULT_ERROR;
         }
 
         $file = (string)$input->getOption('file'); /** @phpstan-ignore-line */
-        if ($file && $mode === HealthInterface::MODE_CHECK) {
+        if ($file && $mode === HealthCheckInterface::MODE_CHECK) {
             $io->error('Option "--file" not available with "--mode check"');
-            return HealthInterface::RESULT_ERROR;
+            return HealthCheckInterface::RESULT_ERROR;
         }
         if ($file) {
             if (!PathUtility::isAbsolutePath($file)) {
                 $io->error('Invalid file "' . $file . '". Must be an absolute path.');
-                return HealthInterface::RESULT_ERROR;
+                return HealthCheckInterface::RESULT_ERROR;
             }
             if (file_exists($file)) {
                 $io->error('Invalid file "' . $file . '". File exists already.');
-                return HealthInterface::RESULT_ERROR;
+                return HealthCheckInterface::RESULT_ERROR;
             }
             $touchFile = file_put_contents($file, '');
             if ($touchFile === false) {
                 $io->error('Invalid file "' . $file . '". Unable to create.');
-                return HealthInterface::RESULT_ERROR;
+                return HealthCheckInterface::RESULT_ERROR;
             }
         }
 
         if (!$this->checkDatabaseSchema($io)) {
-            return HealthInterface::RESULT_ERROR;
+            return HealthCheckInterface::RESULT_ERROR;
         }
 
-        $result = HealthInterface::RESULT_OK;
+        $result = HealthCheckInterface::RESULT_OK;
         foreach ($this->healthFactory->getNext() as $healthInstance) {
-            /** @var HealthInterface $healthInstance */
-            if (!$healthInstance instanceof HealthInterface) {
+            /** @var HealthCheckInterface $healthInstance */
+            if (!$healthInstance instanceof HealthCheckInterface) {
                 throw new \RuntimeException('Single health checks must implement HealthInterface', 1646321959);
             }
             if ((!$healthInstance instanceof HealthDeleteInterface && !$healthInstance instanceof HealthUpdateInterface)
@@ -122,7 +122,7 @@ class HealthCommand extends Command
             }
             $healthInstance->header($io);
             $result |= $healthInstance->handle($io, $mode, $file);
-            if (($result & HealthInterface::RESULT_ABORT) === HealthInterface::RESULT_ABORT) {
+            if (($result & HealthCheckInterface::RESULT_ABORT) === HealthCheckInterface::RESULT_ABORT) {
                 $io->warning('Aborting ...');
                 $result |= $this->removeEmptyFile($io, $file);
                 $this->outputSysRefIndexWarning($io, $mode, $result);
@@ -159,7 +159,7 @@ class HealthCommand extends Command
     private function removeEmptyFile(SymfonyStyle $io, string $file): int
     {
         if (empty($file)) {
-            return HealthInterface::RESULT_OK;
+            return HealthCheckInterface::RESULT_OK;
         }
         $result = true;
         if (filesize($file) === 0) {
@@ -167,15 +167,15 @@ class HealthCommand extends Command
         }
         if (!$result) {
             $io->error('Unable to remove empty file "' . $file . '".');
-            return HealthInterface::RESULT_ERROR;
+            return HealthCheckInterface::RESULT_ERROR;
         }
-        return HealthInterface::RESULT_OK;
+        return HealthCheckInterface::RESULT_OK;
     }
 
     private function outputSysRefIndexWarning(SymfonyStyle $io, int $mode, int $result): void
     {
-        if (($mode === HealthInterface::MODE_INTERACTIVE || $mode === HealthInterface::MODE_EXECUTE)
-            && (($result & HealthInterface::RESULT_BROKEN) === HealthInterface::RESULT_BROKEN)
+        if (($mode === HealthCheckInterface::MODE_INTERACTIVE || $mode === HealthCheckInterface::MODE_EXECUTE)
+            && (($result & HealthCheckInterface::RESULT_BROKEN) === HealthCheckInterface::RESULT_BROKEN)
         ) {
             $io->warning(
                 'DB doctor updated something. Remember to run "bin/typo3 referenceindex:update" to update reference index.'
