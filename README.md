@@ -170,11 +170,14 @@ prompting for user input after each failed check.
 
 * Execute mode: `--mode execute` or `-m execute`:
   ```
-  $ bin/typo3 dbdoctor:health -m execute
+  $ bin/typo3 dbdoctor:health -m execute -f /tmp/dbdoctor-my-instance-`date +%Y-%m-%d-%H-%M-%S`.sql
   ```
   Blindly execute without further questions! This will execute all update and delete queries
   dbdoctor suggests! This is a potentially destructive auto-operation if you trust the command,
-  which you shouldn't ;-) Did you create a DB backup before?
+  which you shouldn't ;-) Did you create a DB backup before? Note the `-f` option is mandatory
+  with this mode: You **must** log executed queries to a dump file that does not exist yet, to
+  at least give you the theoretical option to debug issues after dbdoctor destroyed your database.
+  The `-f` option should thus have some date or similar in it, to make it unique.
 
 * Log execute queries to file: `--file` or `-f`:
   ```
