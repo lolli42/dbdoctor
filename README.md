@@ -187,12 +187,12 @@ prompting for user input after each failed check.
   $ bin/typo3 dbdoctor:health -f /tmp/dbdoctor-my-instance-`date +%Y-%m-%d-%H-%M-%S`.sql
   ```
   Log all data changing queries to a file. The argument must be an *absolute file name*.
-  **Never put such a file into the public web folder of your instance**. This is available in
-  "interactive" and "execute" mode. Executed data changing queries are not only displayed, but also
-  logged to a file. This can be useful if the command has been executed on a staging system
-  using a current live database image: The queries can be reviewed again and then executed
-  on a live instance using something like `mysql my_database < file.sql` or similar for other
-  DBMS.
+  **Never put such a file into the public web folder of your instance**. Option `-f` is **available**
+  in "interactive" and **mandatory** in "execute" mode. Executed data changing queries are not only
+  displayed, but also  logged to a file. This can be useful if the command has been executed on a
+  staging system  using a current live database image: The queries can be reviewed again and then
+  executed  on a live instance using something like `mysql my_database < file.sql` or similar for
+  other DBMS.
 
 
 # Existing health checks
