@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\Commands;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\DatabaseSchema\DatabaseSchemaChecker;
 use Lolli\Dbdoctor\Health\HealthDeleteInterface;
 use Lolli\Dbdoctor\Health\HealthFactoryInterface;
 use Lolli\Dbdoctor\Health\HealthInterface;
@@ -34,10 +35,14 @@ use TYPO3\CMS\Core\Utility\PathUtility;
 class HealthCommand extends Command
 {
     private HealthFactoryInterface $healthFactory;
+    private DatabaseSchemaChecker $databaseSchemaChecker;
 
-    public function __construct(HealthFactoryInterface $healthFactory)
-    {
+    public function __construct(
+        HealthFactoryInterface $healthFactory,
+        DatabaseSchemaChecker $databaseSchemaChecker
+    ) {
         $this->healthFactory = $healthFactory;
+        $this->databaseSchemaChecker = $databaseSchemaChecker;
         parent::__construct();
     }
 
@@ -97,6 +102,10 @@ class HealthCommand extends Command
             }
         }
 
+        if (!$this->checkDatabaseSchema($io)) {
+            return HealthInterface::RESULT_ERROR;
+        }
+
         $result = HealthInterface::RESULT_OK;
         foreach ($this->healthFactory->getNext() as $healthInstance) {
             /** @var HealthInterface $healthInstance */
@@ -123,6 +132,24 @@ class HealthCommand extends Command
         $result |= $this->removeEmptyFile($io, $file);
         $this->outputSysRefIndexWarning($io, $mode, $result);
         return $result;
+    }
+
+    /**
+     * "Database analyzer" must be in a good shape: No missing tables,
+     * fields and indexes. If that is not the case, we stop early.
+     */
+    private function checkDatabaseSchema(SymfonyStyle $io): bool
+    {
+        if ($this->databaseSchemaChecker->hasIncompleteTablesColumnsIndexes()) {
+            $io->error(
+                'Current database schema is not in sync with TCA: ' .
+                'Missing tables, missing or not adapted columns or indexes were detected. ' .
+                'Run "bin/typo3 extension:setup", or use the install tool "Database analyzer" ' .
+                'to fix this. Then run dbdoctor again.'
+            );
+            return false;
+        }
+        return true;
     }
 
     /**
