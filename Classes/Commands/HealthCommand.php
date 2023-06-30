@@ -102,6 +102,16 @@ class HealthCommand extends Command
             }
         }
 
+        if ($mode === HealthCheckInterface::MODE_EXECUTE && empty($file)) {
+            $io->error(
+                'Option "--file" with valid file path is mandatory when using "--mode execute". ' .
+                'The file must be an absolute path and the file must not exist yet. This means ' .
+                'you need some unique filename when executed, for instance by having some date ' .
+                'within the filename.'
+            );
+            return HealthCheckInterface::RESULT_ERROR;
+        }
+
         if (!$this->checkDatabaseSchema($io)) {
             return HealthCheckInterface::RESULT_ERROR;
         }
