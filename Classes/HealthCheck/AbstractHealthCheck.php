@@ -126,9 +126,11 @@ abstract class AbstractHealthCheck
                     }
                     break;
                 case 'p':
+                    $this->outputMainSummary($io, $affectedRecords);
                     $this->affectedPages($io, $affectedRecords);
                     break;
                 case 'd':
+                    $this->outputMainSummary($io, $affectedRecords);
                     $this->recordDetails($io, $affectedRecords);
                     break;
                 case 'h':
