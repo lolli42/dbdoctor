@@ -73,11 +73,13 @@ success already.
 
 ## Composer
 
-You probably want to install this as `--dev` dependency. The extension currently
-supports TYPO3 v11 and TYPO3 v12:
+The extension currently supports TYPO3 v11 and TYPO3 v12. The extension can be installed
+as non-dev dependency (not adding `--dev` to `composer require`): It has no impact on a
+live instance (except dependency injection definitions) as long as it is not actively
+executed via CLI.
 
 ```
-$ composer require --dev lolli/dbdoctor
+$ composer require lolli/dbdoctor
 ```
 
 ## TYPO3 Extension Repository
@@ -96,16 +98,16 @@ instance. As such, a few things should be kept in mind:
   get something wrong. We are dealing with low level database stuff here after all,
   so things can potentially go south rather quickly. See the "Further hints" section below, too.
 
-* [!!!] 💣 Make sure the database analyzer is happy and needs no new fields or tables.
-  There will be a check in the future to verify this early, but for now, **do not use
-  the CLI interface with incomplete database analyzer**.
+* [!!!] 💣 Make sure the TYPO3 "Database analyzer" is happy and needs no new or changed columns or tables.
+  An early check verifies missing tables and columns, but it is still a good idea to double-check
+  before running dbdoctor.
 
-* It's probably not a bad idea to look at not-yet done upgrade wizards before using
-  the extensions CLI command.
+* [!!!] There should not be any pending core upgrade wizards. dbdoctor currently does not check
+  up-front if all upgrade wizards have been executed.
 
 * [!!!] Run the reference index updater when this command finished! It is very likely
   it will update something. A clean reference index becomes more and more important
-  with younger core versions. Reminder: command `bin/typo3 referenceindex:update`.
+  with younger core versions. The CLI command to do this: `bin/typo3 referenceindex:update`.
 
 
 # Usage
@@ -141,14 +143,14 @@ manually on a different server.
 
 # Options
 
-The CLI comes with a couple of options. The default mode is "interactive",
+The CLI command can be executed with a couple of options. The default mode is "interactive",
 prompting for user input after each failed check.
 
 * Help overview:
   ```
   $ bin/typo3 dbdoctor:health -h
   ```
-  Left to the reader to find out what is done here :P
+  Left to the reader to find out what is done here :-P
 
 * Interactive mode: `--mode interactive` or `-m interactive` or option not given:
   ```
@@ -164,25 +166,26 @@ prompting for user input after each failed check.
   ```
   Run all checks but don't perform any DB changes. Returns 0 (zero) if some checks
   found something and non-zero if something was found by any check. Useful to run
-  as cron job to see if check "go red" over time after everything has been fixed once.
+  as cron job to see if any check "goes red" over time after everything has been fixed once.
 
 * Execute mode: `--mode execute` or `-m execute`:
   ```
   $ bin/typo3 dbdoctor:health -m execute
   ```
-  Blindly execute all checks without further questions! Destructive auto-operation if
-  you trust the command enough, which you shouldn't ;-) Did you create a DB backup before?
+  Blindly execute without further questions! This will execute all update and delete queries
+  dbdoctor suggests! This is a potentially destructive auto-operation if you trust the command,
+  which you shouldn't ;-) Did you create a DB backup before?
 
 * Log execute queries to file: `--file` or `-f`:
   ```
   $ bin/typo3 dbdoctor:health -f /tmp/foo.sql
   ```
   ```
-  $ bin/typo3 dbdoctor:health -f /tmp/dbdoctor-changes-my-instance-`date +%Y-%m-%d-%H-%M-%S`.sql
+  $ bin/typo3 dbdoctor:health -f /tmp/dbdoctor-my-instance-`date +%Y-%m-%d-%H-%M-%S`.sql
   ```
   Log all data changing queries to a file. The argument must be an *absolute file name*.
   **Never put such a file into the public web folder of your instance**. This is available in
-  "interactive" and "execute" mode. Data changing queries are not only displayed, but also
+  "interactive" and "execute" mode. Executed data changing queries are not only displayed, but also
   logged to a file. This can be useful if the command has been executed on a staging system
   using a current live database image: The queries can be reviewed again and then executed
   on a live instance using something like `mysql my_database < file.sql` or similar for other
@@ -218,7 +221,10 @@ regarding SQL dumps must not be forgotten when doing this:
   $ bin/typo3 dbdoctor:health
   $ mysqldump --skip-extended-insert myDatabase > /tmp/myDatabase-`date +%Y-%m-%d-%H-%M-%S`-dbdoctor-after.sql
   ```
-  It's always possible to deviate from with when you know what you're doing, though.
+  It's always possible to deviate from with when you know what you're doing, though. I practice, it might
+  be a good idea to create two dumps: One with `--skip-extended-insert` and one without. A disaster recovery
+  is much quicker when loading from a file that has no "one row per line", but to debug, it's much easier
+  to diff dumps that were based on skipped extended inserts.
 
 * When dumping databases, it is a **crucial security measure** to **never** put such dumps into
   a public directory accessible by a web server or some third party server user. Violating this
