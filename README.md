@@ -61,6 +61,24 @@ should be  relatively quick even for big-sized instances, but it will hammer the
 database a lot.
 
 
+# Limits
+
+Even though this low level tool tries to be very careful and checks lots of details
+before suggesting a change, there are still some limits and assumptions: For example,
+the "delete" column of soft-delete aware TCA tables is **assumed** to be an integer column,
+and **not** a text or varchar or similar. The correct schema of this column is
+usually created by the core as long as there is no explicit definition of it in a
+`ext_tables.sql` file. However, if an extension gets this wrong and defines such
+a field in some broken way, dbdoctor may create hazard by suggesting delete or
+updates of all rows.
+
+As such, TCA and `ext_tables.sql` of extensions should be in a good shape before working
+with dbdoctor, and changes suggested by health checks should **always be checked manually**
+before committing them to the database. Also, never forget to back up the database to
+prepare for an eventually needed disaster recovery. Do not accept dbdoctor suggestions
+blindly!
+
+
 # Current status
 
 First releases have been done, but we're not confident enough to have a 1.0.0, yet.
@@ -98,7 +116,7 @@ instance. As such, a few things should be kept in mind:
   get something wrong. We are dealing with low level database stuff here after all,
   so things can potentially go south rather quickly. See the "Further hints" section below, too.
 
-* [!!!] 💣 Make sure the TYPO3 "Database analyzer" is happy and needs no new or changed columns or tables.
+* [!!!] Make sure the TYPO3 "Database analyzer" is happy and needs no new or changed columns or tables.
   An early check verifies missing tables and columns, but it is still a good idea to double-check
   before running dbdoctor.
 

@@ -27,7 +27,8 @@ class TcaHelper
      */
     public function getNextTcaTable(array $ignoreTables = []): iterable
     {
-        foreach (array_keys($GLOBALS['TCA'] ?? []) as $tableName) {
+        $this->verifyTcaIsArray();
+        foreach (array_keys($GLOBALS['TCA']) as $tableName) {
             /** @var string $tableName */
             if (in_array($tableName, $ignoreTables, true)) {
                 continue;
@@ -39,8 +40,25 @@ class TcaHelper
     /**
      * @return iterable<string>
      */
+    public function getNextSoftDeleteAwareTable(): iterable
+    {
+        $this->verifyTcaIsArray();
+        foreach ($GLOBALS['TCA'] as $tableName => $config) {
+            if (($config['ctrl']['delete'] ?? false)
+                && is_string($config['ctrl']['delete'])
+                && !empty($config['ctrl']['delete'])
+            ) {
+                yield $tableName;
+            }
+        }
+    }
+
+    /**
+     * @return iterable<string>
+     */
     public function getNextWorkspaceEnabledTcaTable(): iterable
     {
+        $this->verifyTcaIsArray();
         foreach ($GLOBALS['TCA'] as $tableName => $config) {
             if ($config['ctrl']['versioningWS'] ?? false) {
                 yield $tableName;
@@ -54,6 +72,7 @@ class TcaHelper
      */
     public function getNextLanguageAwareTcaTable(array $ignoreTables = []): iterable
     {
+        $this->verifyTcaIsArray();
         foreach ($GLOBALS['TCA'] as $tableName => $config) {
             if (($config['ctrl']['languageField'] ?? false)
                 && ($config['ctrl']['transOrigPointerField'] ?? false)
@@ -70,6 +89,7 @@ class TcaHelper
      */
     public function getNextInlineForeignFieldChildTcaTable(array $ignoreTables = []): iterable
     {
+        $this->verifyTcaIsArray();
         $inlineChildTables = [];
         foreach ($GLOBALS['TCA'] as $config) {
             foreach (($config['columns'] ?? []) as $columnConfig) {
@@ -189,5 +209,12 @@ class TcaHelper
             $result = array_merge($result, GeneralUtility::trimExplode(',', $GLOBALS['TCA'][$tableName]['ctrl']['label_alt'], true));
         }
         return $result;
+    }
+
+    private function verifyTcaIsArray(): void
+    {
+        if (!is_array($GLOBALS['TCA'])) {
+            throw new \RuntimeException('TCA is not an array!', 1688203176);
+        }
     }
 }
