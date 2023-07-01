@@ -1,0 +1,17 @@
+"sys_workspace"
+,"uid","pid","deleted","title"
+,1,0,0,"ws-1"
+"pages"
+,"uid","pid","deleted","t3ver_wsid","title"
+,1,0,0,0,"Ok site root"
+,2,1,1,0,"Ok deleted sub page 1 in live"
+,3,1,0,1,"Ok not deleted sub page 1 in ws-1"
+# Should be removed
+,4,2,1,1,"Not ok ws-1 page"
+"tt_content"
+,"uid","pid","deleted","t3ver_wsid","header"
+,1,2,0,0,"Ok content"
+,2,2,1,0,"Ok deleted content in live"
+,3,2,0,1,"Ok not deleted content in ws-1"
+# Should be removed
+,4,2,1,1,"Not ok content ws-1"

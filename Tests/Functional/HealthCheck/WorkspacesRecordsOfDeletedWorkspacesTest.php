@@ -18,11 +18,11 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  */
 
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
-use Lolli\Dbdoctor\HealthCheck\TcaTablesWorkspaceRecordsDangling;
+use Lolli\Dbdoctor\HealthCheck\WorkspacesRecordsOfDeletedWorkspaces;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
-class TcaTablesWorkspaceRecordsDanglingTest extends FunctionalTestCase
+class WorkspacesRecordsOfDeletedWorkspacesTest extends FunctionalTestCase
 {
     protected array $coreExtensionsToLoad = [
         'workspaces',
@@ -37,12 +37,12 @@ class TcaTablesWorkspaceRecordsDanglingTest extends FunctionalTestCase
      */
     public function fixBrokenRecords(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesWorkspaceRecordsDanglingImport.csv');
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesRecordsOfDeletedWorkspacesImport.csv');
         $io = $this->getMockBuilder(SymfonyStyle::class)->disableOriginalConstructor()->getMock();
         $io->expects(self::atLeastOnce())->method('warning');
-        /** @var TcaTablesWorkspaceRecordsDangling $subject */
-        $subject = $this->get(TcaTablesWorkspaceRecordsDangling::class);
+        /** @var WorkspacesRecordsOfDeletedWorkspaces $subject */
+        $subject = $this->get(WorkspacesRecordsOfDeletedWorkspaces::class);
         $subject->handle($io, HealthCheckInterface::MODE_EXECUTE, '');
-        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesWorkspaceRecordsDanglingFixed.csv');
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesRecordsOfDeletedWorkspacesFixed.csv');
     }
 }
