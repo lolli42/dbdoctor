@@ -27,6 +27,7 @@ class HealthFactory implements HealthFactoryInterface
      */
     private array $healthClasses = [
         HealthCheck\WorkspacesNotLoadedRecordsDangling::class,
+        HealthCheck\TcaTablesDeleteFlagZeroOrOne::class,
         HealthCheck\TcaTablesWorkspaceRecordsDangling::class,
         HealthCheck\PagesBrokenTree::class,
         HealthCheck\PagesTranslatedLanguageParentMissing::class,

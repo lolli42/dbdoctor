@@ -25,15 +25,16 @@ class TcaHelperTest extends UnitTestCase
     /**
      * @test
      */
-    public function getNextTcaTableReturnsNothingWithInvalidTca(): void
+    public function getNextTcaTableThrowsExceptionIfTcaIsNotAnArray(): void
     {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionCode(1688203176);
         $GLOBALS['TCA'] = null;
         $tables = [];
         $subject = new TcaHelper();
         foreach ($subject->getNextTcaTable() as $item) {
             $tables[] = $item;
         }
-        self::assertSame([], $tables);
     }
 
     /**
@@ -68,6 +69,80 @@ class TcaHelperTest extends UnitTestCase
             $tables[] = $item;
         }
         self::assertSame(['bar'], $tables);
+    }
+
+    /**
+     * @test
+     */
+    public function getNextSoftDeleteAwareTableThrowsExceptionIfTcaIsNotAnArray(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionCode(1688203176);
+        $GLOBALS['TCA'] = null;
+        $subject = new TcaHelper();
+        foreach ($subject->getNextSoftDeleteAwareTable() as $item) {
+            // Trigger iterable
+        }
+    }
+
+    /**
+     * @test
+     */
+    public function getNextSoftDeleteAwareTableReturnsTableNames(): void
+    {
+        $GLOBALS['TCA'] = [
+            'noCtrl' => [
+            ],
+            'noDeleteInCtrl' => [
+                'ctrl' => [
+                ],
+            ],
+            'deleteFalse' => [
+                'ctrl' => [
+                    'delete' => false,
+                ],
+            ],
+            'deleteTrue' => [
+                'ctrl' => [
+                    'delete' => true,
+                ],
+            ],
+            'deleteArray' => [
+                'ctrl' => [
+                    'delete' => [],
+                ],
+            ],
+            'deleteEmptyString' => [
+                'ctrl' => [
+                    'delete' => '',
+                ],
+            ],
+            'correctDelete' => [
+                'ctrl' => [
+                    'delete' => 'deleted',
+                ],
+            ],
+        ];
+        $tableNames = [];
+        $subject = new TcaHelper();
+        foreach ($subject->getNextSoftDeleteAwareTable() as $tableName) {
+            $tableNames[] = $tableName;
+        }
+        self::assertSame(['correctDelete'], $tableNames);
+    }
+
+    /**
+     * @test
+     */
+    public function getNextWorkspaceEnabledTcaTableThrowsExceptionIfTcaIsNotAnArray(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionCode(1688203176);
+        $GLOBALS['TCA'] = null;
+        $subject = new TcaHelper();
+        foreach ($subject->getNextWorkspaceEnabledTcaTable() as $item) {
+            // Trigger iterable
+        }
     }
 
     /**
@@ -116,6 +191,20 @@ class TcaHelperTest extends UnitTestCase
             'workspaceEnabled3',
         ];
         self::assertSame($expected, $result);
+    }
+
+    /**
+     * @test
+     */
+    public function getNextLanguageAwareTcaTableThrowsExceptionIfTcaIsNotAnArray(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionCode(1688203176);
+        $GLOBALS['TCA'] = null;
+        $subject = new TcaHelper();
+        foreach ($subject->getNextLanguageAwareTcaTable() as $item) {
+            // Trigger iterable
+        }
     }
 
     /**
@@ -187,6 +276,20 @@ class TcaHelperTest extends UnitTestCase
             $tables[] = $item;
         }
         self::assertSame(['bar'], $tables);
+    }
+
+    /**
+     * @test
+     */
+    public function getNextInlineForeignFieldChildTcaTableThrowsExceptionIfTcaIsNotAnArray(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionCode(1688203176);
+        $GLOBALS['TCA'] = null;
+        $subject = new TcaHelper();
+        foreach ($subject->getNextInlineForeignFieldChildTcaTable() as $item) {
+            // Trigger iterable
+        }
     }
 
     /**
