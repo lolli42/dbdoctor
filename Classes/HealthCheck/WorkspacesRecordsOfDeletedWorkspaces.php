@@ -21,6 +21,7 @@ use Lolli\Dbdoctor\Helper\TableHelper;
 use Lolli\Dbdoctor\Helper\TcaHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
+use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
@@ -30,7 +31,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  *
  * This class looks for workspace records in all tables which may have been missed.
  */
-class TcaTablesWorkspaceRecordsDangling extends AbstractHealthCheck implements HealthCheckInterface, HealthDeleteInterface
+class WorkspacesRecordsOfDeletedWorkspaces extends AbstractHealthCheck implements HealthCheckInterface, HealthDeleteInterface
 {
     public function header(SymfonyStyle $io): void
     {
@@ -39,12 +40,18 @@ class TcaTablesWorkspaceRecordsDangling extends AbstractHealthCheck implements H
             '[DELETE] When a workspace (table "sys_workspace") is deleted, all existing workspace',
             '         overlays in all tables of this workspace are discarded (= removed from DB). When this',
             '         goes wrong, or if the workspace extension is removed, the system ends up with "dangling"',
-            '         workspace records in tables. This health check finds those records and allows removal.',
+            '         workspace records in tables. This health check finds those records and removes them.',
         ]);
     }
 
     protected function getAffectedRecords(): array
     {
+        if (!ExtensionManagementUtility::isLoaded('workspaces')) {
+            // Check WorkspacesNotLoadedRecordsDangling that is executed before this check
+            // already deleted all workspace overlay records when ext:workspaces is NOT
+            // loaded. We can thus skip this one early if ext:workspaces is not loaded.
+            return [];
+        }
         $allowedWorkspacesUids = $this->getAllowedWorkspaces();
         $affectedRows = [];
         $tcaHelper = $this->container->get(TcaHelper::class);

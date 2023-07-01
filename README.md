@@ -72,7 +72,30 @@ usually created by the core as long as there is no explicit definition of it in 
 a field in some broken way, dbdoctor may create hazard by suggesting delete or
 updates of all rows.
 
-As such, TCA and `ext_tables.sql` of extensions should be in a good shape before working
+There are further scenarios dbdoctor can not deal with: For example, if some extension declares
+a table soft-delete-aware by having a TCA entry `['ctrl']['delete'] = 'deleted'`,
+and you have some rows that are `deleted=1`. Later, that TCA table is set to be no
+longer sof-delete-aware by removing the `['ctrl']['delete']` declaration. The core
+database analyzer will then suggest to first rename the `deleted` column to `zzz_deleted_deleted`,
+and will then allow to remove the column. Doing this will effectively push all previously
+deleted records "live" again, when you missed to remove all `deleted=1` records beforehand, for
+instance, when you missed using a dedicated sql query that removes `deleted=1` rows before deleting the
+column. There are similar scenarios when TCA tables are changed to be no longer workspace-aware, but
+you still have workspace related records in the table, or when TCA tables
+are no longer "starttime" / "endtime" aware with having timed records it the table.
+
+dbdoctor always works on the current TCA state. It never knows if some TCA table has
+been defined "soft-delete-aware" before, and if this has been changed later. When you push
+records live by removing the "deleted" column, by removing the "workspaces" extension, workspaces
+related columns, or timing related fields, this can end up with non-repairable state
+dbdoctor will not be able to fix. Instead, it will tend to find additional database relations
+that are broken, and will suggest changes that make the situation worse than before. Also,
+dbdoctor never looks at potentially existing `zzz_deleted` columns - those do not exist
+from dbdoctor point of view since they depend on some "before" TCA state that can not be
+reconstructed again. State created from scenarios like the above ones are not repairable
+and need manual reconstruction. Good luck.
+
+All in all, TCA and `ext_tables.sql` of extensions should be in a good shape before working
 with dbdoctor, and changes suggested by health checks should **always be checked manually**
 before committing them to the database. Also, never forget to back up the database to
 prepare for an eventually needed disaster recovery. Do not accept dbdoctor suggestions
