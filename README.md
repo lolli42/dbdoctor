@@ -72,15 +72,14 @@ usually created by the core as long as there is no explicit definition of it in 
 a field in some broken way, dbdoctor may create hazard by suggesting delete or
 updates of all rows.
 
-There are further scenarios dbdoctor can not deal with: For example, if some extension declares
+There are further scenarios dbdoctor can not deal with: For example, let's say some extension declares
 a table soft-delete-aware by having a TCA entry `['ctrl']['delete'] = 'deleted'`,
 and you have some rows that are `deleted=1`. Later, that TCA table is set to be no
-longer sof-delete-aware by removing the `['ctrl']['delete']` declaration. The core
+longer soft-delete-aware by removing the `['ctrl']['delete']` declaration. The core
 database analyzer will then suggest to first rename the `deleted` column to `zzz_deleted_deleted`,
 and will then allow to remove the column. Doing this will effectively push all previously
-deleted records "live" again, when you missed to remove all `deleted=1` records beforehand, for
-instance, when you missed using a dedicated sql query that removes `deleted=1` rows before deleting the
-column. There are similar scenarios when TCA tables are changed to be no longer workspace-aware, but
+deleted records "live", when you missed to remove all affected `deleted=1` records beforehand.
+There are similar scenarios when TCA tables are changed to be no longer workspace-aware, but
 you still have workspace related records in the table, or when TCA tables
 are no longer "starttime" / "endtime" aware with having timed records it the table.
 
