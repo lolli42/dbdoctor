@@ -315,18 +315,13 @@ abstract class AbstractHealthCheck
     private function getHelp(): array
     {
         $help = [];
-        if ($this instanceof HealthDeleteInterface) {
-            $help[] = '    e - DELETE records - No soft-delete!';
-        }
-        if ($this instanceof HealthUpdateInterface) {
-            $help[] = '    e - UPDATE records';
-        }
-        $help[] = '    s - show queries but do not execute them';
-        $help[] = '    a - abort now';
-        $help[] = '    r - reload possibly changed data';
-        $help[] = '    p - show record per page';
-        $help[] = '    d - show record details';
-        $help[] = '    ? - print help';
+        $help[] = '    e - EXECUTE suggested changes!';
+        $help[] = '    s - SIMULATE suggested changes, no execution';
+        $help[] = '    a - ABORT now';
+        $help[] = '    r - RELOAD this check';
+        $help[] = '    p - SHOW records by page';
+        $help[] = '    d - SHOW record details';
+        $help[] = '    ? - HELP';
         return $help;
     }
 }
