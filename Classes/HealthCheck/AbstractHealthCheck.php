@@ -26,7 +26,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
 /**
- * Methods used by multiple health classes.
+ * Abstract implement by all single health check classes.
+ * Has the main scaffolding of health checks and various convenient methods to handle details.
  */
 abstract class AbstractHealthCheck
 {
