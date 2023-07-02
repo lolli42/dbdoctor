@@ -30,6 +30,6 @@ class DbdoctorCommandCest
     {
         $I->amGoingTo('Call bin/typo3 dbdoctor:health');
         $I->runShellCommand($this->command);
-        $I->seeInShellOutput('Find and optionally fix database inconsistencies');
+        $I->seeInShellOutput('Find and fix database inconsistencies');
     }
 }
