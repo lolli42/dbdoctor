@@ -28,7 +28,7 @@ use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
  *
  * This check detects and deletes all records having t3ver_wsid != 0 when ext:workspaces is not loaded.
  */
-class WorkspacesNotLoadedRecordsDangling extends AbstractHealthCheck implements HealthCheckInterface, HealthDeleteInterface
+class WorkspacesNotLoadedRecordsDangling extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

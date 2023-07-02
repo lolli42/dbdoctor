@@ -19,8 +19,6 @@ namespace Lolli\Dbdoctor\Commands;
 
 use Lolli\Dbdoctor\DatabaseSchema\DatabaseSchemaChecker;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
-use Lolli\Dbdoctor\HealthCheck\HealthDeleteInterface;
-use Lolli\Dbdoctor\HealthCheck\HealthUpdateInterface;
 use Lolli\Dbdoctor\HealthFactory\HealthFactoryInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -121,14 +119,6 @@ class HealthCommand extends Command
             /** @var HealthCheckInterface $healthInstance */
             if (!$healthInstance instanceof HealthCheckInterface) {
                 throw new \RuntimeException('Single health checks must implement HealthInterface', 1646321959);
-            }
-            if ((!$healthInstance instanceof HealthDeleteInterface && !$healthInstance instanceof HealthUpdateInterface)
-                || ($healthInstance instanceof HealthDeleteInterface && $healthInstance instanceof HealthUpdateInterface)
-            ) {
-                throw new \RuntimeException(
-                    'Single health checks must either implement HealthDeleteInterface or HealthUpdateInterface',
-                    1646322037
-                );
             }
             $healthInstance->header($io);
             $result |= $healthInstance->handle($io, $mode, $file);

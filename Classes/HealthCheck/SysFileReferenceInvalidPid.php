@@ -25,7 +25,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * All records in sys_file_reference must be on same pid as the parent record.
  */
-class SysFileReferenceInvalidPid extends AbstractHealthCheck implements HealthCheckInterface, HealthUpdateInterface
+class SysFileReferenceInvalidPid extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

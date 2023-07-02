@@ -25,7 +25,7 @@ use TYPO3\CMS\Core\Information\Typo3Version;
  *
  * Note core v12 no longer provides field "table_local", this check is skipped in v12.
  */
-class SysFileReferenceInvalidTableLocal extends AbstractHealthCheck implements HealthCheckInterface, HealthUpdateInterface
+class SysFileReferenceInvalidTableLocal extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

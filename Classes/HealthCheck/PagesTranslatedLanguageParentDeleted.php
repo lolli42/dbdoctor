@@ -26,7 +26,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Find not-deleted translated pages that have a sys_language_uid=0 parent set to deleted.
  */
-class PagesTranslatedLanguageParentDeleted extends AbstractHealthCheck implements HealthCheckInterface, HealthUpdateInterface
+class PagesTranslatedLanguageParentDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {
