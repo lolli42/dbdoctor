@@ -26,7 +26,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Tables with record translations must have their pid set to the same pid the default language record points to.
  */
-class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealthCheck implements HealthCheckInterface
+final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

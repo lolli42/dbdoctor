@@ -30,7 +30,7 @@ use TYPO3\CMS\Core\Utility\PathUtility;
 /**
  * Main CLI entry point
  */
-class HealthCommand extends Command
+final class HealthCommand extends Command
 {
     private HealthFactoryInterface $healthFactory;
     private DatabaseSchemaChecker $databaseSchemaChecker;

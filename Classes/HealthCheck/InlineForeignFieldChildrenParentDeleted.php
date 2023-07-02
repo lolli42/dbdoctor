@@ -27,7 +27,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Handle inline foreign field children that are not deleted but parent is deleted.
  */
-class InlineForeignFieldChildrenParentDeleted extends AbstractHealthCheck implements HealthCheckInterface
+final class InlineForeignFieldChildrenParentDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

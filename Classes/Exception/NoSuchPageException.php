@@ -19,6 +19,6 @@ namespace Lolli\Dbdoctor\Exception;
 
 use Lolli\Dbdoctor\Exception;
 
-class NoSuchPageException extends Exception
+final class NoSuchPageException extends Exception
 {
 }

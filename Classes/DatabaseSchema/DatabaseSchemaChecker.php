@@ -20,7 +20,7 @@ namespace Lolli\Dbdoctor\DatabaseSchema;
 use TYPO3\CMS\Core\Database\Schema\SchemaMigrator;
 use TYPO3\CMS\Core\Database\Schema\SqlReader;
 
-class DatabaseSchemaChecker
+final class DatabaseSchemaChecker
 {
     private SqlReader $sqlReader;
     private SchemaMigrator $schemaMigrator;

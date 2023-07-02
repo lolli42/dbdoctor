@@ -22,7 +22,7 @@ use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Helper\TableHelper;
 use Lolli\Dbdoctor\Helper\TcaHelper;
 
-class RecordsRenderer
+final class RecordsRenderer
 {
     /**
      * @var array<int, string>

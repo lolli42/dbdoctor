@@ -25,7 +25,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * Inline foreign field children must have existing parent record.
  */
-class InlineForeignFieldChildrenParentMissing extends AbstractHealthCheck implements HealthCheckInterface
+final class InlineForeignFieldChildrenParentMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

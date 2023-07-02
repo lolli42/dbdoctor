@@ -20,7 +20,7 @@ namespace Lolli\Dbdoctor\Helper;
 use Lolli\Dbdoctor\Exception\NoSuchPageException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 
-class PagesRootlineHelper
+final class PagesRootlineHelper
 {
     /**
      * @var array<int, array<string, int|string|bool>>

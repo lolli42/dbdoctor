@@ -27,7 +27,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Localized sys_file_reference records must have the same data in field 'tablenames' and 'fieldname' as its language parent.
  */
-class SysFileReferenceLocalizedFieldSync extends AbstractHealthCheck implements HealthCheckInterface
+final class SysFileReferenceLocalizedFieldSync extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

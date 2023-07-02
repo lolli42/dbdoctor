@@ -26,7 +26,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Check if translated records point to existing records.
  */
-class TcaTablesInvalidLanguageParent extends AbstractHealthCheck implements HealthCheckInterface
+final class TcaTablesInvalidLanguageParent extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {
