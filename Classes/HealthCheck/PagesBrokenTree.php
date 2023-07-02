@@ -54,6 +54,6 @@ final class PagesBrokenTree extends AbstractHealthCheck implements HealthCheckIn
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        $this->deleteAllRecords($io, $simulate, $affectedRecords);
+        $this->deleteTcaRecordsOfTable($io, $simulate, 'pages', $affectedRecords['pages'] ?? []);
     }
 }

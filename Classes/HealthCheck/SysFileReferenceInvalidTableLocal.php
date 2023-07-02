@@ -67,7 +67,7 @@ final class SysFileReferenceInvalidTableLocal extends AbstractHealthCheck implem
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        $this->updateAllRecords(
+        $this->updateTcaRecordsOfTable(
             $io,
             $simulate,
             'sys_file_reference',

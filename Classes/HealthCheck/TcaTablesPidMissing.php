@@ -67,6 +67,8 @@ final class TcaTablesPidMissing extends AbstractHealthCheck implements HealthChe
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        $this->deleteAllRecords($io, $simulate, $affectedRecords);
+        foreach ($affectedRecords as $tableName => $tableRows) {
+            $this->deleteTcaRecordsOfTable($io, $simulate, $tableName, $tableRows);
+        }
     }
 }
