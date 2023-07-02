@@ -30,10 +30,11 @@ final class SysFileReferenceInvalidPid extends AbstractHealthCheck implements He
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for sys_file_reference records with invalid pid');
+        $this->outputTags($io, self::TAG_UPDATE);
         $io->text([
-            '[UPDATE] Records in "sys_file_reference" must have "pid" set to the same pid as the',
-            '         parent record: If for instance a tt_content record on pid 5 references a sys_file, the',
-            '         sys_file_reference record should be on pid 5, too. This check takes care of this.',
+            'Records in "sys_file_reference" must have "pid" set to the same pid as the',
+            'parent record: If for instance a tt_content record on pid 5 references a sys_file, the',
+            'sys_file_reference record should be on pid 5, too. This updates the pid of affected records.',
         ]);
     }
 

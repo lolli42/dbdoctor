@@ -31,6 +31,15 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
  */
 abstract class AbstractHealthCheck
 {
+    // Used in IO when a check may DELETE records
+    protected const TAG_REMOVE = 'remove';
+    // Used in IO when a check may "deleted=1" records
+    protected const TAG_SOFT_DELETE = 'soft-delete';
+    // Used in IO when a check may DELETE workspace records
+    protected const TAG_WORKSPACE_REMOVE = 'workspace-remove';
+    // Used in IO when a check may UPDATE single fields of records
+    protected const TAG_UPDATE = 'update-fields';
+
     /**
      * Set to an absolute, not-empty file path string when sql command should be logged.
      */
@@ -410,6 +419,18 @@ abstract class AbstractHealthCheck
                 $io->warning('Deleted "' . $deleteCount . '" records from "' . $tableName . '" table');
             }
         }
+    }
+
+    /**
+     * Helper method for header() to render a list of tags
+     * to declare the type of changes this check applies.
+     *
+     * @param string ...$tags
+     */
+    protected function outputTags(SymfonyStyle $io, ...$tags): void
+    {
+        $tags = array_map(fn (string $tag): string => '<comment>' . $tag . '</comment>', $tags);
+        $io->text('Actions: ' . implode(', ', $tags));
     }
 
     private function logAndOutputSql(SymfonyStyle $io, bool $simulate, string $sql): void

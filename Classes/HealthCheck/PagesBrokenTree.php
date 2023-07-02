@@ -28,10 +28,11 @@ final class PagesBrokenTree extends AbstractHealthCheck implements HealthCheckIn
     public function header(SymfonyStyle $io): void
     {
         $io->section('Check page tree integrity');
+        $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
-            '[DELETE] This health check finds "pages" records with their "pid" set to pages that do',
-            '         not exist in the database. Pages without proper connection to the tree root are never',
-            '         shown in the backend. They should be deleted.',
+            'This health check finds "pages" records with their "pid" set to pages that do',
+            'not exist in the database. Pages without proper connection to the tree root are never',
+            'shown in the backend. They are removed.',
         ]);
     }
 

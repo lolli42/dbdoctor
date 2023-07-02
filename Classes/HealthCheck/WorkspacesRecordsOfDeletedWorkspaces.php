@@ -35,11 +35,12 @@ final class WorkspacesRecordsOfDeletedWorkspaces extends AbstractHealthCheck imp
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for workspace records of deleted sys_workspace\'s');
+        $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
-            '[DELETE] When a workspace (table "sys_workspace") is deleted, all existing workspace',
-            '         overlays in all tables of this workspace are discarded (= removed from DB). When this',
-            '         goes wrong, or if the workspace extension is removed, the system ends up with "dangling"',
-            '         workspace records in tables. This health check finds those records and removes them.',
+            'When a workspace (table "sys_workspace") is deleted, all existing workspace',
+            'overlays in all tables of this workspace are removed. When this goes wrong,',
+            'or if the workspace extension is removed, the system ends up with "dangling"',
+            'workspace records in tables. This health check finds those records and removes them.',
         ]);
     }
 

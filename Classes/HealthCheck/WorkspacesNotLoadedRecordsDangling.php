@@ -32,12 +32,13 @@ final class WorkspacesNotLoadedRecordsDangling extends AbstractHealthCheck imple
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for workspace records when ext:workspaces is not loaded');
+        $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
-            '[DELETE] When extension "workspaces" is not loaded, there should be no workspace overlay',
-            '         records (t3ver_wsid != 0). This check deletes all workspace related records if',
-            '         the extension is not loaded. Think about this twice: If workspaces is a thing',
-            '         in your instance, the extension must be loaded, otherwise this check will',
-            '         remove all existing workspace overlay records!',
+            'When extension "workspaces" is not loaded, there should be no workspace overlay',
+            'records (t3ver_wsid != 0). This check removes all workspace related records if',
+            'the extension is not loaded. Think about this twice: If workspaces is a thing',
+            'in your instance, the extension must be loaded, otherwise this check will',
+            'remove all existing workspace overlay records!',
         ]);
     }
 

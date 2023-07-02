@@ -45,11 +45,10 @@ final class HealthFactory implements HealthFactoryInterface
         HealthCheck\SysFileReferenceInvalidPid::class,
         HealthCheck\TcaTablesPidMissing::class,
         // @todo: Disabled for now, see the class comment
-        // HealthCheck\SysFileReferenceInvalidFieldname::class,
+        // SysFileReferenceInvalidFieldname::class,
         HealthCheck\TcaTablesPidDeleted::class,
         HealthCheck\TcaTablesTranslatedLanguageParentMissing::class,
-        // Check sys_file_reference pointing to not existing records *again*:
-        // TcaTablesTranslatedLanguageParentMissing may have deleted some.
+        // Check sys_file_reference pointing to not existing records *again*, TcaTablesTranslatedLanguageParentMissing may have deleted some.
         HealthCheck\SysFileReferenceDangling::class,
         HealthCheck\TcaTablesTranslatedLanguageParentDeleted::class,
         HealthCheck\TcaTablesTranslatedLanguageParentDifferentPid::class,

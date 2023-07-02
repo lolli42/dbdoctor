@@ -32,14 +32,15 @@ final class SysFileReferenceLocalizedFieldSync extends AbstractHealthCheck imple
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for localized sys_file_reference records with parent not in sync');
+        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE);
         $io->text([
-            '[UPDATE] Localized records in "sys_file_reference" (sys_language_uid > 0) must have fields "tablenames"',
-            '         and "fieldname" set to the same values as its language parent record.',
-            '         Records violating this indicate something is wrong with this localized record.',
-            '         This may happen for instance, when the ctype of a default language record is changed and',
-            '         relations are adapted after the record has been localized. Check findings manually if in doubt!',
-            '         For now, affected localized records are set to deleted=1 in live and removed from table if',
-            '         they are workspace overlay records.',
+            'Localized records in "sys_file_reference" (sys_language_uid > 0) must have fields "tablenames"',
+            'and "fieldname" set to the same values as its language parent record.',
+            'Records violating this indicate something is wrong with this localized record.',
+            'This may happen for instance, when the tt_content ctype of a default language record is changed and',
+            'relations are adapted after the record has been localized. Verify findings manually!',
+            'This check sets affected localized records are set to deleted=1 in live and removes the',
+            'if they are workspace overlay records.',
         ]);
     }
 

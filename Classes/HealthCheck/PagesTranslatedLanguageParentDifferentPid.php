@@ -29,10 +29,11 @@ final class PagesTranslatedLanguageParentDifferentPid extends AbstractHealthChec
     public function header(SymfonyStyle $io): void
     {
         $io->section('Check pages with different pid than their language parent');
+        $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
-            '[DELETE] This health check finds translated "pages" records (sys_language_uid > 0) with',
-            '         their default language record (l10n_parent field) on a different pid.',
-            '         Those translated pages are shown in backend at a wrong place. They will be deleted.',
+            'This health check finds translated "pages" records (sys_language_uid > 0) with',
+            'their default language record (l10n_parent field) on a different pid.',
+            'Those translated pages are shown in backend at a wrong place. They are removed.',
         ]);
     }
 

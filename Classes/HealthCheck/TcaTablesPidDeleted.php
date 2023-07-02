@@ -31,10 +31,11 @@ final class TcaTablesPidDeleted extends AbstractHealthCheck implements HealthChe
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for not-deleted records on pages set to deleted');
+        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE);
         $io->text([
-            '[UPDATE] TCA records have a pid field set to a single page. This page must exist.',
-            '         This scan finds deleted=0 records pointing to pages having deleted=1.',
-            '         Affected records are set to deleted=1 if in live, or removed if in workspaces.',
+            'TCA records have a pid field set to a single page. This page must exist.',
+            'This scan finds deleted=0 records pointing to pages having deleted=1.',
+            'Affected records are soft deleted if possible, or removed.',
         ]);
     }
 
@@ -48,6 +49,8 @@ final class TcaTablesPidDeleted extends AbstractHealthCheck implements HealthChe
         foreach ($this->tcaHelper->getNextTcaTable(['pages']) as $tableName) {
             $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
             $isTableWorkspaceAware = !empty($workspaceIdField);
+            $tableDeleteField = $this->tcaHelper->getDeletedField($tableName);
+            $itTableSoftDeleteAware = !empty($tableDeleteField);
             $selectFields = ['uid', 'pid'];
             if ($isTableWorkspaceAware) {
                 $selectFields[] = $workspaceIdField;
@@ -57,8 +60,8 @@ final class TcaTablesPidDeleted extends AbstractHealthCheck implements HealthChe
             $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
             $queryBuilder->select(...$selectFields)->from($tableName)->orderBy('uid');
             $queryBuilder->where($queryBuilder->expr()->gt('pid', $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)));
-            $tableDeleteField = $this->tcaHelper->getDeletedField($tableName);
-            if ($tableDeleteField) {
+
+            if ($itTableSoftDeleteAware) {
                 // Do not consider deleted records: Records pointing to a not-existing page have been
                 // caught before, we want to find non-deleted records pointing to deleted pages.
                 // Still, TCA tables without soft-delete, must point to not-deleted pages.

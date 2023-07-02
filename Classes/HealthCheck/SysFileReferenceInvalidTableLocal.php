@@ -32,12 +32,13 @@ final class SysFileReferenceInvalidTableLocal extends AbstractHealthCheck implem
         $io->section('Scan for sys_file_reference_records with broken table_local field');
         if ((new Typo3Version())->getMajorVersion() >= 12) {
             $io->text([
-                '[SKIPPED] This check is obsolete with core v12.',
+                'This check is obsolete with core v12.',
             ]);
         } else {
+            $this->outputTags($io, self::TAG_UPDATE);
             $io->text([
-                '[UPDATE] Records in "sys_file_reference" must have field "table_local" set to',
-                '         "sys_file". This check verifies this and can update non-compliant rows.',
+                'Records in "sys_file_reference" must have field "table_local" set to',
+                '"sys_file". This check verifies this and can update- non-compliant rows.',
             ]);
         }
     }

@@ -31,12 +31,13 @@ final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck 
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for record translations pointing to non default language parent');
+        $this->outputTags($io, self::TAG_UPDATE);
         $io->text([
-            '[UPDATE] Record translations ("translate" / "connected" mode, as opposed to "free" mode) use the',
-            '         database field "transOrigPointerField" (DB field name usually "l10n_parent" or "l18n_parent").',
-            '         This field points to the default language record if set. This health check verifies if that target',
-            '         actually has sys_language_uid = 0. Violating localizations are set to the transOrigPointerField',
-            '         of the current target record.',
+            'Record translations ("translate" / "connected" mode, as opposed to "free" mode) use the',
+            'database field "transOrigPointerField" (field name usually "l10n_parent" or "l18n_parent").',
+            'This field points to the default language record. This health check verifies that target',
+            'actually has sys_language_uid = 0. Violating localizations are set to the transOrigPointerField',
+            'of the current target record.',
         ]);
     }
 
