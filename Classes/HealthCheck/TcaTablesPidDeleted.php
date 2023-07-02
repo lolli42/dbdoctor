@@ -89,8 +89,6 @@ final class TcaTablesPidDeleted extends AbstractHealthCheck implements HealthChe
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        foreach ($affectedRecords as $tableName => $tableRows) {
-            $this->softOrHardDeleteRecords($io, $simulate, $tableName, $tableRows);
-        }
+        $this->softOrHardDeleteRecords($io, $simulate, $affectedRecords);
     }
 }

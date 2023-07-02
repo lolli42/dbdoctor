@@ -77,7 +77,7 @@ final class SysFileReferenceLocalizedFieldSync extends AbstractHealthCheck imple
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        $this->softOrHardDeleteRecords($io, $simulate, 'sys_file_reference', $affectedRecords['sys_file_reference'] ?? []);
+        $this->softOrHardDeleteRecordsOfTable($io, $simulate, 'sys_file_reference', $affectedRecords['sys_file_reference'] ?? []);
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
