@@ -68,6 +68,8 @@ final class WorkspacesNotLoadedRecordsDangling extends AbstractHealthCheck imple
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        $this->deleteAllRecords($io, $simulate, $affectedRecords);
+        foreach ($affectedRecords as $tableName => $tableRows) {
+            $this->deleteTcaRecordsOfTable($io, $simulate, $tableName, $tableRows);
+        }
     }
 }

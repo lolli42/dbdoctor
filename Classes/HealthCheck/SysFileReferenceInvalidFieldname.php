@@ -73,7 +73,7 @@ final class SysFileReferenceInvalidFieldname extends AbstractHealthCheck impleme
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        $this->deleteAllRecords($io, $simulate, $affectedRecords);
+        $this->deleteTcaRecordsOfTable($io, $simulate, 'sys_file_reference', $affectedRecords['sys_file_reference'] ?? []);
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void

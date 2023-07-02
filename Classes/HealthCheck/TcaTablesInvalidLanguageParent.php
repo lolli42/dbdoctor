@@ -101,7 +101,9 @@ final class TcaTablesInvalidLanguageParent extends AbstractHealthCheck implement
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        $this->deleteAllRecords($io, $simulate, $affectedRecords);
+        foreach ($affectedRecords as $tableName => $tableRows) {
+            $this->deleteTcaRecordsOfTable($io, $simulate, $tableName, $tableRows);
+        }
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void

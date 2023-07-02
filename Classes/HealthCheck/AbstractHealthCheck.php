@@ -217,13 +217,8 @@ abstract class AbstractHealthCheck
      * @param array<int, string> $extraCtrlFields
      * @param array<int, string> $extraDbFields
      */
-    final protected function outputRecordDetails(
-        SymfonyStyle $io,
-        array $danglingRows,
-        string $reasonField = '',
-        array $extraCtrlFields = [],
-        array $extraDbFields = []
-    ): void {
+    final protected function outputRecordDetails(SymfonyStyle $io, array $danglingRows, string $reasonField = '', array $extraCtrlFields = [], array $extraDbFields = []): void
+    {
         /** @var RecordsRenderer $recordsRenderer */
         $recordsRenderer = $this->container->get(RecordsRenderer::class);
         foreach ($danglingRows as $tableName => $rows) {
@@ -236,49 +231,51 @@ abstract class AbstractHealthCheck
     }
 
     /**
-     * @todo: Make this 'per-table' just as updateAllRecords()
+     * DELETE multiple records from a single TCA table.
+     * Outputs a summary before and after, while deleteSingleTcaRecord() logs and outputs single queries.
      *
-     * @param array<string, array<int, array<string, int|string>>> $danglingRows
+     * @param array<int, array<string, int|string>> $rows
      */
-    final protected function deleteAllRecords(SymfonyStyle $io, bool $simulate, array $danglingRows): void
+    final protected function deleteTcaRecordsOfTable(SymfonyStyle $io, bool $simulate, string $tableName, array $rows): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
-        foreach ($danglingRows as $tableName => $rows) {
-            if ($simulate) {
-                $io->note('[SIMULATE] deleting records on table: ' . $tableName);
-            } else {
-                $io->note('Deleting records on table: ' . $tableName);
-            }
-            $count = 0;
-            foreach ($rows as $row) {
-                $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid']);
-                $count ++;
-            }
-            if ($simulate) {
-                $io->note('[SIMULATE] Deleted "' . $count . '" records from "' . $tableName . '" table');
-            } else {
-                $io->warning('Deleted "' . $count . '" records from "' . $tableName . '" table');
-            }
+        if ($simulate) {
+            $io->note('[SIMULATE] delete records on table: ' . $tableName);
+        } else {
+            $io->note('Deleting records on table: ' . $tableName);
+        }
+        $count = 0;
+        foreach ($rows as $row) {
+            $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid']);
+            $count ++;
+        }
+        if ($simulate) {
+            $io->note('[SIMULATE] Delete "' . $count . '" records from "' . $tableName . '" table');
+        } else {
+            $io->warning('Deleted "' . $count . '" records from "' . $tableName . '" table');
         }
     }
 
-    final protected function deleteSingleTcaRecord(
-        SymfonyStyle $io,
-        bool $simulate,
-        RecordsHelper $recordsHelper,
-        string $tableName,
-        int $uid
-    ): void {
+    /**
+     * Execute and log a single DELETE query.
+     * This needs an instance of RecordsHelper to make use of prepared statements, which
+     * should be created by the calling method.
+     */
+    final protected function deleteSingleTcaRecord(SymfonyStyle $io, bool $simulate, RecordsHelper $recordsHelper, string $tableName, int $uid): void
+    {
         $sql = $recordsHelper->deleteTcaRecord($simulate, $tableName, $uid);
         $this->logAndOutputSql($io, $simulate, $sql);
     }
 
     /**
+     * Apply an update to many rows of a single TCA table.
+     * Outputs a summary before and after, while updateSingleTcaRecord() logs and outputs single queries.
+     *
      * @param array<int, array<string, int|string>> $rows
      * @param array<string, array<string, int|string>> $fields
      */
-    final protected function updateAllRecords(SymfonyStyle $io, bool $simulate, string $tableName, array $rows, array $fields): void
+    final protected function updateTcaRecordsOfTable(SymfonyStyle $io, bool $simulate, string $tableName, array $rows, array $fields): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
@@ -300,16 +297,14 @@ abstract class AbstractHealthCheck
     }
 
     /**
+     * Execute and log a single UPDATE query.
+     * This needs an instance of RecordsHelper to make use of prepared statements, which
+     * should be created by the calling method.
+     *
      * @param array<string, array<string, int|string>> $fields
      */
-    final protected function updateSingleTcaRecord(
-        SymfonyStyle $io,
-        bool $simulate,
-        RecordsHelper $recordsHelper,
-        string $tableName,
-        int $uid,
-        array $fields
-    ): void {
+    final protected function updateSingleTcaRecord(SymfonyStyle $io, bool $simulate, RecordsHelper $recordsHelper, string $tableName, int $uid, array $fields): void
+    {
         $sql = $recordsHelper->updateTcaRecord($simulate, $tableName, $uid, $fields);
         $this->logAndOutputSql($io, $simulate, $sql);
     }
@@ -318,6 +313,9 @@ abstract class AbstractHealthCheck
      * When deleting records, they should be soft-deleted when in live (t3ver_wsid = 0),
      * but should be removed when in workspaces (t3ver_wsid > 0). This helper method
      * handles both.
+     *
+     * The method outputs a summary before and after, while deleteSingleTcaRecord()
+     * and updateSingleTcaRecord() log and output single queries.
      *
      * @param array<int, array<string, int|string>> $rows
      */

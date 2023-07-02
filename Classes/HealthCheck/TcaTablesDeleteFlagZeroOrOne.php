@@ -73,7 +73,7 @@ final class TcaTablesDeleteFlagZeroOrOne extends AbstractHealthCheck implements 
                     'type' => \PDO::PARAM_INT,
                 ],
             ];
-            $this->updateAllRecords($io, $simulate, $tableName, $tableRows, $updateFields);
+            $this->updateTcaRecordsOfTable($io, $simulate, $tableName, $tableRows, $updateFields);
         }
     }
 }
