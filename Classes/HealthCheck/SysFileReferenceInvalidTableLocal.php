@@ -45,6 +45,7 @@ class SysFileReferenceInvalidTableLocal extends AbstractHealthCheck implements H
     protected function getAffectedRecords(): array
     {
         if ((new Typo3Version())->getMajorVersion() >= 12) {
+            // Skip with TYPO3 v12.
             return [];
         }
 

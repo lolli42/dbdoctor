@@ -177,6 +177,9 @@ class TcaHelper
         return ($GLOBALS['TCA'][$tableName]['ctrl']['transOrigPointerField'] ?? null) ?: null;
     }
 
+    /**
+     * @return non-empty-string|null
+     */
     public function getWorkspaceIdField(string $tableName): ?string
     {
         return ($GLOBALS['TCA'][$tableName]['ctrl']['versioningWS'] ?? null) ? 't3ver_wsid' : null;

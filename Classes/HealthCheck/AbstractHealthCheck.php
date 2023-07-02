@@ -18,6 +18,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Helper\RecordsHelper;
+use Lolli\Dbdoctor\Helper\TcaHelper;
 use Lolli\Dbdoctor\Renderer\AffectedPagesRenderer;
 use Lolli\Dbdoctor\Renderer\RecordsRenderer;
 use Psr\Container\ContainerInterface;
@@ -229,9 +230,11 @@ abstract class AbstractHealthCheck
     }
 
     /**
+     * @todo: Make this 'per-table' just as updateAllRecords()
+     *
      * @param array<string, array<int, array<string, int|string>>> $danglingRows
      */
-    protected function deleteRecords(SymfonyStyle $io, bool $simulate, array $danglingRows): void
+    protected function deleteAllRecords(SymfonyStyle $io, bool $simulate, array $danglingRows): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
@@ -243,8 +246,7 @@ abstract class AbstractHealthCheck
             }
             $count = 0;
             foreach ($rows as $row) {
-                $sql = $recordsHelper->deleteTcaRecord($simulate, $tableName, (int)$row['uid']);
-                $this->logAndOutputSql($io, $simulate, $sql);
+                $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid']);
                 $count ++;
             }
             if ($simulate) {
@@ -253,6 +255,17 @@ abstract class AbstractHealthCheck
                 $io->warning('Deleted "' . $count . '" records from "' . $tableName . '" table');
             }
         }
+    }
+
+    protected function deleteSingleTcaRecord(
+        SymfonyStyle $io,
+        bool $simulate,
+        RecordsHelper $recordsHelper,
+        string $tableName,
+        int $uid
+    ): void {
+        $sql = $recordsHelper->deleteTcaRecord($simulate, $tableName, $uid);
+        $this->logAndOutputSql($io, $simulate, $sql);
     }
 
     /**
@@ -276,7 +289,7 @@ abstract class AbstractHealthCheck
         if ($simulate) {
             $io->note('[SIMULATE] Update "' . $count . '" records from "' . $tableName . '" table');
         } else {
-            $io->warning('Update "' . $count . '" records from "' . $tableName . '" table');
+            $io->warning('Updated "' . $count . '" records from "' . $tableName . '" table');
         }
     }
 
@@ -293,6 +306,78 @@ abstract class AbstractHealthCheck
     ): void {
         $sql = $recordsHelper->updateTcaRecord($simulate, $tableName, $uid, $fields);
         $this->logAndOutputSql($io, $simulate, $sql);
+    }
+
+    /**
+     * When deleting records, they should be soft-deleted when in live (t3ver_wsid = 0),
+     * but should be removed when in workspaces (t3ver_wsid > 0). This helper method
+     * handles both.
+     *
+     * @param array<int, array<string, int|string>> $rows
+     */
+    protected function softOrHardDeleteRecords(SymfonyStyle $io, bool $simulate, string $tableName, array $rows): void
+    {
+        /** @var TcaHelper $tcaHelper */
+        $tcaHelper = $this->container->get(TcaHelper::class);
+        /** @var RecordsHelper $recordsHelper */
+        $recordsHelper = $this->container->get(RecordsHelper::class);
+        if ($simulate) {
+            $io->note('[SIMULATE] Handle records on table: ' . $tableName);
+        } else {
+            $io->note('Handle records on table: ' . $tableName);
+        }
+
+        $deleteField = $tcaHelper->getDeletedField($tableName);
+        $isTableSoftDeleteAware = !empty($deleteField);
+        $updateFields = [];
+        if ($isTableSoftDeleteAware) {
+            $updateFields = [
+                $deleteField => [
+                    'value' => 1,
+                    'type' => \PDO::PARAM_INT,
+                ],
+            ];
+        }
+        $workspaceIdField = $tcaHelper->getWorkspaceIdField($tableName);
+        $isTableWorkspaceAware = !empty($workspaceIdField);
+
+        $updateCount = 0;
+        $deleteCount = 0;
+        foreach ($rows as $row) {
+            if ($isTableWorkspaceAware && !array_key_exists($workspaceIdField, $row)) {
+                throw new \RuntimeException(
+                    'When soft or hard deleting records from a workspace aware table, t3ver_wsid field must be hand over.',
+                    1688281493
+                );
+            }
+            if (!$isTableSoftDeleteAware
+                || ($isTableWorkspaceAware && ((int)$row[$workspaceIdField] > 0))
+            ) {
+                // DELETE record if table is not workspace aware, or if record is a workspace record
+                $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid']);
+                $deleteCount ++;
+            } else {
+                // UPDATE record, set "deleted=1" if table is soft-delete aware and record is not a workspace record
+                $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $updateFields);
+                $updateCount ++;
+            }
+        }
+
+        if ($simulate) {
+            if ($updateCount > 0) {
+                $io->note('[SIMULATE] Update "' . $updateCount . '" records from "' . $tableName . '" table');
+            }
+            if ($deleteCount > 0) {
+                $io->note('[SIMULATE] Delete "' . $deleteCount . '" records from "' . $tableName . '" table');
+            }
+        } else {
+            if ($updateCount > 0) {
+                $io->warning('Updated "' . $updateCount . '" records from "' . $tableName . '" table');
+            }
+            if ($deleteCount > 0) {
+                $io->warning('Deleted "' . $deleteCount . '" records from "' . $tableName . '" table');
+            }
+        }
     }
 
     private function logAndOutputSql(SymfonyStyle $io, bool $simulate, string $sql): void

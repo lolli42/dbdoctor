@@ -33,7 +33,7 @@ class SysFileReferenceLocalizedParentExists extends AbstractHealthCheck implemen
         $io->text([
             '[DELETE] Localized records in "sys_file_reference" (sys_language_uid > 0) having',
             '         l10n_parent > 0 must point to a sys_language_uid = 0, existing language parent record.',
-            '         Records violating this are set to removed.',
+            '         Records violating this are removed.',
         ]);
     }
 
@@ -65,7 +65,7 @@ class SysFileReferenceLocalizedParentExists extends AbstractHealthCheck implemen
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        $this->deleteRecords($io, $simulate, $affectedRecords);
+        $this->deleteAllRecords($io, $simulate, $affectedRecords);
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void

@@ -36,7 +36,8 @@ class InlineForeignFieldChildrenParentDeleted extends AbstractHealthCheck implem
         $io->text([
             '[UPDATE] TCA inline foreign field records point to a parent record. When this parent is',
             '         soft-deleted (deleted=1), the child should be soft-deleted, too.',
-            '         This check finds affected children and updates them to deleted=1.',
+            '         This check finds affected children and sets them deleted=1 for live records,',
+            '         or removes them when dealing with workspace records.',
         ]);
     }
 
@@ -56,14 +57,25 @@ class InlineForeignFieldChildrenParentDeleted extends AbstractHealthCheck implem
                 // Skip child table if it is not soft-delete aware
                 continue;
             }
+            $workspaceIdField = $tcaHelper->getWorkspaceIdField($childTableName);
+            $isTableWorkspaceAware = !empty($workspaceIdField);
             $fieldNameOfParentTableName = $inlineChild['fieldNameOfParentTableName'];
             $fieldNameOfParentTableUid = $inlineChild['fieldNameOfParentTableUid'];
+
+            $selectFields = [
+                'uid',
+                'pid',
+                $fieldNameOfParentTableName,
+                $fieldNameOfParentTableUid,
+            ];
+            if ($isTableWorkspaceAware) {
+                $selectFields[] = $workspaceIdField;
+            }
+
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($childTableName);
             // Do not consider deleted records: We want to find children deleted=0 with parents deleted=1.
             $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-            $result = $queryBuilder->select('uid', 'pid', $fieldNameOfParentTableName, $fieldNameOfParentTableUid)->from($childTableName)
-                ->orderBy('uid')
-                ->executeQuery();
+            $result = $queryBuilder->select(...$selectFields)->from($childTableName)->orderBy('uid')->executeQuery();
             while ($inlineChildRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $inlineChildRow */
                 if (empty($inlineChildRow[$fieldNameOfParentTableName])
@@ -101,17 +113,8 @@ class InlineForeignFieldChildrenParentDeleted extends AbstractHealthCheck implem
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        /** @var TcaHelper $tcaHelper */
-        $tcaHelper = $this->container->get(TcaHelper::class);
         foreach ($affectedRecords as $tableName => $tableRows) {
-            $deletedField = $tcaHelper->getDeletedField($tableName);
-            $updateFields = [
-                $deletedField => [
-                    'value' => 1,
-                    'type' => \PDO::PARAM_INT,
-                ],
-            ];
-            $this->updateAllRecords($io, $simulate, $tableName, $tableRows, $updateFields);
+            $this->softOrHardDeleteRecords($io, $simulate, $tableName, $tableRows);
         }
     }
 

@@ -35,7 +35,11 @@ class SysFileReferenceLocalizedFieldSync extends AbstractHealthCheck implements 
         $io->text([
             '[UPDATE] Localized records in "sys_file_reference" (sys_language_uid > 0) must have fields "tablenames"',
             '         and "fieldname" set to the same values as its language parent record.',
-            '         Records violating this are probably not shown at all and set to deleted.',
+            '         Records violating this indicate something is wrong with this localized record.',
+            '         This may happen for instance, when the ctype of a default language record is changed and',
+            '         relations are adapted after the record has been localized. Check findings manually if in doubt!',
+            '         For now, affected localized records are set to deleted=1 in live and removed from table if',
+            '         they are workspace overlay records.',
         ]);
     }
 
@@ -46,7 +50,7 @@ class SysFileReferenceLocalizedFieldSync extends AbstractHealthCheck implements 
         $tableRows = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-        $result = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'l10n_parent', 'uid_foreign', 'tablenames', 'fieldname')->from('sys_file_reference')
+        $result = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'l10n_parent', 'uid_foreign', 'tablenames', 'fieldname', 't3ver_wsid')->from('sys_file_reference')
             ->where(
                 $queryBuilder->expr()->gt('sys_language_uid', $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)),
                 $queryBuilder->expr()->gt('l10n_parent', $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT))
@@ -73,18 +77,7 @@ class SysFileReferenceLocalizedFieldSync extends AbstractHealthCheck implements 
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        $this->updateAllRecords(
-            $io,
-            $simulate,
-            'sys_file_reference',
-            $affectedRecords['sys_file_reference'] ?? [],
-            [
-                'deleted' => [
-                    'value' => 1,
-                    'type' => \PDO::PARAM_INT,
-                ],
-            ]
-        );
+        $this->softOrHardDeleteRecords($io, $simulate, 'sys_file_reference', $affectedRecords['sys_file_reference'] ?? []);
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
