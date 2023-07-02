@@ -29,10 +29,11 @@ final class WorkspacesSoftDeletedRecords extends AbstractHealthCheck implements 
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for soft-deleted workspaces records');
+        $this->outputTags($io, self::TAG_WORKSPACE_REMOVE);
         $io->text([
-            '[DELETE] Records in workspaces (t3ver_wsid != 0) are not soft-delete aware since TYPO3 v11:',
-            '         When "discarding" workspace changes, affected records are fully removed from the database.',
-            '         This check looks for "t3ver_wsid != 0" having "deleted = 1" and deletes them from the table.',
+            'Records in workspaces (t3ver_wsid != 0) are not soft-delete aware since TYPO3 v11:',
+            'When "discarding" workspace changes, affected records are fully removed from the database.',
+            'This check looks for workspace overlays being soft-deleted and removes them.',
         ]);
     }
 

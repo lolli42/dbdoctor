@@ -31,12 +31,13 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for record translations on wrong pid');
+        $this->outputTags($io, self::TAG_UPDATE, self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE);
         $io->text([
-            '[UPDATE] Record translations use the TCA ctrl field "transOrigPointerField"',
-            '         (DB field name usually "l10n_parent" or "l18n_parent"). This field points to a',
-            '         default language record. This health check verifies translated records are on',
-            '         the same pid as the default language record. It will move, hide or delete affected',
-            '         records, which depends on potentially existing localizations on the target page.',
+            'Record translations use the TCA ctrl field "transOrigPointerField"',
+            '(DB field name usually "l10n_parent" or "l18n_parent"). This field points to a',
+            'default language record. This health check verifies translated records are on',
+            'the same pid as the default language record. It will move, hide or remove affected',
+            'records, which depends on potentially existing localizations on the target page.',
         ]);
     }
 

@@ -31,11 +31,12 @@ final class PagesTranslatedLanguageParentDeleted extends AbstractHealthCheck imp
     public function header(SymfonyStyle $io): void
     {
         $io->section('Check pages with deleted language parent');
+        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE);
         $io->text([
-            '[UPDATE] This health check finds translated and not deleted "pages" records (sys_language_uid > 0)',
-            '         with their default language record (l10n_parent field) set to deleted.',
-            '         Those translated pages are never shown in backend and frontend. They are set to deleted in',
-            '         live and removed from database if they are workspace overlay records.',
+            'This health check finds not deleted but translated (sys_language_uid > 0) "pages" records,',
+            'with their default language record (l10n_parent field) being soft-deleted.',
+            'Those translated pages are never shown in backend and frontend. They are soft-deleted in',
+            'live and removed if they are workspace overlay records.',
         ]);
     }
 
