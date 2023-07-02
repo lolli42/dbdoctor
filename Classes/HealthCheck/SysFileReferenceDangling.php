@@ -25,7 +25,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * sys_file_reference rows where either uid_local or uid_foreign does not exist.
  */
-class SysFileReferenceDangling extends AbstractHealthCheck implements HealthCheckInterface, HealthDeleteInterface
+class SysFileReferenceDangling extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

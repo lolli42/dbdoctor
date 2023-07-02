@@ -25,7 +25,7 @@ use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
  * Workspace records (t3ver_wsid != 0) are NOT soft-delete aware. Find
  * all deleted=1 workspace records and delete them.
  */
-class WorkspacesSoftDeletedRecords extends AbstractHealthCheck implements HealthCheckInterface, HealthDeleteInterface
+class WorkspacesSoftDeletedRecords extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

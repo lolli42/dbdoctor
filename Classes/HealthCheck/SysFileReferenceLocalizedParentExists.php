@@ -25,7 +25,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * Localized sys_file_reference records must point to a sys_language_uid=0 parent that exists.
  */
-class SysFileReferenceLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface, HealthDeleteInterface
+class SysFileReferenceLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

@@ -27,7 +27,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Not deleted localized sys_file_reference records must point to a sys_language_uid=0 parent that is not deleted.
  */
-class SysFileReferenceLocalizedParentDeleted extends AbstractHealthCheck implements HealthCheckInterface, HealthUpdateInterface
+class SysFileReferenceLocalizedParentDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

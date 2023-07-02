@@ -25,7 +25,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * Tables with record translations must point to existing records in transOrigPointerField
  */
-class TcaTablesTranslatedLanguageParentMissing extends AbstractHealthCheck implements HealthCheckInterface, HealthDeleteInterface
+class TcaTablesTranslatedLanguageParentMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {
