@@ -19,7 +19,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
-use Lolli\Dbdoctor\Helper\TcaHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -41,15 +40,13 @@ class TcaTablesPidDeleted extends AbstractHealthCheck implements HealthCheckInte
 
     protected function getAffectedRecords(): array
     {
-        /** @var TcaHelper $tcaHelper */
-        $tcaHelper = $this->container->get(TcaHelper::class);
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
 
         $affectedRows = [];
         // Iterate all TCA tables, but ignore pages table
-        foreach ($tcaHelper->getNextTcaTable(['pages']) as $tableName) {
-            $workspaceIdField = $tcaHelper->getWorkspaceIdField($tableName);
+        foreach ($this->tcaHelper->getNextTcaTable(['pages']) as $tableName) {
+            $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
             $isTableWorkspaceAware = !empty($workspaceIdField);
             $selectFields = ['uid', 'pid'];
             if ($isTableWorkspaceAware) {
@@ -60,7 +57,7 @@ class TcaTablesPidDeleted extends AbstractHealthCheck implements HealthCheckInte
             $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
             $queryBuilder->select(...$selectFields)->from($tableName)->orderBy('uid');
             $queryBuilder->where($queryBuilder->expr()->gt('pid', $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)));
-            $tableDeleteField = $tcaHelper->getDeletedField($tableName);
+            $tableDeleteField = $this->tcaHelper->getDeletedField($tableName);
             if ($tableDeleteField) {
                 // Do not consider deleted records: Records pointing to a not-existing page have been
                 // caught before, we want to find non-deleted records pointing to deleted pages.

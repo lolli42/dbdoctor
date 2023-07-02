@@ -19,6 +19,9 @@ namespace Lolli\Dbdoctor\Helper;
 
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
+/**
+ * Stateless helper service for various TCA details.
+ */
 class TcaHelper
 {
     /**

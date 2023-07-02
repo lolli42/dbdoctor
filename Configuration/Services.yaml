@@ -15,10 +15,6 @@ services:
     public: true
     shared: false
 
-  Lolli\Dbdoctor\Helper\TcaHelper:
-    public: true
-    shared: false
-
   Lolli\Dbdoctor\Helper\TableHelper:
     public: true
     shared: false

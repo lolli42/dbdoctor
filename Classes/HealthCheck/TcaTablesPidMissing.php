@@ -19,7 +19,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
-use Lolli\Dbdoctor\Helper\TcaHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -38,13 +37,11 @@ class TcaTablesPidMissing extends AbstractHealthCheck implements HealthCheckInte
 
     protected function getAffectedRecords(): array
     {
-        /** @var TcaHelper $tcaHelper */
-        $tcaHelper = $this->container->get(TcaHelper::class);
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
 
         $affectedRows = [];
-        foreach ($tcaHelper->getNextTcaTable(['pages', 'sys_workspace']) as $tableName) {
+        foreach ($this->tcaHelper->getNextTcaTable(['pages', 'sys_workspace']) as $tableName) {
             // Iterate all TCA tables, but ignore pages table
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             // Consider deleted records: If the pid does not exist, they should be deleted, too.

@@ -17,7 +17,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbdoctor\Helper\TcaHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -38,11 +37,9 @@ class TcaTablesDeleteFlagZeroOrOne extends AbstractHealthCheck implements Health
 
     protected function getAffectedRecords(): array
     {
-        /** @var TcaHelper $tcaHelper */
-        $tcaHelper = $this->container->get(TcaHelper::class);
         $affectedRows = [];
-        foreach ($tcaHelper->getNextSoftDeleteAwareTable() as $tableName) {
-            $tableDeleteField = $tcaHelper->getDeletedField($tableName);
+        foreach ($this->tcaHelper->getNextSoftDeleteAwareTable() as $tableName) {
+            $tableDeleteField = $this->tcaHelper->getDeletedField($tableName);
             if (empty($tableDeleteField)) {
                 throw new \RuntimeException(
                     'The delete field must not be empty. This exception indicates a bug in getNextSoftDeleteAwareTable()',
@@ -67,11 +64,9 @@ class TcaTablesDeleteFlagZeroOrOne extends AbstractHealthCheck implements Health
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        /** @var TcaHelper $tcaHelper */
-        $tcaHelper = $this->container->get(TcaHelper::class);
         foreach ($affectedRecords as $tableName => $tableRows) {
             // Force "deleted=1" for affected rows.
-            $deletedField = $tcaHelper->getDeletedField($tableName);
+            $deletedField = $this->tcaHelper->getDeletedField($tableName);
             $updateFields = [
                 $deletedField => [
                     'value' => 1,

@@ -19,7 +19,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
-use Lolli\Dbdoctor\Helper\TcaHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -40,17 +39,15 @@ class TcaTablesTranslatedLanguageParentMissing extends AbstractHealthCheck imple
 
     protected function getAffectedRecords(): array
     {
-        /** @var TcaHelper $tcaHelper */
-        $tcaHelper = $this->container->get(TcaHelper::class);
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
 
         $affectedRows = [];
-        foreach ($tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {
+        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {
             /** @var string $languageField */
-            $languageField = $tcaHelper->getLanguageField($tableName);
+            $languageField = $this->tcaHelper->getLanguageField($tableName);
             /** @var string $translationParentField */
-            $translationParentField = $tcaHelper->getTranslationParentField($tableName);
+            $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
 
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             // Handle deleted=1 records too: If their language parent is gone, they shouldn't exist anymore, too.

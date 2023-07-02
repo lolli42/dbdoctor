@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Helper\TableHelper;
-use Lolli\Dbdoctor\Helper\TcaHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
@@ -54,8 +53,7 @@ class WorkspacesRecordsOfDeletedWorkspaces extends AbstractHealthCheck implement
         }
         $allowedWorkspacesUids = $this->getAllowedWorkspaces();
         $affectedRows = [];
-        $tcaHelper = $this->container->get(TcaHelper::class);
-        foreach ($tcaHelper->getNextWorkspaceEnabledTcaTable() as $tableName) {
+        foreach ($this->tcaHelper->getNextWorkspaceEnabledTcaTable() as $tableName) {
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             // Since workspace records have no deleted=1, we remove all restrictions here: If a sys_workspace
             // has been removed at some point, there shouldn't be *any* records assigned to this workspace.

@@ -20,7 +20,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Helper\TableHelper;
-use Lolli\Dbdoctor\Helper\TcaHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -40,17 +39,15 @@ class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHealthCh
 
     protected function getAffectedRecords(): array
     {
-        /** @var TcaHelper $tcaHelper */
-        $tcaHelper = $this->container->get(TcaHelper::class);
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         /** @var TableHelper $tableHelper */
         $tableHelper = $this->container->get(TableHelper::class);
 
         $affectedRows = [];
-        foreach ($tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
+        foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
             $childTableName = $inlineChild['tableName'];
-            $childTableLanguageField = $tcaHelper->getLanguageField($childTableName);
+            $childTableLanguageField = $this->tcaHelper->getLanguageField($childTableName);
             if (!$childTableLanguageField) {
                 // Skip child table if it is not localizable
                 continue;
@@ -75,7 +72,7 @@ class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHealthCh
                     continue;
                 }
                 $parentTableName = (string)$inlineChildRow[$fieldNameOfParentTableName];
-                $parentTableLanguageField = $tcaHelper->getLanguageField($parentTableName);
+                $parentTableLanguageField = $this->tcaHelper->getLanguageField($parentTableName);
                 if (!$parentTableLanguageField) {
                     // Skip if parent table is not localizable
                     continue;
@@ -104,12 +101,10 @@ class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHealthCh
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        /** @var TcaHelper $tcaHelper */
-        $tcaHelper = $this->container->get(TcaHelper::class);
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         foreach ($affectedRecords as $childTableName => $childTableRows) {
-            $childLanguageField = $tcaHelper->getLanguageField($childTableName);
+            $childLanguageField = $this->tcaHelper->getLanguageField($childTableName);
             foreach ($childTableRows as $childTableRow) {
                 $updateFields = [
                     $childLanguageField => [

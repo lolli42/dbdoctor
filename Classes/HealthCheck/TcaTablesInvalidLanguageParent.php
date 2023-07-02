@@ -19,7 +19,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
-use Lolli\Dbdoctor\Helper\TcaHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -43,18 +42,16 @@ class TcaTablesInvalidLanguageParent extends AbstractHealthCheck implements Heal
 
     protected function getAffectedRecords(): array
     {
-        /** @var TcaHelper $tcaHelper */
-        $tcaHelper = $this->container->get(TcaHelper::class);
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
 
         $danglingRows = [];
-        foreach ($tcaHelper->getNextLanguageAwareTcaTable() as $tableName) {
+        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable() as $tableName) {
             /** @var string $languageField */
-            $languageField = $tcaHelper->getLanguageField($tableName);
+            $languageField = $this->tcaHelper->getLanguageField($tableName);
             /** @var string $translationParentField */
-            $translationParentField = $tcaHelper->getTranslationParentField($tableName);
-            $deletedField = $tcaHelper->getDeletedField($tableName);
+            $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
+            $deletedField = $this->tcaHelper->getDeletedField($tableName);
 
             $parentRowFields = [
                 'uid',

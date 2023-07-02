@@ -17,7 +17,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbdoctor\Helper\TcaHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 
@@ -46,9 +45,8 @@ class WorkspacesSoftDeletedRecords extends AbstractHealthCheck implements Health
             return [];
         }
         $affectedRows = [];
-        $tcaHelper = $this->container->get(TcaHelper::class);
-        foreach ($tcaHelper->getNextWorkspaceEnabledTcaTable() as $tableName) {
-            $tableDeleteField = $tcaHelper->getDeletedField($tableName);
+        foreach ($this->tcaHelper->getNextWorkspaceEnabledTcaTable() as $tableName) {
+            $tableDeleteField = $this->tcaHelper->getDeletedField($tableName);
             if (empty($tableDeleteField)) {
                 // Table is not soft-delete aware. Skip it.
                 continue;
