@@ -24,7 +24,7 @@ use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
- * Find not-deleted translated pages that have a sys_language_uid=0 parent set to deleted.
+ * Find not-deleted translated pages that have a sys_language_uid=0 parent set to deleted=1.
  */
 class PagesTranslatedLanguageParentDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
@@ -34,7 +34,8 @@ class PagesTranslatedLanguageParentDeleted extends AbstractHealthCheck implement
         $io->text([
             '[UPDATE] This health check finds translated and not deleted "pages" records (sys_language_uid > 0)',
             '         with their default language record (l10n_parent field) set to deleted.',
-            '         Those translated pages are never shown in backend and frontend and should be set to deleted, too.',
+            '         Those translated pages are never shown in backend and frontend. They are set to deleted in',
+            '         live and removed from database if they are workspace overlay records.',
         ]);
     }
 
@@ -45,7 +46,7 @@ class PagesTranslatedLanguageParentDeleted extends AbstractHealthCheck implement
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         // Do not consider page translation records that have been set to deleted already.
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-        $result = $queryBuilder->select('uid', 'pid', 'deleted', 'sys_language_uid', 'l10n_parent')
+        $result = $queryBuilder->select('uid', 'pid', 'deleted', 'sys_language_uid', 'l10n_parent', 't3ver_wsid')
             ->from('pages')
             ->where($queryBuilder->expr()->gt('sys_language_uid', $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)))
             ->orderBy('uid')
@@ -73,13 +74,7 @@ class PagesTranslatedLanguageParentDeleted extends AbstractHealthCheck implement
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        $updateFields = [
-            'deleted' => [
-                'value' => 1,
-                'type' => \PDO::PARAM_INT,
-            ],
-        ];
-        $this->updateAllRecords($io, $simulate, 'pages', $affectedRecords['pages'], $updateFields);
+        $this->softOrHardDeleteRecords($io, $simulate, 'pages', $affectedRecords['pages'] ?? []);
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void

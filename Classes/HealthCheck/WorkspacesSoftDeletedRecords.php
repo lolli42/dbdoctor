@@ -73,6 +73,6 @@ class WorkspacesSoftDeletedRecords extends AbstractHealthCheck implements Health
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        $this->deleteRecords($io, $simulate, $affectedRecords);
+        $this->deleteAllRecords($io, $simulate, $affectedRecords);
     }
 }

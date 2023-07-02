@@ -36,7 +36,7 @@ class TcaTablesTranslatedLanguageParentDeleted extends AbstractHealthCheck imple
             '[UPDATE] Record translations use the TCA ctrl field "transOrigPointerField"',
             '         (DB field name usually "l10n_parent" or "l18n_parent"). This field points to a',
             '         default language record. This health check verifies that target is not deleted=1 in the database.',
-            '         Affected records are set deleted=1, too.',
+            '         Affected records are set to deleted=1 if in live, or removed if in workspaces.',
         ]);
     }
 
@@ -59,6 +59,17 @@ class TcaTablesTranslatedLanguageParentDeleted extends AbstractHealthCheck imple
             $languageField = $tcaHelper->getLanguageField($tableName);
             /** @var string $translationParentField */
             $translationParentField = $tcaHelper->getTranslationParentField($tableName);
+            $workspaceIdField = $tcaHelper->getWorkspaceIdField($tableName);
+            $isTableWorkspaceAware = !empty($workspaceIdField);
+
+            $selectFields = [
+                'uid',
+                'pid',
+                $translationParentField,
+            ];
+            if ($isTableWorkspaceAware) {
+                $selectFields[] = $workspaceIdField;
+            }
 
             $parentRowFields = [
                 'uid',
@@ -69,7 +80,7 @@ class TcaTablesTranslatedLanguageParentDeleted extends AbstractHealthCheck imple
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             // Do not fetch deleted=1 records
             $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-            $result = $queryBuilder->select('uid', 'pid', $translationParentField)->from($tableName)
+            $result = $queryBuilder->select(...$selectFields)->from($tableName)
                 ->where(
                     // localized records
                     $queryBuilder->expr()->gt($languageField, $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)),
@@ -102,18 +113,8 @@ class TcaTablesTranslatedLanguageParentDeleted extends AbstractHealthCheck imple
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        /** @var TcaHelper $tcaHelper */
-        $tcaHelper = $this->container->get(TcaHelper::class);
         foreach ($affectedRecords as $tableName => $tableRows) {
-            $deletedField = $tcaHelper->getDeletedField($tableName);
-            // If table is soft-delete-aware, set record to deleted
-            $updateFields = [
-                $deletedField => [
-                    'value' => 1,
-                    'type' => \PDO::PARAM_INT,
-                ],
-            ];
-            $this->updateAllRecords($io, $simulate, $tableName, $tableRows, $updateFields);
+            $this->softOrHardDeleteRecords($io, $simulate, $tableName, $tableRows);
         }
     }
 

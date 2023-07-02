@@ -34,8 +34,8 @@ class TcaTablesPidDeleted extends AbstractHealthCheck implements HealthCheckInte
         $io->section('Scan for not-deleted records on pages set to deleted');
         $io->text([
             '[UPDATE] TCA records have a pid field set to a single page. This page must exist.',
-            '         This scan finds deleted=0 records pointing to pages having deleted=1. Those',
-            '         records are set to deleted=1, too.',
+            '         This scan finds deleted=0 records pointing to pages having deleted=1.',
+            '         Affected records are set to deleted=1 if in live, or removed if in workspaces.',
         ]);
     }
 
@@ -47,11 +47,18 @@ class TcaTablesPidDeleted extends AbstractHealthCheck implements HealthCheckInte
         $recordsHelper = $this->container->get(RecordsHelper::class);
 
         $affectedRows = [];
+        // Iterate all TCA tables, but ignore pages table
         foreach ($tcaHelper->getNextTcaTable(['pages']) as $tableName) {
-            // Iterate all TCA tables, but ignore pages table
+            $workspaceIdField = $tcaHelper->getWorkspaceIdField($tableName);
+            $isTableWorkspaceAware = !empty($workspaceIdField);
+            $selectFields = ['uid', 'pid'];
+            if ($isTableWorkspaceAware) {
+                $selectFields[] = $workspaceIdField;
+            }
+
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-            $queryBuilder->select('uid', 'pid')->from($tableName)->orderBy('uid');
+            $queryBuilder->select(...$selectFields)->from($tableName)->orderBy('uid');
             $queryBuilder->where($queryBuilder->expr()->gt('pid', $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)));
             $tableDeleteField = $tcaHelper->getDeletedField($tableName);
             if ($tableDeleteField) {
@@ -85,27 +92,8 @@ class TcaTablesPidDeleted extends AbstractHealthCheck implements HealthCheckInte
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        /** @var TcaHelper $tcaHelper */
-        $tcaHelper = $this->container->get(TcaHelper::class);
         foreach ($affectedRecords as $tableName => $tableRows) {
-            $deletedField = $tcaHelper->getDeletedField($tableName);
-            if ($deletedField) {
-                // If table is soft-delete-aware, set record to deleted
-                $updateFields = [
-                    $deletedField => [
-                        'value' => 1,
-                        'type' => \PDO::PARAM_INT,
-                    ],
-                ];
-                $this->updateAllRecords($io, $simulate, $tableName, $tableRows, $updateFields);
-            } else {
-                // No soft-delete for table, remove records
-                $tableRows = [
-                    $tableName => $tableRows,
-                ];
-                // @todo: Ugly - deleteRecords() should work table-wise
-                $this->deleteRecords($io, $simulate, $tableRows);
-            }
+            $this->softOrHardDeleteRecords($io, $simulate, $tableName, $tableRows);
         }
     }
 }

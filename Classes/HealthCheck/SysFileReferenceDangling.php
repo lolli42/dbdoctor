@@ -63,7 +63,7 @@ class SysFileReferenceDangling extends AbstractHealthCheck implements HealthChec
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        $this->deleteRecords($io, $simulate, $affectedRecords);
+        $this->deleteAllRecords($io, $simulate, $affectedRecords);
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void

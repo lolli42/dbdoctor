@@ -35,7 +35,7 @@ class SysFileReferenceLocalizedParentDeleted extends AbstractHealthCheck impleme
         $io->text([
             '[UPDATE] Localized, not deleted records in "sys_file_reference" (sys_language_uid > 0) having',
             '         l10n_parent > 0 must point to a sys_language_uid = 0, not deleted, language parent record.',
-            '         Records violating this are set to deleted.',
+            '         Records violating this are soft-deleted in live and removed if in workspaces.',
         ]);
     }
 
@@ -46,7 +46,7 @@ class SysFileReferenceLocalizedParentDeleted extends AbstractHealthCheck impleme
         $tableRows = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-        $result = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'l10n_parent')->from('sys_file_reference')
+        $result = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'l10n_parent', 't3ver_wsid')->from('sys_file_reference')
             ->where(
                 $queryBuilder->expr()->gt('sys_language_uid', $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)),
                 $queryBuilder->expr()->gt('l10n_parent', $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT))
@@ -71,18 +71,7 @@ class SysFileReferenceLocalizedParentDeleted extends AbstractHealthCheck impleme
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        $this->updateAllRecords(
-            $io,
-            $simulate,
-            'sys_file_reference',
-            $affectedRecords['sys_file_reference'] ?? [],
-            [
-                'deleted' => [
-                    'value' => 1,
-                    'type' => \PDO::PARAM_INT,
-                ],
-            ]
-        );
+        $this->softOrHardDeleteRecords($io, $simulate, 'sys_file_reference', $affectedRecords['sys_file_reference'] ?? []);
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void

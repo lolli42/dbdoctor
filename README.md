@@ -72,6 +72,12 @@ usually created by the core as long as there is no explicit definition of it in 
 a field in some broken way, dbdoctor may create hazard by suggesting delete or
 updates of all rows.
 
+There are further assumptions: For instance, dbdoctor assumes some TCA settings the core
+provides for standard tables (especially `pages`, `tt_content` and `sys_file_reference`
+are **not** changed by extensions. As example, those tables are assumed to be both
+soft-delete aware and workspace aware, according fields are queried by dbdoctor on such
+tables, and dbdoctor will fail if an extension tampered with according TCA `ctrl` settings.
+
 There are further scenarios dbdoctor can not deal with: For example, let's say some extension declares
 a table soft-delete-aware by having a TCA entry `['ctrl']['delete'] = 'deleted'`,
 and you have some rows that are `deleted=1`. Later, that TCA table is set to be no
