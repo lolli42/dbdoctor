@@ -74,7 +74,7 @@ final class PagesTranslatedLanguageParentDeleted extends AbstractHealthCheck imp
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        $this->softOrHardDeleteRecords($io, $simulate, 'pages', $affectedRecords['pages'] ?? []);
+        $this->softOrHardDeleteRecordsOfTable($io, $simulate, 'pages', $affectedRecords['pages'] ?? []);
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void

@@ -232,6 +232,20 @@ abstract class AbstractHealthCheck
     }
 
     /**
+     * DELETE multiple records from many TCA tables.
+     * Convenient method to save a foreach loop.
+     * Calls deleteTcaRecordsOfTable() per table.
+     *
+     * @param array<string, array<int, array<string, int|string>>> $affectedRecords
+     */
+    final protected function deleteTcaRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    {
+        foreach ($affectedRecords as $tableName => $tableRows) {
+            $this->deleteTcaRecordsOfTable($io, $simulate, $tableName, $tableRows);
+        }
+    }
+
+    /**
      * DELETE multiple records from a single TCA table.
      * Outputs a summary before and after, while deleteSingleTcaRecord() logs and outputs single queries.
      *
@@ -259,7 +273,7 @@ abstract class AbstractHealthCheck
     }
 
     /**
-     * Execute and log a single DELETE query.
+     * DELETE and log a single row.
      * This needs an instance of RecordsHelper to make use of prepared statements, which
      * should be created by the calling method.
      */
@@ -270,7 +284,7 @@ abstract class AbstractHealthCheck
     }
 
     /**
-     * Apply an update to many rows of a single TCA table.
+     * UPDATE many rows of a single TCA table.
      * Outputs a summary before and after, while updateSingleTcaRecord() logs and outputs single queries.
      *
      * @param array<int, array<string, int|string>> $rows
@@ -298,7 +312,7 @@ abstract class AbstractHealthCheck
     }
 
     /**
-     * Execute and log a single UPDATE query.
+     * UPDATE and log a single row.
      * This needs an instance of RecordsHelper to make use of prepared statements, which
      * should be created by the calling method.
      *
@@ -311,16 +325,31 @@ abstract class AbstractHealthCheck
     }
 
     /**
-     * When deleting records, they should be soft-deleted when in live (t3ver_wsid = 0),
-     * but should be removed when in workspaces (t3ver_wsid > 0). This helper method
-     * handles both.
+     * DELETE or soft-delete multiple records from many tables.
+     * Convenient method to save a foreach loop.
+     * Calls softOrHardDeleteRecordsOfTable() per table.
+     *
+     * @param array<string, array<int, array<string, int|string>>> $affectedRecords
+     */
+    final protected function softOrHardDeleteRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    {
+        foreach ($affectedRecords as $tableName => $tableRows) {
+            $this->softOrHardDeleteRecordsOfTable($io, $simulate, $tableName, $tableRows);
+        }
+    }
+
+    /**
+     * DELETE or UPDATE multiple rows of at table:
+     * * If the table is not delete-aware, records are DELETED
+     * * If the table is delete-aware and the record is live (t3ver_wsid = 0), the record is UPDATED with soft-delete=1
+     * * If the record is workspace-aware and the record is within a workspace (t3ver_wsid > 0), the record is DELETED
      *
      * The method outputs a summary before and after, while deleteSingleTcaRecord()
      * and updateSingleTcaRecord() log and output single queries.
      *
      * @param array<int, array<string, int|string>> $rows
      */
-    final protected function softOrHardDeleteRecords(SymfonyStyle $io, bool $simulate, string $tableName, array $rows): void
+    final protected function softOrHardDeleteRecordsOfTable(SymfonyStyle $io, bool $simulate, string $tableName, array $rows): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);

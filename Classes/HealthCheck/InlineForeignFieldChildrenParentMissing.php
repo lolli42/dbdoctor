@@ -83,9 +83,7 @@ final class InlineForeignFieldChildrenParentMissing extends AbstractHealthCheck 
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        foreach ($affectedRecords as $tableName => $tableRows) {
-            $this->deleteTcaRecordsOfTable($io, $simulate, $tableName, $tableRows);
-        }
+        $this->deleteTcaRecords($io, $simulate, $affectedRecords);
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
