@@ -162,6 +162,12 @@ instance. As such, a few things should be kept in mind:
 $ bin/typo3 dbdoctor:health
 ```
 
+Note dbdoctor is "runtime static" with TCA: When dbdoctor is running, TCA is **not**
+expected to change meanwhile. When you are looking at single changes and decide to change
+TCA, then clear all caches and abort dbdoctor (press "a" in  interactive mode) to
+start again. Failing to do so may lead to dbdoctor committing hazard to the database,
+depending on what you did with TCA.
+
 The interface looks like this:
 
 ![](Documentation/cli-example.png)

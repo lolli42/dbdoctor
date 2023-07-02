@@ -17,7 +17,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbdoctor\Helper\TcaHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 
@@ -49,8 +48,7 @@ class WorkspacesNotLoadedRecordsDangling extends AbstractHealthCheck implements 
             return [];
         }
         $affectedRows = [];
-        $tcaHelper = $this->container->get(TcaHelper::class);
-        foreach ($tcaHelper->getNextWorkspaceEnabledTcaTable() as $tableName) {
+        foreach ($this->tcaHelper->getNextWorkspaceEnabledTcaTable() as $tableName) {
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             // Delete "deleted=1" records as well, when they have t3ver_wsid != 0
             $queryBuilder->getRestrictions()->removeAll();

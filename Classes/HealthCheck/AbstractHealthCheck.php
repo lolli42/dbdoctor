@@ -45,6 +45,7 @@ abstract class AbstractHealthCheck
 
     protected ContainerInterface $container;
     protected ConnectionPool $connectionPool;
+    protected TcaHelper $tcaHelper;
 
     public function injectContainer(ContainerInterface $container): void
     {
@@ -54,6 +55,11 @@ abstract class AbstractHealthCheck
     public function injectConnectionPool(ConnectionPool $connectionPool): void
     {
         $this->connectionPool = $connectionPool;
+    }
+
+    public function injectTcaHelper(TcaHelper $tcaHelper): void
+    {
+        $this->tcaHelper = $tcaHelper;
     }
 
     public function handle(SymfonyStyle $io, int $mode, string $file): int
@@ -317,8 +323,6 @@ abstract class AbstractHealthCheck
      */
     protected function softOrHardDeleteRecords(SymfonyStyle $io, bool $simulate, string $tableName, array $rows): void
     {
-        /** @var TcaHelper $tcaHelper */
-        $tcaHelper = $this->container->get(TcaHelper::class);
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         if ($simulate) {
@@ -327,7 +331,7 @@ abstract class AbstractHealthCheck
             $io->note('Handle records on table: ' . $tableName);
         }
 
-        $deleteField = $tcaHelper->getDeletedField($tableName);
+        $deleteField = $this->tcaHelper->getDeletedField($tableName);
         $isTableSoftDeleteAware = !empty($deleteField);
         $updateFields = [];
         if ($isTableSoftDeleteAware) {
@@ -338,7 +342,7 @@ abstract class AbstractHealthCheck
                 ],
             ];
         }
-        $workspaceIdField = $tcaHelper->getWorkspaceIdField($tableName);
+        $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
         $isTableWorkspaceAware = !empty($workspaceIdField);
 
         $updateCount = 0;

@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Helper\TableHelper;
-use Lolli\Dbdoctor\Helper\TcaHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -49,8 +48,6 @@ class SysFileReferenceInvalidFieldname extends AbstractHealthCheck implements He
     {
         /** @var TableHelper $tableHelper */
         $tableHelper = $this->container->get(TableHelper::class);
-        /** @var TcaHelper $tcaHelper */
-        $tcaHelper = $this->container->get(TcaHelper::class);
         $tableRows = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
         // We consider deleted=1 records too to remove them if they're invalid.
@@ -61,7 +58,7 @@ class SysFileReferenceInvalidFieldname extends AbstractHealthCheck implements He
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             if (!$tableHelper->fieldExistsInTable((string)$row['tablenames'], (string)$row['fieldname'])
-                && !$tcaHelper->hasFlexField((string)$row['tablenames'])
+                && !$this->tcaHelper->hasFlexField((string)$row['tablenames'])
             ) {
                 // @todo: FAL fields can be bound to TCA flex. For those, fieldname is set to single flex
                 //        data structure fields names. (see styleguide_inline_fal flex example) To find out

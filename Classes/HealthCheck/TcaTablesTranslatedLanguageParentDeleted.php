@@ -19,7 +19,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
-use Lolli\Dbdoctor\Helper\TcaHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -42,24 +41,22 @@ class TcaTablesTranslatedLanguageParentDeleted extends AbstractHealthCheck imple
 
     protected function getAffectedRecords(): array
     {
-        /** @var TcaHelper $tcaHelper */
-        $tcaHelper = $this->container->get(TcaHelper::class);
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
 
         $affectedRows = [];
-        foreach ($tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {
-            $deletedField = $tcaHelper->getDeletedField($tableName);
+        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {
+            $deletedField = $this->tcaHelper->getDeletedField($tableName);
             if (!$deletedField) {
                 // Ignore tables without delete field.
                 continue;
             }
 
             /** @var string $languageField */
-            $languageField = $tcaHelper->getLanguageField($tableName);
+            $languageField = $this->tcaHelper->getLanguageField($tableName);
             /** @var string $translationParentField */
-            $translationParentField = $tcaHelper->getTranslationParentField($tableName);
-            $workspaceIdField = $tcaHelper->getWorkspaceIdField($tableName);
+            $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
+            $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
             $isTableWorkspaceAware = !empty($workspaceIdField);
 
             $selectFields = [

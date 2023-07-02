@@ -20,7 +20,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Helper\TableHelper;
-use Lolli\Dbdoctor\Helper\TcaHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -43,21 +42,19 @@ class InlineForeignFieldChildrenParentDeleted extends AbstractHealthCheck implem
 
     protected function getAffectedRecords(): array
     {
-        /** @var TcaHelper $tcaHelper */
-        $tcaHelper = $this->container->get(TcaHelper::class);
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         /** @var TableHelper $tableHelper */
         $tableHelper = $this->container->get(TableHelper::class);
 
         $affectedRows = [];
-        foreach ($tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
+        foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
             $childTableName = $inlineChild['tableName'];
-            if (!$tcaHelper->getDeletedField($childTableName)) {
+            if (!$this->tcaHelper->getDeletedField($childTableName)) {
                 // Skip child table if it is not soft-delete aware
                 continue;
             }
-            $workspaceIdField = $tcaHelper->getWorkspaceIdField($childTableName);
+            $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($childTableName);
             $isTableWorkspaceAware = !empty($workspaceIdField);
             $fieldNameOfParentTableName = $inlineChild['fieldNameOfParentTableName'];
             $fieldNameOfParentTableUid = $inlineChild['fieldNameOfParentTableUid'];
@@ -88,7 +85,7 @@ class InlineForeignFieldChildrenParentDeleted extends AbstractHealthCheck implem
                     continue;
                 }
                 $parentTableName = (string)$inlineChildRow[$fieldNameOfParentTableName];
-                $parentTableDeleteField = $tcaHelper->getDeletedField($parentTableName);
+                $parentTableDeleteField = $this->tcaHelper->getDeletedField($parentTableName);
                 if (!$parentTableDeleteField) {
                     // Skip if parent table is not soft-delete aware
                     continue;
