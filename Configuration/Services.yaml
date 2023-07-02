@@ -35,4 +35,4 @@ services:
     tags:
       - name: 'console.command'
         command: 'dbdoctor:health'
-        description: 'Find and optionally fix database inconsistencies'
+        description: 'Find and fix database inconsistencies'
