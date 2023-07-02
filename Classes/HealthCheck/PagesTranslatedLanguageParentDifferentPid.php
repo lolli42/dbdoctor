@@ -24,7 +24,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * Find translated pages that are on a different pid than their no sys_language_uid=0 parent.
  */
-class PagesTranslatedLanguageParentDifferentPid extends AbstractHealthCheck implements HealthCheckInterface
+final class PagesTranslatedLanguageParentDifferentPid extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

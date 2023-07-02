@@ -32,7 +32,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  *          column name of the parent table. That's probably problematic to do, but it
  *          seems at least the Backend can deal with this?
  */
-class SysFileReferenceInvalidFieldname extends AbstractHealthCheck implements HealthCheckInterface
+final class SysFileReferenceInvalidFieldname extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

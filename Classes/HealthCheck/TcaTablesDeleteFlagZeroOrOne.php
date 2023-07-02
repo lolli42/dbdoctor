@@ -22,7 +22,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * Values of delete column of TCA tables with enabled soft-delete must be either 0 or 1.
  */
-class TcaTablesDeleteFlagZeroOrOne extends AbstractHealthCheck implements HealthCheckInterface
+final class TcaTablesDeleteFlagZeroOrOne extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

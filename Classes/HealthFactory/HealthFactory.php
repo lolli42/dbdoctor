@@ -20,7 +20,7 @@ namespace Lolli\Dbdoctor\HealthFactory;
 use Lolli\Dbdoctor\HealthCheck;
 use Psr\Container\ContainerInterface;
 
-class HealthFactory implements HealthFactoryInterface
+final class HealthFactory implements HealthFactoryInterface
 {
     /**
      * @var string[]

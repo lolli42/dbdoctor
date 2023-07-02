@@ -47,22 +47,22 @@ abstract class AbstractHealthCheck
     protected ConnectionPool $connectionPool;
     protected TcaHelper $tcaHelper;
 
-    public function injectContainer(ContainerInterface $container): void
+    final public function injectContainer(ContainerInterface $container): void
     {
         $this->container = $container;
     }
 
-    public function injectConnectionPool(ConnectionPool $connectionPool): void
+    final public function injectConnectionPool(ConnectionPool $connectionPool): void
     {
         $this->connectionPool = $connectionPool;
     }
 
-    public function injectTcaHelper(TcaHelper $tcaHelper): void
+    final public function injectTcaHelper(TcaHelper $tcaHelper): void
     {
         $this->tcaHelper = $tcaHelper;
     }
 
-    public function handle(SymfonyStyle $io, int $mode, string $file): int
+    final public function handle(SymfonyStyle $io, int $mode, string $file): int
     {
         $this->sqlDumpFile = $file;
         if ($mode === HealthCheckInterface::MODE_CHECK) {
@@ -181,7 +181,7 @@ abstract class AbstractHealthCheck
     /**
      * @param array<string, array<int, array<string, int|string>>> $danglingRows
      */
-    protected function outputMainSummary(SymfonyStyle $io, array $danglingRows): void
+    final protected function outputMainSummary(SymfonyStyle $io, array $danglingRows): void
     {
         if (!count($danglingRows)) {
             $io->success('No affected records found');
@@ -204,7 +204,7 @@ abstract class AbstractHealthCheck
     /**
      * @param array<string, array<int, array<string, int|string>>> $danglingRows
      */
-    protected function outputAffectedPages(SymfonyStyle $io, array $danglingRows): void
+    final protected function outputAffectedPages(SymfonyStyle $io, array $danglingRows): void
     {
         $io->note('Found records per page:');
         /** @var AffectedPagesRenderer $affectedPagesHelper */
@@ -217,7 +217,7 @@ abstract class AbstractHealthCheck
      * @param array<int, string> $extraCtrlFields
      * @param array<int, string> $extraDbFields
      */
-    protected function outputRecordDetails(
+    final protected function outputRecordDetails(
         SymfonyStyle $io,
         array $danglingRows,
         string $reasonField = '',
@@ -240,7 +240,7 @@ abstract class AbstractHealthCheck
      *
      * @param array<string, array<int, array<string, int|string>>> $danglingRows
      */
-    protected function deleteAllRecords(SymfonyStyle $io, bool $simulate, array $danglingRows): void
+    final protected function deleteAllRecords(SymfonyStyle $io, bool $simulate, array $danglingRows): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
@@ -263,7 +263,7 @@ abstract class AbstractHealthCheck
         }
     }
 
-    protected function deleteSingleTcaRecord(
+    final protected function deleteSingleTcaRecord(
         SymfonyStyle $io,
         bool $simulate,
         RecordsHelper $recordsHelper,
@@ -278,7 +278,7 @@ abstract class AbstractHealthCheck
      * @param array<int, array<string, int|string>> $rows
      * @param array<string, array<string, int|string>> $fields
      */
-    protected function updateAllRecords(SymfonyStyle $io, bool $simulate, string $tableName, array $rows, array $fields): void
+    final protected function updateAllRecords(SymfonyStyle $io, bool $simulate, string $tableName, array $rows, array $fields): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
@@ -302,7 +302,7 @@ abstract class AbstractHealthCheck
     /**
      * @param array<string, array<string, int|string>> $fields
      */
-    protected function updateSingleTcaRecord(
+    final protected function updateSingleTcaRecord(
         SymfonyStyle $io,
         bool $simulate,
         RecordsHelper $recordsHelper,
@@ -321,7 +321,7 @@ abstract class AbstractHealthCheck
      *
      * @param array<int, array<string, int|string>> $rows
      */
-    protected function softOrHardDeleteRecords(SymfonyStyle $io, bool $simulate, string $tableName, array $rows): void
+    final protected function softOrHardDeleteRecords(SymfonyStyle $io, bool $simulate, string $tableName, array $rows): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);

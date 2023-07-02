@@ -25,7 +25,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * Handle inline foreign field children that are set to a different sys_language_uid than their parent.
  */
-class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHealthCheck implements HealthCheckInterface
+final class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

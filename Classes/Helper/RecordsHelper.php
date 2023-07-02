@@ -24,7 +24,7 @@ use Lolli\Dbdoctor\Exception\UnexpectedNumberOfAffectedRowsException;
 use Psr\Container\ContainerInterface;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
-class RecordsHelper
+final class RecordsHelper
 {
     /**
      * @var array<string, array{string, sqlString: string, statement: Statement}>

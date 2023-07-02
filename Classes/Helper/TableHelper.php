@@ -19,7 +19,7 @@ namespace Lolli\Dbdoctor\Helper;
 
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
-class TableHelper
+final class TableHelper
 {
     /**
      * @var array<string, bool>

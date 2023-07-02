@@ -23,7 +23,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * An important early check: Find pages that have no proper connection to the tree root.
  */
-class PagesBrokenTree extends AbstractHealthCheck implements HealthCheckInterface
+final class PagesBrokenTree extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

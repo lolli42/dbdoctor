@@ -19,7 +19,7 @@ namespace Lolli\Dbdoctor\Renderer;
 
 use Lolli\Dbdoctor\Helper\PagesRootlineHelper;
 
-class AffectedPagesRenderer
+final class AffectedPagesRenderer
 {
     private PagesRootlineHelper $pagesRootlineHelper;
 

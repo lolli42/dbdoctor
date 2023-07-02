@@ -24,7 +24,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * Find translated pages that have no sys_language_uid=0 parent.
  */
-class PagesTranslatedLanguageParentMissing extends AbstractHealthCheck implements HealthCheckInterface
+final class PagesTranslatedLanguageParentMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

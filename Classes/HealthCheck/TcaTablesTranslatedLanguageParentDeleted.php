@@ -26,7 +26,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Tables with not-deleted record translations must point to not-deleted records in transOrigPointerField
  */
-class TcaTablesTranslatedLanguageParentDeleted extends AbstractHealthCheck implements HealthCheckInterface
+final class TcaTablesTranslatedLanguageParentDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {
