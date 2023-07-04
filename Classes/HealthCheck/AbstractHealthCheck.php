@@ -264,21 +264,13 @@ abstract class AbstractHealthCheck
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
-        if ($simulate) {
-            $io->note('[SIMULATE] delete records on table: ' . $tableName);
-        } else {
-            $io->note('Deleting records on table: ' . $tableName);
-        }
+        $this->outputTableDeleteBefore($io, $simulate, $tableName);
         $count = 0;
         foreach ($rows as $row) {
             $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid']);
             $count ++;
         }
-        if ($simulate) {
-            $io->note('[SIMULATE] Delete "' . $count . '" records from "' . $tableName . '" table');
-        } else {
-            $io->warning('Deleted "' . $count . '" records from "' . $tableName . '" table');
-        }
+        $this->outputTableDeleteAfter($io, $simulate, $tableName, $count);
     }
 
     /**
@@ -303,21 +295,13 @@ abstract class AbstractHealthCheck
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
-        if ($simulate) {
-            $io->note('[SIMULATE] Update records on table: ' . $tableName);
-        } else {
-            $io->note('Update records on table: ' . $tableName);
-        }
+        $this->outputTableUpdateBefore($io, $simulate, $tableName);
         $count = 0;
         foreach ($rows as $row) {
             $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
             $count++;
         }
-        if ($simulate) {
-            $io->note('[SIMULATE] Update "' . $count . '" records from "' . $tableName . '" table');
-        } else {
-            $io->warning('Updated "' . $count . '" records from "' . $tableName . '" table');
-        }
+        $this->outputTableUpdateAfter($io, $simulate, $tableName, $count);
     }
 
     /**
@@ -362,11 +346,7 @@ abstract class AbstractHealthCheck
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
-        if ($simulate) {
-            $io->note('[SIMULATE] Handle records on table: ' . $tableName);
-        } else {
-            $io->note('Handle records on table: ' . $tableName);
-        }
+        $this->outputTableHandleBefore($io, $simulate, $tableName);
 
         $deleteField = $this->tcaHelper->getDeletedField($tableName);
         $isTableSoftDeleteAware = !empty($deleteField);
@@ -404,12 +384,74 @@ abstract class AbstractHealthCheck
             }
         }
 
+        $this->outputTableHandleAfter($io, $simulate, $tableName, $updateCount, $deleteCount);
+    }
+
+    /**
+     * Helper method for header() to render a list of tags
+     * to declare the type of changes this check applies.
+     *
+     * @param string ...$tags
+     */
+    final protected function outputTags(SymfonyStyle $io, ...$tags): void
+    {
+        $tags = array_map(fn (string $tag): string => '<comment>' . $tag . '</comment>', $tags);
+        $io->text('Actions: ' . implode(', ', $tags));
+    }
+
+    final protected function outputTableDeleteBefore(SymfonyStyle $io, bool $simulate, string $tableName): void
+    {
+        if ($simulate) {
+            $io->note('[SIMULATE] Delete records on table: ' . $tableName);
+        } else {
+            $io->note('Delete records on table: ' . $tableName);
+        }
+    }
+
+    final protected function outputTableDeleteAfter(SymfonyStyle $io, bool $simulate, string $tableName, int $count): void
+    {
+        if ($simulate) {
+            $io->note('[SIMULATE] Deleted "' . $count . '" records from "' . $tableName . '" table');
+        } else {
+            $io->warning('Deleted "' . $count . '" records from "' . $tableName . '" table');
+        }
+    }
+
+    final protected function outputTableUpdateBefore(SymfonyStyle $io, bool $simulate, string $tableName): void
+    {
+        if ($simulate) {
+            $io->note('[SIMULATE] Update records on table: ' . $tableName);
+        } else {
+            $io->note('Update records on table: ' . $tableName);
+        }
+    }
+
+    final protected function outputTableUpdateAfter(SymfonyStyle $io, bool $simulate, string $tableName, int $count): void
+    {
+        if ($simulate) {
+            $io->note('[SIMULATE] Updated "' . $count . '" records from "' . $tableName . '" table');
+        } else {
+            $io->warning('Updated "' . $count . '" records from "' . $tableName . '" table');
+        }
+    }
+
+    final protected function outputTableHandleBefore(SymfonyStyle $io, bool $simulate, string $tableName): void
+    {
+        if ($simulate) {
+            $io->note('[SIMULATE] Handle records on table: ' . $tableName);
+        } else {
+            $io->note('Handle records on table: ' . $tableName);
+        }
+    }
+
+    final protected function outputTableHandleAfter(SymfonyStyle $io, bool $simulate, string $tableName, int $updateCount, int $deleteCount): void
+    {
         if ($simulate) {
             if ($updateCount > 0) {
-                $io->note('[SIMULATE] Update "' . $updateCount . '" records from "' . $tableName . '" table');
+                $io->note('[SIMULATE] Updated "' . $updateCount . '" records from "' . $tableName . '" table');
             }
             if ($deleteCount > 0) {
-                $io->note('[SIMULATE] Delete "' . $deleteCount . '" records from "' . $tableName . '" table');
+                $io->note('[SIMULATE] Deleted "' . $deleteCount . '" records from "' . $tableName . '" table');
             }
         } else {
             if ($updateCount > 0) {
@@ -419,18 +461,6 @@ abstract class AbstractHealthCheck
                 $io->warning('Deleted "' . $deleteCount . '" records from "' . $tableName . '" table');
             }
         }
-    }
-
-    /**
-     * Helper method for header() to render a list of tags
-     * to declare the type of changes this check applies.
-     *
-     * @param string ...$tags
-     */
-    protected function outputTags(SymfonyStyle $io, ...$tags): void
-    {
-        $tags = array_map(fn (string $tag): string => '<comment>' . $tag . '</comment>', $tags);
-        $io->text('Actions: ' . implode(', ', $tags));
     }
 
     private function logAndOutputSql(SymfonyStyle $io, bool $simulate, string $sql): void

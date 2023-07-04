@@ -104,11 +104,8 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         foreach ($affectedRecords as $tableName => $tableRows) {
-            if ($simulate) {
-                $io->note('[SIMULATE] Handle records on table: ' . $tableName);
-            } else {
-                $io->note('Handle records on table: ' . $tableName);
-            }
+            $this->outputTableHandleBefore($io, $simulate, $tableName);
+
             $updateCount = 0;
             $deleteCount = 0;
 
@@ -235,21 +232,7 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
                 }
             }
 
-            if ($simulate) {
-                if ($updateCount > 0) {
-                    $io->note('[SIMULATE] Update "' . $updateCount . '" records from "' . $tableName . '" table');
-                }
-                if ($deleteCount > 0) {
-                    $io->note('[SIMULATE] Delete "' . $deleteCount . '" records from "' . $tableName . '" table');
-                }
-            } else {
-                if ($updateCount > 0) {
-                    $io->warning('Updated "' . $updateCount . '" records from "' . $tableName . '" table');
-                }
-                if ($deleteCount > 0) {
-                    $io->warning('Deleted "' . $deleteCount . '" records from "' . $tableName . '" table');
-                }
-            }
+            $this->outputTableHandleAfter($io, $simulate, $tableName, $updateCount, $deleteCount);
         }
     }
 
