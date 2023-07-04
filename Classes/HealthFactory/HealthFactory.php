@@ -32,6 +32,7 @@ final class HealthFactory implements HealthFactoryInterface
         HealthCheck\WorkspacesSoftDeletedRecords::class,
         HealthCheck\WorkspacesPidNegative::class,
         HealthCheck\WorkspacesT3verStateMinusOne::class,
+        HealthCheck\WorkspacesT3verStateThree::class,
         HealthCheck\PagesBrokenTree::class,
         HealthCheck\PagesTranslatedLanguageParentMissing::class,
         HealthCheck\PagesTranslatedLanguageParentDeleted::class,
