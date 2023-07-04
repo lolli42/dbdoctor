@@ -34,8 +34,8 @@ final class WorkspacesT3verStateThree extends AbstractHealthCheck implements Hea
             'The workspace related field state t3ver_state=3 has been removed with TYPO3 v11.',
             'Until TYPO3 v11, they were paired with a t3ver_state=4 record. A core upgrade',
             'wizard migrates affected records. This check removes left over records having t3ver_state=3.',
-            'If this check finds many records, it indicates the upgrade wizard "WorkspaceMovePlaceholderRemovalMigration"',
-            'has not been executed. ABORT NOW and run the wizard, it is included in TYPO3 core v11 and v12.',
+            'If this check finds records, it may indicate the upgrade wizard "WorkspaceMovePlaceholderRemovalMigration"',
+            'has not been run. ABORT NOW and run the wizard, it is included in TYPO3 core v11 and v12.',
         ]);
     }
 
