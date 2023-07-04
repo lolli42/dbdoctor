@@ -81,7 +81,7 @@ final class SysFileReferenceInvalidPid extends AbstractHealthCheck implements He
         $rows = $affectedRecords['sys_file_reference'] ?? [];
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
-        $io->note('Update records on table: ' . $tableName);
+        $this->outputTableUpdateBefore($io, $simulate, $tableName);
         $count = 0;
         foreach ($rows as $row) {
             if ($row['tablenames'] === 'pages') {
@@ -104,7 +104,7 @@ final class SysFileReferenceInvalidPid extends AbstractHealthCheck implements He
             }
             $count++;
         }
-        $io->warning('Update "' . $count . '" records from "' . $tableName . '" table');
+        $this->outputTableUpdateAfter($io, $simulate, $tableName, $count);
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
