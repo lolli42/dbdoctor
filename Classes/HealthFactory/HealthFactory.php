@@ -31,6 +31,7 @@ final class HealthFactory implements HealthFactoryInterface
         HealthCheck\TcaTablesDeleteFlagZeroOrOne::class,
         HealthCheck\WorkspacesSoftDeletedRecords::class,
         HealthCheck\WorkspacesPidNegative::class,
+        HealthCheck\WorkspacesT3verStateNotZeroInLive::class,
         HealthCheck\WorkspacesT3verStateMinusOne::class,
         HealthCheck\WorkspacesT3verStateThree::class,
         HealthCheck\PagesBrokenTree::class,

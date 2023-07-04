@@ -1,0 +1,60 @@
+"sys_workspace"
+,"uid","pid","deleted","title"
+,1,0,0,"ws-1"
+"pages"
+,"uid","pid","deleted","t3ver_wsid","t3ver_state","title"
+,1,0,0,0,0,"Ok site root"
+,2,1,0,0,0,"Ok sub page in live"
+,3,1,0,1,0,"Ok sub page in ws-1 t3ver_state=0"
+,4,1,0,1,1,"Ok sub page in ws-1 t3ver_state=1"
+# Below all deleted=1 - should be romoved
+,5,2,1,0,-1,"Not ok page live deleted t3ver_state=-1"
+,6,2,1,0,1,"Not ok page live deleted t3ver_state=1"
+,7,2,1,0,2,"Not ok page live deleted t3ver_state=2"
+,8,2,1,0,3,"Not ok page live deleted t3ver_state=3"
+,9,2,1,0,4,"Not ok page live deleted t3ver_state=4"
+# Should be set t3ver_state=0
+,10,2,0,0,-1,"Not ok page live t3ver_state=-1"
+# Should be set t3ver_state=0
+,11,2,0,0,-2,"Not ok page live t3ver_state=-2"
+# Below should be set deleted=1 and t3ver_state=0
+,12,2,0,0,1,"Not ok page live t3ver_state=1"
+,13,2,0,0,2,"Not ok page live t3ver_state=2"
+,14,2,0,0,3,"Not ok page live t3ver_state=3"
+,15,2,0,0,4,"Not ok page live t3ver_state=4"
+"tt_content"
+,"uid","pid","deleted","t3ver_wsid","t3ver_state","header"
+,1,2,0,0,0,"Ok content"
+,2,2,1,0,0,"Ok deleted content in live"
+,3,2,0,1,0,"Ok content in ws-1 t3ver_state=0"
+,4,2,0,1,1,"Ok content in ws-1 t3ver_state=1"
+# Below all deleted=1 - should be romoved
+,5,2,1,0,-1,"Not ok content live deleted t3ver_state=-1"
+,6,2,1,0,1,"Not ok content live deleted t3ver_state=1"
+,7,2,1,0,2,"Not ok content live deleted t3ver_state=2"
+,8,2,1,0,3,"Not ok content live deleted t3ver_state=3"
+,9,2,1,0,4,"Not ok content live deleted t3ver_state=4"
+# Should be set t3ver_state=0
+,10,2,0,0,-1,"Not ok content live deleted t3ver_state=-1"
+# Should be set t3ver_state=0
+,11,2,0,0,-2,"Not ok content live deleted t3ver_state=-2"
+# Below should be set deleted=1 and t3ver_state=0
+,12,2,0,0,1,"Not ok content live t3ver_state=1"
+,13,2,0,0,2,"Not ok content live t3ver_state=2"
+,14,2,0,0,3,"Not ok content live t3ver_state=3"
+,15,2,0,0,4,"Not ok content live t3ver_state=4"
+"sys_file_metadata"
+,"uid","pid","t3ver_wsid","t3ver_state","title"
+# This table is the only core one that is ws-aware but not delete aware
+,1,2,0,0,"Ok"
+,2,2,1,0,"Ok in ws-1 t3ver_state=0"
+,3,2,1,1,"Ok in ws-1 t3ver_state=1"
+# Should be set t3ver_state=0
+,4,2,0,-1,"Not ok live t3ver_state=-1"
+# Should be set t3ver_state=0
+,5,2,0,-2,"Not ok live t3ver_state=-2"
+# Below should be set removed
+,6,2,0,1,"Not ok live t3ver_state=1"
+,7,2,0,2,"Not ok live t3ver_state=2"
+,8,2,0,3,"Not ok live t3ver_state=3"
+,9,2,0,4,"Not ok live t3ver_state=4"

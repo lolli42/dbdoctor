@@ -35,8 +35,8 @@ final class WorkspacesPidNegative extends AbstractHealthCheck implements HealthC
         $io->text([
             'Records must have a pid equal or greater than zero (0).',
             'Until TYPO3 v10, workspace records where placed on pid=-1. This check removes leftovers.',
-            'If this check finds many records, it indicates the upgrade wizard "WorkspaceVersionRecordsMigration"',
-            'has not been executed. ABORT NOW and run the wizard, it is included in TYPO3 core v10 and v11.',
+            'If this check finds records, it may indicate the upgrade wizard "WorkspaceVersionRecordsMigration"',
+            'has not been run. ABORT NOW and run the wizard, it is included in TYPO3 core v10 and v11.',
         ]);
     }
 
