@@ -70,7 +70,7 @@ final class TcaHelper
     }
 
     /**
-     * Note we check for *both* languageField (usually sys_language_uid)
+     * We check for *both* languageField (usually sys_language_uid)
      * and transOrigPointerField (usually l10n_parent) here: Only having
      * languageField does not make too much sense and is more a TCA bug
      * than anything else and not handled.
@@ -84,6 +84,30 @@ final class TcaHelper
         foreach ($GLOBALS['TCA'] as $tableName => $config) {
             if (($config['ctrl']['languageField'] ?? false)
                 && ($config['ctrl']['transOrigPointerField'] ?? false)
+                && !in_array($tableName, $ignoreTables, true)
+            ) {
+                yield $tableName;
+            }
+        }
+    }
+
+    /**
+     * We check for languageField (usually sys_language_uid)
+     * *and* transOrigPointerField (usually l10n_parent) *and*
+     * translationSource (usually l10n_source) here: Not having
+     * all three of them does not make too much sense and is more a TCA bug
+     * than anything else and not handled.
+     *
+     * @param array<int, string> $ignoreTables
+     * @return iterable<string>
+     */
+    public function getNextLanguageSourceAwareTcaTable(array $ignoreTables = []): iterable
+    {
+        $this->verifyTcaIsArray();
+        foreach ($GLOBALS['TCA'] as $tableName => $config) {
+            if (($config['ctrl']['languageField'] ?? false)
+                && ($config['ctrl']['transOrigPointerField'] ?? false)
+                && ($config['ctrl']['translationSource'] ?? false)
                 && !in_array($tableName, $ignoreTables, true)
             ) {
                 yield $tableName;
@@ -183,6 +207,11 @@ final class TcaHelper
     public function getTranslationParentField(string $tableName): ?string
     {
         return ($GLOBALS['TCA'][$tableName]['ctrl']['transOrigPointerField'] ?? null) ?: null;
+    }
+
+    public function getTranslationSourceField(string $tableName): ?string
+    {
+        return ($GLOBALS['TCA'][$tableName]['ctrl']['translationSource'] ?? null) ?: null;
     }
 
     /**

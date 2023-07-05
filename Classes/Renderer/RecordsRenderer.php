@@ -111,6 +111,7 @@ final class RecordsRenderer
             $row = $this->resolveWorkspace($tableName, $row);
             $row = $this->resolvePid($row);
             $row = $this->resolveTranslationParentField($tableName, $row);
+            $row = $this->resolveTranslationSourceField($tableName, $row);
             $rows[] = $row;
         }
         return $rows;
@@ -135,6 +136,8 @@ final class RecordsRenderer
         $fields = $this->addField($fields, $this->tcaHelper->getCreateUserIdField($tableName));
         $fields = $this->addField($fields, $this->tcaHelper->getTimestampField($tableName));
         $fields = $this->addField($fields, $this->tcaHelper->getLanguageField($tableName));
+        $fields = $this->addField($fields, $this->tcaHelper->getTranslationParentField($tableName));
+        $fields = $this->addField($fields, $this->tcaHelper->getTranslationSourceField($tableName));
         $fields = $this->addField($fields, $this->tcaHelper->getWorkspaceIdField($tableName));
         $fields = $this->addField($fields, $this->tcaHelper->getTypeField($tableName));
         $fields = $this->addFields($fields, $this->tcaHelper->getLabelFields($tableName));
@@ -250,13 +253,42 @@ final class RecordsRenderer
         $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
         if ($translationParentField && array_key_exists($translationParentField, $row)) {
             $parentUid = (int)$row[$translationParentField];
-            try {
-                $parentRecord = $this->recordsHelper->getRecord($tableName, ['deleted'], $parentUid);
-                if ((bool)$parentRecord['deleted']) {
-                    $row[$translationParentField] = '[' . $parentUid . '|<info>deleted</info>]';
+            if ($parentUid === 0) {
+                $row[$translationParentField] = '0';
+            } else {
+                try {
+                    $parentRecord = $this->recordsHelper->getRecord($tableName, ['deleted'], $parentUid);
+                    if ((bool)$parentRecord['deleted']) {
+                        $row[$translationParentField] = '[' . $parentUid . '|<info>deleted</info>]';
+                    }
+                } catch (NoSuchRecordException $e) {
+                    $row[$translationParentField] = '[' . $parentUid . '|<comment>missing</comment>]';
                 }
-            } catch (NoSuchRecordException $e) {
-                $row[$translationParentField] = '[' . $parentUid . '|<comment>missing</comment>]';
+            }
+        }
+        return $row;
+    }
+
+    /**
+     * @param array<string, int|string> $row
+     * @return array<string, int|string>
+     */
+    private function resolveTranslationSourceField(string $tableName, array $row): array
+    {
+        $translationSourceField = $this->tcaHelper->getTranslationSourceField($tableName);
+        if ($translationSourceField && array_key_exists($translationSourceField, $row)) {
+            $parentUid = (int)$row[$translationSourceField];
+            if ($parentUid === 0) {
+                $row[$translationSourceField] = '0';
+            } else {
+                try {
+                    $parentRecord = $this->recordsHelper->getRecord($tableName, ['deleted'], $parentUid);
+                    if ((bool)$parentRecord['deleted']) {
+                        $row[$translationSourceField] = '[' . $parentUid . '|<info>deleted</info>]';
+                    }
+                } catch (NoSuchRecordException $e) {
+                    $row[$translationSourceField] = '[' . $parentUid . '|<comment>missing</comment>]';
+                }
             }
         }
         return $row;
