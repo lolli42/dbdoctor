@@ -34,6 +34,8 @@ final class HealthFactory implements HealthFactoryInterface
         HealthCheck\WorkspacesT3verStateNotZeroInLive::class,
         HealthCheck\WorkspacesT3verStateMinusOne::class,
         HealthCheck\WorkspacesT3verStateThree::class,
+        // Note we have "move sys_redirects" *before* PagesBrokenTree for a better chance to move to correct pid
+        HealthCheck\SysRedirectInvalidPid::class,
         HealthCheck\PagesBrokenTree::class,
         HealthCheck\PagesTranslatedLanguageParentMissing::class,
         HealthCheck\PagesTranslatedLanguageParentDeleted::class,

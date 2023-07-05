@@ -37,6 +37,7 @@
     "phpunit/phpunit": "^9",
     "typo3/cms-impexp": "^11.5 || ^12.4",
     "typo3/cms-workspaces": "^11.5 || ^12.4",
+    "typo3/cms-redirects": "^11.5 || ^12.4",
     "typo3/testing-framework": "^7.0.2"
   },
   "autoload": {

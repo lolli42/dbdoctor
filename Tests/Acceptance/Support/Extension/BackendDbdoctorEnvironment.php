@@ -35,6 +35,7 @@ class BackendDbdoctorEnvironment extends BackendEnvironment
             'recordlist',
             'impexp',
             'workspaces',
+            'redirects',
         ],
         'testExtensionsToLoad' => [
             'typo3conf/ext/dbdoctor',
