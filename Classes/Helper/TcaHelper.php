@@ -70,6 +70,11 @@ final class TcaHelper
     }
 
     /**
+     * Note we check for *both* languageField (usually sys_language_uid)
+     * and transOrigPointerField (usually l10n_parent) here: Only having
+     * languageField does not make too much sense and is more a TCA bug
+     * than anything else and not handled.
+     *
      * @param array<int, string> $ignoreTables
      * @return iterable<string>
      */
