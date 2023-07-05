@@ -47,7 +47,8 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
         $recordsHelper = $this->container->get(RecordsHelper::class);
 
         $affectedRows = [];
-        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {
+        // @todo: sys_file_reference is excluded due to https://github.com/lolli42/dbdoctor/issues/30, see comment below, too.
+        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages', 'sys_file_reference']) as $tableName) {
             /** @var string $languageField */
             $languageField = $this->tcaHelper->getLanguageField($tableName);
             /** @var string $translationParentField */
@@ -180,6 +181,8 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
                         $updateCount ++;
                     }
                 } else {
+                    // @todo: sys_file_reference is excluded due to https://github.com/lolli42/dbdoctor/issues/30, see comment above, too.
+                    /*
                     if ($tableName === 'sys_file_reference') {
                         // @todo: Maybe split this special handling to an own check, maybe merge with PagesTranslatedLanguageParentDifferentPid?
                         // pid for sys_file_reference is not *that* important: If it's not correct, the
@@ -193,41 +196,41 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
                         $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid'], $updateFields);
                         $updateCount ++;
                     } else {
-                        // For all other tables: Moving this record means it may show up in the FE now. To avoid this,
-                        // if the table is 'hidden'-aware, we set the record to hidden and move it. If the table is not
-                        // hidden aware but delete-aware, we set the record to deleted=1. Else, we remove the record.
-                        if ($isTableHiddenAware) {
-                            $updateFields = [
-                                'pid' => [
-                                    'value' => (int)$defaultLanguageRow['pid'],
-                                    'type' => \PDO::PARAM_INT,
-                                ],
-                                $hiddenField => [
-                                    'value' => 1,
-                                    'type' => \PDO::PARAM_INT,
-                                ],
-                            ];
-                            $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid'], $updateFields);
-                            $updateCount++;
-                        } elseif (!$isTableSoftDeleteAware
-                            || ($isTableWorkspaceAware && ((int)$localizedRow[$workspaceIdField] > 0))
-                        ) {
-                            $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid']);
-                            $deleteCount ++;
-                        } else {
-                            $updateFields = [
-                                'pid' => [
-                                    'value' => (int)$defaultLanguageRow['pid'],
-                                    'type' => \PDO::PARAM_INT,
-                                ],
-                                $deleteField => [
-                                    'value' => 1,
-                                    'type' => \PDO::PARAM_INT,
-                                ],
-                            ];
-                            $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid'], $updateFields);
-                            $updateCount ++;
-                        }
+                    */
+                    // For all other tables: Moving this record means it may show up in the FE now. To avoid this,
+                    // if the table is 'hidden'-aware, we set the record to hidden and move it. If the table is not
+                    // hidden aware but delete-aware, we set the record to deleted=1. Else, we remove the record.
+                    if ($isTableHiddenAware) {
+                        $updateFields = [
+                            'pid' => [
+                                'value' => (int)$defaultLanguageRow['pid'],
+                                'type' => \PDO::PARAM_INT,
+                            ],
+                            $hiddenField => [
+                                'value' => 1,
+                                'type' => \PDO::PARAM_INT,
+                            ],
+                        ];
+                        $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid'], $updateFields);
+                        $updateCount++;
+                    } elseif (!$isTableSoftDeleteAware
+                        || ($isTableWorkspaceAware && ((int)$localizedRow[$workspaceIdField] > 0))
+                    ) {
+                        $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid']);
+                        $deleteCount ++;
+                    } else {
+                        $updateFields = [
+                            'pid' => [
+                                'value' => (int)$defaultLanguageRow['pid'],
+                                'type' => \PDO::PARAM_INT,
+                            ],
+                            $deleteField => [
+                                'value' => 1,
+                                'type' => \PDO::PARAM_INT,
+                            ],
+                        ];
+                        $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid'], $updateFields);
+                        $updateCount ++;
                     }
                 }
             }
