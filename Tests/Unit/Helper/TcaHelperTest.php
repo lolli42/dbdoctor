@@ -281,6 +281,105 @@ class TcaHelperTest extends UnitTestCase
     /**
      * @test
      */
+    public function getNextLanguageSourceAwareTcaTableThrowsExceptionIfTcaIsNotAnArray(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionCode(1688203176);
+        $GLOBALS['TCA'] = null;
+        $subject = new TcaHelper();
+        foreach ($subject->getNextLanguageSourceAwareTcaTable() as $item) {
+            // Trigger iterable
+        }
+    }
+
+    /**
+     * @test
+     */
+    public function getNextLanguageSourceAwareTcaTableReturnsLanguageSourceAwareEnabledTcaTables(): void
+    {
+        $GLOBALS['TCA'] = [
+            'languageAware1' => [
+                'ctrl' => [
+                    'languageField' => 'sys_language_uid',
+                    'transOrigPointerField' => 'l18n_parent',
+                    'translationSource' => 'l10n_source',
+                ],
+            ],
+            'notAware1' => [
+                'ctrl' => [],
+            ],
+            'notAware2' => [
+                'ctrl' => [
+                    'languageField' => 'sys_language_uid',
+                ],
+            ],
+            'notAware3' => [
+                'ctrl' => [
+                    'transOrigPointerField' => 'l18n_parent',
+                ],
+            ],
+            'notAware4' => [
+                'ctrl' => [
+                    'languageField' => 'sys_language_uid',
+                    'transOrigPointerField' => 'l18n_parent',
+                ],
+            ],
+            'notAware5' => [
+                'ctrl' => [
+                    'transOrigPointerField' => 'l18n_parent',
+                    'translationSource' => 'l10n_source',
+                ],
+            ],
+            'notAware6' => [
+                'ctrl' => [
+                    'languageField' => 'sys_language_uid',
+                    'translationSource' => 'l10n_source',
+                ],
+            ],
+        ];
+        $subject = new TcaHelper();
+        $result = [];
+        foreach ($subject->getNextLanguageSourceAwareTcaTable() as $table) {
+            $result[] = $table;
+        }
+        $expected = [
+            'languageAware1',
+        ];
+        self::assertSame($expected, $result);
+    }
+
+    /**
+     * @test
+     */
+    public function getNextLanguageSourceAwareTcaTableIgnoresTable(): void
+    {
+        $GLOBALS['TCA'] = [
+            'foo' => [
+                'ctrl' => [
+                    'languageField' => 'sys_language_uid',
+                    'transOrigPointerField' => 'l18n_parent',
+                    'translationSource' => 'l10n_source',
+                ],
+            ],
+            'bar' => [
+                'ctrl' => [
+                    'languageField' => 'sys_language_uid',
+                    'transOrigPointerField' => 'l18n_parent',
+                    'translationSource' => 'l10n_source',
+                ],
+            ],
+        ];
+        $subject = new TcaHelper();
+        $tables = [];
+        foreach ($subject->getNextLanguageSourceAwareTcaTable(['foo']) as $item) {
+            $tables[] = $item;
+        }
+        self::assertSame(['bar'], $tables);
+    }
+
+    /**
+     * @test
+     */
     public function getNextInlineForeignFieldChildTcaTableThrowsExceptionIfTcaIsNotAnArray(): void
     {
         $this->expectException(\RuntimeException::class);
@@ -866,6 +965,23 @@ class TcaHelperTest extends UnitTestCase
     public function getTranslationParentFieldReturnsNull(): void
     {
         self::assertNull((new TcaHelper())->getTranslationParentField('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getTranslationSourceFieldReturnsField(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['translationSource'] = 'l10n_parent';
+        self::assertSame('l10n_parent', (new TcaHelper())->getTranslationSourceField('foo'));
+    }
+
+    /**
+     * @test
+     */
+    public function getTranslationSourceFieldReturnsNull(): void
+    {
+        self::assertNull((new TcaHelper())->getTranslationSourceField('foo'));
     }
 
     /**

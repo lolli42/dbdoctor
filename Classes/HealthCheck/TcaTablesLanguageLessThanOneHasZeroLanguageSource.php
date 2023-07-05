@@ -20,41 +20,42 @@ namespace Lolli\Dbdoctor\HealthCheck;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Records with sys_language_uid = 0 (or -1) must have l10n_parent=0
+ * Records with sys_language_uid = 0 (or -1) must have l10n_source=0
  */
-final class TcaTablesLanguageLessThanOneHasZeroLanguageParent extends AbstractHealthCheck implements HealthCheckInterface
+final class TcaTablesLanguageLessThanOneHasZeroLanguageSource extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {
-        $io->section('Scan for records in default language not having language parent zero');
+        $io->section('Scan for records in default language not having language source zero');
         $this->outputTags($io, self::TAG_UPDATE);
         $io->text([
             'TCA records in default or "all" language (typically sys_language_uid field having 0 or -1)',
-            'must have their "transOrigPointerField" (typically l10n_parent or l18n_parent) field',
-            'set to zero (0). This checks finds and updates violating records.',
+            'must have their "translationSource" (typically l10n_source) field set to zero (0).',
+            'This checks finds and updates violating records.',
         ]);
     }
 
     protected function getAffectedRecords(): array
     {
         $affectedRows = [];
-        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable() as $tableName) {
+        foreach ($this->tcaHelper->getNextLanguageSourceAwareTcaTable() as $tableName) {
             $sysLanguageField = $this->tcaHelper->getLanguageField($tableName);
             $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
-            if ($sysLanguageField === null || $translationParentField === null) {
+            $translationSourceField = $this->tcaHelper->getTranslationSourceField($tableName);
+            if ($sysLanguageField === null || $translationParentField === null || $translationSourceField === null) {
                 throw new \RuntimeException(
-                    'TCA ctrl languageField or transOrigPointerField null, indicates bug in getNextLanguageAwareTcaTable()',
-                    1688571126
+                    'TCA ctrl languageField or translationSource or transOrigPointerField null, indicates bug in getNextLanguageSourceAwareTcaTable()',
+                    1688575780
                 );
             }
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             // Let's deal with deleted=1 records here as well.
             $queryBuilder->getRestrictions()->removeAll();
-            $queryBuilder->select('uid', 'pid', $sysLanguageField, $translationParentField)
+            $queryBuilder->select('uid', 'pid', $sysLanguageField, $translationParentField, $translationSourceField)
                 ->from($tableName)
                 ->where(
                     $queryBuilder->expr()->lte($sysLanguageField, 0),
-                    $queryBuilder->expr()->neq($translationParentField, 0)
+                    $queryBuilder->expr()->neq($translationSourceField, 0)
                 )
                 ->orderBy('uid');
             $result = $queryBuilder->executeQuery();
@@ -69,9 +70,9 @@ final class TcaTablesLanguageLessThanOneHasZeroLanguageParent extends AbstractHe
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
         foreach ($affectedRecords as $tableName => $tableRows) {
-            $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
+            $translationSourceField = $this->tcaHelper->getTranslationSourceField($tableName);
             $updateFields = [
-                $translationParentField => [
+                $translationSourceField => [
                     'value' => 0,
                     'type' => \PDO::PARAM_INT,
                 ],

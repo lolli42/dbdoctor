@@ -37,6 +37,7 @@ final class HealthFactory implements HealthFactoryInterface
         // Note we have "move sys_redirects" *before* PagesBrokenTree for a better chance to move to correct pid
         HealthCheck\SysRedirectInvalidPid::class,
         HealthCheck\TcaTablesLanguageLessThanOneHasZeroLanguageParent::class,
+        HealthCheck\TcaTablesLanguageLessThanOneHasZeroLanguageSource::class,
         HealthCheck\PagesBrokenTree::class,
         HealthCheck\PagesTranslatedLanguageParentMissing::class,
         HealthCheck\PagesTranslatedLanguageParentDeleted::class,
