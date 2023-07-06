@@ -46,10 +46,10 @@ final class HealthFactory implements HealthFactoryInterface
         HealthCheck\TcaTablesTranslatedParentInvalidPointer::class,
         // @todo: Next one is skipped in v12 and can be dropped when v11 compat is removed from extension.
         HealthCheck\SysFileReferenceInvalidTableLocal::class,
+        HealthCheck\SysFileReferenceDangling::class,
         HealthCheck\SysFileReferenceLocalizedParentExists::class,
         HealthCheck\SysFileReferenceLocalizedParentDeleted::class,
         HealthCheck\SysFileReferenceLocalizedFieldSync::class,
-        HealthCheck\SysFileReferenceDangling::class,
         HealthCheck\SysFileReferenceInvalidPid::class,
         HealthCheck\TcaTablesPidMissing::class,
         // @todo: Disabled for now, see the class comment

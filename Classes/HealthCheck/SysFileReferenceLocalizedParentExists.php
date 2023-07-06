@@ -24,6 +24,9 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * Localized sys_file_reference records must point to a sys_language_uid=0 parent that exists.
+ *
+ * @todo: risky, records maybe shown in FE, but except when editing
+ *        maybe remove when soft-delete, remove if in ws, but set l10n_parent=0 if not?
  */
 final class SysFileReferenceLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface
 {

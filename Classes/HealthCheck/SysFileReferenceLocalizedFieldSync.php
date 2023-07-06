@@ -39,7 +39,7 @@ final class SysFileReferenceLocalizedFieldSync extends AbstractHealthCheck imple
             'Records violating this indicate something is wrong with this localized record.',
             'This may happen for instance, when the tt_content ctype of a default language record is changed and',
             'relations are adapted after the record has been localized. Verify findings manually!',
-            'This check sets affected localized records are set to deleted=1 in live and removes the',
+            'This check sets affected localized records to deleted=1 in live and removes them',
             'if they are workspace overlay records.',
         ]);
     }
