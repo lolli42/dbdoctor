@@ -26,6 +26,8 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Not deleted localized sys_file_reference records must point to a sys_language_uid=0 parent that is not deleted.
+ * This is related to SysFileReferenceLocalizedParentExists, and risky as well. See SysFileReferenceLocalizedParentExists
+ * for more comments on this.
  */
 final class SysFileReferenceLocalizedParentDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
@@ -33,11 +35,18 @@ final class SysFileReferenceLocalizedParentDeleted extends AbstractHealthCheck i
     {
         $io->section('Scan for localized sys_file_reference records with deleted parent');
         $this->outputClass($io);
-        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE);
+        $this->outputTags($io, self::TAG_RISKY, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE);
         $io->text([
             'Localized, not deleted records in "sys_file_reference" (sys_language_uid > 0) having',
-            'l10n_parent > 0 must point to a sys_language_uid = 0, not deleted, language parent record.',
+            'l10n_parent > 0 must point to a sys_language_uid = 0, not soft-deleted, language parent record.',
             'Records violating this are soft-deleted in live and removed if in workspaces.',
+            'This change is <error>risky</error>. Records with a deleted=1 l10n_parent typically throw',
+            'an exception in the BE when edited. However, the FE often still shows such an image.',
+            'As such, when this check soft-deletes or removes records, you may want to check them manually by',
+            'looking at the referencing inline parent record indicated by fields "tablenames" and "uid_foreign"',
+            'to eventually find a better solution manually, for instance by setting l10n_parent=0 or',
+            'connecting it to the correct l10n_parent if in "connected mode", or by creating a new',
+            'image relation and then letting dbdoctor remove this one after reloading the check.',
         ]);
     }
 
@@ -73,6 +82,7 @@ final class SysFileReferenceLocalizedParentDeleted extends AbstractHealthCheck i
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
+        // @todo: Risky. Similar possible strategies to mitigate this as in SysFileReferenceLocalizedParentExists.
         $this->softOrHardDeleteRecordsOfTable($io, $simulate, 'sys_file_reference', $affectedRecords['sys_file_reference'] ?? []);
     }
 
