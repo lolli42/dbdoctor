@@ -27,6 +27,7 @@ final class TcaTablesLanguageLessThanOneHasZeroLanguageParent extends AbstractHe
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for records in default language not having language parent zero');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_UPDATE);
         $io->text([
             'TCA records in default or "all" language (typically sys_language_uid field having 0 or -1)',

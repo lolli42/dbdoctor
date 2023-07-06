@@ -32,6 +32,7 @@ final class SysFileReferenceLocalizedParentDeleted extends AbstractHealthCheck i
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for localized sys_file_reference records with deleted parent');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE);
         $io->text([
             'Localized, not deleted records in "sys_file_reference" (sys_language_uid > 0) having',

@@ -32,6 +32,7 @@ final class SysFileReferenceLocalizedFieldSync extends AbstractHealthCheck imple
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for localized sys_file_reference records with parent not in sync');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE);
         $io->text([
             'Localized records in "sys_file_reference" (sys_language_uid > 0) must have fields "tablenames"',

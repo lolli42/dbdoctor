@@ -32,6 +32,7 @@ final class InlineForeignFieldChildrenParentDeleted extends AbstractHealthCheck 
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for inline foreign field records with deleted=1 parent');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE);
         $io->text([
             'TCA inline foreign field records point to a parent record. When this parent is',

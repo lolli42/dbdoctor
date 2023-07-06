@@ -30,9 +30,11 @@ final class SysFileReferenceInvalidTableLocal extends AbstractHealthCheck implem
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for sys_file_reference_records with broken table_local field');
+        $this->outputClass($io);
         if ((new Typo3Version())->getMajorVersion() >= 12) {
+            $this->outputTags($io, self::TAG_DISABLED);
             $io->text([
-                'This check is obsolete with core v12.',
+                'This check is obsolete with TYPO3 core v12.',
             ]);
         } else {
             $this->outputTags($io, self::TAG_UPDATE);

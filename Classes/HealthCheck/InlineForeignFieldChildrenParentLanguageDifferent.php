@@ -30,6 +30,7 @@ final class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHe
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for inline foreign field records with different language than their parent');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_UPDATE);
         $io->text([
             'TCA inline foreign field child records point to a parent record. This check finds',

@@ -29,6 +29,7 @@ final class PagesTranslatedLanguageParentDifferentPid extends AbstractHealthChec
     public function header(SymfonyStyle $io): void
     {
         $io->section('Check pages with different pid than their language parent');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
             'This health check finds translated "pages" records (sys_language_uid > 0) with',

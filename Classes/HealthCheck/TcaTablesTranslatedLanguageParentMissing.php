@@ -29,6 +29,7 @@ final class TcaTablesTranslatedLanguageParentMissing extends AbstractHealthCheck
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for record translations with missing parent');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
             'Record translations use the TCA ctrl field "transOrigPointerField"',

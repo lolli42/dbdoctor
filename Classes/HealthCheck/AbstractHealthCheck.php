@@ -31,6 +31,8 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
  */
 abstract class AbstractHealthCheck
 {
+    // Used in IO when a check is fully disabled, for instance due to TYPO3 version
+    protected const TAG_DISABLED = 'disabled';
     // Used in IO when a check may DELETE records
     protected const TAG_REMOVE = 'remove';
     // Used in IO when a check may "deleted=1" records
@@ -397,6 +399,11 @@ abstract class AbstractHealthCheck
     {
         $tags = array_map(fn (string $tag): string => '<comment>' . $tag . '</comment>', $tags);
         $io->text('Actions: ' . implode(', ', $tags));
+    }
+
+    final protected function outputClass(SymfonyStyle $io): void
+    {
+        $io->text(('Class: <comment>' . (new \ReflectionClass($this))->getShortName()) . '</comment>');
     }
 
     final protected function outputTableDeleteBefore(SymfonyStyle $io, bool $simulate, string $tableName): void

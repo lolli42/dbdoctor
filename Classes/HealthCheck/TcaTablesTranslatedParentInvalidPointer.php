@@ -31,6 +31,7 @@ final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck 
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for record translations pointing to non default language parent');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_UPDATE);
         $io->text([
             'Record translations ("translate" / "connected" mode, as opposed to "free" mode) use the',

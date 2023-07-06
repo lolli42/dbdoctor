@@ -31,6 +31,7 @@ final class TcaTablesTranslatedLanguageParentDeleted extends AbstractHealthCheck
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for not-deleted record translations with deleted parent');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE);
         $io->text([
             'Record translations use the TCA ctrl field "transOrigPointerField"',

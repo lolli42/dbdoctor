@@ -29,9 +29,10 @@ final class WorkspacesT3verStateNotZeroInLive extends AbstractHealthCheck implem
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for records with t3ver_wsid=0 and t3ver_state!=0');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_REMOVE, self::TAG_SOFT_DELETE, self::TAG_UPDATE);
         $io->text([
-            'There should be not t3ver_state non-zero (0) records in live.',
+            'There should be no t3ver_state non-zero (0) records in live.',
             'If this check finds records, ABORT NOW and run these upgrades wizards:',
             'WorkspaceVersionRecordsMigration (TYPO3 v10 & v11),',
             'WorkspaceNewPlaceholderRemovalMigration (TYPO3 11 & v12),',
