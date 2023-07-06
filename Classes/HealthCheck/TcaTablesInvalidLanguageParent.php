@@ -25,6 +25,8 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Check if translated records point to existing records.
+ *
+ * @todo: Currently disabled!
  */
 final class TcaTablesInvalidLanguageParent extends AbstractHealthCheck implements HealthCheckInterface
 {

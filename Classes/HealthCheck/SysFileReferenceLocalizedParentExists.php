@@ -30,6 +30,7 @@ final class SysFileReferenceLocalizedParentExists extends AbstractHealthCheck im
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for localized sys_file_reference records without parent');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
             'Localized records in "sys_file_reference" (sys_language_uid > 0) having',

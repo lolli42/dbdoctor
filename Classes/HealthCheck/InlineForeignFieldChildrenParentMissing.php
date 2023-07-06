@@ -30,6 +30,7 @@ final class InlineForeignFieldChildrenParentMissing extends AbstractHealthCheck 
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for inline foreign field records with missing parent');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
             'TCA inline foreign field records point to a parent record. This parent',

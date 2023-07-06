@@ -29,6 +29,7 @@ final class WorkspacesT3verStateMinusOne extends AbstractHealthCheck implements 
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for records with t3ver_state=-1');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_WORKSPACE_REMOVE);
         $io->text([
             'The workspace related field state t3ver_state=-1 has been removed with TYPO3 v11.',

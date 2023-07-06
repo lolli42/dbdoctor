@@ -31,6 +31,7 @@ final class WorkspacesPidNegative extends AbstractHealthCheck implements HealthC
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for records with negative pid');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
             'Records must have a pid equal or greater than zero (0).',

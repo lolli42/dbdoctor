@@ -31,6 +31,7 @@ final class PagesTranslatedLanguageParentDeleted extends AbstractHealthCheck imp
     public function header(SymfonyStyle $io): void
     {
         $io->section('Check pages with deleted language parent');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE);
         $io->text([
             'This health check finds not deleted but translated (sys_language_uid > 0) "pages" records,',

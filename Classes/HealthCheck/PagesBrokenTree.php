@@ -28,6 +28,7 @@ final class PagesBrokenTree extends AbstractHealthCheck implements HealthCheckIn
     public function header(SymfonyStyle $io): void
     {
         $io->section('Check page tree integrity');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
             'This health check finds "pages" records with their "pid" set to pages that do',

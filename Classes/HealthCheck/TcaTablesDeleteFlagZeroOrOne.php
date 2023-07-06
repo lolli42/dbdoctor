@@ -27,6 +27,7 @@ final class TcaTablesDeleteFlagZeroOrOne extends AbstractHealthCheck implements 
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for rows with delete field not "0" or "1"');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_SOFT_DELETE);
         $io->text([
             'Values of the "deleted" column of TCA tables with enabled soft-delete',

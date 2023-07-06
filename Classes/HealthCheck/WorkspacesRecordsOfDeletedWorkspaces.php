@@ -35,6 +35,7 @@ final class WorkspacesRecordsOfDeletedWorkspaces extends AbstractHealthCheck imp
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for workspace records of deleted sys_workspace\'s');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
             'When a workspace (table "sys_workspace") is deleted, all existing workspace',

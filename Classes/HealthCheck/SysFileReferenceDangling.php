@@ -30,6 +30,7 @@ final class SysFileReferenceDangling extends AbstractHealthCheck implements Heal
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for orphan sys_file_reference records');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
             'Basic check of sys_file_reference: Records referenced in uid_local and uid_foreign',

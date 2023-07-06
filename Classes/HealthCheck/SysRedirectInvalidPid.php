@@ -46,6 +46,7 @@ final class SysRedirectInvalidPid extends AbstractHealthCheck implements HealthC
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for sys_redirect records on wrong pid');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_UPDATE);
         $io->text([
             'Redirect records should be located on pages having a site config, or pid 0.',

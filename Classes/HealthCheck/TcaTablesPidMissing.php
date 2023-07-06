@@ -29,6 +29,7 @@ final class TcaTablesPidMissing extends AbstractHealthCheck implements HealthChe
     public function header(SymfonyStyle $io): void
     {
         $io->section('Scan for records on not existing pages');
+        $this->outputClass($io);
         $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
             'TCA records have a pid field set to a single page. This page must exist.',
