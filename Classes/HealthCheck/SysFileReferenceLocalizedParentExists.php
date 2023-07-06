@@ -24,9 +24,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * Localized sys_file_reference records must point to a sys_language_uid=0 parent that exists.
- *
- * @todo: risky, records maybe shown in FE, but except when editing
- *        maybe remove when soft-delete, remove if in ws, but set l10n_parent=0 if not?
+ * This check is risky since it may remove images from FE. See comments.
  */
 final class SysFileReferenceLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface
 {
@@ -34,11 +32,16 @@ final class SysFileReferenceLocalizedParentExists extends AbstractHealthCheck im
     {
         $io->section('Scan for localized sys_file_reference records without parent');
         $this->outputClass($io);
-        $this->outputTags($io, self::TAG_REMOVE);
+        $this->outputTags($io, self::TAG_RISKY, self::TAG_REMOVE);
         $io->text([
             'Localized records in "sys_file_reference" (sys_language_uid > 0) having',
-            'l10n_parent > 0 must point to a sys_language_uid = 0 and existing language parent record.',
-            'Records violating this are removed.',
+            'l10n_parent > 0 must point to a sys_language_uid = 0 existing language parent record.',
+            'Records violating this are REMOVED.',
+            'This change is <error>risky</error>. Records with an invalid l10n_parent pointer typically throw',
+            'an exception in the BE when edited. However, the FE often still shows such an image.',
+            'As such, when this check REMOVES records, you may want to check them manually by looking',
+            'at the referencing inline parent record indicated by fields "tablenames" and "uid_foreign"',
+            'to eventually find a better solution manually.',
         ]);
     }
 
@@ -70,6 +73,16 @@ final class SysFileReferenceLocalizedParentExists extends AbstractHealthCheck im
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
+        // @todo: Possible improvement. We could try to look at the uid_foreign/tablesnames inline parent record,
+        //        see if is "connected mode", has a sys_language_uid=0 l10n_parent on the same pid, look up the
+        //        sys_file_reference children attached to the same fieldname (which must not be a flexform field),
+        //        then see if one of them has the same uid_local "image" attached, and see if there is no other
+        //        existing localized record of this one. Then set l10n_parent to the uid of that sys_file_reference record.
+        //        This would allow us to "reconnect" at least some affected records to the "most likely" correct l10n_parent
+        //        instead of removing the relation. Also, workspaces has to be considered for all this as well.
+        //        A second strategy to mitigate this is to set l10n_parent=0, which will make that relation
+        //        "free mode". This however may lead to funny behavior in BE, when the inline parent is
+        //        "connected mode". Needs further investigation if considered.
         $this->deleteTcaRecordsOfTable($io, $simulate, 'sys_file_reference', $affectedRecords['sys_file_reference'] ?? []);
     }
 

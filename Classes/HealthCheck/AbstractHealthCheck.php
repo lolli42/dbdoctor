@@ -33,6 +33,8 @@ abstract class AbstractHealthCheck
 {
     // Used in IO when a check is fully disabled, for instance due to TYPO3 version
     protected const TAG_DISABLED = 'disabled';
+    // Used in IO when a check is considered risky, for instance when it may change FE output
+    protected const TAG_RISKY = 'risky';
     // Used in IO when a check may DELETE records
     protected const TAG_REMOVE = 'remove';
     // Used in IO when a check may "deleted=1" records
@@ -397,8 +399,15 @@ abstract class AbstractHealthCheck
      */
     final protected function outputTags(SymfonyStyle $io, ...$tags): void
     {
-        $tags = array_map(fn (string $tag): string => '<comment>' . $tag . '</comment>', $tags);
-        $io->text('Actions: ' . implode(', ', $tags));
+        $wrappedTags = [];
+        foreach ($tags as $tag) {
+            if ($tag === self::TAG_RISKY) {
+                $wrappedTags[] = '<error>' . $tag . '</error>';
+            } else {
+                $wrappedTags[] = '<comment>' . $tag . '</comment>';
+            }
+        }
+        $io->text('Actions: ' . implode(', ', $wrappedTags));
     }
 
     final protected function outputClass(SymfonyStyle $io): void
