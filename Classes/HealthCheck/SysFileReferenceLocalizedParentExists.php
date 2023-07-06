@@ -41,7 +41,9 @@ final class SysFileReferenceLocalizedParentExists extends AbstractHealthCheck im
             'an exception in the BE when edited. However, the FE often still shows such an image.',
             'As such, when this check REMOVES records, you may want to check them manually by looking',
             'at the referencing inline parent record indicated by fields "tablenames" and "uid_foreign"',
-            'to eventually find a better solution manually.',
+            'to eventually find a better solution manually, for instance by setting l10n_parent=0 or',
+            'connecting it to the correct l10n_parent if in "connected mode", or by creating a new',
+            'image relation and then letting dbdoctor remove this one after reloading the check.',
         ]);
     }
 
@@ -83,6 +85,9 @@ final class SysFileReferenceLocalizedParentExists extends AbstractHealthCheck im
         //        A second strategy to mitigate this is to set l10n_parent=0, which will make that relation
         //        "free mode". This however may lead to funny behavior in BE, when the inline parent is
         //        "connected mode". Needs further investigation if considered.
+        //        Note there is also a scenario where inline parent and inline parent of default language are
+        //        located on different pid's, which indicates the l10n_parent uid is even more borked. Also,
+        //        l10n_parent record should be on the same pid, see https://github.com/lolli42/dbdoctor/issues/30
         $this->deleteTcaRecordsOfTable($io, $simulate, 'sys_file_reference', $affectedRecords['sys_file_reference'] ?? []);
     }
 
