@@ -5,4 +5,7 @@
 "be_users"
 ,"uid","pid","deleted","username"
 ,1,0,0,"Ok user on pid 0"
-,2,1,0,0,"Ok user on pid 1"
+"tt_content",,,,,,,,,,,,,,,,,
+,"uid","pid","deleted","t3ver_wsid","header"
+,1,0,0,0,"Ok content on pid 0"
+,2,2,0,0,"Ok content on sub page 1"

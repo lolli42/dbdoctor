@@ -43,8 +43,10 @@ final class TcaTablesPidMissing extends AbstractHealthCheck implements HealthChe
         $recordsHelper = $this->container->get(RecordsHelper::class);
 
         $affectedRows = [];
-        foreach ($this->tcaHelper->getNextTcaTable(['pages', 'sys_workspace']) as $tableName) {
-            // Iterate all TCA tables, but ignore pages table
+        foreach ($this->tcaHelper->getNextTcaTable(['pages', 'sys_workspace', 'tt_content']) as $tableName) {
+            // Iterate all TCA tables, but ignore some tables: pages of course,
+            // and tt_content has been done with TtContentPidMissing already.
+            // @todo: sys_workspace records must be pid=0 anyways - eventually have a check for this?
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             // Consider deleted records: If the pid does not exist, they should be deleted, too.
             $queryBuilder->getRestrictions()->removeAll();
