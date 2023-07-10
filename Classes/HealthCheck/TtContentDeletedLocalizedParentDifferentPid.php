@@ -23,22 +23,21 @@ use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Deleted localized tt_content records must point to a sys_language_uid=0 parent that exists.
+ * Deleted localized tt_content records must point to a sys_language_uid=0 parent that
+ * exists on the same pid.
  * This is a "safe" variant since it handles deleted=1 records only.
- *
- * @todo: needs update to skip tt_content?!
  */
-final class TtContentDeletedLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface
+final class TtContentDeletedLocalizedParentDifferentPid extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {
-        $io->section('Scan for deleted localized tt_content records without parent');
+        $io->section('Scan for deleted localized tt_content records with parent on different pid');
         $this->outputClass($io);
         $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
             'Soft deleted localized records in "tt_content" (sys_language_uid > 0) having',
-            'l18n_parent > 0 must point to a sys_language_uid = 0 existing language parent record.',
-            'Records violating this are removed.',
+            'l18n_parent > 0 must point to a sys_language_uid = 0 language parent record',
+            'on the same pid. Records violating this are removed.',
         ]);
     }
 
@@ -46,7 +45,7 @@ final class TtContentDeletedLocalizedParentExists extends AbstractHealthCheck im
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
-        $tableRows = [];
+        $affectedRows = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
         $queryBuilder->getRestrictions()->removeAll();
         $result = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'l18n_parent')->from('tt_content')
@@ -60,13 +59,20 @@ final class TtContentDeletedLocalizedParentExists extends AbstractHealthCheck im
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
-                $recordsHelper->getRecord('tt_content', ['uid'], (int)$row['l18n_parent']);
+                $parentRecord = $recordsHelper->getRecord('tt_content', ['uid', 'pid'], (int)$row['l18n_parent']);
+                // Note workspace moved records are not an issue here sind we're dealing with
+                // deleted=1 records here, which don't exist in workspaces.
+                if ((int)$row['pid'] !== (int)$parentRecord['pid']) {
+                    $affectedRows['tt_content'][] = $row;
+                }
             } catch (NoSuchRecordException|NoSuchTableException $e) {
-                // Match if parent does not exist at all
-                $tableRows['tt_content'][] = $row;
+                throw new \RuntimeException(
+                    'Should not happen: Existence was checked by TtContentDeletedLocalizedParentExists already.',
+                    1688988051
+                );
             }
         }
-        return $tableRows;
+        return $affectedRows;
     }
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void

@@ -23,6 +23,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * Tables with record translations must point to existing records in transOrigPointerField
+ *
+ * @todo: needs update to skip tt_content?!
  */
 final class TcaTablesTranslatedLanguageParentMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
