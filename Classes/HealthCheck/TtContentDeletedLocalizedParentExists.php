@@ -23,19 +23,19 @@ use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Deleted localized sys_file_reference records must point to a sys_language_uid=0 parent that exists.
- * This is the "safe" variant of SysFileReferenceLocalizedParentExists since it handles deleted=1 records only.
+ * Deleted localized tt_content records must point to a sys_language_uid=0 parent that exists.
+ * This is a "safe" variant since it handles deleted=1 records only.
  */
-final class SysFileReferenceDeletedLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface
+final class TtContentDeletedLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {
-        $io->section('Scan for deleted localized sys_file_reference records without parent');
+        $io->section('Scan for deleted localized tt_content records without parent');
         $this->outputClass($io);
         $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
-            'Soft deleted localized records in "sys_file_reference" (sys_language_uid > 0) having',
-            'l10n_parent > 0 must point to a sys_language_uid = 0 existing language parent record.',
+            'Soft deleted localized records in "tt_content" (sys_language_uid > 0) having',
+            'l18n_parent > 0 must point to a sys_language_uid = 0 existing language parent record.',
             'Records violating this are removed.',
         ]);
     }
@@ -45,23 +45,23 @@ final class SysFileReferenceDeletedLocalizedParentExists extends AbstractHealthC
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         $tableRows = [];
-        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
         $queryBuilder->getRestrictions()->removeAll();
-        $result = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'l10n_parent')->from('sys_file_reference')
+        $result = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'l18n_parent')->from('tt_content')
             ->where(
                 $queryBuilder->expr()->eq('deleted', 1),
                 $queryBuilder->expr()->gt('sys_language_uid', 0),
-                $queryBuilder->expr()->gt('l10n_parent', 0)
+                $queryBuilder->expr()->gt('l18n_parent', 0)
             )
             ->orderBy('uid')
             ->executeQuery();
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
-                $recordsHelper->getRecord('sys_file_reference', ['uid'], (int)$row['l10n_parent']);
+                $recordsHelper->getRecord('tt_content', ['uid'], (int)$row['l18n_parent']);
             } catch (NoSuchRecordException|NoSuchTableException $e) {
                 // Match if parent does not exist at all
-                $tableRows['sys_file_reference'][] = $row;
+                $tableRows['tt_content'][] = $row;
             }
         }
         return $tableRows;
@@ -69,11 +69,6 @@ final class SysFileReferenceDeletedLocalizedParentExists extends AbstractHealthC
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        $this->deleteTcaRecordsOfTable($io, $simulate, 'sys_file_reference', $affectedRecords['sys_file_reference'] ?? []);
-    }
-
-    protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
-    {
-        $this->outputRecordDetails($io, $affectedRecords, '', [], ['sys_language_uid', 'l10n_parent', 'deleted', 'tablenames', 'uid_foreign', 'fieldname', 'uid_local']);
+        $this->deleteTcaRecordsOfTable($io, $simulate, 'tt_content', $affectedRecords['tt_content'] ?? []);
     }
 }
