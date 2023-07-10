@@ -3,17 +3,14 @@
 ,1,0,0,0,"Ok site root"
 ,2,1,0,0,"Ok sub page 1"
 ,3,1,1,0,"Deleted sub page 2"
+# This test misses a remove scenario for workspace records on deleted=1 pages
 "be_users"
 ,"uid","pid","deleted","username"
 ,1,0,0,"Ok user on pid 0"
-"tt_content"
-,"uid","pid","deleted","t3ver_wsid","header"
-,1,0,0,0,"Ok content on pid 0"
-,2,2,0,0,"Ok content on sub page 1"
-# Should be set to deleted=1
-,3,3,0,0,"Not ok content on not deleted page"
-# Should be removed
-,4,3,0,1,"Not ok content on not deleted page ws-1"
+# We are misusing be_users table here since tt_content is excluded but be_users should always be on pid 0 anyways
+,2,1,0,0,"Ok user on pid 1"
+# Should be set deleted=1
+,3,3,0,1,"Not ok user on pid 3"
 "tx_impexp_presets"
 ,"uid","pid","title"
 # tx_impexp_presets has no ctrl deleted field in TCA so uid 2 should be removed

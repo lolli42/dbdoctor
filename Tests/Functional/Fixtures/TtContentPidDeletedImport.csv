@@ -1,0 +1,16 @@
+"pages"
+,"uid","pid","deleted","t3ver_wsid","title"
+,1,0,0,0,"Site root"
+,2,1,0,0,"Sub page 1"
+,3,1,1,0,"Sub page deleted 2"
+"be_users"
+,"uid","pid","deleted","username"
+,1,0,0,"Ok user on pid 0"
+"tt_content",,,,,,,,,,,,,,,,,
+,"uid","pid","deleted","t3ver_wsid","header"
+,1,0,0,0,"Ok content on pid 0"
+,2,2,0,0,"Ok content on sub page 1"
+# Should be set delted=1
+,3,3,0,0,"Not ok content on deleted page"
+# Should be removed
+,4,3,0,1,"Not ok content on deleted page ws-1"

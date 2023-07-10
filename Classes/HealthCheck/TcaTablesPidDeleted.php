@@ -47,7 +47,7 @@ final class TcaTablesPidDeleted extends AbstractHealthCheck implements HealthChe
 
         $affectedRows = [];
         // Iterate all TCA tables, but ignore pages table
-        foreach ($this->tcaHelper->getNextTcaTable(['pages']) as $tableName) {
+        foreach ($this->tcaHelper->getNextTcaTable(['pages', 'tt_content']) as $tableName) {
             $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
             $isTableWorkspaceAware = !empty($workspaceIdField);
             $tableDeleteField = $this->tcaHelper->getDeletedField($tableName);
