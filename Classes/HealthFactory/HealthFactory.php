@@ -45,6 +45,7 @@ final class HealthFactory implements HealthFactoryInterface
         // This one is relatively early since it is rather safe and prevents loops on checks below.
         HealthCheck\TcaTablesTranslatedParentInvalidPointer::class,
         HealthCheck\TtContentPidMissing::class,
+        HealthCheck\TtContentPidDeleted::class,
         // @todo: Next one is skipped in v12 and can be dropped when v11 compat is removed from extension.
         HealthCheck\SysFileReferenceInvalidTableLocal::class,
         HealthCheck\SysFileReferenceDangling::class,
