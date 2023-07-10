@@ -37,7 +37,7 @@ final class TtContentPidDeleted extends AbstractHealthCheck implements HealthChe
 {
     public function header(SymfonyStyle $io): void
     {
-        $io->section('Scan for tt_content on not existing pages');
+        $io->section('Scan for tt_content on soft-deleted pages');
         $this->outputClass($io);
         $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
