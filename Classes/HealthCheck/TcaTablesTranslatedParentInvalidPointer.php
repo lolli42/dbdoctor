@@ -25,6 +25,8 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Records in localization tables must point to a sys_language_uid=0 record in their transOrigPointerField.
+ *
+ * @todo: needs update to skip tt_content?!
  */
 final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck implements HealthCheckInterface
 {
