@@ -21,23 +21,25 @@ use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
- * Deleted localized tt_content records must point to a sys_language_uid=0 parent that
- * exists on the same pid.
- * This is a "safe" variant since it handles deleted=1 records only.
+ * Localized tt_content records must point to a sys_language_uid=0 parent that exists.
+ * Similar to TtContentDeletedLocalizedParentExists, but handles deleted=0 records only.
  */
-final class TtContentDeletedLocalizedParentDifferentPid extends AbstractHealthCheck implements HealthCheckInterface
+final class TtContentLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {
-        $io->section('Scan for soft-deleted localized tt_content records with parent on different pid');
+        $io->section('Localized tt_content records without parent');
         $this->outputClass($io);
         $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
-            'Soft deleted localized records in "tt_content" (sys_language_uid > 0) having',
-            'l18n_parent > 0 must point to a sys_language_uid = 0 language parent record',
-            'on the same pid. Records violating this are removed.',
+            'Localized records in "tt_content" (sys_language_uid > 0) having',
+            'l18n_parent > 0 must point to a sys_language_uid = 0 existing language parent record.',
+            'Violating records are removed since they are typically never rendered in FE,',
+            'even though the BE renders them in page module.',
         ]);
     }
 
@@ -45,12 +47,11 @@ final class TtContentDeletedLocalizedParentDifferentPid extends AbstractHealthCh
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
-        $affectedRows = [];
+        $affectedRecords = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
-        $queryBuilder->getRestrictions()->removeAll();
+        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
         $result = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'l18n_parent')->from('tt_content')
             ->where(
-                $queryBuilder->expr()->eq('deleted', 1),
                 $queryBuilder->expr()->gt('sys_language_uid', 0),
                 $queryBuilder->expr()->gt('l18n_parent', 0)
             )
@@ -59,20 +60,13 @@ final class TtContentDeletedLocalizedParentDifferentPid extends AbstractHealthCh
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
-                $languageParent = $recordsHelper->getRecord('tt_content', ['uid', 'pid'], (int)$row['l18n_parent']);
-                // Note workspace moved records are not an issue here since we're dealing with
-                // deleted=1 records here, which don't exist in workspaces.
-                if ((int)$row['pid'] !== (int)$languageParent['pid']) {
-                    $affectedRows['tt_content'][] = $row;
-                }
+                $recordsHelper->getRecord('tt_content', ['uid'], (int)$row['l18n_parent']);
             } catch (NoSuchRecordException|NoSuchTableException $e) {
-                throw new \RuntimeException(
-                    'Should not happen: Existence was checked by TtContentDeletedLocalizedParentExists already.',
-                    1688988051
-                );
+                // Match if parent does not exist at all
+                $affectedRecords['tt_content'][] = $row;
             }
         }
-        return $affectedRows;
+        return $affectedRecords;
     }
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void

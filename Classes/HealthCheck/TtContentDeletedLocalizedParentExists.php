@@ -25,14 +25,12 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * Deleted localized tt_content records must point to a sys_language_uid=0 parent that exists.
  * This is a "safe" variant since it handles deleted=1 records only.
- *
- * @todo: needs update to skip tt_content?!
  */
 final class TtContentDeletedLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {
-        $io->section('Scan for deleted localized tt_content records without parent');
+        $io->section('Scan for soft-deleted localized tt_content records without parent');
         $this->outputClass($io);
         $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
@@ -46,7 +44,7 @@ final class TtContentDeletedLocalizedParentExists extends AbstractHealthCheck im
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
-        $tableRows = [];
+        $affectedRecords = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
         $queryBuilder->getRestrictions()->removeAll();
         $result = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'l18n_parent')->from('tt_content')
@@ -63,10 +61,10 @@ final class TtContentDeletedLocalizedParentExists extends AbstractHealthCheck im
                 $recordsHelper->getRecord('tt_content', ['uid'], (int)$row['l18n_parent']);
             } catch (NoSuchRecordException|NoSuchTableException $e) {
                 // Match if parent does not exist at all
-                $tableRows['tt_content'][] = $row;
+                $affectedRecords['tt_content'][] = $row;
             }
         }
-        return $tableRows;
+        return $affectedRecords;
     }
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
