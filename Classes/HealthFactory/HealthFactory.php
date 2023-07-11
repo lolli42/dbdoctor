@@ -51,6 +51,7 @@ final class HealthFactory implements HealthFactoryInterface
         HealthCheck\TtContentLocalizedParentSoftDeleted::class,
         HealthCheck\TtContentDeletedLocalizedParentDifferentPid::class,
         HealthCheck\TtContentLocalizedParentDifferentPid::class,
+        HealthCheck\TtContentLocalizedDuplicates::class,
         // @todo: Next one is skipped in v12 and can be dropped when v11 compat is removed from extension.
         HealthCheck\SysFileReferenceInvalidTableLocal::class,
         HealthCheck\SysFileReferenceDangling::class,
