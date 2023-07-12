@@ -106,6 +106,8 @@ final class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHe
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         foreach ($affectedRecords as $childTableName => $childTableRows) {
+            $this->outputTableUpdateBefore($io, $simulate, $childTableName);
+            $count = 0;
             $childLanguageField = $this->tcaHelper->getLanguageField($childTableName);
             foreach ($childTableRows as $childTableRow) {
                 $updateFields = [
@@ -115,7 +117,9 @@ final class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHe
                     ],
                 ];
                 $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $childTableName, (int)$childTableRow['uid'], $updateFields);
+                $count ++;
             }
+            $this->outputTableUpdateAfter($io, $simulate, $childTableName, $count);
         }
     }
 
