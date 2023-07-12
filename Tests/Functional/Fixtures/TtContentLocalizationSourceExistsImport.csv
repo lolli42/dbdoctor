@@ -1,0 +1,22 @@
+"pages"
+,"uid","pid","deleted","t3ver_wsid","title"
+,1,0,0,0,"Site root"
+,2,1,0,0,"Sub page 1"
+"tt_content",,,,,,,,,,,,,,,,,
+,"uid","pid","deleted","sys_language_uid","l18n_parent","l10n_source","t3ver_wsid","t3ver_state","header"
+,1,0,0,0,0,0,0,0,"Ok content on pid 0"
+,2,2,0,0,0,0,0,0,"Ok content on sub page 1"
+,3,2,0,1,2,0,0,0,"Ok localized content 1 on sub page 1"
+,4,2,0,1,2,2,0,0,"Ok localized content 2 on sub page 1"
+# 5 not exists - 6 should be set l10n_source=0 - 7 should be set l10n_source=2
+,6,2,0,1,0,5,0,0,"Not ok localized content 3 on sub page 1"
+,7,2,0,1,2,5,0,0,"Not ok localized content 4 on sub page 1"
+# similar for workspace records
+,8,2,0,1,0,5,1,0,"Ok localized content 5 on sub page 1 ws-1"
+,9,2,0,1,2,5,1,0,"Ok localized content 6 on sub page 1 ws-1"
+,10,2,0,1,0,5,1,1,"Ok localized content 7 on sub page 1 new ws-1"
+,11,2,0,1,2,5,1,1,"Ok localized content 8 on sub page 1 new ws-1"
+,12,2,0,1,0,5,1,2,"Ok localized content 9 on sub page 1 delete ws-1"
+,13,2,0,1,2,5,1,2,"Ok localized content 10 on sub page 1 delete ws-1"
+,14,2,0,1,0,5,1,4,"Ok localized content 11 on sub page 1 move ws-1"
+,15,2,0,1,2,5,1,4,"Ok localized content 12 on sub page 1 move ws-1"

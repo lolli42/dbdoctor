@@ -17,7 +17,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -44,8 +43,6 @@ final class TtContentLocalizedDuplicates extends AbstractHealthCheck implements 
 
     protected function getAffectedRecords(): array
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
         // Ignore deleted=1 records
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
