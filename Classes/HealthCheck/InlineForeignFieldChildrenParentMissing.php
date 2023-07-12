@@ -34,7 +34,7 @@ final class InlineForeignFieldChildrenParentMissing extends AbstractHealthCheck 
         $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
             'TCA inline foreign field records point to a parent record. This parent',
-            'must exist. Inline children with missing parent ale deleted.',
+            'must exist. Inline children with missing parent are deleted.',
         ]);
     }
 
