@@ -310,7 +310,7 @@ regarding SQL dumps must not be forgotten when doing this:
   removed at some point!
 
 * When dumping databases, it is often a good idea to gzip .sql files: This typically reduces file size
-  by around factor eight. Lets safe some precious server disk and backup size! It's also possible to
+  by around factor eight. Lets save some precious server disk and backup size! It's also possible to
   directly 'pipe' to gzip when dumping. Either do that, or remember to gzip stuff before logging out
   of a system.
 
