@@ -34,7 +34,7 @@ and gives admins options to fix them.
 
 We're not aware of other open extensions that try to achieve the same in a similar
 systematic way. The core `lowlevel` extension comes with a couple of commands that
-try to clean up various DB state, but their codebase is rather rotten and hard to
+try to clean up various DB state, but its codebase is rather rotten and hard to
 maintain.
 
 This extension is not a substitution of `lowlevel` commands (yet?), it's more an
@@ -151,6 +151,9 @@ instance. As such, a few things should be kept in mind:
 * [!!!] There should not be any pending core upgrade wizards. dbdoctor currently does not check
   up-front if all upgrade wizards have been executed.
 
+
+# Postprocessing
+
 * [!!!] Run the reference index updater when this command finished! It is very likely
   it will update something. A clean reference index becomes more and more important
   with younger core versions. The CLI command to do this: `bin/typo3 referenceindex:update`.
@@ -186,11 +189,29 @@ always asks the user for actions. When pressing 's' (simulate/show), the queries
 that *would* be performed are shown, when pressing 'e' (execute), the queries
 are actually executed.
 
-In the example above, eight pages are found that have no connection to the
-tree-root anymore. A help is selected, then an overview to show more record
-details. Finally, the records are deleted and the next check is called. The
-delete queries are shown, which can become handy if those should be executed
-manually on a different server.
+
+# Interactive mode
+
+When dbdoctor finds something to fix in (default) interactive mode, execution stops
+and waits for user input:
+
+* e - EXECUTE suggested changes!
+* s - SIMULATE suggested changes, no execution
+* a - ABORT now
+* r - RELOAD this check
+* p - SHOW records by page
+* d - SHOW record details
+* ? - HELP
+
+
+# Exit values
+
+Exit values are bit masks: Integer 3 means: "Changes needed or done" AND "User abort"
+
+* 0 - No changes needed or done
+* 1 - Changes needed or done
+* 2 - User abort
+* 4 - Error occurred
 
 
 # Options
@@ -247,7 +268,7 @@ prompting for user input after each failed check.
   other DBMS.
 
 
-# Existing health checks
+# Current health checks
 
 Single tests are described in details when running the CLI command. Rough overview:
 
