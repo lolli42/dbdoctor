@@ -237,8 +237,8 @@ prompting for user input after each failed check.
   ```
   $ bin/typo3 dbdoctor:health -m check
   ```
-  Run all checks but don't perform any DB changes. Returns 0 (zero) if some checks
-  found something and non-zero if something was found by any check. Useful to run
+  Run all checks but don't perform any DB changes. Returns 0 (zero) if all checks
+  are fine and non-zero if something was found by any check. Useful to run
   as cron job to see if any check "goes red" over time after everything has been fixed once.
 
 * Execute mode: `--mode execute` or `-m execute`:
