@@ -5,7 +5,7 @@
 ,"uid","pid","sys_language_uid","l10n_parent","deleted","uid_local","uid_foreign","tablenames","title"
 ,1,1,0,0,0,1,1,"tt_content","Ok tt_content 1"
 ,2,1,0,0,0,1,2,"tt_content","Not Ok - tt_content 2 missing"
-,2,1,0,0,0,1,2,"not_existing_table","Not Ok - not existing table"
+,3,1,0,0,0,1,2,"not_existing_table","Not Ok - not existing table"
 "tt_content"
 ,"uid","pid"
 ,1,1
