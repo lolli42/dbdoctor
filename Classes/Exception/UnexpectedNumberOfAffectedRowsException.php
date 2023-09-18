@@ -19,6 +19,4 @@ namespace Lolli\Dbdoctor\Exception;
 
 use Lolli\Dbdoctor\Exception;
 
-final class UnexpectedNumberOfAffectedRowsException extends Exception
-{
-}
+final class UnexpectedNumberOfAffectedRowsException extends Exception {}

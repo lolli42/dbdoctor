@@ -17,6 +17,4 @@ declare(strict_types=1);
 
 namespace Lolli\Dbdoctor;
 
-class Exception extends \Exception
-{
-}
+class Exception extends \Exception {}

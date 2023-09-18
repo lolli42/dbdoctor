@@ -19,6 +19,4 @@ namespace Lolli\Dbdoctor\Exception;
 
 use Lolli\Dbdoctor\Exception;
 
-final class NoSuchRecordException extends Exception
-{
-}
+final class NoSuchRecordException extends Exception {}
