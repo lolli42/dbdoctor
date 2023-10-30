@@ -73,7 +73,7 @@ final class TtContentLocalizationSourceSetWithParent extends AbstractHealthCheck
                 ],
             ];
             $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, 'tt_content', (int)$row['uid'], $updateFields);
-            $count ++;
+            $count++;
         }
         $this->outputTableUpdateAfter($io, $simulate, 'tt_content', $count);
     }

@@ -86,7 +86,7 @@ final class TtContentLocalizationSourceLogicWithParent extends AbstractHealthChe
                 ],
             ];
             $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, 'tt_content', (int)$row['uid'], $updateFields);
-            $count ++;
+            $count++;
         }
         $this->outputTableUpdateAfter($io, $simulate, 'tt_content', $count);
     }

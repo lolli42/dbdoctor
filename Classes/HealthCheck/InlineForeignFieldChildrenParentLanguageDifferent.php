@@ -117,7 +117,7 @@ final class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHe
                     ],
                 ];
                 $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $childTableName, (int)$childTableRow['uid'], $updateFields);
-                $count ++;
+                $count++;
             }
             $this->outputTableUpdateAfter($io, $simulate, $childTableName, $count);
         }

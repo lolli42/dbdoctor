@@ -168,7 +168,7 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
                         || ($isTableWorkspaceAware && ((int)$localizedRow[$workspaceIdField] > 0))
                     ) {
                         $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid']);
-                        $deleteCount ++;
+                        $deleteCount++;
                     } else {
                         $updateFields = [
                             'pid' => [
@@ -181,7 +181,7 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
                             ],
                         ];
                         $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid'], $updateFields);
-                        $updateCount ++;
+                        $updateCount++;
                     }
                 } else {
                     // @todo: sys_file_reference is excluded due to https://github.com/lolli42/dbdoctor/issues/30, see comment above, too.
@@ -220,7 +220,7 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
                         || ($isTableWorkspaceAware && ((int)$localizedRow[$workspaceIdField] > 0))
                     ) {
                         $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid']);
-                        $deleteCount ++;
+                        $deleteCount++;
                     } else {
                         $updateFields = [
                             'pid' => [
@@ -233,7 +233,7 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
                             ],
                         ];
                         $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid'], $updateFields);
-                        $updateCount ++;
+                        $updateCount++;
                     }
                 }
             }
