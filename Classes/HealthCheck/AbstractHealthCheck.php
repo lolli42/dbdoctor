@@ -272,7 +272,7 @@ abstract class AbstractHealthCheck
         $count = 0;
         foreach ($rows as $row) {
             $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid']);
-            $count ++;
+            $count++;
         }
         $this->outputTableDeleteAfter($io, $simulate, $tableName, $count);
     }
@@ -380,11 +380,11 @@ abstract class AbstractHealthCheck
             ) {
                 // DELETE record if table is not workspace aware, or if record is a workspace record
                 $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid']);
-                $deleteCount ++;
+                $deleteCount++;
             } else {
                 // UPDATE record, set "deleted=1" if table is soft-delete aware and record is not a workspace record
                 $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $updateFields);
-                $updateCount ++;
+                $updateCount++;
             }
         }
 

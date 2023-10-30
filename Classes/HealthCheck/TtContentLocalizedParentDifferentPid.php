@@ -96,7 +96,7 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
                     ],
                 ];
                 $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, 'tt_content', (int)$row['uid'], $fields);
-                $updateCount ++;
+                $updateCount++;
             } else {
                 if ((int)$row['t3ver_state'] === 0) {
                     // We have a "workspace changed" record that is not on the same pid as the
@@ -113,7 +113,7 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
                         ],
                     ];
                     $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, 'tt_content', (int)$row['uid'], $fields);
-                    $updateCount ++;
+                    $updateCount++;
                 } elseif ((int)$row['t3ver_state'] === 1) {
                     // We have a "workspace new" record that is not on the same pid as the default
                     // language record. Those are *not* shown in ws preview! We remove those.
@@ -126,7 +126,7 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
                     // on a different pid.
                     // @todo: Fine-tune this case when core bugs with "first add, then move" have been fixed.
                     $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, 'tt_content', (int)$row['uid']);
-                    $removeCount ++;
+                    $removeCount++;
                 } elseif ((int)$row['t3ver_state'] === 2) {
                     // We have "delete placeholder" record that is not on the same pid as the default
                     // language record. This works: The "delete placeholder" kicks in on preview, the record
@@ -160,10 +160,10 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
                             ],
                         ];
                         $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, 'tt_content', (int)$row['uid'], $fields);
-                        $updateCount ++;
+                        $updateCount++;
                     } else {
                         $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, 'tt_content', (int)$row['uid']);
-                        $removeCount ++;
+                        $removeCount++;
                     }
                 } elseif ((int)$row['t3ver_state'] === 4) {
                     // "workspace move" record: A localized content element can only be moved around in workspaces
@@ -174,7 +174,7 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
                     // As such, having a "move placeholder" of a localized content element alone indicates a bug,
                     // so we remove the record.
                     $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, 'tt_content', (int)$row['uid']);
-                    $removeCount ++;
+                    $removeCount++;
                 } else {
                     throw new \RuntimeException(
                         'Should not happen, unexpected t3ver_state',

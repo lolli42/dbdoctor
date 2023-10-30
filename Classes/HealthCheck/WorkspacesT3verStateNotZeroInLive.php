@@ -95,7 +95,7 @@ final class WorkspacesT3verStateNotZeroInLive extends AbstractHealthCheck implem
                 if ($isTableDeleteAware && ((int)$tableRow[$deleteField] === 1)) {
                     // If row is soft-deleted already, we now fully remove it.
                     $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid']);
-                    $deleteCount ++;
+                    $deleteCount++;
                 } elseif ((int)$tableRow['t3ver_state'] <= -1) {
                     // t3ver_state < 0 lead to exceptions in BE page module in v12, but are
                     // SHOWN in FE - we update to t3ver_state=0 and keep them.
@@ -106,7 +106,7 @@ final class WorkspacesT3verStateNotZeroInLive extends AbstractHealthCheck implem
                         ],
                     ];
                     $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid'], $updateFields);
-                    $updateCount ++;
+                    $updateCount++;
                 } elseif ($isTableDeleteAware) {
                     // t3ver_state > 0 are never shown in FE and may lead to exceptions in BE page module in v12.
                     // If the table is soft-delete aware, we set those records deleted=1 and t3ver_state=0
@@ -121,12 +121,12 @@ final class WorkspacesT3verStateNotZeroInLive extends AbstractHealthCheck implem
                         ],
                     ];
                     $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid'], $updateFields);
-                    $updateCount ++;
+                    $updateCount++;
                 } else {
                     // t3ver_state > 0 are never shown in FE and may lead to exceptions in BE page module in v12.
                     // The table is not soft-delete aware, we remove the record.
                     $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid']);
-                    $deleteCount ++;
+                    $deleteCount++;
                 }
             }
 

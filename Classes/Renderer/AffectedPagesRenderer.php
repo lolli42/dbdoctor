@@ -102,7 +102,7 @@ final class AffectedPagesRenderer
                 if (!isset($affectedPids[$value])) {
                     $affectedPids[$value] = 1;
                 } else {
-                    $affectedPids[$value] ++;
+                    $affectedPids[$value]++;
                 }
             }
         }

@@ -30,7 +30,7 @@
     "codeception/codeception": "^4.1 || ^5.0.0",
     "codeception/module-asserts": "^2.0 || ^3.0.0",
     "codeception/module-cli": "^1.1 || ^2.0.0",
-    "friendsofphp/php-cs-fixer": "^3.27",
+    "friendsofphp/php-cs-fixer": "^3.37.1",
     "friendsoftypo3/phpstan-typo3": "^0.9.0",
     "phpstan/phpstan": "^1.4.6",
     "phpstan/phpstan-phpunit": "^1.0",

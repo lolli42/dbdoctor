@@ -112,7 +112,7 @@ final class SysRedirectInvalidPid extends AbstractHealthCheck implements HealthC
                     ],
                 ];
                 $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid'], $updateFields);
-                $count ++;
+                $count++;
             }
             $this->outputTableUpdateAfter($io, $simulate, $tableName, $count);
         }
