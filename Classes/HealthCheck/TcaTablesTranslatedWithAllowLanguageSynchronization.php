@@ -43,14 +43,6 @@ final class TcaTablesTranslatedWithAllowLanguageSynchronization extends Abstract
         ]);
     }
 
-    /**
-     * @return array
-     * @throws NoSuchTableException
-     * @throws \Doctrine\DBAL\DBALException
-     * @throws \Doctrine\DBAL\Driver\Exception
-     * @throws \Psr\Container\ContainerExceptionInterface
-     * @throws \Psr\Container\NotFoundExceptionInterface
-     */
     protected function getAffectedRecords(): array
     {
         /** @var TableHelper $tableHelper */
@@ -75,9 +67,6 @@ final class TcaTablesTranslatedWithAllowLanguageSynchronization extends Abstract
             }
             // l10n_state
             $translationStateField = 'l10n_state';
-            if (!$translationStateField) {
-                continue;
-            }
 
             $selectFields = [
                 $table . '.uid AS uid',
@@ -124,16 +113,14 @@ final class TcaTablesTranslatedWithAllowLanguageSynchronization extends Abstract
                 ->orderBy($table . '.uid')
                 ->executeQuery();
             while ($row = $result->fetchAssociative()) {
-                $state = $this->getL10nStateForField($row[$translationStateField] ?? '', $field, 'parent');
+                /** @var array<string, int|string> $row */
+                $state = $this->getL10nStateForField((string)($row[$translationStateField] ?? ''), $field, 'parent');
                 if ($state === 'parent') {
                     $affectedRow['_reasonBroken'] = sprintf('Value for field %s differs from language parent', $field);
-                    $affectedRow['uid'] = $row['uid'];
-                    $affectedRow['pid'] = $row['pid'];
-                    $affectedRow['l10n_state'] = $row['l10n_state'];
+                    $affectedRow['uid'] = (int)($row['uid']);
+                    $affectedRow['pid'] = (int)($row['pid']);
+                    $affectedRow['l10n_state'] = (string)($row['l10n_state'] ?? '');
                     $affectedRow['_fieldName'] = $field;
-                    $affectedRow['_fieldValue'] = $row[$field] ?? '';
-                    $affectedRow['_fieldValueOfParent'] = $row[$field . '2'] ?? '';
-                    $affectedRow['_uidOfParent'] = $row['uid2'] ?? '';
                     $affectedRows[$table][] = $affectedRow;
                 }
             }
@@ -143,15 +130,17 @@ final class TcaTablesTranslatedWithAllowLanguageSynchronization extends Abstract
 
     protected function addFieldToL10nState(string $l10nState, string $field, string $value): string
     {
+        /** @var array<string,string> $array */
         $array = \json_decode($l10nState, true) ?: [];
         $array[$field] = $value;
-        return \json_encode($array) ?? $l10nState;
+        return (string)(\json_encode($array) ?: $l10nState);
     }
 
     protected function getL10nStateForField(string $l10nState, string $field, string $default): string
     {
+        /** @var array<string,string> $array */
         $array = \json_decode($l10nState, true) ?: [];
-        return $array[$field] ?? $default;
+        return (string)($array[$field] ?: $default);
     }
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
@@ -162,8 +151,8 @@ final class TcaTablesTranslatedWithAllowLanguageSynchronization extends Abstract
         foreach ($affectedRecords as $table => $rows) {
             foreach ($rows as $row) {
                 $uid = (int)$row['uid'];
-                $field = $row['_fieldName'];
-                $newL10nState = $this->addFieldToL10nState($row['l10n_state'] ?? '', $field, 'custom');
+                $field = (string)$row['_fieldName'];
+                $newL10nState = $this->addFieldToL10nState((string)($row['l10n_state'] ?? ''), $field, 'custom');
                 $fields = [
                     'l10n_state' => [
                         'value' => $newL10nState,
