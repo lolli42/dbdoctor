@@ -140,7 +140,7 @@ final class TcaTablesTranslatedWithAllowLanguageSynchronization extends Abstract
     {
         /** @var array<string,string> $array */
         $array = \json_decode($l10nState, true) ?: [];
-        return (string)($array[$field] ?: $default);
+        return (string)($array[$field] ?? $default);
     }
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
