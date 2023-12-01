@@ -26,6 +26,7 @@ final class HealthFactory implements HealthFactoryInterface
      * @var string[]
      */
     private array $healthClasses = [
+        /*
         HealthCheck\WorkspacesNotLoadedRecordsDangling::class,
         HealthCheck\WorkspacesRecordsOfDeletedWorkspaces::class,
         HealthCheck\TcaTablesDeleteFlagZeroOrOne::class,
@@ -77,6 +78,7 @@ final class HealthFactory implements HealthFactoryInterface
         HealthCheck\InlineForeignFieldChildrenParentDeleted::class,
         // @todo: Maybe that's not a good position when we start scanning for records translated more than once (issue #9)?
         HealthCheck\InlineForeignFieldChildrenParentLanguageDifferent::class,
+        */
         HealthCheck\TcaTablesTranslatedWithAllowLanguageSynchronization::class,
     ];
 

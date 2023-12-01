@@ -116,23 +116,45 @@ final class TcaTablesTranslatedWithAllowLanguageSynchronization extends Abstract
                 /** @var array<string, int|string> $row */
                 $state = $this->getL10nStateForField((string)($row[$translationStateField] ?? ''), $field, 'parent');
                 if ($state === 'parent') {
-                    $affectedRow['_reasonBroken'] = sprintf('Value for field %s differs from language parent', $field);
-                    $affectedRow['uid'] = (int)($row['uid']);
-                    $affectedRow['pid'] = (int)($row['pid']);
-                    $affectedRow['l10n_state'] = (string)($row['l10n_state'] ?? '');
-                    $affectedRow['_fieldName'] = $field;
-                    $affectedRows[$table][] = $affectedRow;
+                    $uid = (int)($row['uid']);
+                    // if we are handling several fields in one record, we handle them all in one scoop
+                    // (otherwise subsequent changes would overwrite previous changes in l10n_state)
+                    if (isset($affectedRows[$table][$uid])) {
+                        $affectedRows[$table][$uid]['_fieldNames'] .= ',' . $field;
+                        $affectedRows[$table][$uid]['_reasonBroken'] = sprintf(
+                            'Value for fields %s differ from language parent',
+                            $affectedRows[$table][$uid]['_fieldNames']
+                        );
+                    } else {
+                        $affectedRow = [];
+                        $affectedRow['uid'] = $uid;
+                        $affectedRow['pid'] = (int)($row['pid']);
+                        $affectedRow['l10n_state'] = (string)($row['l10n_state'] ?? '');
+                        $affectedRow['_fieldNames'] = $field;
+                        $affectedRow['_reasonBroken'] = sprintf(
+                            'Value for field %s differs from language parent',
+                            $field
+                        );
+                        $affectedRows[$table][$uid] = $affectedRow;
+                    }
                 }
             }
         }
         return $affectedRows;
     }
 
-    protected function addFieldToL10nState(string $l10nState, string $field, string $value): string
+    /**
+     * @param string $l10nState
+     * @param array<int,string> $fields
+     * @return string
+     */
+    protected function addFieldsToL10nState(string $l10nState, array $fields, string $value): string
     {
         /** @var array<string,string> $array */
         $array = \json_decode($l10nState, true) ?: [];
-        $array[$field] = $value;
+        foreach ($fields as $field) {
+            $array[$field] = $value;
+        }
         return (string)(\json_encode($array) ?: $l10nState);
     }
 
@@ -151,15 +173,15 @@ final class TcaTablesTranslatedWithAllowLanguageSynchronization extends Abstract
         foreach ($affectedRecords as $table => $rows) {
             foreach ($rows as $row) {
                 $uid = (int)$row['uid'];
-                $field = (string)$row['_fieldName'];
-                $newL10nState = $this->addFieldToL10nState((string)($row['l10n_state'] ?? ''), $field, 'custom');
-                $fields = [
+                $fields = explode(',', (string)$row['_fieldNames']);
+                $newL10nState = $this->addFieldsToL10nState((string)($row['l10n_state'] ?? ''), $fields, 'custom');
+                $updateField = [
                     'l10n_state' => [
                         'value' => $newL10nState,
                         'type' => \PDO::PARAM_STR,
                     ],
                 ];
-                $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $table, $uid, $fields);
+                $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $table, $uid, $updateField);
             }
         }
     }
