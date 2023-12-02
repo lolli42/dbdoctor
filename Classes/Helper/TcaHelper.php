@@ -119,6 +119,33 @@ final class TcaHelper
      * @param array<int, string> $ignoreTables
      * @return iterable<array<string, string>>
      */
+    public function getNextFieldWithAllowLanguageSynchronization(array $ignoreTables = []): iterable
+    {
+        $this->verifyTcaIsArray();
+        $tablesFields = [];
+        foreach ($GLOBALS['TCA'] as $tablename => $config) {
+            if (in_array($tablename, $ignoreTables)) {
+                continue;
+            }
+            foreach (($config['columns'] ?? []) as $fieldName => $columnConfig) {
+                $allowLanguageSynchronization = (int)($columnConfig['config']['behaviour']['allowLanguageSynchronization'] ?? 0);
+                if ($allowLanguageSynchronization) {
+                    $tablesFields[] = [
+                        'tableName' => $tablename,
+                        'fieldName' => $fieldName,
+                    ];
+                }
+            }
+        }
+        foreach ($tablesFields as $row) {
+            yield $row;
+        }
+    }
+
+    /**
+     * @param array<int, string> $ignoreTables
+     * @return iterable<array<string, string>>
+     */
     public function getNextInlineForeignFieldChildTcaTable(array $ignoreTables = []): iterable
     {
         $this->verifyTcaIsArray();

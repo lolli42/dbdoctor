@@ -1,0 +1,17 @@
+"pages"
+,"uid","pid","url","author","sys_language_uid","l10n_parent","l10n_state"
+# Test with empty l10n_state
+,1,0,"https://example.org","",0,0,""
+,2,0,"","",1,1,"{""url"":""custom""}"
+# Test with l10n_state containing values for other field
+,3,0,"https://example.org","",0,0,""
+,4,0,"","",1,3,"{""author"":""custom"",""url"":""custom""}"
+# Test with l10n_state: parent
+,5,0,"https://example.org","",0,0,""
+,6,0,"","",1,5,"{""url"":""custom""}"
+# Test with no changes necessary
+,7,0,"https://example.org","",0,0,""
+,8,0,"https://example.org","",1,7,""
+# Test with several fields
+,9,0,"https://example.org","Author",0,0,""
+,10,0,"","",1,9,"{""url"":""custom"",""author"":""custom""}"
