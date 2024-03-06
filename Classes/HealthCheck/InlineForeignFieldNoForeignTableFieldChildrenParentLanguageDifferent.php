@@ -25,20 +25,22 @@ use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
- * Handle inline foreign field children that are not deleted but parent is deleted.
+ * Handle inline foreign field without TCA foreign_table_field children
+ * that are set to a different sys_language_uid than their parent.
  */
-final class InlineForeignFieldChildrenParentDeleted extends AbstractHealthCheck implements HealthCheckInterface
+final class InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {
-        $io->section('Scan for inline foreign field records with deleted=1 parent');
+        $io->section('Scan for inline foreign field records with different language than their parent');
         $this->outputClass($io);
-        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE);
+        $this->outputTags($io, self::TAG_UPDATE, self::TAG_RISKY);
         $io->text([
-            'TCA inline foreign field records point to a parent record. When this parent is',
-            'soft-deleted, all children must be soft-deleted, too.',
-            'This check finds not soft-deleted children and sets soft-deleted for for live records,',
-            'or removes them when dealing with workspace records.',
+            'TCA inline foreign field child records point to a parent record. This check finds',
+            'child records that have a different language than the parent record.',
+            'This check is for inline children defined *without* foreign_table_field in TCA.',
+            'Affected children are soft-deleted if the table is soft-delete aware, and',
+            'hard deleted if not.',
         ]);
     }
 
@@ -50,62 +52,58 @@ final class InlineForeignFieldChildrenParentDeleted extends AbstractHealthCheck 
         $tableHelper = $this->container->get(TableHelper::class);
 
         $affectedRows = [];
-        foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
+        foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldChildTcaTable() as $inlineChild) {
             $childTableName = $inlineChild['tableName'];
-            if (!$this->tcaHelper->getDeletedField($childTableName)) {
-                // Skip child table if it is not soft-delete aware
+            $childTableLanguageField = $this->tcaHelper->getLanguageField($childTableName);
+            if (!$childTableLanguageField) {
+                // Skip child table if it is not localizable
+                continue;
+            }
+            $parentTableName = $inlineChild['parentTableName'];
+            $parentTableLanguageField = $this->tcaHelper->getLanguageField($parentTableName);
+            if (!$parentTableLanguageField) {
+                // Skip if parent table is not localizable
+                continue;
+            }
+            $fieldNameOfParentTableUid = $inlineChild['fieldNameOfParentTableUid'];
+            if (!$tableHelper->tableExistsInDatabase($parentTableName)) {
                 continue;
             }
             $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($childTableName);
             $isTableWorkspaceAware = !empty($workspaceIdField);
-            $fieldNameOfParentTableName = $inlineChild['fieldNameOfParentTableName'];
-            $fieldNameOfParentTableUid = $inlineChild['fieldNameOfParentTableUid'];
 
             $selectFields = [
                 'uid',
                 'pid',
-                $fieldNameOfParentTableName,
                 $fieldNameOfParentTableUid,
+                $childTableLanguageField,
             ];
             if ($isTableWorkspaceAware) {
                 $selectFields[] = $workspaceIdField;
             }
 
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($childTableName);
-            // Do not consider deleted records: We want to find children deleted=0 with parents deleted=1.
+            // Do not consider deleted child records.
             $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
             $result = $queryBuilder->select(...$selectFields)
                 ->from($childTableName)
                 ->where(
                     $queryBuilder->expr()->gt($fieldNameOfParentTableUid, $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)),
-                    $queryBuilder->expr()->neq($fieldNameOfParentTableName, $queryBuilder->createNamedParameter('')),
-                    $queryBuilder->expr()->isNotNull($fieldNameOfParentTableName)
                 )
                 ->orderBy('uid')
                 ->executeQuery();
             while ($inlineChildRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $inlineChildRow */
-                if (empty($inlineChildRow[$fieldNameOfParentTableName])
-                    || (int)($inlineChildRow[$fieldNameOfParentTableUid]) === 0
-                    // Parent TCA table must be defined and table must exist
-                    || !is_array($GLOBALS['TCA'][$inlineChildRow[$fieldNameOfParentTableName]] ?? false)
-                    || !$tableHelper->tableExistsInDatabase((string)$inlineChildRow[$fieldNameOfParentTableName])
-                ) {
-                    // This was handled by previous InlineForeignFieldChildrenParentMissing already.
-                    continue;
-                }
-                $parentTableName = (string)$inlineChildRow[$fieldNameOfParentTableName];
-                $parentTableDeleteField = $this->tcaHelper->getDeletedField($parentTableName);
-                if (!$parentTableDeleteField) {
-                    // Skip if parent table is not soft-delete aware
-                    continue;
-                }
                 try {
-                    $parentRow = $recordsHelper->getRecord((string)$inlineChildRow[$fieldNameOfParentTableName], ['uid', $parentTableDeleteField], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
-                    if ((bool)$parentRow[$parentTableDeleteField]) {
-                        $inlineChildRow['_reasonBroken'] = 'Deleted parent';
-                        $inlineChildRow['_fieldNameOfParentTableName'] = $fieldNameOfParentTableName;
+                    $parentRow = $recordsHelper->getRecord($parentTableName, ['uid', $parentTableLanguageField], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
+                    $parentRowLanguage = (int)$parentRow[$parentTableLanguageField];
+                    $childRowLanguage = (int)$inlineChildRow[$childTableLanguageField];
+                    // @todo: We may need to think about l10n_parent field here as well?
+                    if ($parentRowLanguage >= 0 && $childRowLanguage !== $parentRowLanguage) {
+                        $inlineChildRow['_reasonBroken'] = 'Parent record language ' . $parentRowLanguage;
+                        $inlineChildRow['_parentTableName'] = $parentTableName;
                         $inlineChildRow['_fieldNameOfParentTableUid'] = $fieldNameOfParentTableUid;
+                        $inlineChildRow['_parentRowLanguage'] = $parentRowLanguage;
                         $affectedRows[$childTableName][] = $inlineChildRow;
                     }
                 } catch (NoSuchRecordException $e) {
@@ -127,7 +125,6 @@ final class InlineForeignFieldChildrenParentDeleted extends AbstractHealthCheck 
     {
         foreach ($affectedRecords as $tableName => $rows) {
             $extraDbFields = [
-                (string)$rows[0]['_fieldNameOfParentTableName'],
                 (string)$rows[0]['_fieldNameOfParentTableUid'],
             ];
             $this->outputRecordDetails($io, [$tableName => $rows], '_reasonBroken', [], $extraDbFields);

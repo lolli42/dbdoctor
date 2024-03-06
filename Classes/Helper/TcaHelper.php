@@ -116,6 +116,13 @@ final class TcaHelper
     }
 
     /**
+     * 'config' => [
+     *      'type' => 'inline',
+     *      'foreign_table' => 'tx_sometable_name',
+     *      'foreign_field' => 'parent_uid',
+     *      'foreign_table_field' => 'parent_table_name',
+     * ],
+     *
      * @param array<int, string> $ignoreTables
      * @return iterable<array<string, string>>
      */
@@ -126,18 +133,18 @@ final class TcaHelper
         foreach ($GLOBALS['TCA'] as $config) {
             foreach (($config['columns'] ?? []) as $columnConfig) {
                 if (is_array($columnConfig['config'] ?? false)
+                    // @todo: skip type=file here - sys_file_reference is already handled with other checks.
                     && in_array(($columnConfig['config']['type'] ?? ''), ['inline', 'file'], true)
                     && (!empty($columnConfig['config']['foreign_table'] ?? ''))
                     && (!empty($columnConfig['config']['foreign_field'] ?? ''))
-                    // We require foreign_table_field being set - at least for now.
+                    // We require foreign_table_field being set.
                     && (!empty($columnConfig['config']['foreign_table_field'] ?? ''))
                     // Checking existence of TCA definition of the two fields in child table *may* not be strictly required?
                     // We keep it for now, though.
                     && (!empty($GLOBALS['TCA'][$columnConfig['config']['foreign_table']]['columns'][$columnConfig['config']['foreign_field']]))
                     && (!empty($GLOBALS['TCA'][$columnConfig['config']['foreign_table']]['columns'][$columnConfig['config']['foreign_table_field']]))
-                    // Not found yet
-                    // Note we're not handling the case "two different parents use different foreign_field / foreign_table_field of child": It's unsure
-                    // if that works at all. If that happens, first one wins for now.
+                    // Note we're not handling the case "two different parents use different foreign_field / foreign_table_field of child":
+                    // It's unsure if that works at all. If that happens, first one wins for now.
                     && (!isset($inlineChildTables[$columnConfig['config']['foreign_table']]))
                     // Not ignored
                     && !in_array($columnConfig['config']['foreign_table'], $ignoreTables, true)
@@ -146,6 +153,54 @@ final class TcaHelper
                         'tableName' => $columnConfig['config']['foreign_table'],
                         'fieldNameOfParentTableUid' => $columnConfig['config']['foreign_field'],
                         'fieldNameOfParentTableName' => $columnConfig['config']['foreign_table_field'],
+                    ];
+                }
+            }
+        }
+        foreach ($inlineChildTables as $childTable) {
+            yield $childTable;
+        }
+    }
+
+    /**
+     * Similar to getNextInlineForeignFieldChildTcaTable(), but without
+     * a foreign_table_field in child table.
+     *
+     *  'config' => [
+     *       'type' => 'inline',
+     *       'foreign_table' => 'tx_sometable_name',
+     *       'foreign_field' => 'parent_uid',
+     *  ],
+     *
+     * @param array<int, string> $ignoreTables
+     * @return iterable<array<string, string>>
+     */
+    public function getNextInlineForeignFieldNoForeignTableFieldChildTcaTable(array $ignoreTables = []): iterable
+    {
+        $this->verifyTcaIsArray();
+        $inlineChildTables = [];
+        foreach ($GLOBALS['TCA'] as $tableName => $config) {
+            foreach (($config['columns'] ?? []) as $columnConfig) {
+                if (is_array($columnConfig['config'] ?? false)
+                    && in_array(($columnConfig['config']['type'] ?? ''), ['inline'], true)
+                    && (!empty($columnConfig['config']['foreign_table'] ?? ''))
+                    && (!empty($columnConfig['config']['foreign_field'] ?? ''))
+                    // We require foreign_table_field NOT being set.
+                    && (!isset($columnConfig['config']['foreign_table_field']))
+                    // Checking existence of TCA definition of the foreign_field in child table *may* not be strictly required?
+                    // We keep it for now, though.
+                    && (!empty($GLOBALS['TCA'][$columnConfig['config']['foreign_table']]['columns'][$columnConfig['config']['foreign_field']]))
+                    // Broken TCA: There are 2 parents pointing to the same child, and that child has
+                    // no foreign_table_field, If that happens, first one wins for now.
+                    // @todo: Core should probably except in TcaPreparation or something?!
+                    && (!isset($inlineChildTables[$columnConfig['config']['foreign_table']]))
+                    // Not ignored
+                    && !in_array($columnConfig['config']['foreign_table'], $ignoreTables, true)
+                ) {
+                    $inlineChildTables[$columnConfig['config']['foreign_table']] = [
+                        'tableName' => $columnConfig['config']['foreign_table'],
+                        'parentTableName' => $tableName,
+                        'fieldNameOfParentTableUid' => $columnConfig['config']['foreign_field'],
                     ];
                 }
             }

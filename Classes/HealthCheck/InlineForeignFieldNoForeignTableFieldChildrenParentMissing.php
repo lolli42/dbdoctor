@@ -23,9 +23,9 @@ use Lolli\Dbdoctor\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Inline foreign field children must have existing parent record.
+ * Inline foreign field without TCA foreign_table_field children must have existing parent record.
  */
-final class InlineForeignFieldChildrenParentMissing extends AbstractHealthCheck implements HealthCheckInterface
+final class InlineForeignFieldNoForeignTableFieldChildrenParentMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {
@@ -34,7 +34,7 @@ final class InlineForeignFieldChildrenParentMissing extends AbstractHealthCheck 
         $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
             'TCA inline foreign field records point to a parent record. This parent must exist.',
-            'This check is for inline children defined *with* foreign_table_field in TCA.',
+            'This check is for inline children defined *without* foreign_table_field in TCA.',
             'Inline children with missing parent are deleted.',
         ]);
     }
@@ -47,40 +47,31 @@ final class InlineForeignFieldChildrenParentMissing extends AbstractHealthCheck 
         $tableHelper = $this->container->get(TableHelper::class);
 
         $affectedRows = [];
-        foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
+
+        foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldChildTcaTable() as $inlineChild) {
             $childTableName = $inlineChild['tableName'];
-            $fieldNameOfParentTableName = $inlineChild['fieldNameOfParentTableName'];
+            $parentTableName = $inlineChild['parentTableName'];
+            if (!$tableHelper->tableExistsInDatabase($parentTableName)) {
+                continue;
+            }
             $fieldNameOfParentTableUid = $inlineChild['fieldNameOfParentTableUid'];
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($childTableName);
             // Consider deleted records: If the parent does not exist, they should be deleted, too.
             $queryBuilder->getRestrictions()->removeAll();
-            $result = $queryBuilder->select('uid', 'pid', $fieldNameOfParentTableName, $fieldNameOfParentTableUid)
+            $result = $queryBuilder->select('uid', 'pid', $fieldNameOfParentTableUid)
                 ->from($childTableName)
                 ->where(
-                    $queryBuilder->expr()->neq($fieldNameOfParentTableName, $queryBuilder->createNamedParameter('')),
-                    $queryBuilder->expr()->isNotNull($fieldNameOfParentTableName)
+                    $queryBuilder->expr()->gt($fieldNameOfParentTableUid, $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)),
                 )
                 ->orderBy('uid')
                 ->executeQuery();
             while ($inlineChildRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $inlineChildRow */
-                if (empty($inlineChildRow[$fieldNameOfParentTableName])
-                    || (int)($inlineChildRow[$fieldNameOfParentTableUid]) === 0
-                    // Parent TCA table must be defined and table must exist
-                    || !is_array($GLOBALS['TCA'][$inlineChildRow[$fieldNameOfParentTableName]] ?? false)
-                    || !$tableHelper->tableExistsInDatabase((string)$inlineChildRow[$fieldNameOfParentTableName])
-                ) {
-                    $inlineChildRow['_reasonBroken'] = 'Invalid parent';
-                    $inlineChildRow['_fieldNameOfParentTableName'] = $fieldNameOfParentTableName;
-                    $inlineChildRow['_fieldNameOfParentTableUid'] = $fieldNameOfParentTableUid;
-                    $affectedRows[$childTableName][] = $inlineChildRow;
-                    continue;
-                }
                 try {
-                    $recordsHelper->getRecord((string)$inlineChildRow[$fieldNameOfParentTableName], ['uid'], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
+                    $recordsHelper->getRecord($parentTableName, ['uid'], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
                 } catch (NoSuchRecordException $e) {
                     $inlineChildRow['_reasonBroken'] = 'Missing parent';
-                    $inlineChildRow['_fieldNameOfParentTableName'] = $fieldNameOfParentTableName;
+                    $inlineChildRow['_parentTableName'] = $parentTableName;
                     $inlineChildRow['_fieldNameOfParentTableUid'] = $fieldNameOfParentTableUid;
                     $affectedRows[$childTableName][] = $inlineChildRow;
                 }
@@ -98,7 +89,6 @@ final class InlineForeignFieldChildrenParentMissing extends AbstractHealthCheck 
     {
         foreach ($affectedRecords as $tableName => $rows) {
             $extraDbFields = [
-                (string)$rows[0]['_fieldNameOfParentTableName'],
                 (string)$rows[0]['_fieldNameOfParentTableUid'],
             ];
             $this->outputRecordDetails($io, [$tableName => $rows], '_reasonBroken', [], $extraDbFields);

@@ -4,6 +4,8 @@
 "sys_file_reference"
 ,"uid","pid","sys_language_uid","l10n_parent","deleted","uid_local","uid_foreign","tablenames","title"
 ,1,1,0,0,0,1,1,"tt_content","Ok tt_content 1"
+,5,1,0,0,0,1,0,"","Ok - empty uid, empty table"
+,6,1,0,0,0,1,0,,"Ok - empty uid, empty table"
 "tt_content"
 ,"uid","pid"
 ,1,1

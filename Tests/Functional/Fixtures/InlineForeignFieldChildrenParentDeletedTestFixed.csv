@@ -6,6 +6,9 @@
 ,1,1,0,0,0,0,1,1,"tt_content","Ok tt_content 1"
 ,2,1,0,0,1,0,1,1,"tt_content","Ok tt_content 1 - child deleted"
 ,3,1,0,0,1,0,1,2,"tt_content","Not Ok - tt_content 2 parent deleted=1"
+,5,1,0,0,0,0,1,0,"tt_content","Ok - tt_content 0 can not exist"
+,6,1,0,0,0,0,1,0,"","Ok - empty uid, empty table"
+,7,1,0,0,0,0,1,0,,"Ok - empty uid, empty table"
 "tt_content"
 ,"uid","pid","deleted"
 ,1,1,0

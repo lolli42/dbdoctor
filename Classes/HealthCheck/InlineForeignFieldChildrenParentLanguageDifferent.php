@@ -21,6 +21,8 @@ use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Handle inline foreign field children that are set to a different sys_language_uid than their parent.
@@ -31,11 +33,12 @@ final class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHe
     {
         $io->section('Scan for inline foreign field records with different language than their parent');
         $this->outputClass($io);
-        $this->outputTags($io, self::TAG_UPDATE);
+        $this->outputTags($io, self::TAG_UPDATE, self::TAG_RISKY);
         $io->text([
             'TCA inline foreign field child records point to a parent record. This check finds',
             'child records that have a different language than the parent record.',
-            'Affected children are updated by setting them to the same language as the parent record.',
+            'Affected children are soft-deleted if the table is soft-delete aware, and',
+            'hard deleted if not.',
         ]);
     }
 
@@ -56,10 +59,30 @@ final class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHe
             }
             $fieldNameOfParentTableName = $inlineChild['fieldNameOfParentTableName'];
             $fieldNameOfParentTableUid = $inlineChild['fieldNameOfParentTableUid'];
+            $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($childTableName);
+            $isTableWorkspaceAware = !empty($workspaceIdField);
+
+            $selectFields = [
+                'uid',
+                'pid',
+                $fieldNameOfParentTableName,
+                $fieldNameOfParentTableUid,
+                $childTableLanguageField,
+            ];
+            if ($isTableWorkspaceAware) {
+                $selectFields[] = $workspaceIdField;
+            }
+
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($childTableName);
-            // Consider deleted child records.
-            $queryBuilder->getRestrictions()->removeAll();
-            $result = $queryBuilder->select('uid', 'pid', $fieldNameOfParentTableName, $fieldNameOfParentTableUid, $childTableLanguageField)->from($childTableName)
+            // Do not consider deleted child records.
+            $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
+            $result = $queryBuilder->select(...$selectFields)
+                ->from($childTableName)
+                ->where(
+                    $queryBuilder->expr()->gt($fieldNameOfParentTableUid, $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)),
+                    $queryBuilder->expr()->neq($fieldNameOfParentTableName, $queryBuilder->createNamedParameter('')),
+                    $queryBuilder->expr()->isNotNull($fieldNameOfParentTableName)
+                )
                 ->orderBy('uid')
                 ->executeQuery();
             while ($inlineChildRow = $result->fetchAssociative()) {
@@ -84,7 +107,7 @@ final class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHe
                     $parentRowLanguage = (int)$parentRow[$parentTableLanguageField];
                     $childRowLanguage = (int)$inlineChildRow[$childTableLanguageField];
                     // @todo: We may need to think about l10n_parent field here as well?
-                    if ($parentRowLanguage > 0 && $childRowLanguage !== $parentRowLanguage) {
+                    if ($parentRowLanguage >= 0 && $childRowLanguage !== $parentRowLanguage) {
                         $inlineChildRow['_reasonBroken'] = 'Parent record language ' . $parentRowLanguage;
                         $inlineChildRow['_fieldNameOfParentTableName'] = $fieldNameOfParentTableName;
                         $inlineChildRow['_fieldNameOfParentTableUid'] = $fieldNameOfParentTableUid;
@@ -103,24 +126,7 @@ final class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHe
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
-        foreach ($affectedRecords as $childTableName => $childTableRows) {
-            $this->outputTableUpdateBefore($io, $simulate, $childTableName);
-            $count = 0;
-            $childLanguageField = $this->tcaHelper->getLanguageField($childTableName);
-            foreach ($childTableRows as $childTableRow) {
-                $updateFields = [
-                    $childLanguageField => [
-                        'value' => (int)$childTableRow['_parentRowLanguage'],
-                        'type' => \PDO::PARAM_INT,
-                    ],
-                ];
-                $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $childTableName, (int)$childTableRow['uid'], $updateFields);
-                $count++;
-            }
-            $this->outputTableUpdateAfter($io, $simulate, $childTableName, $count);
-        }
+        $this->softOrHardDeleteRecords($io, $simulate, $affectedRecords);
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
