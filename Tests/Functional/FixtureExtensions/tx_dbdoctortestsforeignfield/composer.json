@@ -1,0 +1,14 @@
+{
+	"name": "dbdoctortests/test-foreignfield",
+	"type": "typo3-cms-extension",
+	"description": "A test extension for dbdoctor",
+	"license": "GPL-2.0-or-later",
+	"require": {
+    "typo3/cms-core": "^11.5 || ^12.4"
+	},
+	"extra": {
+		"typo3/cms": {
+			"extension-key": "tx_dbdoctortestsforeignfield"
+		}
+	}
+}

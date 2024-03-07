@@ -74,9 +74,12 @@ final class HealthFactory implements HealthFactoryInterface
         HealthCheck\TcaTablesTranslatedLanguageParentDifferentPid::class,
         // TcaTablesInvalidLanguageParent::class,
         HealthCheck\InlineForeignFieldChildrenParentMissing::class,
+        HealthCheck\InlineForeignFieldNoForeignTableFieldChildrenParentMissing::class,
         HealthCheck\InlineForeignFieldChildrenParentDeleted::class,
+        HealthCheck\InlineForeignFieldNoForeignTableFieldChildrenParentDeleted::class,
         // @todo: Maybe that's not a good position when we start scanning for records translated more than once (issue #9)?
         HealthCheck\InlineForeignFieldChildrenParentLanguageDifferent::class,
+        HealthCheck\InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent::class,
     ];
 
     private ContainerInterface $container;
