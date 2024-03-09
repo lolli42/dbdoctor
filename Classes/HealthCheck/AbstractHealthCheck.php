@@ -16,13 +16,13 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Helper\TcaHelper;
 use Lolli\Dbdoctor\Renderer\AffectedPagesRenderer;
 use Lolli\Dbdoctor\Renderer\RecordsRenderer;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
 /**
@@ -359,7 +359,7 @@ abstract class AbstractHealthCheck
             $updateFields = [
                 $deleteField => [
                     'value' => 1,
-                    'type' => \PDO::PARAM_INT,
+                    'type' => Connection::PARAM_INT,
                 ],
             ];
         }

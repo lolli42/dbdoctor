@@ -16,10 +16,10 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Database\Connection;
 
 /**
  * Tables with record translations must point to existing records in transOrigPointerField
@@ -59,9 +59,9 @@ final class TcaTablesTranslatedLanguageParentMissing extends AbstractHealthCheck
             $result = $queryBuilder->select('uid', 'pid', $translationParentField)->from($tableName)
                 ->where(
                     // localized records
-                    $queryBuilder->expr()->gt($languageField, $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)),
+                    $queryBuilder->expr()->gt($languageField, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
                     // in 'connected' mode - has a l10n_parent field > 0
-                    $queryBuilder->expr()->gt($translationParentField, $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT))
+                    $queryBuilder->expr()->gt($translationParentField, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT))
                 )
                 ->orderBy('uid')
                 ->executeQuery();

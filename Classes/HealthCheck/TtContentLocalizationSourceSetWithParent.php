@@ -16,9 +16,9 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Database\Connection;
 
 /**
  * tt_content l10n_source must be set to something if l18n_parent is not zero.
@@ -69,7 +69,7 @@ final class TtContentLocalizationSourceSetWithParent extends AbstractHealthCheck
             $updateFields = [
                 'l10n_source' => [
                     'value' => (int)$row['l18n_parent'],
-                    'type' => \PDO::PARAM_INT,
+                    'type' => Connection::PARAM_INT,
                 ],
             ];
             $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, 'tt_content', (int)$row['uid'], $updateFields);

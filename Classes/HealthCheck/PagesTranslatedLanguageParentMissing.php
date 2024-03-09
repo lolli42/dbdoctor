@@ -16,10 +16,10 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Database\Connection;
 
 /**
  * Find translated pages that have no sys_language_uid=0 parent.
@@ -47,7 +47,7 @@ final class PagesTranslatedLanguageParentMissing extends AbstractHealthCheck imp
         $queryBuilder->getRestrictions()->removeAll();
         $result = $queryBuilder->select('uid', 'pid', 'l10n_parent')
             ->from('pages')
-            ->where($queryBuilder->expr()->gt('sys_language_uid', $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)))
+            ->where($queryBuilder->expr()->gt('sys_language_uid', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)))
             ->orderBy('uid')
             ->executeQuery();
         $affectedRecords = [];

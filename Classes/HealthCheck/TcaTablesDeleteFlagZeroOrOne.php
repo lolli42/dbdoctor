@@ -16,8 +16,8 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Database\Connection;
 
 /**
  * Values of delete column of TCA tables with enabled soft-delete must be either 0 or 1.
@@ -52,8 +52,8 @@ final class TcaTablesDeleteFlagZeroOrOne extends AbstractHealthCheck implements 
             $queryBuilder->getRestrictions()->removeAll();
             $queryBuilder->select('uid', 'pid', $tableDeleteField)->from($tableName)->orderBy('uid');
             $queryBuilder->where(
-                $queryBuilder->expr()->neq($tableDeleteField, $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)),
-                $queryBuilder->expr()->neq($tableDeleteField, $queryBuilder->createNamedParameter(1, \PDO::PARAM_INT)),
+                $queryBuilder->expr()->neq($tableDeleteField, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
+                $queryBuilder->expr()->neq($tableDeleteField, $queryBuilder->createNamedParameter(1, Connection::PARAM_INT)),
             );
             $result = $queryBuilder->executeQuery();
             while ($row = $result->fetchAssociative()) {
@@ -72,7 +72,7 @@ final class TcaTablesDeleteFlagZeroOrOne extends AbstractHealthCheck implements 
             $updateFields = [
                 $deletedField => [
                     'value' => 1,
-                    'type' => \PDO::PARAM_INT,
+                    'type' => Connection::PARAM_INT,
                 ],
             ];
             $this->updateTcaRecordsOfTable($io, $simulate, $tableName, $tableRows, $updateFields);

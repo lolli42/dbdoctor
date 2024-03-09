@@ -16,10 +16,10 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -75,9 +75,9 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
             $result = $queryBuilder->select(...$selectFields)->from($tableName)
                 ->where(
                     // localized records
-                    $queryBuilder->expr()->gt($languageField, $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)),
+                    $queryBuilder->expr()->gt($languageField, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
                     // in 'connected' mode - has a l10n_parent field > 0
-                    $queryBuilder->expr()->gt($translationParentField, $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)),
+                    $queryBuilder->expr()->gt($translationParentField, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
                 )
                 ->orderBy('uid')
                 ->executeQuery();
@@ -141,23 +141,23 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
                     ->select('uid')
                     ->from($tableName)
                     ->where(
-                        $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter($defaultLanguageRow['pid'], \PDO::PARAM_INT)),
-                        $queryBuilder->expr()->eq($languageField, $queryBuilder->createNamedParameter($localizedRow[$languageField], \PDO::PARAM_INT)),
-                        $queryBuilder->expr()->eq($translationParentField, $queryBuilder->createNamedParameter($localizedRow[$translationParentField], \PDO::PARAM_INT))
+                        $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter($defaultLanguageRow['pid'], Connection::PARAM_INT)),
+                        $queryBuilder->expr()->eq($languageField, $queryBuilder->createNamedParameter($localizedRow[$languageField], Connection::PARAM_INT)),
+                        $queryBuilder->expr()->eq($translationParentField, $queryBuilder->createNamedParameter($localizedRow[$translationParentField], Connection::PARAM_INT))
                     );
                 if ($isTableWorkspaceAware && $localizedRow[$workspaceIdField] > 0) {
                     // If the localized record that is on the wrong pid is a workspace record, check if there is
                     // a localized live OR this-workspace record on the target pid.
                     $queryBuilder->andWhere(
                         $queryBuilder->expr()->or(
-                            $queryBuilder->expr()->eq($workspaceIdField, $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)),
-                            $queryBuilder->expr()->eq($workspaceIdField, $queryBuilder->createNamedParameter((int)$localizedRow[$workspaceIdField], \PDO::PARAM_INT)),
+                            $queryBuilder->expr()->eq($workspaceIdField, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
+                            $queryBuilder->expr()->eq($workspaceIdField, $queryBuilder->createNamedParameter((int)$localizedRow[$workspaceIdField], Connection::PARAM_INT)),
                         )
                     );
                 } elseif ($isTableWorkspaceAware) {
                     // If the localized record that is on the wrong pid is a live record in a workspace aware table,
                     // check for existing localized records in live on the target pid.
-                    $queryBuilder->andWhere($queryBuilder->expr()->eq($workspaceIdField, $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)));
+                    $queryBuilder->andWhere($queryBuilder->expr()->eq($workspaceIdField, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)));
                 }
 
                 $existingLocalizedRow = $queryBuilder->executeQuery()->fetchAllAssociative();
@@ -173,11 +173,11 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
                         $updateFields = [
                             'pid' => [
                                 'value' => (int)$defaultLanguageRow['pid'],
-                                'type' => \PDO::PARAM_INT,
+                                'type' => Connection::PARAM_INT,
                             ],
                             $deleteField => [
                                 'value' => 1,
-                                'type' => \PDO::PARAM_INT,
+                                'type' => Connection::PARAM_INT,
                             ],
                         ];
                         $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid'], $updateFields);
@@ -207,11 +207,11 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
                         $updateFields = [
                             'pid' => [
                                 'value' => (int)$defaultLanguageRow['pid'],
-                                'type' => \PDO::PARAM_INT,
+                                'type' => Connection::PARAM_INT,
                             ],
                             $hiddenField => [
                                 'value' => 1,
-                                'type' => \PDO::PARAM_INT,
+                                'type' => Connection::PARAM_INT,
                             ],
                         ];
                         $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid'], $updateFields);
@@ -225,11 +225,11 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
                         $updateFields = [
                             'pid' => [
                                 'value' => (int)$defaultLanguageRow['pid'],
-                                'type' => \PDO::PARAM_INT,
+                                'type' => Connection::PARAM_INT,
                             ],
                             $deleteField => [
                                 'value' => 1,
-                                'type' => \PDO::PARAM_INT,
+                                'type' => Connection::PARAM_INT,
                             ],
                         ];
                         $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid'], $updateFields);

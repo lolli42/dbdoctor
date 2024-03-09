@@ -16,9 +16,9 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Database\Connection;
 
 /**
  * Live records should never have t3ver_state!=0. Find and change those,
@@ -102,7 +102,7 @@ final class WorkspacesT3verStateNotZeroInLive extends AbstractHealthCheck implem
                     $updateFields = [
                         't3ver_state' => [
                             'value' => 0,
-                            'type' => \PDO::PARAM_INT,
+                            'type' => Connection::PARAM_INT,
                         ],
                     ];
                     $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid'], $updateFields);
@@ -113,11 +113,11 @@ final class WorkspacesT3verStateNotZeroInLive extends AbstractHealthCheck implem
                     $updateFields = [
                         $deleteField => [
                             'value' => 1,
-                            'type' => \PDO::PARAM_INT,
+                            'type' => Connection::PARAM_INT,
                         ],
                         't3ver_state' => [
                             'value' => 0,
-                            'type' => \PDO::PARAM_INT,
+                            'type' => Connection::PARAM_INT,
                         ],
                     ];
                     $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid'], $updateFields);
