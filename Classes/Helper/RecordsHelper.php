@@ -16,12 +16,12 @@ namespace Lolli\Dbdoctor\Helper;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
 use Doctrine\DBAL\Statement;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
 use Lolli\Dbdoctor\Exception\UnexpectedNumberOfAffectedRowsException;
 use Psr\Container\ContainerInterface;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
 final class RecordsHelper
@@ -66,12 +66,12 @@ final class RecordsHelper
                 ->select(...$fields)
                 ->from($tableName)
                 ->where(
-                    $queryBuilder->expr()->eq('uid', $queryBuilder->createPositionalParameter(0, \PDO::PARAM_INT))
+                    $queryBuilder->expr()->eq('uid', $queryBuilder->createPositionalParameter(0, Connection::PARAM_INT))
                 );
             $this->preparedStatements[$statementHash]['statement'] = $queryBuilder->prepare();
         }
         $statement = $this->preparedStatements[$statementHash]['statement'];
-        $statement->bindParam(1, $uid, \PDO::PARAM_INT);
+        $statement->bindParam(1, $uid, Connection::PARAM_INT);
         $result = $statement->executeQuery();
         $record = $result->fetchAllAssociative();
         $result->free();
@@ -91,7 +91,7 @@ final class RecordsHelper
             $queryBuilder
                 ->delete($tableName)
                 ->where(
-                    $queryBuilder->expr()->eq('uid', $queryBuilder->createPositionalParameter(0, \PDO::PARAM_INT))
+                    $queryBuilder->expr()->eq('uid', $queryBuilder->createPositionalParameter(0, Connection::PARAM_INT))
                 );
             $this->preparedStatements[$statementHash]['sqlString'] = $queryBuilder->getSQL();
             $this->preparedStatements[$statementHash]['statement'] = $queryBuilder->prepare();
@@ -101,7 +101,7 @@ final class RecordsHelper
         $sqlString = str_replace('= ?', '= ' . $uid, $sqlString);
         $sqlString .= ';';
         if (!$simulate) {
-            $statement->bindParam(1, $uid, \PDO::PARAM_INT);
+            $statement->bindParam(1, $uid, Connection::PARAM_INT);
             $affectedRows = $statement->executeStatement();
             if ($affectedRows !== 1) {
                 throw new UnexpectedNumberOfAffectedRowsException(
@@ -126,7 +126,7 @@ final class RecordsHelper
                 $queryBuilder->set($fieldName, '?', false);
             }
             $queryBuilder->where(
-                $queryBuilder->expr()->eq('uid', $queryBuilder->createPositionalParameter(0, \PDO::PARAM_INT))
+                $queryBuilder->expr()->eq('uid', $queryBuilder->createPositionalParameter(0, Connection::PARAM_INT))
             );
             $this->preparedStatements[$statementHash]['sqlString'] = $queryBuilder->getSQL();
             $this->preparedStatements[$statementHash]['statement'] = $queryBuilder->prepare();
@@ -136,7 +136,7 @@ final class RecordsHelper
         $sqlString = $this->preparedStatements[$statementHash]['sqlString'];
         $currentParam = 1;
         foreach ($fields as $valueAndType) {
-            if ($valueAndType['type'] === \PDO::PARAM_STR) {
+            if ($valueAndType['type'] === Connection::PARAM_STR) {
                 $sqlValue = '\'' . $valueAndType['value'] . '\'';
             } else {
                 $sqlValue = (string)$valueAndType['value'];
@@ -150,7 +150,7 @@ final class RecordsHelper
         $sqlString = $this->strReplaceFirst('= ?', '= ' . $uid, $sqlString);
         $sqlString .= ';';
         if (!$simulate) {
-            $statement->bindParam($currentParam, $uid, \PDO::PARAM_INT);
+            $statement->bindParam($currentParam, $uid, Connection::PARAM_INT);
             $affectedRows = $statement->executeStatement();
             if ($affectedRows !== 1) {
                 throw new UnexpectedNumberOfAffectedRowsException(

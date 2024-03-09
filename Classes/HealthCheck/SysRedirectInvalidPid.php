@@ -16,10 +16,10 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Exception\SiteNotFoundException;
 use TYPO3\CMS\Core\Site\SiteFinder;
@@ -108,7 +108,7 @@ final class SysRedirectInvalidPid extends AbstractHealthCheck implements HealthC
                 $updateFields = [
                     'pid' => [
                         'value' => $rootPageId,
-                        'type' => \PDO::PARAM_INT,
+                        'type' => Connection::PARAM_INT,
                     ],
                 ];
                 $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid'], $updateFields);

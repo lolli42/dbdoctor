@@ -16,8 +16,8 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Information\Typo3Version;
 
 /**
@@ -78,7 +78,7 @@ final class SysFileReferenceInvalidTableLocal extends AbstractHealthCheck implem
             [
                 'table_local' => [
                     'value' => 'sys_file',
-                    'type' => \PDO::PARAM_STR,
+                    'type' => Connection::PARAM_STR,
                 ],
             ]
         );

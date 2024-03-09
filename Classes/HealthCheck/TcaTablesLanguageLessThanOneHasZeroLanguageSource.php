@@ -16,8 +16,8 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Database\Connection;
 
 /**
  * Records with sys_language_uid = 0 (or -1) must have l10n_source=0
@@ -75,7 +75,7 @@ final class TcaTablesLanguageLessThanOneHasZeroLanguageSource extends AbstractHe
             $updateFields = [
                 $translationSourceField => [
                     'value' => 0,
-                    'type' => \PDO::PARAM_INT,
+                    'type' => Connection::PARAM_INT,
                 ],
             ];
             $this->updateTcaRecordsOfTable($io, $simulate, $tableName, $tableRows, $updateFields);

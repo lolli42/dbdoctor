@@ -16,11 +16,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Database\Connection;
 
 /**
  * Inline foreign field without TCA foreign_table_field children must have existing parent record.
@@ -61,7 +61,7 @@ final class InlineForeignFieldNoForeignTableFieldChildrenParentMissing extends A
             $result = $queryBuilder->select('uid', 'pid', $fieldNameOfParentTableUid)
                 ->from($childTableName)
                 ->where(
-                    $queryBuilder->expr()->gt($fieldNameOfParentTableUid, $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)),
+                    $queryBuilder->expr()->gt($fieldNameOfParentTableUid, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
                 )
                 ->orderBy('uid')
                 ->executeQuery();

@@ -16,8 +16,8 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -99,7 +99,7 @@ final class TtContentLocalizedDuplicates extends AbstractHealthCheck implements 
         $updateFields = [
             'deleted' => [
                 'value' => 1,
-                'type' => \PDO::PARAM_INT,
+                'type' => Connection::PARAM_INT,
             ],
         ];
         $this->updateTcaRecordsOfTable($io, $simulate, 'tt_content', $affectedRecords['tt_content'] ?? [], $updateFields);

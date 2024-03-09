@@ -16,11 +16,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Database\Connection;
 
 /**
  * All records in sys_file_reference must be on same pid as the parent record.
@@ -89,7 +89,7 @@ final class SysFileReferenceInvalidPid extends AbstractHealthCheck implements He
                 $fields = [
                     'pid' => [
                         'value' => (int)$row['uid_foreign'],
-                        'type' => \PDO::PARAM_INT,
+                        'type' => Connection::PARAM_INT,
                     ],
                 ];
                 $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
@@ -98,7 +98,7 @@ final class SysFileReferenceInvalidPid extends AbstractHealthCheck implements He
                 $fields = [
                     'pid' => [
                         'value' => (int)$referencingRecord['pid'],
-                        'type' => \PDO::PARAM_INT,
+                        'type' => Connection::PARAM_INT,
                     ],
                 ];
                 $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
