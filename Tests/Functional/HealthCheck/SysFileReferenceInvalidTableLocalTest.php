@@ -34,6 +34,9 @@ class SysFileReferenceInvalidTableLocalTest extends FunctionalTestCase
      */
     public function showDetails(): void
     {
+        if ((new Typo3Version())->getMajorVersion() >= 12) {
+            self::markTestSkipped();
+        }
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceInvalidTableLocalImport.csv');
         $io = $this->createMock(SymfonyStyle::class);
         /** @var SysFileReferenceInvalidTableLocal $subject */
