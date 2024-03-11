@@ -24,6 +24,10 @@ use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 class TcaTablesTranslatedLanguageParentDifferentPidTest extends FunctionalTestCase
 {
+    protected array $coreExtensionsToLoad = [
+        'workspaces',
+    ];
+
     protected array $testExtensionsToLoad = [
         'typo3conf/ext/dbdoctor',
     ];
@@ -31,14 +35,26 @@ class TcaTablesTranslatedLanguageParentDifferentPidTest extends FunctionalTestCa
     /**
      * @test
      */
+    public function showDetails(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidImport.csv');
+        $io = $this->createMock(SymfonyStyle::class);
+        /** @var TcaTablesTranslatedLanguageParentDifferentPid $subject */
+        $subject = $this->get(TcaTablesTranslatedLanguageParentDifferentPid::class);
+        $io->expects(self::atLeastOnce())->method('warning');
+        $io->expects(self::atLeastOnce())->method('ask')->willReturn('d', 'a');
+        $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
+    }
+
+    /**
+     * @test
+     */
     public function fixBrokenRecords(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidImport.csv');
-        $io = $this->getMockBuilder(SymfonyStyle::class)->disableOriginalConstructor()->getMock();
-        $io->expects(self::atLeastOnce())->method('warning');
         /** @var TcaTablesTranslatedLanguageParentDifferentPid $subject */
         $subject = $this->get(TcaTablesTranslatedLanguageParentDifferentPid::class);
-        $subject->handle($io, HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidFixed.csv');
     }
 
@@ -49,11 +65,9 @@ class TcaTablesTranslatedLanguageParentDifferentPidTest extends FunctionalTestCa
     {
         unset($GLOBALS['TCA']['tt_content']['ctrl']['enablecolumns']['disabled']);
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidTtContentNotHiddenAwareImport.csv');
-        $io = $this->getMockBuilder(SymfonyStyle::class)->disableOriginalConstructor()->getMock();
-        $io->expects(self::atLeastOnce())->method('warning');
         /** @var TcaTablesTranslatedLanguageParentDifferentPid $subject */
         $subject = $this->get(TcaTablesTranslatedLanguageParentDifferentPid::class);
-        $subject->handle($io, HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidTtContentNotHiddenAwareFixed.csv');
     }
 
@@ -65,11 +79,9 @@ class TcaTablesTranslatedLanguageParentDifferentPidTest extends FunctionalTestCa
         unset($GLOBALS['TCA']['tt_content']['ctrl']['enablecolumns']['disabled']);
         unset($GLOBALS['TCA']['tt_content']['ctrl']['delete']);
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidTtContentNotHiddenNotDeleteAwareImport.csv');
-        $io = $this->getMockBuilder(SymfonyStyle::class)->disableOriginalConstructor()->getMock();
-        $io->expects(self::atLeastOnce())->method('warning');
         /** @var TcaTablesTranslatedLanguageParentDifferentPid $subject */
         $subject = $this->get(TcaTablesTranslatedLanguageParentDifferentPid::class);
-        $subject->handle($io, HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidTtContentNotHiddenNotDeleteAwareFixed.csv');
     }
 }

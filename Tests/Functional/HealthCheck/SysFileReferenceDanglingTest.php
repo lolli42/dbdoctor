@@ -36,6 +36,24 @@ class SysFileReferenceDanglingTest extends FunctionalTestCase
     /**
      * @test
      */
+    public function showDetails(): void
+    {
+        if ((new Typo3Version())->getMajorVersion() >= 12) {
+            $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingImport.csv');
+        } else {
+            $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingImportV11.csv');
+        }
+        $io = $this->createMock(SymfonyStyle::class);
+        /** @var SysFileReferenceDangling $subject */
+        $subject = $this->get(SysFileReferenceDangling::class);
+        $io->expects(self::atLeastOnce())->method('warning');
+        $io->expects(self::atLeastOnce())->method('ask')->willReturn('d', 'a');
+        $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
+    }
+
+    /**
+     * @test
+     */
     public function fixBrokenRecords(): void
     {
         if ((new Typo3Version())->getMajorVersion() >= 12) {
@@ -43,11 +61,9 @@ class SysFileReferenceDanglingTest extends FunctionalTestCase
         } else {
             $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingImportV11.csv');
         }
-        $io = $this->getMockBuilder(SymfonyStyle::class)->disableOriginalConstructor()->getMock();
-        $io->expects(self::atLeastOnce())->method('warning');
         /** @var SysFileReferenceDangling $subject */
         $subject = $this->get(SysFileReferenceDangling::class);
-        $subject->handle($io, HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         if ((new Typo3Version())->getMajorVersion() >= 12) {
             $this->assertCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingFixed.csv');
         } else {

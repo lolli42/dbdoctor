@@ -31,14 +31,26 @@ class TtContentLocalizedDuplicatesTest extends FunctionalTestCase
     /**
      * @test
      */
+    public function showDetails(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizedDuplicatesImport.csv');
+        $io = $this->createMock(SymfonyStyle::class);
+        /** @var TtContentLocalizedDuplicates $subject */
+        $subject = $this->get(TtContentLocalizedDuplicates::class);
+        $io->expects(self::atLeastOnce())->method('warning');
+        $io->expects(self::atLeastOnce())->method('ask')->willReturn('d', 'a');
+        $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
+    }
+
+    /**
+     * @test
+     */
     public function fixBrokenRecords(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizedDuplicatesImport.csv');
-        $io = $this->getMockBuilder(SymfonyStyle::class)->disableOriginalConstructor()->getMock();
-        $io->expects(self::atLeastOnce())->method('warning');
         /** @var TtContentLocalizedDuplicates $subject */
         $subject = $this->get(TtContentLocalizedDuplicates::class);
-        $subject->handle($io, HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizedDuplicatesFixed.csv');
     }
 }
