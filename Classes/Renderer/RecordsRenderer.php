@@ -18,6 +18,7 @@ namespace Lolli\Dbdoctor\Renderer;
  */
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Exception\NoSuchTableException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Helper\TableHelper;
 use Lolli\Dbdoctor\Helper\TcaHelper;
@@ -233,6 +234,8 @@ final class RecordsRenderer
                         $workspaceString = '[' . $workspaceUid . $deletedString . ']' . $workspace['title'];
                     } catch (NoSuchRecordException $e) {
                         $workspaceString = '[' . $workspaceUid . '|<comment>missing</comment>]';
+                    } catch (NoSuchTableException $e) {
+                        $workspaceString = '[' . $workspaceUid . '|<comment>no sys_workspace table</comment>]';
                     }
                     $this->workspaceCache[$workspaceUid] = $workspaceString;
                 }
