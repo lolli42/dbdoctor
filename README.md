@@ -61,6 +61,40 @@ should be  relatively quick even for big-sized instances, but it will hammer the
 database a lot.
 
 
+# Impact on Frontend rendering
+
+When a health check finds something fishy, dbdoctor allows only one hard
+coded solution to deal with it. The user is not asked for a solution, it either
+accepts the proposed UPDATE or DELETE database changes, or it needs to abort and take
+care manually (and then restart).
+
+Implementing a per-record question/answer feature to dbdoctor is not feasible since
+this would add an orthogonal vector of complexity to the system which would
+quickly render it unmaintainable: Single checks are designed to work
+on top of each other, dbdoctor needs to establish a "chain of correctness" to
+do its job.
+
+There are usually three options for a specific "fix":
+
+* Hard delete the offending record
+* Set the record `deleted=1` for soft-delete aware tables
+* Update the record to something "more correct"
+
+The general strategy is to create as little damage as possible from a TYPO3 *Frontend rending*
+point of view.
+
+For example, when there are *two* localizations for a default language record in a specific
+language, dbdoctor detects this as invalid and suggests to set one of them to `deleted=1`. From
+the two records, it will try to set the one deleted that is typically *not* rendered in Frontend.
+
+This general strategy isn't always as simple as with the above example, tough: Since
+the TYPO3 Frontend rendering is so flexible, the actual rendered record sometimes depends
+on specific Frontend rendering details dbdoctor can't know. In those cases, dbdoctor
+tries to guess the least amount of damage. This may not always fit real life cases.
+The only solution to deal with this is to look at single record change suggestions individually.
+The  interactive options `p`, `d` and `s` hopefully help to classify single suggested changes.
+
+
 # Limits
 
 Even though this low level tool tries to be very careful and checks lots of details
