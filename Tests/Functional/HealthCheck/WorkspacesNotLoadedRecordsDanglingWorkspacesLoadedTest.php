@@ -35,13 +35,25 @@ class WorkspacesNotLoadedRecordsDanglingWorkspacesLoadedTest extends FunctionalT
     /**
      * @test
      */
+    public function showDetails(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesNotLoadedRecordsDanglingImport.csv');
+        $io = $this->createMock(SymfonyStyle::class);
+        /** @var WorkspacesNotLoadedRecordsDangling $subject */
+        $subject = $this->get(WorkspacesNotLoadedRecordsDangling::class);
+        $io->expects(self::atLeastOnce())->method('success');
+        $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
+    }
+
+    /**
+     * @test
+     */
     public function fixBrokenRecords(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesNotLoadedRecordsDanglingImport.csv');
-        $io = $this->getMockBuilder(SymfonyStyle::class)->disableOriginalConstructor()->getMock();
         /** @var WorkspacesNotLoadedRecordsDangling $subject */
         $subject = $this->get(WorkspacesNotLoadedRecordsDangling::class);
-        $subject->handle($io, HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesNotLoadedRecordsDanglingWorkspacesLoadedFixed.csv');
     }
 }

@@ -35,14 +35,26 @@ class WorkspacesT3verStateNotZeroInLiveTest extends FunctionalTestCase
     /**
      * @test
      */
+    public function showDetails(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesT3verStateNotZeroInLiveImport.csv');
+        $io = $this->createMock(SymfonyStyle::class);
+        /** @var WorkspacesT3verStateNotZeroInLive $subject */
+        $subject = $this->get(WorkspacesT3verStateNotZeroInLive::class);
+        $io->expects(self::atLeastOnce())->method('warning');
+        $io->expects(self::atLeastOnce())->method('ask')->willReturn('d', 'a');
+        $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
+    }
+
+    /**
+     * @test
+     */
     public function fixBrokenRecords(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesT3verStateNotZeroInLiveImport.csv');
-        $io = $this->getMockBuilder(SymfonyStyle::class)->disableOriginalConstructor()->getMock();
-        $io->expects(self::atLeastOnce())->method('warning');
         /** @var WorkspacesT3verStateNotZeroInLive $subject */
         $subject = $this->get(WorkspacesT3verStateNotZeroInLive::class);
-        $subject->handle($io, HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesT3verStateNotZeroInLiveFixed.csv');
     }
 }

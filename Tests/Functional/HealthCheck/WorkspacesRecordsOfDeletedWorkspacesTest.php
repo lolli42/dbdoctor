@@ -35,14 +35,26 @@ class WorkspacesRecordsOfDeletedWorkspacesTest extends FunctionalTestCase
     /**
      * @test
      */
+    public function showDetails(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesRecordsOfDeletedWorkspacesImport.csv');
+        $io = $this->createMock(SymfonyStyle::class);
+        /** @var WorkspacesRecordsOfDeletedWorkspaces $subject */
+        $subject = $this->get(WorkspacesRecordsOfDeletedWorkspaces::class);
+        $io->expects(self::atLeastOnce())->method('warning');
+        $io->expects(self::atLeastOnce())->method('ask')->willReturn('d', 'a');
+        $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
+    }
+
+    /**
+     * @test
+     */
     public function fixBrokenRecords(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesRecordsOfDeletedWorkspacesImport.csv');
-        $io = $this->getMockBuilder(SymfonyStyle::class)->disableOriginalConstructor()->getMock();
-        $io->expects(self::atLeastOnce())->method('warning');
         /** @var WorkspacesRecordsOfDeletedWorkspaces $subject */
         $subject = $this->get(WorkspacesRecordsOfDeletedWorkspaces::class);
-        $subject->handle($io, HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesRecordsOfDeletedWorkspacesFixed.csv');
     }
 }
