@@ -1,6 +1,6 @@
 "pages"
 ,"uid","pid","title"
-,1,1,"page 1"
+,1,0,"page 1"
 "sys_file_reference"
 ,"uid","pid","sys_language_uid","l10n_parent","deleted","uid_local","uid_foreign","tablenames","title"
 ,1,1,0,0,0,1,1,"pages","Ok pages lang 0"
