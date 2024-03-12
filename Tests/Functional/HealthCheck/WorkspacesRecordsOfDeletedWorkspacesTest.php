@@ -42,7 +42,7 @@ class WorkspacesRecordsOfDeletedWorkspacesTest extends FunctionalTestCase
         /** @var WorkspacesRecordsOfDeletedWorkspaces $subject */
         $subject = $this->get(WorkspacesRecordsOfDeletedWorkspaces::class);
         $io->expects(self::atLeastOnce())->method('warning');
-        $io->expects(self::atLeastOnce())->method('ask')->willReturn('d', 'a');
+        $io->expects(self::atLeastOnce())->method('ask')->willReturn('p', 'd', 'a');
         $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
     }
 

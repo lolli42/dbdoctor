@@ -69,8 +69,16 @@ final class PagesRootlineHelper
         }
         try {
             $currentPage = $this->getPage($uid);
+            $upperPid = (int)$currentPage['pid'];
+            if (in_array($upperPid, array_column($rootline, 'pid'))) {
+                // @todo: potential health check: 'pages' should not create recursion loops.
+                throw new \RuntimeException(
+                    sprintf('Not handled pages rootline loop with uid:"%s" and pid:"%s"', $currentPage['uid'], $upperPid),
+                    1710204250
+                );
+            }
             array_unshift($rootline, $currentPage);
-            return $this->getRootline((int)$currentPage['pid'], $rootline);
+            return $this->getRootline($upperPid, $rootline);
         } catch (NoSuchPageException $e) {
             array_unshift(
                 $rootline,

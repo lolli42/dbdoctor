@@ -42,7 +42,7 @@ class WorkspacesT3verStateThreeTest extends FunctionalTestCase
         /** @var WorkspacesT3verStateThree $subject */
         $subject = $this->get(WorkspacesT3verStateThree::class);
         $io->expects(self::atLeastOnce())->method('warning');
-        $io->expects(self::atLeastOnce())->method('ask')->willReturn('d', 'a');
+        $io->expects(self::atLeastOnce())->method('ask')->willReturn('p', 'd', 'a');
         $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
     }
 
