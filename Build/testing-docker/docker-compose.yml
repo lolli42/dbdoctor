@@ -56,7 +56,7 @@ services:
           XDEBUG_MODE=\"off\" \
           $${COMMAND};
         else
-          XDEBUG_MODE=\"debug,develop\" \
+          XDEBUG_MODE=\"debug\" \
           XDEBUG_TRIGGER=\"foo\" \
           XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
           $${COMMAND};
@@ -96,7 +96,7 @@ services:
           XDEBUG_MODE=\"off\" \
           $${COMMAND};
         else
-          XDEBUG_MODE=\"debug,develop\" \
+          XDEBUG_MODE=\"debug\" \
           XDEBUG_TRIGGER=\"foo\" \
           XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
           $${COMMAND};
@@ -136,7 +136,7 @@ services:
           XDEBUG_MODE=\"off\" \
           $${COMMAND};
         else
-          XDEBUG_MODE=\"debug,develop\" \
+          XDEBUG_MODE=\"debug\" \
           XDEBUG_TRIGGER=\"foo\" \
           XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
           $${COMMAND};
@@ -165,7 +165,7 @@ services:
           XDEBUG_MODE=\"off\" \
           $${COMMAND};
         else
-          XDEBUG_MODE=\"debug,develop\" \
+          XDEBUG_MODE=\"debug\" \
           XDEBUG_TRIGGER=\"foo\" \
           XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
           $${COMMAND};
@@ -193,7 +193,7 @@ services:
               ${CGLCHECK_DRY_RUN} \
               --config=Build/php-cs-fixer/config.php
         else
-          XDEBUG_MODE=\"debug,develop\" \
+          XDEBUG_MODE=\"debug\" \
           XDEBUG_TRIGGER=\"foo\" \
           XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
           PHP_CS_FIXER_ALLOW_XDEBUG=1 \
@@ -268,7 +268,7 @@ services:
           XDEBUG_MODE=\"off\" \
           .Build/bin/phpunit -c Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
         else
-          XDEBUG_MODE=\"debug,develop\" \
+          XDEBUG_MODE=\"debug\" \
           XDEBUG_TRIGGER=\"foo\" \
           XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
           .Build/bin/phpunit -c Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
@@ -306,7 +306,7 @@ services:
           XDEBUG_MODE=\"off\" \
           .Build/bin/phpunit -c Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
         else
-          XDEBUG_MODE=\"debug,develop\" \
+          XDEBUG_MODE=\"debug\" \
           XDEBUG_TRIGGER=\"foo\" \
           XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
           .Build/bin/phpunit -c Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
@@ -344,7 +344,7 @@ services:
           XDEBUG_MODE=\"off\" \
           .Build/bin/phpunit -c Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-postgres ${TEST_FILE};
         else
-          XDEBUG_MODE=\"debug,develop\" \
+          XDEBUG_MODE=\"debug\" \
           XDEBUG_TRIGGER=\"foo\" \
           XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
           .Build/bin/phpunit -c Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-postgres ${TEST_FILE};
@@ -373,7 +373,7 @@ services:
           XDEBUG_MODE=\"off\" \
           .Build/bin/phpunit -c Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-sqlite ${TEST_FILE};
         else
-          XDEBUG_MODE=\"debug,develop\" \
+          XDEBUG_MODE=\"debug\" \
           XDEBUG_TRIGGER=\"foo\" \
           XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
           .Build/bin/phpunit -c Build/FunctionalTests.xml ${EXTRA_TEST_OPTIONS} --exclude-group not-sqlite ${TEST_FILE};
@@ -445,7 +445,7 @@ services:
           XDEBUG_MODE=\"off\" \
           .Build/bin/phpunit -c Build/UnitTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
         else
-          XDEBUG_MODE=\"debug,develop\" \
+          XDEBUG_MODE=\"debug\" \
           XDEBUG_TRIGGER=\"foo\" \
           XDEBUG_CONFIG=\"client_host=host.docker.internal\" \
           .Build/bin/phpunit -c Build/UnitTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
