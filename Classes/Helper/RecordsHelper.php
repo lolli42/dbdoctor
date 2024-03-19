@@ -71,7 +71,7 @@ final class RecordsHelper
             $this->preparedStatements[$statementHash]['statement'] = $queryBuilder->prepare();
         }
         $statement = $this->preparedStatements[$statementHash]['statement'];
-        $statement->bindParam(1, $uid, Connection::PARAM_INT);
+        $statement->bindValue(1, $uid, Connection::PARAM_INT);
         $result = $statement->executeQuery();
         $record = $result->fetchAllAssociative();
         $result->free();
@@ -101,7 +101,7 @@ final class RecordsHelper
         $sqlString = str_replace('= ?', '= ' . $uid, $sqlString);
         $sqlString .= ';';
         if (!$simulate) {
-            $statement->bindParam(1, $uid, Connection::PARAM_INT);
+            $statement->bindValue(1, $uid, Connection::PARAM_INT);
             $affectedRows = $statement->executeStatement();
             if ($affectedRows !== 1) {
                 throw new UnexpectedNumberOfAffectedRowsException(
@@ -143,14 +143,14 @@ final class RecordsHelper
             }
             $sqlString = $this->strReplaceFirst('= ?', '= ' . $sqlValue, $sqlString);
             if (!$simulate) {
-                $statement->bindParam($currentParam, $valueAndType['value'], (int)$valueAndType['type']);
+                $statement->bindValue($currentParam, $valueAndType['value'], (int)$valueAndType['type']);
             }
             $currentParam++;
         }
         $sqlString = $this->strReplaceFirst('= ?', '= ' . $uid, $sqlString);
         $sqlString .= ';';
         if (!$simulate) {
-            $statement->bindParam($currentParam, $uid, Connection::PARAM_INT);
+            $statement->bindValue($currentParam, $uid, Connection::PARAM_INT);
             $affectedRows = $statement->executeStatement();
             if ($affectedRows !== 1) {
                 throw new UnexpectedNumberOfAffectedRowsException(
