@@ -25,7 +25,7 @@ use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 class TtContentDeletedLocalizedParentDifferentPidTest extends FunctionalTestCase
 {
     protected array $coreExtensionsToLoad = [
-       'workspaces',
+        'workspaces',
     ];
 
     protected array $testExtensionsToLoad = [
