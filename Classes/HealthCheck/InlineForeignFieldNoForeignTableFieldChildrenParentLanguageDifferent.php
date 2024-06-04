@@ -70,12 +70,14 @@ final class InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent
             }
             $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($childTableName);
             $isTableWorkspaceAware = !empty($workspaceIdField);
+            $childTableTranslationParentField = $this->tcaHelper->getTranslationParentField($childTableName);
 
             $selectFields = [
                 'uid',
                 'pid',
                 $fieldNameOfParentTableUid,
                 $childTableLanguageField,
+                $childTableTranslationParentField,
             ];
             if ($isTableWorkspaceAware) {
                 $selectFields[] = $workspaceIdField;
@@ -98,10 +100,13 @@ final class InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent
                     // Skip parent check if child has language "-1"
                     continue;
                 }
+                $childRowTranslationParent = (int)($inlineChildRow[$childTableTranslationParentField] ?? 0);
+                if ($childRowTranslationParent > 0) {
+                    continue;
+                }
                 try {
                     $parentRow = $recordsHelper->getRecord($parentTableName, ['uid', $parentTableLanguageField], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
                     $parentRowLanguage = (int)$parentRow[$parentTableLanguageField];
-                    // @todo: We may need to think about l10n_parent field here as well?
                     if ($parentRowLanguage >= 0 && $childRowLanguage !== $parentRowLanguage) {
                         $inlineChildRow['_reasonBroken'] = 'Parent record language ' . $parentRowLanguage;
                         $inlineChildRow['_parentTableName'] = $parentTableName;

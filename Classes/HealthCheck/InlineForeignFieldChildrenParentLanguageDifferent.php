@@ -56,6 +56,7 @@ final class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHe
                 // Skip child table if it is not localizable
                 continue;
             }
+            $childTableTranslationParentField = $this->tcaHelper->getTranslationParentField($childTableName);
             $fieldNameOfParentTableName = $inlineChild['fieldNameOfParentTableName'];
             $fieldNameOfParentTableUid = $inlineChild['fieldNameOfParentTableUid'];
             $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($childTableName);
@@ -67,6 +68,7 @@ final class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHe
                 $fieldNameOfParentTableName,
                 $fieldNameOfParentTableUid,
                 $childTableLanguageField,
+                $childTableTranslationParentField,
             ];
             if ($isTableWorkspaceAware) {
                 $selectFields[] = $workspaceIdField;
@@ -100,6 +102,10 @@ final class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHe
                     // Skip parent check if child has language "-1"
                     continue;
                 }
+                $childRowTranslationParent = (int)($inlineChildRow[$childTableTranslationParentField] ?? 0);
+                if ($childRowTranslationParent > 0) {
+                    continue;
+                }
                 $parentTableName = (string)$inlineChildRow[$fieldNameOfParentTableName];
                 $parentTableLanguageField = $this->tcaHelper->getLanguageField($parentTableName);
                 if (!$parentTableLanguageField) {
@@ -109,7 +115,6 @@ final class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHe
                 try {
                     $parentRow = $recordsHelper->getRecord((string)$inlineChildRow[$fieldNameOfParentTableName], ['uid', $parentTableLanguageField], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
                     $parentRowLanguage = (int)$parentRow[$parentTableLanguageField];
-                    // @todo: We may need to think about l10n_parent field here as well?
                     if ($parentRowLanguage >= 0 && $childRowLanguage !== $parentRowLanguage) {
                         $inlineChildRow['_reasonBroken'] = 'Parent record language ' . $parentRowLanguage;
                         $inlineChildRow['_fieldNameOfParentTableName'] = $fieldNameOfParentTableName;
