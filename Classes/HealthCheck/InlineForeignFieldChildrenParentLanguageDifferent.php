@@ -37,8 +37,7 @@ final class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHe
         $io->text([
             'TCA inline foreign field child records point to a parent record. This check finds',
             'child records that have a different language than the parent record.',
-            'Affected children are soft-deleted if the table is soft-delete aware, and',
-            'hard deleted if not.',
+            'Language of affected children is set to same language as parent record.',
         ]);
     }
 
@@ -96,6 +95,11 @@ final class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHe
                     // This was handled by previous InlineForeignFieldChildrenParentMissing already.
                     continue;
                 }
+                $childRowLanguage = (int)$inlineChildRow[$childTableLanguageField];
+                if ($childRowLanguage < 0) {
+                    // Skip parent check if child has language "-1"
+                    continue;
+                }
                 $parentTableName = (string)$inlineChildRow[$fieldNameOfParentTableName];
                 $parentTableLanguageField = $this->tcaHelper->getLanguageField($parentTableName);
                 if (!$parentTableLanguageField) {
@@ -105,7 +109,6 @@ final class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHe
                 try {
                     $parentRow = $recordsHelper->getRecord((string)$inlineChildRow[$fieldNameOfParentTableName], ['uid', $parentTableLanguageField], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
                     $parentRowLanguage = (int)$parentRow[$parentTableLanguageField];
-                    $childRowLanguage = (int)$inlineChildRow[$childTableLanguageField];
                     // @todo: We may need to think about l10n_parent field here as well?
                     if ($parentRowLanguage >= 0 && $childRowLanguage !== $parentRowLanguage) {
                         $inlineChildRow['_reasonBroken'] = 'Parent record language ' . $parentRowLanguage;
@@ -126,7 +129,20 @@ final class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHe
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        $this->softOrHardDeleteRecords($io, $simulate, $affectedRecords);
+        /** @var RecordsHelper $recordsHelper */
+        $recordsHelper = $this->container->get(RecordsHelper::class);
+        foreach ($affectedRecords as $tableName => $tableRows) {
+            $languageField = $this->tcaHelper->getLanguageField($tableName);
+            foreach ($tableRows as $inlineChildRow) {
+                $updateFields = [
+                    $languageField => [
+                        'value' => $inlineChildRow['_parentRowLanguage'],
+                        'type' => Connection::PARAM_INT,
+                    ],
+                ];
+                $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$inlineChildRow['uid'], $updateFields);
+            }
+        }
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
