@@ -60,7 +60,8 @@ final class SiteLanguageDeleted extends AbstractHealthCheck implements HealthChe
         foreach ($sites as $site) {
             $sitePageIds = $this->pageRepositoryHelper->getPageIdsBySite($site);
 
-            $languageIds = [];
+            // Keep All Languages records
+            $languageIds = [-1];
             foreach ($site->getAllLanguages() as $language) {
                 $languageIds[] = $language->getLanguageId();
             }
