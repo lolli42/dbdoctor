@@ -3,4 +3,5 @@
 .idea/
 composer.json.testing
 composer.lock
-Tests/Acceptance/Support/_generated/
+config/
+var/
