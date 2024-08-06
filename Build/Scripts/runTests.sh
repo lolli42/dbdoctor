@@ -160,9 +160,9 @@ No arguments: Run all unit tests with PHP 8.1
 Options:
     -s <...>
         Specifies which test suite to run
-            - acceptance: backend acceptance tests
             - cgl: cgl test and fix all php files
             - clean: clean up build and testing related files
+            - cli: cli end-to-end tests
             - composerUpdate: "composer update", handy if host has no PHP
             - functional: functional tests
             - lint: PHP linting
@@ -171,7 +171,7 @@ Options:
             - unit (default): PHP unit tests
 
     -a <mysqli|pdo_mysql>
-        Only with -s acceptance,functional
+        Only with -s cli,functional
         Specifies to use another driver, following combinations are available:
             - mysql
                 - mysqli (default)
@@ -186,7 +186,7 @@ Options:
             - docker
 
     -d <sqlite|mariadb|mysql|postgres>
-        Only with -s acceptance,functional
+        Only with -s cli,functional
         Specifies on which DBMS tests are performed
             - sqlite: (default) use sqlite
             - mariadb: use mariadb
@@ -246,7 +246,7 @@ Options:
             - 12: Use TYPO3 core v12
 
     -x
-        Only with -s functional|unit|acceptance
+        Only with -s functional|unit|cli
         Send information to host instance for test or system under test break points. This is especially
         useful if a local PhpStorm instance is listening on default xdebug port 9003. A different port
         can be selected with -y
@@ -432,42 +432,6 @@ fi
 
 # Suite execution
 case ${TEST_SUITE} in
-    acceptance)
-        mkdir -p "${ROOT_DIR}/.Build/Web/typo3temp/var/tests/"
-        COMMAND=(./.Build/bin/codecept run Cli -d -c ./Tests/codeception.yml "$@" --html reports.html)
-        rm -rf "${ROOT_DIR}/.Build/Web/typo3temp/var/tests/acceptance" "${ROOT_DIR}/.Build/Web/typo3temp/var/tests/AcceptanceReports"
-        mkdir -p "${ROOT_DIR}/.Build/Web/typo3temp/var/tests/acceptance"
-        case ${DBMS} in
-            mariadb)
-                ${CONTAINER_BIN} run --rm ${CI_PARAMS} --name mariadb-ac-${SUFFIX} --network ${NETWORK} -d -e MYSQL_ROOT_PASSWORD=funcp --tmpfs /var/lib/mysql/:rw,noexec,nosuid ${IMAGE_MARIADB} >/dev/null
-                waitFor mariadb-ac-${SUFFIX} 3306
-                CONTAINERPARAMS="-e typo3DatabaseName=func_test -e typo3DatabaseUsername=root -e typo3DatabasePassword=funcp -e typo3DatabaseHost=mariadb-ac-${SUFFIX}"
-                ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name ac-mariadb ${XDEBUG_MODE} -e XDEBUG_CONFIG="${XDEBUG_CONFIG}" ${CONTAINERPARAMS} ${IMAGE_PHP} "${COMMAND[@]}"
-                SUITE_EXIT_CODE=$?
-                ;;
-            mysql)
-                ${CONTAINER_BIN} run --rm ${CI_PARAMS} --name mysql-ac-${SUFFIX} --network ${NETWORK} -d -e MYSQL_ROOT_PASSWORD=funcp --tmpfs /var/lib/mysql/:rw,noexec,nosuid ${IMAGE_MYSQL} >/dev/null
-                waitFor mysql-ac-${SUFFIX} 3306
-                CONTAINERPARAMS="-e typo3DatabaseName=func_test -e typo3DatabaseUsername=root -e typo3DatabasePassword=funcp -e typo3DatabaseHost=mysql-ac-${SUFFIX}"
-                ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name ac-mysql ${XDEBUG_MODE} -e XDEBUG_CONFIG="${XDEBUG_CONFIG}" ${CONTAINERPARAMS} ${IMAGE_PHP} "${COMMAND[@]}"
-                SUITE_EXIT_CODE=$?
-                ;;
-            postgres)
-                ${CONTAINER_BIN} run --rm ${CI_PARAMS} --name postgres-ac-${SUFFIX} --network ${NETWORK} -d -e POSTGRES_PASSWORD=funcp -e POSTGRES_USER=funcu --tmpfs /var/lib/postgresql/data:rw,noexec,nosuid ${IMAGE_POSTGRES} >/dev/null
-                waitFor postgres-ac-${SUFFIX} 5432
-                CONTAINERPARAMS="-e typo3DatabaseDriver=pdo_pgsql -e typo3DatabaseName=func_test -e typo3DatabaseUsername=funcu -e typo3DatabasePassword=funcp -e typo3DatabaseHost=postgres-ac-${SUFFIX}"
-                ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name ac-postgres ${XDEBUG_MODE} -e XDEBUG_CONFIG="${XDEBUG_CONFIG}" ${CONTAINERPARAMS} ${IMAGE_PHP} "${COMMAND[@]}"
-                SUITE_EXIT_CODE=$?
-                ;;
-            sqlite)
-                rm -rf "${ROOT_DIR}/.Build/Web/typo3temp/var/tests/acceptance-sqlite-dbs/"
-                mkdir -p "${ROOT_DIR}/.Build/Web/typo3temp/var/tests/acceptance-sqlite-dbs/"
-                CONTAINERPARAMS="-e typo3DatabaseDriver=pdo_sqlite"
-                ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name ac-sqlite ${XDEBUG_MODE} -e XDEBUG_CONFIG="${XDEBUG_CONFIG}" ${CONTAINERPARAMS} ${IMAGE_PHP} "${COMMAND[@]}"
-                SUITE_EXIT_CODE=$?
-                ;;
-        esac
-        ;;
     cgl)
         # Active dry-run for cgl needs not "-n" but specific options
         if [ -n "${CGLCHECK_DRY_RUN}" ]; then
@@ -478,7 +442,46 @@ case ${TEST_SUITE} in
         SUITE_EXIT_CODE=$?
         ;;
     clean)
-        rm -rf ./composer.lock ./.Build/ ./Tests/Acceptance/Support/_generated/ ./composer.json.testing
+        rm -rf ./composer.lock ./.Build/ ./composer.json.testing ./config ./var
+        ;;
+    cli)
+        COMMAND=(./.Build/bin/phpunit -c Build/FunctionalTests.xml --testsuite Cli "$@")
+        case ${DBMS} in
+            mariadb)
+                ${CONTAINER_BIN} run --rm ${CI_PARAMS} --name mariadb-func-${SUFFIX} --network ${NETWORK} -d -e MYSQL_DATABASE=func -e MYSQL_ROOT_PASSWORD=funcp --tmpfs /var/lib/mysql/:rw,noexec,nosuid ${IMAGE_MARIADB} >/dev/null
+                waitFor mariadb-func-${SUFFIX} 3306
+                SETUPCOMMAND=(./.Build/bin/typo3 setup -n --force --admin-user-password=Admin123! --server-type=other --driver=mysqli --dbname=func --username=root --password=funcp --host=mariadb-func-${SUFFIX})
+                ${CONTAINER_BIN} run --rm ${CONTAINER_COMMON_PARAMS} --name functional-setup-${SUFFIX} ${IMAGE_PHP} "${SETUPCOMMAND[@]}"
+                CONTAINERPARAMS="-e typo3DatabaseDriver=${DATABASE_DRIVER} -e typo3DatabaseName=func_test -e typo3DatabaseUsername=root -e typo3DatabaseHost=mariadb-func-${SUFFIX} -e typo3DatabasePassword=funcp"
+                ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name functional-${SUFFIX} ${XDEBUG_MODE} -e XDEBUG_CONFIG="${XDEBUG_CONFIG}" ${CONTAINERPARAMS} ${IMAGE_PHP} "${COMMAND[@]}"
+                SUITE_EXIT_CODE=$?
+                ;;
+            mysql)
+                ${CONTAINER_BIN} run --rm ${CI_PARAMS} --name mysql-func-${SUFFIX} --network ${NETWORK} -d -e MYSQL_DATABASE=func -e MYSQL_ROOT_PASSWORD=funcp --tmpfs /var/lib/mysql/:rw,noexec,nosuid ${IMAGE_MYSQL} >/dev/null
+                waitFor mysql-func-${SUFFIX} 3306
+                SETUPCOMMAND=(./.Build/bin/typo3 setup -n --force --admin-user-password=Admin123! --server-type=other --driver=mysqli --dbname=func --username=root --password=funcp --host=mysql-func-${SUFFIX})
+                ${CONTAINER_BIN} run --rm ${CONTAINER_COMMON_PARAMS} --name functional-setup-${SUFFIX} ${IMAGE_PHP} "${SETUPCOMMAND[@]}"
+                CONTAINERPARAMS="-e typo3DatabaseDriver=${DATABASE_DRIVER} -e typo3DatabaseName=func_test -e typo3DatabaseUsername=root -e typo3DatabaseHost=mysql-func-${SUFFIX} -e typo3DatabasePassword=funcp"
+                ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name functional-${SUFFIX} ${XDEBUG_MODE} -e XDEBUG_CONFIG="${XDEBUG_CONFIG}" ${CONTAINERPARAMS} ${IMAGE_PHP} "${COMMAND[@]}"
+                SUITE_EXIT_CODE=$?
+                ;;
+            postgres)
+                ${CONTAINER_BIN} run --rm ${CI_PARAMS} --name postgres-func-${SUFFIX} --network ${NETWORK} -d -e POSTGRES_PASSWORD=funcp -e POSTGRES_USER=funcu --tmpfs /var/lib/postgresql/data:rw,noexec,nosuid ${IMAGE_POSTGRES} >/dev/null
+                waitFor postgres-func-${SUFFIX} 5432
+                SETUPCOMMAND=(./.Build/bin/typo3 setup -n --force --admin-user-password=Admin123! --server-type=other --driver=postgres --dbname=funcu --username=funcu --password=funcp --host=postgres-func-${SUFFIX} --port=5432)
+                ${CONTAINER_BIN} run --rm ${CONTAINER_COMMON_PARAMS} --name functional-setup-${SUFFIX} ${IMAGE_PHP} "${SETUPCOMMAND[@]}"
+                CONTAINERPARAMS="-e typo3DatabaseDriver=pdo_pgsql -e typo3DatabaseName=bamboo -e typo3DatabaseUsername=funcu -e typo3DatabaseHost=postgres-func-${SUFFIX} -e typo3DatabasePassword=funcp"
+                ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name functional-${SUFFIX} ${XDEBUG_MODE} -e XDEBUG_CONFIG="${XDEBUG_CONFIG}" ${CONTAINERPARAMS} ${IMAGE_PHP} "${COMMAND[@]}"
+                SUITE_EXIT_CODE=$?
+                ;;
+            sqlite)
+                SETUPCOMMAND=(./.Build/bin/typo3 setup -n --force --admin-user-password=Admin123! --server-type=other --driver=sqlite)
+                ${CONTAINER_BIN} run --rm ${CONTAINER_COMMON_PARAMS} --name functional-setup-${SUFFIX} ${IMAGE_PHP} "${SETUPCOMMAND[@]}"
+                CONTAINERPARAMS="-e typo3DatabaseDriver=pdo_sqlite"
+                ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name functional-${SUFFIX} ${XDEBUG_MODE} -e XDEBUG_CONFIG="${XDEBUG_CONFIG}" ${CONTAINERPARAMS} ${IMAGE_PHP} "${COMMAND[@]}"
+                SUITE_EXIT_CODE=$?
+                ;;
+        esac
         ;;
     composerUpdate)
         cp composer.json composer.json.orig
@@ -500,10 +503,9 @@ case ${TEST_SUITE} in
         mv composer.json.orig composer.json
         ;;
     functional)
-        COMMAND=(./.Build/bin/phpunit -c Build/FunctionalTests.xml --exclude-group not-${DBMS} "$@")
+        COMMAND=(./.Build/bin/phpunit -c Build/FunctionalTests.xml --testsuite Functional --exclude-group not-${DBMS} "$@")
         case ${DBMS} in
             mariadb)
-                echo "Using driver: ${DATABASE_DRIVER}"
                 ${CONTAINER_BIN} run --rm ${CI_PARAMS} --name mariadb-func-${SUFFIX} --network ${NETWORK} -d -e MYSQL_ROOT_PASSWORD=funcp --tmpfs /var/lib/mysql/:rw,noexec,nosuid ${IMAGE_MARIADB} >/dev/null
                 waitFor mariadb-func-${SUFFIX} 3306
                 CONTAINERPARAMS="-e typo3DatabaseDriver=${DATABASE_DRIVER} -e typo3DatabaseName=func_test -e typo3DatabaseUsername=root -e typo3DatabaseHost=mariadb-func-${SUFFIX} -e typo3DatabasePassword=funcp"
@@ -511,7 +513,6 @@ case ${TEST_SUITE} in
                 SUITE_EXIT_CODE=$?
                 ;;
             mysql)
-                echo "Using driver: ${DATABASE_DRIVER}"
                 ${CONTAINER_BIN} run --rm ${CI_PARAMS} --name mysql-func-${SUFFIX} --network ${NETWORK} -d -e MYSQL_ROOT_PASSWORD=funcp --tmpfs /var/lib/mysql/:rw,noexec,nosuid ${IMAGE_MYSQL} >/dev/null
                 waitFor mysql-func-${SUFFIX} 3306
                 CONTAINERPARAMS="-e typo3DatabaseDriver=${DATABASE_DRIVER} -e typo3DatabaseName=func_test -e typo3DatabaseUsername=root -e typo3DatabaseHost=mysql-func-${SUFFIX} -e typo3DatabasePassword=funcp"
@@ -580,7 +581,7 @@ echo "##########################################################################
 echo "Result of ${TEST_SUITE}" >&2
 echo "Container runtime: ${CONTAINER_BIN}" >&2
 echo "PHP: ${PHP_VERSION}" >&2
-if [[ ${TEST_SUITE} =~ ^(functional|acceptance)$ ]]; then
+if [[ ${TEST_SUITE} =~ ^(functional|cli)$ ]]; then
     case "${DBMS}" in
         mariadb|mysql|postgres)
             echo "DBMS: ${DBMS}  version ${DBMS_VERSION}  driver ${DATABASE_DRIVER}" >&2
