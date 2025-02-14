@@ -26,16 +26,16 @@
     }
   },
   "require-dev": {
-    "bnf/phpstan-psr-container": "^1.0",
-    "friendsofphp/php-cs-fixer": "^3.52.0",
+    "bnf/phpstan-psr-container": "^1.1",
+    "friendsofphp/php-cs-fixer": "^3.68.5",
     "friendsoftypo3/phpstan-typo3": "^0.9.0",
-    "phpstan/phpstan": "^1.4.6",
-    "phpstan/phpstan-phpunit": "^1.0",
+    "phpstan/phpstan": "^1.12.18",
+    "phpstan/phpstan-phpunit": "^1.4.2",
     "phpunit/phpunit": "^9",
     "typo3/cms-impexp": "^11.5 || ^12.4",
     "typo3/cms-redirects": "^11.5 || ^12.4",
     "typo3/cms-workspaces": "^11.5 || ^12.4",
-    "typo3/testing-framework": "^7.0.2"
+    "typo3/testing-framework": "^7.1.1"
   },
   "autoload": {
     "psr-4": {
