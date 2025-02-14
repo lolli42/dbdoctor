@@ -21,7 +21,7 @@ core bug, a buggy extension, a broken deployment, and more. Long living active
 instances that were upgraded through multiple major core versions tend to end up
 with something that isn't quite right anymore.
 
-Such inconsistencies can lead to further issues. For instance if a page
+Such inconsistencies can lead to further issues. For instance, if a page
 is copied that has an orphaned localized record, the system tends to mess up
 localizations of the copied page, too. Editors then stumble and TYPO3 agencies
 have to do time-consuming debugging sessions to find out what went wrong.
@@ -33,9 +33,8 @@ and gives admins options to fix them.
 # Alternatives
 
 We're not aware of other open extensions that try to achieve the same in a similar
-systematic way. The core `lowlevel` extension comes with a couple of commands that
-try to clean up various DB state, but its codebase is rather rotten and hard to
-maintain.
+systematic way. The core `lowlevel` extension comes with a few commands that try to
+find and clean up some fishy DB state cases, but dbdoctor solves far more things.
 
 This extension is not a substitution of `lowlevel` commands (yet?), it's more an
 incubator to see if a certain strategy dealing with inconsistencies actually works
@@ -57,7 +56,7 @@ Single checks rather try to avoid memory consumption and assumed state at the co
 of more queries being executed. Queries are often performed as prepared statements
 to re-use them often in a single check. Statements are properly closed when a single
 check finished, effectively using the PHP garbage collection. All-in-all, this command
-should be  relatively quick even for big-sized instances, but it will hammer the
+should perform relatively well even with big-sized instances, but it will hammer the
 database a lot.
 
 
@@ -92,7 +91,7 @@ the TYPO3 Frontend rendering is so flexible, the actual rendered record sometime
 on specific Frontend rendering details dbdoctor can't know. In those cases, dbdoctor
 tries to guess the least amount of damage. This may not always fit real life cases.
 The only solution to deal with this is to look at single record change suggestions individually.
-The  interactive options `p`, `d` and `s` hopefully help to classify single suggested changes.
+The interactive options `p`, `d` and `s` hopefully help to classify single suggested changes.
 
 
 # Limits
