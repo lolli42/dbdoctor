@@ -14,3 +14,4 @@
 ,6,2,0,1,2,1,1,"Ok localized content on sub page 1 new ws-1"
 ,7,2,0,1,2,1,2,"Ok localized content on sub page 1 delete ws-1"
 ,8,2,0,1,2,1,4,"Ok localized content on sub page 1 move ws-1"
+,9,2,1,-1,0,0,0,"Ok content 2 on sub page 1 sys_language_uid -1"

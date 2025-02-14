@@ -18,3 +18,5 @@
 ,13,2,0,1,2,2,1,2,"Ok localized content 10 on sub page 1 delete ws-1"
 ,14,2,0,1,0,0,1,4,"Ok localized content 11 on sub page 1 move ws-1"
 ,15,2,0,1,2,2,1,4,"Ok localized content 12 on sub page 1 move ws-1"
+# having l18n_source on a sys_language_uid -1 does not make sense but is skipped - has own check
+,16,2,0,-1,2,5,0,0,"Ok content 13 on sub page 1 sys_language_uid -1"

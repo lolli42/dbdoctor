@@ -53,7 +53,7 @@ final class SysFileReferenceInvalidPid extends AbstractHealthCheck implements He
             /** @var array<string, int|string> $row */
             if ((string)$row['tablenames'] === 'pages') {
                 if ((int)$row['uid_foreign'] !== (int)$row['pid']
-                    && (int)$row['sys_language_uid'] === 0
+                    && (int)$row['sys_language_uid'] <= 0
                 ) {
                     // For sys_file_reference's attached to pages records, it's simple: "pid"
                     // and "uid_foreign" must be the same, if we're dealing with sys_language_uid=0 records

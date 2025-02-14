@@ -12,3 +12,5 @@
 # uid 6 missing - 7 and 8 should be removed
 ,7,2,1,1,6,0,"Not ok localized deleted content"
 ,8,2,1,1,6,1,"Not ok localized deleted content ws-1"
+,9,2,1,-1,0,0,"Ok content on sub page 1 sys_language_uid -1"
+,10,2,1,-1,0,1,"Ok content on sub page 1 sys_language_uid -1 ws-1"
