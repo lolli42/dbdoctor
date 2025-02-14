@@ -7,6 +7,8 @@
 ,4,1,1,3,0,0,1,1,"pages","Not Ok lang 1"
 # Should be removed
 ,5,1,1,3,0,1,1,1,"pages","Not Ok lang 1 ws-1"
+# l10n_parent > 0 does not make sence with sys_language_uid -1 - done by another check
+,6,1,-1,3,0,0,1,1,"pages","Ok pages sys_language_uid -1"
 "pages"
 ,"uid","pid","title"
 ,1,0,"page 1"

@@ -18,14 +18,18 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  */
 
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
-use Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedParentInvalidPointer;
+use Lolli\Dbdoctor\HealthCheck\TcaTablesLanguageLessThanOneHasZeroLanguageSource;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
-class TcaTablesTranslatedParentInvalidPointerTest extends FunctionalTestCase
+class TcaTablesLanguageLessThanOneHasZeroLanguageSourceTest extends FunctionalTestCase
 {
     protected array $testExtensionsToLoad = [
         'typo3conf/ext/dbdoctor',
+    ];
+
+    protected array $coreExtensionsToLoad = [
+        'workspaces',
     ];
 
     /**
@@ -33,10 +37,10 @@ class TcaTablesTranslatedParentInvalidPointerTest extends FunctionalTestCase
      */
     public function showDetails(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedParentInvalidPointerImport.csv');
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesLanguageLessThanOneHasZeroLanguageSourceImport.csv');
         $io = $this->createMock(SymfonyStyle::class);
-        /** @var TcaTablesTranslatedParentInvalidPointer $subject */
-        $subject = $this->get(TcaTablesTranslatedParentInvalidPointer::class);
+        /** @var TcaTablesLanguageLessThanOneHasZeroLanguageSource $subject */
+        $subject = $this->get(TcaTablesLanguageLessThanOneHasZeroLanguageSource::class);
         $io->expects(self::atLeastOnce())->method('warning');
         $io->expects(self::atLeastOnce())->method('ask')->willReturn('p', 'd', 'a');
         $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
@@ -47,10 +51,10 @@ class TcaTablesTranslatedParentInvalidPointerTest extends FunctionalTestCase
      */
     public function fixBrokenRecords(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedParentInvalidPointerImport.csv');
-        /** @var TcaTablesTranslatedParentInvalidPointer $subject */
-        $subject = $this->get(TcaTablesTranslatedParentInvalidPointer::class);
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesLanguageLessThanOneHasZeroLanguageSourceImport.csv');
+        /** @var TcaTablesLanguageLessThanOneHasZeroLanguageSource $subject */
+        $subject = $this->get(TcaTablesLanguageLessThanOneHasZeroLanguageSource::class);
         $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
-        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedParentInvalidPointerFixed.csv');
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesLanguageLessThanOneHasZeroLanguageSourceFixed.csv');
     }
 }

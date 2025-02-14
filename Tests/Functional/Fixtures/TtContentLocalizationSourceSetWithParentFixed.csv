@@ -13,3 +13,5 @@
 ,7,2,0,1,2,2,1,1,"Ok localized content 5 on sub page 1 new ws-1"
 ,8,2,0,1,2,2,1,2,"Ok localized content 6 on sub page 1 delete ws-1"
 ,9,2,0,1,2,2,1,4,"Ok localized content 7 on sub page 1 move ws-1"
+# having l18n_parent on a sys_language_uid -1 does not make sense but is skipped - has own check
+,10,2,0,-1,2,0,0,0,"Ok content 8 on sub page 1 sys_language_uid -1"

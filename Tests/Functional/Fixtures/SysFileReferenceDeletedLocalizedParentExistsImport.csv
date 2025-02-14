@@ -8,3 +8,5 @@
 ,4,1,1,3,0,1,1,"pages","OK pages lang 1 not deleted"
 # Should be removed
 ,6,1,1,5,1,1,1,"pages","Not Ok pages"
+# sys_language_uid -1 ignored - broken l10n_parent has own check
+,7,1,-1,5,1,1,1,"pages","Not Ok pages"
