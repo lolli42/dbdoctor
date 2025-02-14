@@ -28,3 +28,4 @@
 ,15,2,0,0,0,0,0,0,"Ok content 4 on pid 2"
 ,16,2,0,1,15,0,0,0,"Ok localized content 4 on pid 2"
 ,17,3,0,1,15,1,4,16,"Nok ok move placeholder localized content 4 on pid 3"
+,18,2,0,-1,0,0,0,0,"Ok content 5 on pid 2 sys_language_uid -1"
