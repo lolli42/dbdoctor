@@ -335,15 +335,6 @@ Localized tt_content records must have logically correct localization source
 
  [OK] No affected records found%w
 
-Scan for sys_file_reference_records with broken table_local field
------------------------------------------------------------------
-
- Class: SysFileReferenceInvalidTableLocal
- Actions: disabled
- This check is obsolete with TYPO3 core v12.
-
- [OK] No affected records found%w
-
 Scan for orphan sys_file_reference records
 ------------------------------------------
 
