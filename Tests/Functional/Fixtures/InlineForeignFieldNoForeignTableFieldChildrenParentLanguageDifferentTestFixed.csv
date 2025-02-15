@@ -5,14 +5,20 @@
 ,"uid","pid","deleted","sys_language_uid"
 ,1,1,0,0
 ,2,1,0,1
+,3,1,0,-1
 "tx_dbdoctortestsforeignfield_hotels"
 ,"uid","pid","deleted","hidden","sorting","sys_language_uid","l18n_parent","parentid","title"
 ,1,1,0,0,0,0,0,1,"Ok tt_content 1"
 ,2,1,0,0,0,1,0,2,"Ok tt_content 2"
-,3,1,0,0,0,0,0,1,"Not Ok tt_content 1"
-,4,1,0,0,0,1,0,2,"Not Ok tt_content 2"
+,3,1,1,0,0,1,0,1,"Not Ok tt_content 1"
+,4,1,1,0,0,0,0,2,"Not Ok tt_content 2"
 ,5,1,0,0,0,0,0,0,"Ok - tt_content 0 missing"
 ,6,1,1,0,0,0,0,0,"Ok - tt_content 0 missing"
+,7,1,0,0,0,-1,0,4,"Ok - parent -1, child -1"
+,8,1,0,0,0,0,0,4,"Ok - parent -1, child 0"
+,9,1,0,0,0,1,0,4,"Ok - parent -1, child 1"
+,10,1,0,0,0,-1,0,1,"Ok - parent 0, child -1"
+,11,1,1,0,0,-1,0,2,"Not Ok - parent 1, child -1"
 "sys_file"
 ,"uid","pid","identifier"
 ,1,1,"a-file.txt"

@@ -39,7 +39,8 @@ final class InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent
             'TCA inline foreign field child records point to a parent record. This check finds',
             'child records that have a different language than the parent record.',
             'This check is for inline children defined *without* foreign_table_field in TCA.',
-            'Language of affected children is set to same language as parent record.',
+            'Affected children are soft-deleted if the table is soft-delete aware, and',
+            'hard deleted if not.',
         ]);
     }
 
@@ -70,14 +71,12 @@ final class InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent
             }
             $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($childTableName);
             $isTableWorkspaceAware = !empty($workspaceIdField);
-            $childTableTranslationParentField = $this->tcaHelper->getTranslationParentField($childTableName);
 
             $selectFields = [
                 'uid',
                 'pid',
                 $fieldNameOfParentTableUid,
                 $childTableLanguageField,
-                $childTableTranslationParentField,
             ];
             if ($isTableWorkspaceAware) {
                 $selectFields[] = $workspaceIdField;
@@ -95,19 +94,15 @@ final class InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent
                 ->executeQuery();
             while ($inlineChildRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $inlineChildRow */
-                $childRowLanguage = (int)$inlineChildRow[$childTableLanguageField];
-                if ($childRowLanguage < 0) {
-                    // Skip parent check if child has language "-1"
-                    continue;
-                }
-                $childRowTranslationParent = (int)($inlineChildRow[$childTableTranslationParentField] ?? 0);
-                if ($childRowTranslationParent > 0) {
-                    continue;
-                }
                 try {
                     $parentRow = $recordsHelper->getRecord($parentTableName, ['uid', $parentTableLanguageField], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
                     $parentRowLanguage = (int)$parentRow[$parentTableLanguageField];
-                    if ($parentRowLanguage >= 0 && $childRowLanguage !== $parentRowLanguage) {
+                    $childRowLanguage = (int)$inlineChildRow[$childTableLanguageField];
+                    // @todo: We may need to think about l10n_parent field here as well?
+                    if ($parentRowLanguage >= 0 && $childRowLanguage !== $parentRowLanguage
+                        // If parent row is sys_language_uid = 0, and child row is -1, that's fine.
+                        && !($parentRowLanguage === 0 && $childRowLanguage === -1)
+                    ) {
                         $inlineChildRow['_reasonBroken'] = 'Parent record language ' . $parentRowLanguage;
                         $inlineChildRow['_parentTableName'] = $parentTableName;
                         $inlineChildRow['_fieldNameOfParentTableUid'] = $fieldNameOfParentTableUid;
@@ -126,20 +121,7 @@ final class InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
-        foreach ($affectedRecords as $tableName => $tableRows) {
-            $languageField = $this->tcaHelper->getLanguageField($tableName);
-            foreach ($tableRows as $inlineChildRow) {
-                $updateFields = [
-                    $languageField => [
-                        'value' => $inlineChildRow['_parentRowLanguage'],
-                        'type' => Connection::PARAM_INT,
-                    ],
-                ];
-                $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$inlineChildRow['uid'], $updateFields);
-            }
-        }
+        $this->softOrHardDeleteRecords($io, $simulate, $affectedRecords);
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
