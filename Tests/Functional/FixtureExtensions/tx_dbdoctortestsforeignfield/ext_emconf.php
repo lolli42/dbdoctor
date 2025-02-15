@@ -13,7 +13,7 @@ $EM_CONF['tx_dbdoctortestsforeignfield'] = [
     'author_company' => '',
     'constraints' => [
         'depends' => [
-            'typo3' => '11.5.0-12.99.99',
+            'typo3' => '12.99.99-13.99.99',
         ],
         'conflicts' => [],
         'suggests' => [],
