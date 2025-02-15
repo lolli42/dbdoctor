@@ -20,7 +20,6 @@ use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
 use Lolli\Dbdoctor\HealthCheck\SysFileReferenceDangling;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 class SysFileReferenceDanglingTest extends FunctionalTestCase
@@ -36,11 +35,7 @@ class SysFileReferenceDanglingTest extends FunctionalTestCase
     #[Test]
     public function showDetails(): void
     {
-        if ((new Typo3Version())->getMajorVersion() >= 12) {
-            $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingImport.csv');
-        } else {
-            $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingImportV11.csv');
-        }
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingImport.csv');
         $io = $this->createMock(SymfonyStyle::class);
         /** @var SysFileReferenceDangling $subject */
         $subject = $this->get(SysFileReferenceDangling::class);
@@ -52,18 +47,10 @@ class SysFileReferenceDanglingTest extends FunctionalTestCase
     #[Test]
     public function fixBrokenRecords(): void
     {
-        if ((new Typo3Version())->getMajorVersion() >= 12) {
-            $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingImport.csv');
-        } else {
-            $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingImportV11.csv');
-        }
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingImport.csv');
         /** @var SysFileReferenceDangling $subject */
         $subject = $this->get(SysFileReferenceDangling::class);
         $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
-        if ((new Typo3Version())->getMajorVersion() >= 12) {
-            $this->assertCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingFixed.csv');
-        } else {
-            $this->assertCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingFixedV11.csv');
-        }
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceDanglingFixed.csv');
     }
 }
