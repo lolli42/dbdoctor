@@ -1,5 +1,5 @@
-![tests core v11](https://github.com/lolli42/dbdoctor/actions/workflows/testscorev11.yml/badge.svg)
 ![tests core v12](https://github.com/lolli42/dbdoctor/actions/workflows/testscorev12.yml/badge.svg)
+![tests core v13](https://github.com/lolli42/dbdoctor/actions/workflows/testscorev13.yml/badge.svg)
 
 TYPO3 DB doctor
 ===============
