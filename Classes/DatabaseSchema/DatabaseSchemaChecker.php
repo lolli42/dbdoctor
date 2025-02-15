@@ -41,12 +41,12 @@ final class DatabaseSchemaChecker
             )
         );
         foreach ($databaseDifferences as $schemaDiff) {
-            if (!empty($schemaDiff->newTables)) {
+            if (!empty($schemaDiff->getCreatedTables())) {
                 // Table missing
                 return true;
             }
-            foreach ($schemaDiff->changedTables as $changedTable) {
-                if (!empty($changedTable->addedColumns)) {
+            foreach ($schemaDiff->getAlteredTables() as $changedTable) {
+                if (!empty($changedTable->getAddedColumns())) {
                     // Column missing
                     return true;
                 }
@@ -55,12 +55,13 @@ final class DatabaseSchemaChecker
                 //        This needs to be fixed in core, before the below check can
                 //        be activated as well.
                 /*
-                if (!empty($changedTable->changedColumns)) {
+                if (!empty(method_exists($changedTable, 'getChangedColumns') ? $changedTable->getChangedColumns() : $changedTable->getModifiedColumns())) {
                     // Column has to be changed
                     return true;
                 }
                 */
-                if (!empty($changedTable->addedIndexes)) {
+
+                if (!empty($changedTable->getAddedIndexes())) {
                     // Index missing
                     return true;
                 }
