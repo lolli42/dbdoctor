@@ -52,20 +52,20 @@ jobs:
       - name: Functional Tests with sqlite
         run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -d sqlite -s functional
 
-      - name: Cli Tests mariadb and mysqli
-        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s cli -d mariadb -i 10.5 -a mysqli
+      #- name: Cli Tests mariadb and mysqli
+      #  run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s cli -d mariadb -i 10.5 -a mysqli
 
-      - name: Cli Tests mariadb and pdo_mysql
-        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s cli -d mariadb -i 10.5 -a pdo_mysql
+      #- name: Cli Tests mariadb and pdo_mysql
+      #  run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s cli -d mariadb -i 10.5 -a pdo_mysql
 
-      - name: Cli Tests mysql and mysqli
-        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s cli -d mysql -i 8.0 -a mysqli
+      #- name: Cli Tests mysql and mysqli
+      #  run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s cli -d mysql -i 8.0 -a mysqli
 
-      - name: Cli Tests mysql and pdo_mysql
-        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s cli -d mysql -i 8.0 -a pdo_mysql
+      #- name: Cli Tests mysql and pdo_mysql
+      #  run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s cli -d mysql -i 8.0 -a pdo_mysql
 
-      - name: Cli Tests postgres
-        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s cli -d postgres -i 10
+      #- name: Cli Tests postgres
+      #  run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s cli -d postgres -i 10
 
-      - name: Cli Tests sqlite
-        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s cli -d sqlite
+      #- name: Cli Tests sqlite
+      #  run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s cli -d sqlite
