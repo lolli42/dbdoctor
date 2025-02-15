@@ -443,7 +443,7 @@ case ${TEST_SUITE} in
             mariadb)
                 ${CONTAINER_BIN} run --rm ${CI_PARAMS} --name mariadb-func-${SUFFIX} --network ${NETWORK} -d -e MYSQL_DATABASE=func -e MYSQL_ROOT_PASSWORD=funcp --tmpfs /var/lib/mysql/:rw,noexec,nosuid ${IMAGE_MARIADB} >/dev/null
                 waitFor mariadb-func-${SUFFIX} 3306
-                SETUPCOMMAND=(./.Build/bin/typo3 setup -n --force --admin-user-password=Admin123! --server-type=other --driver=mysqli --dbname=func --username=root --password=funcp --host=mariadb-func-${SUFFIX})
+                SETUPCOMMAND=(./.Build/bin/typo3 setup -n --force --admin-username=admin --admin-user-password='Admin123!' --admin-email='john.doe@example.com' --project-name='clitest' --server-type=other --driver=mysqli --dbname=func --username=root --password=funcp --host=mariadb-func-${SUFFIX})
                 ${CONTAINER_BIN} run --rm ${CONTAINER_COMMON_PARAMS} --name functional-setup-${SUFFIX} ${IMAGE_PHP} "${SETUPCOMMAND[@]}"
                 CONTAINERPARAMS="-e typo3DatabaseDriver=${DATABASE_DRIVER} -e typo3DatabaseName=func_test -e typo3DatabaseUsername=root -e typo3DatabaseHost=mariadb-func-${SUFFIX} -e typo3DatabasePassword=funcp"
                 ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name functional-${SUFFIX} ${XDEBUG_MODE} -e XDEBUG_CONFIG="${XDEBUG_CONFIG}" ${CONTAINERPARAMS} ${IMAGE_PHP} "${COMMAND[@]}"
@@ -452,7 +452,7 @@ case ${TEST_SUITE} in
             mysql)
                 ${CONTAINER_BIN} run --rm ${CI_PARAMS} --name mysql-func-${SUFFIX} --network ${NETWORK} -d -e MYSQL_DATABASE=func -e MYSQL_ROOT_PASSWORD=funcp --tmpfs /var/lib/mysql/:rw,noexec,nosuid ${IMAGE_MYSQL} >/dev/null
                 waitFor mysql-func-${SUFFIX} 3306
-                SETUPCOMMAND=(./.Build/bin/typo3 setup -n --force --admin-user-password=Admin123! --server-type=other --driver=mysqli --dbname=func --username=root --password=funcp --host=mysql-func-${SUFFIX})
+                SETUPCOMMAND=(./.Build/bin/typo3 setup -n --force --admin-username=admin --admin-user-password='Admin123!' --admin-email='john.doe@example.com' --project-name='clitest' --server-type=other --driver=mysqli --dbname=func --username=root --password=funcp --host=mysql-func-${SUFFIX})
                 ${CONTAINER_BIN} run --rm ${CONTAINER_COMMON_PARAMS} --name functional-setup-${SUFFIX} ${IMAGE_PHP} "${SETUPCOMMAND[@]}"
                 CONTAINERPARAMS="-e typo3DatabaseDriver=${DATABASE_DRIVER} -e typo3DatabaseName=func_test -e typo3DatabaseUsername=root -e typo3DatabaseHost=mysql-func-${SUFFIX} -e typo3DatabasePassword=funcp"
                 ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name functional-${SUFFIX} ${XDEBUG_MODE} -e XDEBUG_CONFIG="${XDEBUG_CONFIG}" ${CONTAINERPARAMS} ${IMAGE_PHP} "${COMMAND[@]}"
@@ -461,14 +461,14 @@ case ${TEST_SUITE} in
             postgres)
                 ${CONTAINER_BIN} run --rm ${CI_PARAMS} --name postgres-func-${SUFFIX} --network ${NETWORK} -d -e POSTGRES_PASSWORD=funcp -e POSTGRES_USER=funcu --tmpfs /var/lib/postgresql/data:rw,noexec,nosuid ${IMAGE_POSTGRES} >/dev/null
                 waitFor postgres-func-${SUFFIX} 5432
-                SETUPCOMMAND=(./.Build/bin/typo3 setup -n --force --admin-user-password=Admin123! --server-type=other --driver=postgres --dbname=funcu --username=funcu --password=funcp --host=postgres-func-${SUFFIX} --port=5432)
+                SETUPCOMMAND=(./.Build/bin/typo3 setup -n --force --admin-username=admin --admin-user-password='Admin123!' --admin-email='john.doe@example.com' --project-name='clitest' --server-type=other --driver=postgres --dbname=funcu --username=funcu --password=funcp --host=postgres-func-${SUFFIX} --port=5432)
                 ${CONTAINER_BIN} run --rm ${CONTAINER_COMMON_PARAMS} --name functional-setup-${SUFFIX} ${IMAGE_PHP} "${SETUPCOMMAND[@]}"
                 CONTAINERPARAMS="-e typo3DatabaseDriver=pdo_pgsql -e typo3DatabaseName=bamboo -e typo3DatabaseUsername=funcu -e typo3DatabaseHost=postgres-func-${SUFFIX} -e typo3DatabasePassword=funcp"
                 ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name functional-${SUFFIX} ${XDEBUG_MODE} -e XDEBUG_CONFIG="${XDEBUG_CONFIG}" ${CONTAINERPARAMS} ${IMAGE_PHP} "${COMMAND[@]}"
                 SUITE_EXIT_CODE=$?
                 ;;
             sqlite)
-                SETUPCOMMAND=(./.Build/bin/typo3 setup -n --force --admin-user-password=Admin123! --server-type=other --driver=sqlite)
+                SETUPCOMMAND=(./.Build/bin/typo3 setup -n --force --admin-username=admin --admin-user-password='Admin123!' --admin-email='john.doe@example.com' --project-name='clitest' --server-type=other --driver=sqlite)
                 ${CONTAINER_BIN} run --rm ${CONTAINER_COMMON_PARAMS} --name functional-setup-${SUFFIX} ${IMAGE_PHP} "${SETUPCOMMAND[@]}"
                 CONTAINERPARAMS="-e typo3DatabaseDriver=pdo_sqlite"
                 ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name functional-${SUFFIX} ${XDEBUG_MODE} -e XDEBUG_CONFIG="${XDEBUG_CONFIG}" ${CONTAINERPARAMS} ${IMAGE_PHP} "${COMMAND[@]}"
