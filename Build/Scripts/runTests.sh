@@ -124,23 +124,17 @@ handleDbmsOptions() {
 
 getPhpImageVersion() {
     case ${1} in
-        7.4)
-            echo -n "2.8"
-            ;;
-        8.0)
-            echo -n "2.8"
-            ;;
         8.1)
-            echo -n "2.12"
+            echo -n "2.13"
             ;;
         8.2)
-            echo -n "1.12"
-            ;;
-        8.3)
             echo -n "1.13"
             ;;
+        8.3)
+            echo -n "1.14"
+            ;;
         8.4)
-            echo -n "1.1"
+            echo -n "1.6"
             ;;
     esac
 }
@@ -231,13 +225,12 @@ Options:
             - 15    maintained until 2027-11-11
             - 16    maintained until 2028-11-09
 
-    -p <7.4|8.0|8.1|8.2|8.3>
+    -p <8.1|8.2|8.3|8.4>
         Specifies the PHP minor version to be used
-            - 7.4 use PHP 7.4
-            - 8.0: use PHP 8.0
             - 8.1: (default) use PHP 8.1
             - 8.2: use PHP 8.2
             - 8.3: use PHP 8.3
+            - 8.4: use PHP 8.4
 
     -t <11|12>
         Only with -s composerUpdate
@@ -329,7 +322,7 @@ while getopts ":s:a:b:d:i:p:t:e:xnhuv" OPT; do
             ;;
         p)
             PHP_VERSION=${OPTARG}
-            if ! [[ ${PHP_VERSION} =~ ^(7.4|8.0|8.1|8.2|8.3)$ ]]; then
+            if ! [[ ${PHP_VERSION} =~ ^(8.1|8.2|8.3|8.4)$ ]]; then
                 INVALID_OPTIONS+=("p ${OPTARG}")
             fi
             ;;
