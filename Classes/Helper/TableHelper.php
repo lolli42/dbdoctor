@@ -47,7 +47,7 @@ final class TableHelper
             return $this->tableExistsCache[$tableName];
         }
         $connection = $this->connectionPool->getConnectionForTable($tableName);
-        $this->tableExistsCache[$tableName] = $connection->createSchemaManager()->tablesExist($tableName);
+        $this->tableExistsCache[$tableName] = $connection->createSchemaManager()->tablesExist([$tableName]);
         return $this->tableExistsCache[$tableName];
     }
 
