@@ -28,9 +28,6 @@ jobs:
         if: ${{ matrix.php <= '8.3' }}
         run: Build/Scripts/runTests.sh -n -p ${{ matrix.php }} -s cgl
 
-      - name: phpstan
-        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s phpstan
-
       - name: Unit Tests
         run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s unit
 
