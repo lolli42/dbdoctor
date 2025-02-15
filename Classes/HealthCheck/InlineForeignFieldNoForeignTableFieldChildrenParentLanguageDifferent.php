@@ -99,7 +99,10 @@ final class InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent
                     $parentRowLanguage = (int)$parentRow[$parentTableLanguageField];
                     $childRowLanguage = (int)$inlineChildRow[$childTableLanguageField];
                     // @todo: We may need to think about l10n_parent field here as well?
-                    if ($parentRowLanguage >= 0 && $childRowLanguage !== $parentRowLanguage) {
+                    if ($parentRowLanguage >= 0 && $childRowLanguage !== $parentRowLanguage
+                        // If parent row is sys_language_uid = 0, and child row is -1, that's fine.
+                        && !($parentRowLanguage === 0 && $childRowLanguage === -1)
+                    ) {
                         $inlineChildRow['_reasonBroken'] = 'Parent record language ' . $parentRowLanguage;
                         $inlineChildRow['_parentTableName'] = $parentTableName;
                         $inlineChildRow['_fieldNameOfParentTableUid'] = $fieldNameOfParentTableUid;
