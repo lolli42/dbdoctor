@@ -29,7 +29,7 @@ class WorkspacesT3verStateNotZeroInLiveTest extends FunctionalTestCase
     ];
 
     protected array $testExtensionsToLoad = [
-        'typo3conf/ext/dbdoctor',
+        'lolli/dbdoctor',
     ];
 
     #[Test]

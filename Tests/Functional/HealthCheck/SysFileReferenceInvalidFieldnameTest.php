@@ -25,7 +25,7 @@ use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 class SysFileReferenceInvalidFieldnameTest extends FunctionalTestCase
 {
     protected array $testExtensionsToLoad = [
-        'typo3conf/ext/dbdoctor',
+        'lolli/dbdoctor',
     ];
 
     #[Test]
