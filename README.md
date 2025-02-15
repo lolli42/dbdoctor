@@ -140,12 +140,10 @@ prepare for an eventually needed disaster recovery. Do not accept dbdoctor sugge
 blindly!
 
 
-# Current status
+# Versions
 
-First releases have been done, but we're not confident enough to have a 1.0.0, yet.
-The nature of this extension is to perform potential malicious queries, so use the
-system with care. We are however using this extension for some of our customers with
-success already.
+* 0.x: TYPO3 v11 & v12
+* 1.x: TYPO3 v12 & v13
 
 
 # Installation
