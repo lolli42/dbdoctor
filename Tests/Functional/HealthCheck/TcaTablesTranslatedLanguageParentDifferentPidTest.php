@@ -29,7 +29,7 @@ class TcaTablesTranslatedLanguageParentDifferentPidTest extends FunctionalTestCa
     ];
 
     protected array $testExtensionsToLoad = [
-        'typo3conf/ext/dbdoctor',
+        'lolli/dbdoctor',
     ];
 
     #[Test]

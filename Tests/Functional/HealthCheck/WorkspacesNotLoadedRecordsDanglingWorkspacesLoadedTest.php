@@ -29,7 +29,7 @@ class WorkspacesNotLoadedRecordsDanglingWorkspacesLoadedTest extends FunctionalT
     ];
 
     protected array $testExtensionsToLoad = [
-        'typo3conf/ext/dbdoctor',
+        'lolli/dbdoctor',
     ];
 
     #[Test]
