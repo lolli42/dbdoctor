@@ -394,7 +394,7 @@ class TcaHelperTest extends UnitTestCase
     /**
      * @return iterable<array<mixed>>
      */
-    public function getNextInlineForeignFieldChildTcaTableDataProvider(): iterable
+    public static function getNextInlineForeignFieldChildTcaTableDataProvider(): iterable
     {
         yield 'empty' => [
             [],
@@ -743,7 +743,7 @@ class TcaHelperTest extends UnitTestCase
     /**
      * @return iterable<array<mixed>>
      */
-    public function getNextInlineForeignFieldNoForeignTableFieldChildTcaTableDataProvider(): iterable
+    public static function getNextInlineForeignFieldNoForeignTableFieldChildTcaTableDataProvider(): iterable
     {
         yield 'empty' => [
             [],
@@ -1041,7 +1041,7 @@ class TcaHelperTest extends UnitTestCase
     /**
      * @return array<string, array<mixed>>
      */
-    public function hasFlexFieldDataProvider(): array
+    public static function hasFlexFieldDataProvider(): array
     {
         return [
             'fieldName empty' => [
