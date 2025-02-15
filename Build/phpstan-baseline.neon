@@ -112,12 +112,6 @@ parameters:
 			message: '#^PHPDoc tag @var with type array\<string, int\|string\> is not subtype of native type mixed\.$#'
 			identifier: varTag.nativeType
 			count: 1
-			path: ../Classes/HealthCheck/SysFileReferenceInvalidTableLocal.php
-
-		-
-			message: '#^PHPDoc tag @var with type array\<string, int\|string\> is not subtype of native type mixed\.$#'
-			identifier: varTag.nativeType
-			count: 1
 			path: ../Classes/HealthCheck/SysFileReferenceLocalizedFieldSync.php
 
 		-
