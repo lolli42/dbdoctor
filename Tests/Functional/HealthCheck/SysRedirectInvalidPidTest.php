@@ -16,7 +16,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
+use PHPUnit\Framework\Attributes\Test;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
 use Lolli\Dbdoctor\HealthCheck\SysRedirectInvalidPid;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -34,9 +34,7 @@ class SysRedirectInvalidPidTest extends FunctionalTestCase
         'typo3conf/ext/dbdoctor',
     ];
 
-    /**
-     * @test
-     */
+    #[Test]
     public function showDetails(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysRedirectInvalidPidImport.csv');
@@ -48,9 +46,7 @@ class SysRedirectInvalidPidTest extends FunctionalTestCase
         $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function fixBrokenRecords(): void
     {
         $this->addSiteConfiguration(1, 'root-1', '/root-1/');

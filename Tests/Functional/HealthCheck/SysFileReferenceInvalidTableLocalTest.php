@@ -16,7 +16,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
+use PHPUnit\Framework\Attributes\Test;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
 use Lolli\Dbdoctor\HealthCheck\SysFileReferenceInvalidTableLocal;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -29,9 +29,7 @@ class SysFileReferenceInvalidTableLocalTest extends FunctionalTestCase
         'typo3conf/ext/dbdoctor',
     ];
 
-    /**
-     * @test
-     */
+    #[Test]
     public function showDetails(): void
     {
         if ((new Typo3Version())->getMajorVersion() >= 12) {
@@ -46,9 +44,7 @@ class SysFileReferenceInvalidTableLocalTest extends FunctionalTestCase
         $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function fixBrokenRecords(): void
     {
         if ((new Typo3Version())->getMajorVersion() >= 12) {

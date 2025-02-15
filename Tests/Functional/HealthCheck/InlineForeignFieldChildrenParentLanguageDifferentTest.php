@@ -16,7 +16,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
+use PHPUnit\Framework\Attributes\Test;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
 use Lolli\Dbdoctor\HealthCheck\InlineForeignFieldChildrenParentLanguageDifferent;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -28,9 +28,7 @@ class InlineForeignFieldChildrenParentLanguageDifferentTest extends FunctionalTe
         'typo3conf/ext/dbdoctor',
     ];
 
-    /**
-     * @test
-     */
+    #[Test]
     public function showDetails(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/InlineForeignFieldChildrenParentLanguageDifferentTestImport.csv');
@@ -42,9 +40,7 @@ class InlineForeignFieldChildrenParentLanguageDifferentTest extends FunctionalTe
         $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function fixBrokenRecords(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/InlineForeignFieldChildrenParentLanguageDifferentTestImport.csv');

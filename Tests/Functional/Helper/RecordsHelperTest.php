@@ -16,7 +16,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\Helper;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
+use PHPUnit\Framework\Attributes\Test;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
@@ -26,9 +26,7 @@ class RecordsHelperTest extends FunctionalTestCase
         'typo3conf/ext/dbdoctor',
     ];
 
-    /**
-     * @test
-     */
+    #[Test]
     public function getRecordThrowsExceptionWithEmptyFields(): void
     {
         $this->expectException(\RuntimeException::class);

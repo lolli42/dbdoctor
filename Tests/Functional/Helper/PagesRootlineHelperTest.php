@@ -16,7 +16,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\Helper;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
+use PHPUnit\Framework\Attributes\Test;
 use Lolli\Dbdoctor\Helper\PagesRootlineHelper;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
@@ -26,9 +26,7 @@ class PagesRootlineHelperTest extends FunctionalTestCase
         'typo3conf/ext/dbdoctor',
     ];
 
-    /**
-     * @test
-     */
+    #[Test]
     public function isInRootline(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/PagesBrokenTreeImport.csv');
@@ -45,9 +43,7 @@ class PagesRootlineHelperTest extends FunctionalTestCase
         self::assertFalse($subject->isInRootline(9));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function getRootline(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/PagesBrokenTreeImport.csv');
