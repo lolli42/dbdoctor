@@ -28,8 +28,8 @@
   "require-dev": {
     "bnf/phpstan-psr-container": "^1.1",
     "friendsofphp/php-cs-fixer": "^3.68.5",
-    "phpstan/phpstan": "^1.12.18",
-    "phpstan/phpstan-phpunit": "^1.4.2",
+    "phpstan/phpstan": "^2.1.5",
+    "phpstan/phpstan-phpunit": "^2.0.4",
     "phpunit/phpunit": "^10.5.45 || ^11.5.7",
     "typo3/cms-impexp": "^12.4 || ^13.4",
     "typo3/cms-redirects": "^12.4 || ^13.4",
