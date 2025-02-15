@@ -16,7 +16,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\Helper;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
+use PHPUnit\Framework\Attributes\Test;
 use Lolli\Dbdoctor\Helper\TableHelper;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
@@ -27,9 +27,7 @@ class TableHelperTest extends FunctionalTestCase
         'typo3conf/ext/dbdoctor',
     ];
 
-    /**
-     * @test
-     */
+    #[Test]
     public function tableExistsInDatabaseReturnTrueForExistingTable(): void
     {
         /** @var ConnectionPool $connectionPool */
@@ -37,9 +35,7 @@ class TableHelperTest extends FunctionalTestCase
         self::assertTrue((new TableHelper($connectionPool))->tableExistsInDatabase('pages'));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function tableExistsInDatabaseReturnFalseForEmptyString(): void
     {
         /** @var ConnectionPool $connectionPool */
@@ -47,9 +43,7 @@ class TableHelperTest extends FunctionalTestCase
         self::assertFalse((new TableHelper($connectionPool))->tableExistsInDatabase(''));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function tableExistsInDatabaseReturnFalseForNotExistingTable(): void
     {
         /** @var ConnectionPool $connectionPool */
@@ -57,9 +51,7 @@ class TableHelperTest extends FunctionalTestCase
         self::assertFalse((new TableHelper($connectionPool))->tableExistsInDatabase('i_do_not_exist'));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function fieldExistsInTableReturnsFalseWithEmptyTableName(): void
     {
         /** @var ConnectionPool $connectionPool */
@@ -67,9 +59,7 @@ class TableHelperTest extends FunctionalTestCase
         self::assertFalse((new TableHelper($connectionPool))->fieldExistsInTable('', 'foo'));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function fieldExistsInTableReturnsFalseWithEmptyFieldName(): void
     {
         /** @var ConnectionPool $connectionPool */
@@ -77,9 +67,7 @@ class TableHelperTest extends FunctionalTestCase
         self::assertFalse((new TableHelper($connectionPool))->fieldExistsInTable('foo', ''));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function fieldExistsInTableReturnsFalseIfTableDoesNotExist(): void
     {
         /** @var ConnectionPool $connectionPool */
@@ -87,9 +75,7 @@ class TableHelperTest extends FunctionalTestCase
         self::assertFalse((new TableHelper($connectionPool))->fieldExistsInTable('table-does-not-exist', 'uid'));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function fieldExistsInTableReturnsFalseIfFieldDoesNotExist(): void
     {
         /** @var ConnectionPool $connectionPool */
@@ -97,9 +83,7 @@ class TableHelperTest extends FunctionalTestCase
         self::assertFalse((new TableHelper($connectionPool))->fieldExistsInTable('pages', 'field-does-not-exist'));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function fieldExistsInTableReturnsTrueIfFieldDoesExist(): void
     {
         /** @var ConnectionPool $connectionPool */

@@ -16,7 +16,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
+use PHPUnit\Framework\Attributes\Test;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
 use Lolli\Dbdoctor\HealthCheck\InlineForeignFieldChildrenParentDeleted;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -33,9 +33,7 @@ class InlineForeignFieldChildrenParentDeletedTest extends FunctionalTestCase
         'typo3conf/ext/dbdoctor',
     ];
 
-    /**
-     * @test
-     */
+    #[Test]
     public function showDetails(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/InlineForeignFieldChildrenParentDeletedTestImport.csv');
@@ -47,9 +45,7 @@ class InlineForeignFieldChildrenParentDeletedTest extends FunctionalTestCase
         $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function fixBrokenRecords(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/InlineForeignFieldChildrenParentDeletedTestImport.csv');

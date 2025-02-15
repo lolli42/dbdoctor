@@ -16,7 +16,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
+use PHPUnit\Framework\Attributes\Test;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
 use Lolli\Dbdoctor\HealthCheck\TcaTablesLanguageLessThanOneHasZeroLanguageSource;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -32,9 +32,7 @@ class TcaTablesLanguageLessThanOneHasZeroLanguageSourceTest extends FunctionalTe
         'workspaces',
     ];
 
-    /**
-     * @test
-     */
+    #[Test]
     public function showDetails(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesLanguageLessThanOneHasZeroLanguageSourceImport.csv');
@@ -46,9 +44,7 @@ class TcaTablesLanguageLessThanOneHasZeroLanguageSourceTest extends FunctionalTe
         $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function fixBrokenRecords(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesLanguageLessThanOneHasZeroLanguageSourceImport.csv');
