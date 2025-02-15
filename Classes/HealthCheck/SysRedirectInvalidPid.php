@@ -27,7 +27,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * sys_redirect records should be on pid 0, or pids having a site config.
- * This was improved with v12, however, we need something for v11 as well:
+ * This was improved with v12, but well keep this:
  * sys_redirects records with deleted=0 on pages that are deleted=1 or
  * don't exist, still match! Since we have other checks that set records
  * deleted=1 if they are on pages with deleted=1, we need to move those
