@@ -1,7 +1,7 @@
 .Build/
 .cache/
 .idea/
-Build/testing-docker/.env
 composer.json.testing
 composer.lock
-Tests/Acceptance/Support/_generated/
+config/
+var/

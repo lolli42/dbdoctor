@@ -19,8 +19,11 @@
     failOnWarning="true"
 >
     <testsuites>
-        <testsuite name="Functional tests">
+        <testsuite name="Functional">
             <directory>../Tests/Functional/</directory>
+        </testsuite>
+        <testsuite name="Cli">
+            <directory suffix=".phpt">../Tests/Cli/</directory>
         </testsuite>
     </testsuites>
     <php>

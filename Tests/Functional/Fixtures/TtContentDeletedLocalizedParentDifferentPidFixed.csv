@@ -10,3 +10,5 @@
 ,3,2,0,1,2,0,"Ok localized content on sub page 1"
 ,4,2,0,1,2,1,"Ok localized content on sub page 1 ws-1"
 ,5,2,1,1,2,0,"Ok localized deleted content on sub page 1"
+,8,2,0,-1,0,0,"Ok content 2 on pid 2 sys_language_uid -1"
+,9,2,1,-1,0,0,"Ok content deleted 2 on pid 2 sys_language_uid -1"

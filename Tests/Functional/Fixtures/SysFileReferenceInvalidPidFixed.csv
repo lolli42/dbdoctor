@@ -5,6 +5,8 @@
 ,3,1,1,1,2,"pages","Ok pages lang 1"
 ,4,1,0,1,1,"tt_content","Ok tt_content"
 ,5,1,0,1,2,"tt_content","Not ok tt_content"
+,6,2,-1,1,2,"pages","Not ok pages lang -1"
+,7,1,-1,1,2,"tt_content","Not ok tt_content lang -1"
 "pages"
 ,"uid","pid","title"
 ,1,0,"page 1"

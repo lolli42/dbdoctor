@@ -4,6 +4,9 @@
 ,2,1,1,1,0,1,1,"pages","Ok pages lang 1"
 ,4,1,1,3,0,1,1,"pages","Not Ok pages"
 ,6,1,1,5,1,1,1,"pages","Not Ok pages"
+# l10n_parent > 0 does not make sence with sys_language_uid -1 - done by another check
+,7,1,-1,3,0,1,1,"pages","Ok pages sys_language_uid -1"
+,8,1,-1,5,1,1,1,"pages","Ok pages sys_language_uid -1"
 "pages"
 ,"uid","pid","title"
 ,1,0,"page 1"
