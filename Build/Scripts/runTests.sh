@@ -232,11 +232,11 @@ Options:
             - 8.3: use PHP 8.3
             - 8.4: use PHP 8.4
 
-    -t <11|12>
+    -t <12|13>
         Only with -s composerUpdate
         Specifies the TYPO3 core major version to be used
-            - 11 (default): use TYPO3 core v11
-            - 12: Use TYPO3 core v12
+            - 12 (default): use TYPO3 core v12
+            - 13: Use TYPO3 core v13
 
     -x
         Only with -s functional|unit|cli
@@ -292,7 +292,7 @@ CI_JOB_ID=${CI_JOB_ID:-}
 SUFFIX=$(echo $RANDOM)
 NETWORK="typo3-core-${SUFFIX}"
 CONTAINER_HOST="host.docker.internal"
-TYPO3_VERSION="11"
+TYPO3_VERSION="12"
 
 # Option parsing updates above default vars
 # Reset in case getopts has been used previously in the shell
@@ -328,7 +328,7 @@ while getopts ":s:a:b:d:i:p:t:e:xnhuv" OPT; do
             ;;
         t)
             TYPO3_VERSION=${OPTARG}
-            if ! [[ ${TYPO3_VERSION} =~ ^(11|12)$ ]]; then
+            if ! [[ ${TYPO3_VERSION} =~ ^(12|13)$ ]]; then
                 INVALID_OPTIONS+=("p ${OPTARG}")
             fi
             ;;
