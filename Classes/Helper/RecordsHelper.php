@@ -143,7 +143,7 @@ final class RecordsHelper
             }
             $sqlString = $this->strReplaceFirst('= ?', '= ' . $sqlValue, $sqlString);
             if (!$simulate) {
-                $statement->bindValue($currentParam, $valueAndType['value'], (int)$valueAndType['type']);
+                $statement->bindValue($currentParam, $valueAndType['value'], $valueAndType['type']);
             }
             $currentParam++;
         }
