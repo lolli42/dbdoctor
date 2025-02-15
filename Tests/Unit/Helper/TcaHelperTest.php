@@ -16,9 +16,9 @@ namespace Lolli\Dbdoctor\Tests\Unit\Helper;
  *
  * The TYPO3 project - inspiring people to share!
  */
-use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\Attributes\DataProvider;
 use Lolli\Dbdoctor\Helper\TcaHelper;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 class TcaHelperTest extends UnitTestCase

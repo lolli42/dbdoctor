@@ -16,8 +16,8 @@ namespace Lolli\Dbdoctor\Tests\Functional\Helper;
  *
  * The TYPO3 project - inspiring people to share!
  */
-use PHPUnit\Framework\Attributes\Test;
 use Lolli\Dbdoctor\Helper\PagesRootlineHelper;
+use PHPUnit\Framework\Attributes\Test;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 class PagesRootlineHelperTest extends FunctionalTestCase
