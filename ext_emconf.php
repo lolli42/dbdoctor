@@ -7,12 +7,11 @@ $EM_CONF['dbdoctor'] = [
     'version' => '0.6.3',
     'module' => '',
     'state' => 'stable',
-    'clearCacheOnLoad' => 1,
     'author' => 'Christian Kuhn',
     'author_email' => 'lolli@schwarzbu.ch',
     'constraints' => [
         'depends' => [
-            'typo3' => '11.5.0-12.99.99',
+            'typo3' => '12.99.99-13.99.99',
         ],
         'conflicts' => [
         ],

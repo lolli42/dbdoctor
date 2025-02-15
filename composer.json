@@ -13,8 +13,8 @@
     "GPL-2.0-or-later"
   ],
   "require": {
-    "php": "^7.4 || ^8.0",
-    "typo3/cms-core": "^11.5 || ^12.4"
+    "php": "^8.1",
+    "typo3/cms-core": "^12.4 || ^13.4"
   },
   "config": {
     "sort-packages": true,
@@ -32,9 +32,9 @@
     "phpstan/phpstan": "^1.12.18",
     "phpstan/phpstan-phpunit": "^1.4.2",
     "phpunit/phpunit": "^9",
-    "typo3/cms-impexp": "^11.5 || ^12.4",
-    "typo3/cms-redirects": "^11.5 || ^12.4",
-    "typo3/cms-workspaces": "^11.5 || ^12.4",
+    "typo3/cms-impexp": "^12.4 || ^13.4",
+    "typo3/cms-redirects": "^12.4 || ^13.4",
+    "typo3/cms-workspaces": "^12.4 || ^13.4",
     "typo3/testing-framework": "^7.1.1"
   },
   "autoload": {
@@ -49,7 +49,7 @@
   },
   "extra": {
     "branch-alias": {
-      "dev-main": "0.x-dev"
+      "dev-main": "1.x-dev"
     },
     "typo3/cms": {
       "app-dir": ".Build",
