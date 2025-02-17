@@ -67,7 +67,7 @@ final class TtContentPidMissing extends AbstractHealthCheck implements HealthChe
             }
             try {
                 $recordsHelper->getRecord('pages', ['uid'], (int)$row['pid']);
-            } catch (NoSuchRecordException $e) {
+            } catch (NoSuchRecordException) {
                 $affectedRows['tt_content'][] = $row;
             }
         }

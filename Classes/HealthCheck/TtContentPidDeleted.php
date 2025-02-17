@@ -24,7 +24,7 @@ use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
- * Records in tt_content must live on a pid that is not soft-deleted.
+ * Records in tt_content that are not soft-deleted must live on a pid that is not soft-deleted.
  * This check is relatively early - tt_content is most likely a top-down page->content
  * thing: If the page does not exist, that content will not be editable and most likely not shown.
  * There *may* be edge cases for tt_content records that are inline children, for example with
@@ -41,9 +41,9 @@ final class TtContentPidDeleted extends AbstractHealthCheck implements HealthChe
         $this->outputClass($io);
         $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
-            'tt_content must have a "pid" page record that is not soft-deleted. Otherwise, they are most likely',
-            'not editable. This is similar to the previous check, affected records will be soft-deleted if in',
-            'live, and removed if in workspaces.',
+            'tt_content not soft-delete must have a "pid" page record that is not soft-deleted. Otherwise, they are',
+            'most likely not editable. This is similar to the previous check, affected records will be soft-deleted',
+            'if in live, and removed if in workspaces.',
         ]);
     }
 
