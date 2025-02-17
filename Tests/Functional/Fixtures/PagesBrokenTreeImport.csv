@@ -9,3 +9,6 @@
 # uid 7 does not exist
 ,8,7,0,0,"Lost direct parent 2"
 ,9,7,0,1,"WS page Lost direct parent"
+# two pages looping each other
+,10,11,0,0,"Not Ok loop to 11"
+,11,10,0,0,"Not Ok loop to 10"

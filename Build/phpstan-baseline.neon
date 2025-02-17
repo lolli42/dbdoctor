@@ -61,9 +61,9 @@ parameters:
 			path: ../Classes/HealthCheck/InlineForeignFieldNoForeignTableFieldChildrenParentMissing.php
 
 		-
-			message: '#^PHPDoc tag @var with type array\<string, int\|string\> is not subtype of native type mixed\.$#'
-			identifier: varTag.nativeType
-			count: 1
+			message: '#^Cannot cast mixed to int\.$#'
+			identifier: cast.int
+			count: 4
 			path: ../Classes/HealthCheck/PagesBrokenTree.php
 
 		-
@@ -299,12 +299,6 @@ parameters:
 			identifier: varTag.nativeType
 			count: 1
 			path: ../Classes/HealthCheck/WorkspacesT3verStateThree.php
-
-		-
-			message: '#^Call to function is_array\(\) with array\<string, bool\|int\|string\> will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: ../Classes/Helper/PagesRootlineHelper.php
 
 		-
 			message: '#^Cannot access offset ''SYS'' on mixed\.$#'
