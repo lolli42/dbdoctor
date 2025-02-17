@@ -11,7 +11,7 @@ $EM_CONF['dbdoctor'] = [
     'author_email' => 'lolli@schwarzbu.ch',
     'constraints' => [
         'depends' => [
-            'typo3' => '12.99.99-13.99.99',
+            'typo3' => '12.4.0-13.99.99',
         ],
         'conflicts' => [
         ],
