@@ -222,9 +222,9 @@ Scan for tt_content on soft-deleted pages
 
  Class: TtContentPidDeleted
  Actions: remove
- tt_content must have a "pid" page record that is not soft-deleted. Otherwise, they are most likely
- not editable. This is similar to the previous check, affected records will be soft-deleted if in
- live, and removed if in workspaces.
+ tt_content not soft-delete must have a "pid" page record that is not soft-deleted. Otherwise, they are
+ most likely not editable. This is similar to the previous check, affected records will be soft-deleted
+ if in live, and removed if in workspaces.
 
  [OK] No affected records found%w
 
