@@ -227,8 +227,8 @@ Options:
 
     -p <8.1|8.2|8.3|8.4>
         Specifies the PHP minor version to be used
-            - 8.1: (default) use PHP 8.1
-            - 8.2: use PHP 8.2
+            - 8.1: use PHP 8.1
+            - 8.2: (default) use PHP 8.2
             - 8.3: use PHP 8.3
             - 8.4: use PHP 8.4
 
@@ -278,7 +278,7 @@ ROOT_DIR="${PWD}"
 TEST_SUITE="unit"
 DBMS="sqlite"
 DBMS_VERSION=""
-PHP_VERSION="8.1"
+PHP_VERSION="8.2"
 PHP_XDEBUG_ON=0
 CGLCHECK_DRY_RUN=""
 DATABASE_DRIVER=""
