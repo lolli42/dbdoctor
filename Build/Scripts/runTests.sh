@@ -329,7 +329,10 @@ while getopts ":s:a:b:d:i:p:t:e:xnhuv" OPT; do
         t)
             TYPO3_VERSION=${OPTARG}
             if ! [[ ${TYPO3_VERSION} =~ ^(12|13)$ ]]; then
-                INVALID_OPTIONS+=("p ${OPTARG}")
+                INVALID_OPTIONS+=("t ${OPTARG}")
+            fi
+            if [[ (${TYPO3_VERSION} == "13" && ${PHP_VERSION} == "8.1") ]]; then
+                INVALID_OPTIONS+=("t ${OPTARG} with -p 8.1")
             fi
             ;;
         x)
@@ -478,16 +481,18 @@ case ${TEST_SUITE} in
         ;;
     composerUpdate)
         cp composer.json composer.json.orig
-        if [ ${TYPO3_VERSION} -eq 11 ]; then
-            COMMAND=(composer req --dev --no-update --no-interaction typo3/cms-composer-installers:^3.0 typo3/cms-workspaces:^11.5 typo3/cms-impexp:^11.5 typo3/cms-redirects:^11.5 "$@")
-            ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-update-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
-            COMMAND=(composer req --no-update --no-interaction typo3/cms-core:^11.5 "$@")
-            ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-update-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
-        fi
         if [ ${TYPO3_VERSION} -eq 12 ]; then
             COMMAND=(composer req --dev --no-update --no-interaction typo3/cms-composer-installers:^5.0 typo3/cms-workspaces:^12.4 typo3/cms-impexp:^12.4 typo3/cms-redirects:^12.4 "$@")
             ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-update-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
             COMMAND=(composer req --no-update --no-interaction typo3/cms-core:^12.4 "$@")
+            ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-update-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
+        fi
+        if [ ${TYPO3_VERSION} -eq 13 ]; then
+            COMMAND=(composer req --dev --no-update --no-interaction typo3/cms-composer-installers:^5.0 typo3/cms-workspaces:^13.4 typo3/cms-impexp:^13.4 typo3/cms-redirects:^13.4 "$@")
+            ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-update-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
+            COMMAND=(composer rm --no-update --no-interaction --dev typo3/cms-install "$@")
+            ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-update-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
+            COMMAND=(composer req --no-update --no-interaction typo3/cms-core:^13.4 typo3/cms-install:^13.4 "$@")
             ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-update-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
         fi
         COMMAND=(composer update --no-progress --no-interaction "$@")
