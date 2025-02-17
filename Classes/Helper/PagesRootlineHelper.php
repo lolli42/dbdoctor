@@ -35,21 +35,6 @@ final class PagesRootlineHelper
         $this->recordsHelper = $recordsHelper;
     }
 
-    public function isInRootline(int $uid): bool
-    {
-        if ($uid === 0) {
-            return true;
-        }
-        $rootline = $this->getRootline($uid);
-        if (!empty($rootline)
-            && is_array($rootline[0])
-            && ($rootline[0]['uid'] ?? false) === 0
-        ) {
-            return true;
-        }
-        return false;
-    }
-
     /**
      * @param array<int, array<string, int|string|bool>> $rootline
      * @return array<int, array<string, int|string|bool>>
@@ -71,11 +56,10 @@ final class PagesRootlineHelper
             $currentPage = $this->getPage($uid);
             $upperPid = (int)$currentPage['pid'];
             if (in_array($upperPid, array_column($rootline, 'pid'))) {
-                // @todo: potential health check: 'pages' should not create recursion loops.
-                throw new \RuntimeException(
-                    sprintf('Not handled pages rootline loop with uid:"%s" and pid:"%s"', $currentPage['uid'], $upperPid),
-                    1710204250
-                );
+                // Page loops (page uid 1 having pid 2, uid 2 having 1) are found and
+                // fixed by PagesBrokenTree. To not fail here or run into endless loop,
+                // we break this situation and return pages not connected to 0 as rootline.
+                return $rootline;
             }
             array_unshift($rootline, $currentPage);
             return $this->getRootline($upperPid, $rootline);
@@ -105,7 +89,7 @@ final class PagesRootlineHelper
         }
         try {
             $currentPage = $this->recordsHelper->getRecord('pages', ['uid', 'pid', 'deleted', 't3ver_wsid', 'title'], $uid);
-        } catch (NoSuchRecordException $e) {
+        } catch (NoSuchRecordException) {
             throw new NoSuchPageException('record with uid "' . $uid . '" in table "pages" not found', 1646121409);
         }
         $currentPage['_isMissing'] = false;
