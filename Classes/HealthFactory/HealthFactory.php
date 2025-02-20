@@ -39,9 +39,11 @@ final class HealthFactory implements HealthFactoryInterface
         HealthCheck\TcaTablesLanguageLessThanOneHasZeroLanguageParent::class,
         HealthCheck\TcaTablesLanguageLessThanOneHasZeroLanguageSource::class,
         HealthCheck\PagesBrokenTree::class,
+        HealthCheck\PagesTranslatedLanguageParentSelf::class,
         HealthCheck\PagesTranslatedLanguageParentMissing::class,
         HealthCheck\PagesTranslatedLanguageParentDeleted::class,
         HealthCheck\PagesTranslatedLanguageParentDifferentPid::class,
+        HealthCheck\TcaTablesTranslatedParentSelf::class,
         // This one is relatively early since it is rather safe and prevents loops on checks below.
         HealthCheck\TcaTablesTranslatedParentInvalidPointer::class,
         HealthCheck\TtContentPidMissing::class,

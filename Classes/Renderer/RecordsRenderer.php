@@ -37,7 +37,7 @@ final class RecordsRenderer
     public function __construct(
         private readonly RecordsHelper $recordsHelper,
         private readonly TcaHelper $tcaHelper,
-        private readonly TableHelper $tableHelper
+        private readonly TableHelper $tableHelper,
     ) {}
 
     /**

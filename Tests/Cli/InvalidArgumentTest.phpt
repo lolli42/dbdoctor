@@ -156,6 +156,19 @@ Check page tree integrity
 
  [OK] No affected records found%w
 
+Check localized pages having language parent set to self
+--------------------------------------------------------
+
+ Class: PagesTranslatedLanguageParentSelf
+ Actions: soft-delete, workspace-remove
+ This health check finds not deleted but localized (sys_language_uid > 0) "pages" records
+ having their own uid set as their localization parent (l10n_parent = uid).
+ This is invalid, such page records are not listed in the BE list module and the Frontend
+ will most likely not render such pages.
+ They are soft-deleted in live and removed if they are workspace overlay records.
+
+ [OK] No affected records found%w
+
 Check pages with missing language parent
 ----------------------------------------
 
@@ -187,6 +200,21 @@ Check pages with different pid than their language parent
  This health check finds translated "pages" records (sys_language_uid > 0) with
  their default language record (l10n_parent field) on a different pid.
  Those translated pages are shown in backend at a wrong place. They are removed.
+
+ [OK] No affected records found%w
+
+Scan for record translations pointing to self
+---------------------------------------------
+
+ Class: TcaTablesTranslatedParentSelf
+ Actions: update-fields, workspace-remove, risky
+ Record translations ("translate" / "connected" mode, as opposed to "free" mode) use the
+ database field "transOrigPointerField" (field name usually "l10n_parent" or "l18n_parent").
+ This field should point to the default language record. This health check scans for not
+ soft-deleted and localized records that point to their own uid in "transOrigPointerField".
+ They are soft-deleted in live and removed if they are workspace overlay records.
+ This change is considered risky since depending on configuration, such records may still be
+ shown in the Frontend and will disappear when deleted.
 
  [OK] No affected records found%w
 

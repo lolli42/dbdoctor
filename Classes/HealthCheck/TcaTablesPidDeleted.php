@@ -51,7 +51,7 @@ final class TcaTablesPidDeleted extends AbstractHealthCheck implements HealthChe
             $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
             $isTableWorkspaceAware = !empty($workspaceIdField);
             $tableDeleteField = $this->tcaHelper->getDeletedField($tableName);
-            $itTableSoftDeleteAware = !empty($tableDeleteField);
+            $isTableSoftDeleteAware = !empty($tableDeleteField);
             $selectFields = ['uid', 'pid'];
             if ($isTableWorkspaceAware) {
                 $selectFields[] = $workspaceIdField;
@@ -62,7 +62,7 @@ final class TcaTablesPidDeleted extends AbstractHealthCheck implements HealthChe
             $queryBuilder->select(...$selectFields)->from($tableName)->orderBy('uid');
             $queryBuilder->where($queryBuilder->expr()->gt('pid', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)));
 
-            if ($itTableSoftDeleteAware) {
+            if ($isTableSoftDeleteAware) {
                 // Do not consider deleted records: Records pointing to a not-existing page have been
                 // caught before, we want to find non-deleted records pointing to deleted pages.
                 // Still, TCA tables without soft-delete, must point to not-deleted pages.

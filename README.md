@@ -86,7 +86,7 @@ For example, when there are *two* localizations for a default language record in
 language, dbdoctor detects this as invalid and suggests to set one of them to `deleted=1`. From
 the two records, it will try to set the one deleted that is typically *not* rendered in Frontend.
 
-This general strategy isn't always as simple as with the above example, tough: Since
+This general strategy isn't always as simple as with the above example, though: Since
 the TYPO3 Frontend rendering is so flexible, the actual rendered record sometimes depends
 on specific Frontend rendering details dbdoctor can't know. In those cases, dbdoctor
 tries to guess the least amount of damage. This may not always fit real life cases.

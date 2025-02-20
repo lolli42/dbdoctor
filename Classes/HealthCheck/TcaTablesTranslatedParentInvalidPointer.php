@@ -71,7 +71,11 @@ final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck 
                     // localized records
                     $queryBuilder->expr()->gt($languageField, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
                     // in 'connected' mode
-                    $queryBuilder->expr()->gt($translationParentField, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT))
+                    $queryBuilder->expr()->gt($translationParentField, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
+                    // does not point to itself. This is a sanitation for this check and should have been fixed by
+                    // PagesTranslatedLanguageParentSelf and TcaTablesTranslatedParentSelf already, but could pop
+                    // up here again if the check is run multiple times.
+                    $queryBuilder->expr()->neq($tableName . '.uid', $tableName . '.' . $translationParentField)
                 )
                 ->orderBy('uid')
                 ->executeQuery();
@@ -80,7 +84,10 @@ final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck 
                 /** @var array<string, int|string> $localizedRow */
                 try {
                     $parentRow = $recordsHelper->getRecord($tableName, $parentRowFields, (int)$localizedRow[$translationParentField]);
-                    if ((int)$parentRow[$languageField] !== 0) {
+                    if ((int)$parentRow[$languageField] !== 0
+                        // Skip record if the parent row has l10n_parent=uid
+                        && (int)$parentRow[$translationParentField] !== (int)$parentRow['uid']
+                    ) {
                         $affectedRows[$tableName][] = $localizedRow;
                     }
                 } catch (NoSuchRecordException $e) {
