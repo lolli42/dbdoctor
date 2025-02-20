@@ -21,13 +21,9 @@ use Lolli\Dbdoctor\Helper\PagesRootlineHelper;
 
 final class AffectedPagesRenderer
 {
-    private PagesRootlineHelper $pagesRootlineHelper;
-
     public function __construct(
-        PagesRootlineHelper $pagesRootlineHelper
-    ) {
-        $this->pagesRootlineHelper = $pagesRootlineHelper;
-    }
+        private readonly PagesRootlineHelper $pagesRootlineHelper,
+    ) {}
 
     /**
      * @param array<string, array<int, array<string, int|string>>> $tableRecordRows

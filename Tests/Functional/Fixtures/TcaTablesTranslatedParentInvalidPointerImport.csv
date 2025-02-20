@@ -12,6 +12,10 @@
 ,6,2,0,2,4,0,"No ok content on sub page 1 translated"
 # ignored here l18n_parent>0 does not make sense on sys_language_uid -1 record - has own check
 ,7,2,0,-1,4,0,"Ok content on sub page 1 sys_language_uid -1"
+# skipped since it points to itself
+,8,1,0,1,8,0,"Ok lang 1 pointing to itself"
+# skipped since it points to a record that has l18n_parent=uid
+,9,1,0,2,8,0,"Ok lang 1 pointing to broken 8"
 "sys_file_reference"
 ,"uid","pid","sys_language_uid","l10n_parent","deleted","uid_local","uid_foreign","tablenames","title"
 ,1,1,0,0,0,1,1,"pages","Ok pages lang 0"
