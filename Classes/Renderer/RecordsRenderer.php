@@ -34,19 +34,11 @@ final class RecordsRenderer
      */
     private array $workspaceCache = [];
 
-    private RecordsHelper $recordsHelper;
-    private TcaHelper $tcaHelper;
-    private TableHelper $tableHelper;
-
     public function __construct(
-        RecordsHelper $recordsHelper,
-        TcaHelper $tcaHelper,
-        TableHelper $tableHelper
-    ) {
-        $this->recordsHelper = $recordsHelper;
-        $this->tcaHelper = $tcaHelper;
-        $this->tableHelper = $tableHelper;
-    }
+        private readonly RecordsHelper $recordsHelper,
+        private readonly TcaHelper $tcaHelper,
+        private readonly TableHelper $tableHelper
+    ) {}
 
     /**
      * @param array<int, string> $extraCtrlFields
@@ -132,8 +124,7 @@ final class RecordsRenderer
         $fields = $this->addField($fields, $this->tcaHelper->getTranslationSourceField($tableName));
         $fields = $this->addField($fields, $this->tcaHelper->getWorkspaceIdField($tableName));
         $fields = $this->addField($fields, $this->tcaHelper->getTypeField($tableName));
-        $fields = $this->addFields($fields, $this->tcaHelper->getLabelFields($tableName));
-        return $fields;
+        return $this->addFields($fields, $this->tcaHelper->getLabelFields($tableName));
     }
 
     /**
@@ -192,10 +183,12 @@ final class RecordsRenderer
             if ($crUserUid > 0) {
                 if (!($this->crUserCache[$crUserUid] ?? false)) {
                     try {
+                        // Not checking TCA ctrl for be_users soft-delete-awareness here:
+                        // Hopefully nobody unsets this, and it is likely core would stumble on this, too.
                         $user = $this->recordsHelper->getRecord('be_users', ['username', 'deleted'], $crUserUid);
                         $deletedString = $user['deleted'] ? '|<info>deleted</info>' : '';
                         $crUserString = '[' . $crUserUid . $deletedString . ']' . $user['username'];
-                    } catch (NoSuchRecordException $e) {
+                    } catch (NoSuchRecordException) {
                         $crUserString = '[' . $crUserUid . '|<comment>missing</comment>]';
                     }
                     $this->crUserCache[$crUserUid] = $crUserString;
@@ -220,12 +213,14 @@ final class RecordsRenderer
             if ($workspaceUid > 0) {
                 if (!($this->workspaceCache[$workspaceUid] ?? false)) {
                     try {
+                        // Not checking TCA ctrl for sys_workspace soft-delete-awareness here:
+                        // Hopefully nobody unsets this, and it is likely core would stumble on this, too.
                         $workspace = $this->recordsHelper->getRecord('sys_workspace', ['title', 'deleted'], $workspaceUid);
                         $deletedString = $workspace['deleted'] ? '|<info>deleted</info>' : '';
                         $workspaceString = '[' . $workspaceUid . $deletedString . ']' . $workspace['title'];
-                    } catch (NoSuchRecordException $e) {
+                    } catch (NoSuchRecordException) {
                         $workspaceString = '[' . $workspaceUid . '|<comment>missing</comment>]';
-                    } catch (NoSuchTableException $e) {
+                    } catch (NoSuchTableException) {
                         $workspaceString = '[' . $workspaceUid . '|<comment>no sys_workspace table</comment>]';
                     }
                     $this->workspaceCache[$workspaceUid] = $workspaceString;
@@ -250,13 +245,18 @@ final class RecordsRenderer
             if ($parentUid === 0) {
                 $row[$translationParentField] = '0';
             } else {
-                try {
-                    $parentRecord = $this->recordsHelper->getRecord($tableName, ['deleted'], $parentUid);
-                    if ((bool)$parentRecord['deleted']) {
-                        $row[$translationParentField] = '[' . $parentUid . '|<info>deleted</info>]';
-                    }
-                } catch (NoSuchRecordException $e) {
+                $deletedField = $this->tcaHelper->getDeletedField($tableName);
+                if ($deletedField === null) {
                     $row[$translationParentField] = '[' . $parentUid . '|<comment>missing</comment>]';
+                } else {
+                    try {
+                        $parentRecord = $this->recordsHelper->getRecord($tableName, [$deletedField], $parentUid);
+                        if ($parentRecord[$deletedField]) {
+                            $row[$translationParentField] = '[' . $parentUid . '|<info>deleted</info>]';
+                        }
+                    } catch (NoSuchRecordException) {
+                        $row[$translationParentField] = '[' . $parentUid . '|<comment>missing</comment>]';
+                    }
                 }
             }
         }
@@ -275,13 +275,18 @@ final class RecordsRenderer
             if ($parentUid === 0) {
                 $row[$translationSourceField] = '0';
             } else {
-                try {
-                    $parentRecord = $this->recordsHelper->getRecord($tableName, ['deleted'], $parentUid);
-                    if ((bool)$parentRecord['deleted']) {
-                        $row[$translationSourceField] = '[' . $parentUid . '|<info>deleted</info>]';
-                    }
-                } catch (NoSuchRecordException $e) {
+                $deletedField = $this->tcaHelper->getDeletedField($tableName);
+                if ($deletedField === null) {
                     $row[$translationSourceField] = '[' . $parentUid . '|<comment>missing</comment>]';
+                } else {
+                    try {
+                        $parentRecord = $this->recordsHelper->getRecord($tableName, [$deletedField], $parentUid);
+                        if ($parentRecord[$deletedField]) {
+                            $row[$translationSourceField] = '[' . $parentUid . '|<info>deleted</info>]';
+                        }
+                    } catch (NoSuchRecordException) {
+                        $row[$translationSourceField] = '[' . $parentUid . '|<comment>missing</comment>]';
+                    }
                 }
             }
         }
@@ -298,11 +303,13 @@ final class RecordsRenderer
         ) {
             $pagesUid = (int)$row['pid'];
             try {
+                // Not checking TCA ctrl for pages soft-delete-awareness here:
+                // Hopefully nobody unsets this, and it is likely core would stumble on this, too.
                 $pagesRecord = $this->recordsHelper->getRecord('pages', ['uid', 'deleted'], $pagesUid);
-                if ((bool)$pagesRecord['deleted']) {
+                if ($pagesRecord['deleted']) {
                     $row['pid'] = '[' . $pagesUid . '|<info>deleted</info>]';
                 }
-            } catch (NoSuchRecordException $e) {
+            } catch (NoSuchRecordException) {
                 $row['pid'] = '[' . $pagesUid . '|<comment>missing</comment>]';
             }
         }
@@ -313,7 +320,7 @@ final class RecordsRenderer
     {
         try {
             $this->recordsHelper->getRecord($tableName, ['uid'], $uid);
-        } catch (NoSuchRecordException $e) {
+        } catch (NoSuchRecordException) {
             return '[<comment>missing</comment>]' . $uid;
         }
         return (string)$uid;
