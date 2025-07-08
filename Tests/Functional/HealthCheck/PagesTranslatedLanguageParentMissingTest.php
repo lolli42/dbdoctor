@@ -19,18 +19,17 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
 
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
 use Lolli\Dbdoctor\HealthCheck\PagesTranslatedLanguageParentMissing;
+use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
-class PagesTranslatedLanguageParentTestMissing extends FunctionalTestCase
+class PagesTranslatedLanguageParentMissingTest extends FunctionalTestCase
 {
     protected array $testExtensionsToLoad = [
         'lolli/dbdoctor',
     ];
 
-    /**
-     * @test
-     */
+    #[Test]
     public function showDetails(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/PagesTranslatedLanguageParentMissingImport.csv');
@@ -42,9 +41,7 @@ class PagesTranslatedLanguageParentTestMissing extends FunctionalTestCase
         $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function fixBrokenRecords(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/PagesTranslatedLanguageParentMissingImport.csv');
