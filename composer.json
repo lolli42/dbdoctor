@@ -30,7 +30,7 @@
     "friendsofphp/php-cs-fixer": "^3.68.5",
     "phpstan/phpstan": "^2.1.7",
     "phpstan/phpstan-phpunit": "^2.0.4",
-    "phpunit/phpunit": "^10.5.45 || ^11.5.7",
+    "phpunit/phpunit": "^10.5.47 || ^11.5.26 || ^12.2.6",
     "typo3/cms-impexp": "^12.4 || ^13.4",
     "typo3/cms-install": "^12.4 || ^13.4",
     "typo3/cms-redirects": "^12.4 || ^13.4",
