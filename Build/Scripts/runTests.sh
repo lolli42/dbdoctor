@@ -136,6 +136,9 @@ getPhpImageVersion() {
         8.4)
             echo -n "1.6"
             ;;
+        8.5)
+            echo -n "1.0"
+            ;;
     esac
 }
 
@@ -231,6 +234,7 @@ Options:
             - 8.2: (default) use PHP 8.2
             - 8.3: use PHP 8.3
             - 8.4: use PHP 8.4
+            - 8.5: use PHP 8.5
 
     -t <12|13>
         Only with -s composerUpdate
@@ -322,7 +326,7 @@ while getopts ":s:a:b:d:i:p:t:e:xnhuv" OPT; do
             ;;
         p)
             PHP_VERSION=${OPTARG}
-            if ! [[ ${PHP_VERSION} =~ ^(8.1|8.2|8.3|8.4)$ ]]; then
+            if ! [[ ${PHP_VERSION} =~ ^(8.1|8.2|8.3|8.4|8.5)$ ]]; then
                 INVALID_OPTIONS+=("p ${OPTARG}")
             fi
             ;;
