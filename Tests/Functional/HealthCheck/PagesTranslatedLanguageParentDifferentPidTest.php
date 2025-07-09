@@ -24,6 +24,10 @@ use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 class PagesTranslatedLanguageParentDifferentPidTest extends FunctionalTestCase
 {
+    protected array $coreExtensionsToLoad = [
+        'workspaces',
+    ];
+
     protected array $testExtensionsToLoad = [
         'lolli/dbdoctor',
     ];
