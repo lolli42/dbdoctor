@@ -67,6 +67,7 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
             ];
             if ($isTableWorkspaceAware) {
                 $selectFields[] = $workspaceIdField;
+                $selectFields[] = 't3ver_state';
             }
 
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
@@ -86,7 +87,12 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
                 /** @var array<string, int|string> $localizedRow */
                 try {
                     $parentRow = $recordsHelper->getRecord($tableName, ['uid', 'pid'], (int)$localizedRow[$translationParentField]);
-                    if ((int)$parentRow['pid'] !== (int)$localizedRow['pid']) {
+                    if ((int)$parentRow['pid'] !== (int)$localizedRow['pid']
+                        // Ignore "workspace moved" translations due to the odd l10n_parent behavior, as
+                        // shown with the tests from https://review.typo3.org/c/Packages/TYPO3.CMS/+/89803
+                        // @todo: This could be optimized when the underlying core question has been decided.
+                        && (!$isTableWorkspaceAware || !((int)$localizedRow[$workspaceIdField] > 0 && (int)$localizedRow['t3ver_state'] === 4))
+                    ) {
                         $affectedRows[$tableName][] = $localizedRow;
                     }
                 } catch (NoSuchRecordException $e) {

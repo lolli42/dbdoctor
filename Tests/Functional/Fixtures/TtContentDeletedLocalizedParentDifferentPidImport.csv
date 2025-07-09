@@ -12,6 +12,7 @@
 ,5,2,1,1,2,0,"Ok localized deleted content on sub page 1"
 # parent is on pid 2 - 6 and 7 should be removed
 ,6,3,1,1,2,0,"Not ok localized deleted content"
+# should not exist at this point anymore since it should have been removed by WorkspacesSoftDeletedRecords already
 ,7,3,1,1,2,1,"Not ok localized deleted content ws-1"
 ,8,2,0,-1,0,0,"Ok content 2 on pid 2 sys_language_uid -1"
 ,9,2,1,-1,0,0,"Ok content deleted 2 on pid 2 sys_language_uid -1"

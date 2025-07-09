@@ -45,7 +45,7 @@ final class PagesTranslatedLanguageParentDifferentPid extends AbstractHealthChec
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         // Deleted pages are considered as well, we remove all restrictions.
         $queryBuilder->getRestrictions()->removeAll();
-        $result = $queryBuilder->select('uid', 'pid', 'l10n_parent', 'sys_language_uid')
+        $result = $queryBuilder->select('uid', 'pid', 't3ver_wsid', 't3ver_state', 'l10n_parent', 'sys_language_uid')
             ->from('pages')
             ->where($queryBuilder->expr()->gt('sys_language_uid', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)))
             ->orderBy('uid')
@@ -56,7 +56,12 @@ final class PagesTranslatedLanguageParentDifferentPid extends AbstractHealthChec
             try {
                 /** @var array<string, int|string> $languageParentRow */
                 $languageParentRow = $recordsHelper->getRecord('pages', ['uid', 'pid'], (int)$row['l10n_parent']);
-                if ((int)$row['pid'] !== (int)$languageParentRow['pid']) {
+                if ((int)$row['pid'] !== (int)$languageParentRow['pid']
+                    // Ignore "workspace moved" translations due to the odd l10n_parent behavior, as
+                    // shown with the tests from https://review.typo3.org/c/Packages/TYPO3.CMS/+/89803
+                    // @todo: This could be optimized when the underlying core question has been decided.
+                    && !((int)$row['t3ver_wsid'] > 0 && (int)$row['t3ver_state'] === 4)
+                ) {
                     $affectedRecords['pages'][] = $row;
                 }
             } catch (NoSuchRecordException $e) {
