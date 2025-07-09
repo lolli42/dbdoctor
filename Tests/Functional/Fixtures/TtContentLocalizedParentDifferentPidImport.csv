@@ -24,8 +24,17 @@
 ,12,2,0,1,11,0,0,0,"Ok localized content 3 on pid 2"
 ,13,3,0,0,0,1,4,11,"Ok moved placeholder content 3 to pid 3"
 ,14,3,0,1,11,1,2,12,"Not ok delete placeholder localized content 3 on pid 3"
-# move placeholder detail - 18 should be removed
+# move placeholder detail - 17 should be removed. It currently is not since it
+# collides with the scenario below. This could be fine tuned. The difference is
+# that the scenario below is ok since 22 is a moved default language record overlay
+# while 17 is moved without having a default language overlay.
+# @todo: We may want to handle move details in dedicated checks when the core issue pointed out by #106935 has been sorted out.
 ,15,2,0,0,0,0,0,0,"Ok content 4 on pid 2"
 ,16,2,0,1,15,0,0,0,"Ok localized content 4 on pid 2"
 ,17,3,0,1,15,1,4,16,"Nok ok move placeholder localized content 4 on pid 3"
 ,18,2,0,-1,0,0,0,0,"Ok content 5 on pid 2 sys_language_uid -1"
+# move placeholder detail ok - localization has been changed in workspaces then default lang record has been moved in workspaces - see core issue #106935
+,19,2,0,0,0,0,0,0,"Content 6 for sub page 1"
+,20,2,0,1,19,0,0,0,"Content 6 localized for sub page 1"
+,21,3,0,1,19,1,4,20,"Content 6 localized changed then moved for sub page 1"
+,22,3,0,0,0,1,4,19,"Content 6 changed then moved for sub page 1"

@@ -64,7 +64,12 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
             /** @var array<string, int|string> $row */
             try {
                 $languageParent = $recordsHelper->getRecord('tt_content', ['uid', 'pid'], (int)$row['l18n_parent']);
-                if ((int)$row['pid'] !== (int)$languageParent['pid']) {
+                if ((int)$row['pid'] !== (int)$languageParent['pid']
+                    // Ignore "workspace moved" translations due to the odd l10n_parent behavior, as
+                    // shown with the tests from https://review.typo3.org/c/Packages/TYPO3.CMS/+/89803
+                    // @todo: This could be optimized when the underlying core question has been decided.
+                    && !((int)$row['t3ver_wsid'] > 0 && (int)$row['t3ver_state'] === 4)
+                ) {
                     $affectedRows['tt_content'][] = $row;
                 }
             } catch (NoSuchRecordException|NoSuchTableException $e) {
