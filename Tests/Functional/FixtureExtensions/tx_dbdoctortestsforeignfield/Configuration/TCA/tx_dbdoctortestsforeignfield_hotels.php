@@ -65,10 +65,7 @@ return [
         ],
     ],
     'types' => [
-        '0' => ['showitem' =>
-            '--div--;General, title,' .
-            '--div--;Visibility, sys_language_uid, l18n_parent, hidden',
-        ],
+        '0' => ['showitem' => '--div--;General, title,--div--;Visibility, sys_language_uid, l18n_parent, hidden'],
     ],
     'palettes' => [
         '1' => ['showitem' => ''],

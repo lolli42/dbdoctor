@@ -102,10 +102,10 @@ final class HealthCommand extends Command
 
         if ($mode === HealthCheckInterface::MODE_EXECUTE && empty($file)) {
             $io->error(
-                'Option "--file" with valid file path is mandatory when using "--mode execute". ' .
-                'The file must be an absolute path and the file must not exist yet. This means ' .
-                'you need some unique filename when executed, for instance by having some date ' .
-                'within the filename.'
+                'Option "--file" with valid file path is mandatory when using "--mode execute". '
+                . 'The file must be an absolute path and the file must not exist yet. This means '
+                . 'you need some unique filename when executed, for instance by having some date '
+                . 'within the filename.'
             );
             return HealthCheckInterface::RESULT_ERROR;
         }
@@ -142,10 +142,10 @@ final class HealthCommand extends Command
     {
         if ($this->databaseSchemaChecker->hasIncompleteTablesColumnsIndexes()) {
             $io->error(
-                'Current database schema is not in sync with TCA: ' .
-                'Missing tables, missing or not adapted columns or indexes were detected. ' .
-                'Run "bin/typo3 extension:setup", or use the install tool "Database analyzer" ' .
-                'to fix this. Then run dbdoctor again.'
+                'Current database schema is not in sync with TCA: '
+                . 'Missing tables, missing or not adapted columns or indexes were detected. '
+                . 'Run "bin/typo3 extension:setup", or use the install tool "Database analyzer" '
+                . 'to fix this. Then run dbdoctor again.'
             );
             return false;
         }
