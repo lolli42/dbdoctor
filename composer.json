@@ -27,7 +27,7 @@
   },
   "require-dev": {
     "bnf/phpstan-psr-container": "^1.1",
-    "friendsofphp/php-cs-fixer": "^3.82.2",
+    "friendsofphp/php-cs-fixer": "^3.86.0",
     "phpstan/phpstan": "^2.1.17",
     "phpstan/phpstan-phpunit": "^2.0.6",
     "phpunit/phpunit": "^10.5.47 || ^11.5.26 || ^12.2.6",
