@@ -75,7 +75,6 @@ final class RecordsHelper
         $result = $statement->executeQuery();
         $record = $result->fetchAllAssociative();
         $result->free();
-        /** @var array<string, int|string> $record */
         $record = array_pop($record);
         if (!is_array($record)) {
             throw new NoSuchRecordException('Record with uid "' . $uid . '" in table "' . $tableName . '" not found', 1646121410);

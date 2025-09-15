@@ -67,7 +67,7 @@ final class HealthCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $io->title($this->getDescription());
 
-        $mode = (string)$input->getOption('mode'); /** @phpstan-ignore-line */
+        $mode = (string)$input->getOption('mode');
         if ($mode === 'interactive') {
             $mode = HealthCheckInterface::MODE_INTERACTIVE;
         } elseif ($mode === 'check') {
@@ -79,7 +79,7 @@ final class HealthCommand extends Command
             return HealthCheckInterface::RESULT_ERROR;
         }
 
-        $file = (string)$input->getOption('file'); /** @phpstan-ignore-line */
+        $file = (string)$input->getOption('file');
         if ($file && $mode === HealthCheckInterface::MODE_CHECK) {
             $io->error('Option "--file" not available with "--mode check"');
             return HealthCheckInterface::RESULT_ERROR;
@@ -116,10 +116,6 @@ final class HealthCommand extends Command
 
         $result = HealthCheckInterface::RESULT_OK;
         foreach ($this->healthFactory->getNext() as $healthInstance) {
-            /** @var HealthCheckInterface $healthInstance */
-            if (!$healthInstance instanceof HealthCheckInterface) {
-                throw new \RuntimeException('Single health checks must implement HealthInterface', 1646321959);
-            }
             $healthInstance->header($io);
             $result |= $healthInstance->handle($io, $mode, $file);
             if (($result & HealthCheckInterface::RESULT_ABORT) === HealthCheckInterface::RESULT_ABORT) {
