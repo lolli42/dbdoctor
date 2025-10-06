@@ -27,7 +27,7 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 final class RecordsHelper
 {
     /**
-     * @var array<string, array{string, sqlString: string, statement: Statement}>
+     * @var array<string, array{0?: string, sqlString: string, statement: Statement}>
      */
     private array $preparedStatements = [];
 
