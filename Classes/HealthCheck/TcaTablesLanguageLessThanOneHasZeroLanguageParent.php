@@ -71,6 +71,12 @@ final class TcaTablesLanguageLessThanOneHasZeroLanguageParent extends AbstractHe
     {
         foreach ($affectedRecords as $tableName => $tableRows) {
             $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
+            if ($translationParentField === null) {
+                throw new \RuntimeException(
+                    'TCA ctrl transOrigPointerField null, indicates bug in getNextLanguageAwareTcaTable()',
+                    1761914821
+                );
+            }
             $updateFields = [
                 $translationParentField => [
                     'value' => 0,
