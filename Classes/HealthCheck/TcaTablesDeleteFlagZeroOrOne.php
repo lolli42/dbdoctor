@@ -69,6 +69,12 @@ final class TcaTablesDeleteFlagZeroOrOne extends AbstractHealthCheck implements 
         foreach ($affectedRecords as $tableName => $tableRows) {
             // Force "deleted=1" for affected rows.
             $deletedField = $this->tcaHelper->getDeletedField($tableName);
+            if ($deletedField === null) {
+                throw new \RuntimeException(
+                    'The delete field must not be empty. This exception indicates a bug in getNextSoftDeleteAwareTable()',
+                    1761914758
+                );
+            }
             $updateFields = [
                 $deletedField => [
                     'value' => 1,

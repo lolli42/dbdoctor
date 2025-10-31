@@ -72,6 +72,12 @@ final class TcaTablesLanguageLessThanOneHasZeroLanguageSource extends AbstractHe
     {
         foreach ($affectedRecords as $tableName => $tableRows) {
             $translationSourceField = $this->tcaHelper->getTranslationSourceField($tableName);
+            if ($translationSourceField === null) {
+                throw new \RuntimeException(
+                    'TCA ctrl translationSource null, indicates bug in getNextLanguageSourceAwareTcaTable()',
+                    1761914882
+                );
+            }
             $updateFields = [
                 $translationSourceField => [
                     'value' => 0,
