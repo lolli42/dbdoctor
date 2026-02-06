@@ -72,6 +72,8 @@ final class HealthFactory implements HealthFactoryInterface
         HealthCheck\SysFileReferenceDangling::class,
         HealthCheck\TcaTablesTranslatedLanguageParentDeleted::class,
         HealthCheck\TcaTablesTranslatedLanguageParentDifferentPid::class,
+        HealthCheck\TcaTablesTranslatedLanguageNotInSiteConfiguration::class,
+        HealthCheck\TcaTablesTranslatedLanguagePageTranslationMissing::class,
         // TcaTablesInvalidLanguageParent::class,
         HealthCheck\InlineForeignFieldChildrenParentMissing::class,
         HealthCheck\InlineForeignFieldNoForeignTableFieldChildrenParentMissing::class,
