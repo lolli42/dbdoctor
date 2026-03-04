@@ -351,6 +351,14 @@ regarding SQL dumps must not be forgotten when doing this:
 * Will the functionality be made available in a backend GUI?
   > No. CLI is the only sane way for these kind of things.
 
+* Can I manipulate health checks?
+  > No and yes. dbdoctor CLI does not allow skipping checks and single checks always fix
+  > things the same way without giving options or choices. Adding this would quickly lead
+  > to a multiplication of system state permutations rendering maintenance of this already
+  > complex project impossible. If really needed, ModifyHealthClassListEvent can be used
+  > to programmatically adapt things. This option is not for the faint of heart, please
+  > understand the event class comment before following this path.
+
 * Will support for TYPO3 v10 or other older core versions added?
   > No. TYPO3 v11 had quite a few DB changes, and it is not planned to implement
   > a v10 backwards compatible layer.
