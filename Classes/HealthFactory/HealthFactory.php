@@ -17,8 +17,10 @@ namespace Lolli\Dbdoctor\HealthFactory;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Event\ModifyHealthClassListEvent;
 use Lolli\Dbdoctor\HealthCheck;
 use Psr\Container\ContainerInterface;
+use Psr\EventDispatcher\EventDispatcherInterface;
 
 final class HealthFactory implements HealthFactoryInterface
 {
@@ -82,16 +84,17 @@ final class HealthFactory implements HealthFactoryInterface
         HealthCheck\InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent::class,
     ];
 
-    private ContainerInterface $container;
-
-    public function __construct(ContainerInterface $container)
-    {
-        $this->container = $container;
-    }
+    public function __construct(
+        private readonly ContainerInterface $container,
+        private readonly EventDispatcherInterface $eventDispatcher,
+    ) {}
 
     public function getNext(): iterable
     {
-        foreach ($this->healthClasses as $class) {
+        $event = new ModifyHealthClassListEvent($this->healthClasses);
+        $this->eventDispatcher->dispatch($event);
+        $healthClasses = $event->healthClasses;
+        foreach ($healthClasses as $class) {
             /** @var object $instance */
             $instance = $this->container->get($class);
             if (!$instance instanceof HealthCheck\HealthCheckInterface) {
