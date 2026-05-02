@@ -4,11 +4,15 @@
 	"description": "A test extension for dbdoctor",
 	"license": "GPL-2.0-or-later",
 	"require": {
-    "typo3/cms-core": "^11.5 || ^12.4"
+		"typo3/cms-core": "^13.4 || ^14.3"
 	},
 	"extra": {
 		"typo3/cms": {
-			"extension-key": "tx_dbdoctortestsforeignfield"
+			"extension-key": "tx_dbdoctortestsforeignfield",
+			"version": "1.0.0",
+			"Package": {
+				"providesPackages": {}
+			}
 		}
 	}
 }

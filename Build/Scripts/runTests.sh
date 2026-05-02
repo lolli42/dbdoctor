@@ -124,9 +124,6 @@ handleDbmsOptions() {
 
 getPhpImageVersion() {
     case ${1} in
-        8.1)
-            echo -n "2.13"
-            ;;
         8.2)
             echo -n "1.13"
             ;;
@@ -152,7 +149,7 @@ Recommended docker version is >=20.10 for xdebug break pointing to work reliably
 
 Usage: $0 [options] [file]
 
-No arguments: Run all unit tests with PHP 8.1
+No arguments: Run all unit tests with PHP 8.2
 
 Options:
     -s <...>
@@ -228,19 +225,18 @@ Options:
             - 15    maintained until 2027-11-11
             - 16    maintained until 2028-11-09
 
-    -p <8.1|8.2|8.3|8.4>
+    -p <8.2|8.3|8.4|8.5>
         Specifies the PHP minor version to be used
-            - 8.1: use PHP 8.1
             - 8.2: (default) use PHP 8.2
             - 8.3: use PHP 8.3
             - 8.4: use PHP 8.4
             - 8.5: use PHP 8.5
 
-    -t <12|13>
+    -t <13|14>
         Only with -s composerUpdate
         Specifies the TYPO3 core major version to be used
-            - 12 (default): use TYPO3 core v12
-            - 13: Use TYPO3 core v13
+            - 13 (default): use TYPO3 core v13
+            - 14: Use TYPO3 core v14
 
     -x
         Only with -s functional|unit|cli
@@ -260,7 +256,7 @@ Options:
         Show this help.
 
 Examples:
-    # Run unit tests using PHP 8.1
+    # Run unit tests using PHP 8.2
     ./Build/Scripts/runTests.sh
 EOF
 }
@@ -296,7 +292,7 @@ CI_JOB_ID=${CI_JOB_ID:-}
 SUFFIX=$(echo $RANDOM)
 NETWORK="typo3-core-${SUFFIX}"
 CONTAINER_HOST="host.docker.internal"
-TYPO3_VERSION="12"
+TYPO3_VERSION="13"
 
 # Option parsing updates above default vars
 # Reset in case getopts has been used previously in the shell
@@ -326,17 +322,14 @@ while getopts ":s:a:b:d:i:p:t:e:xnhuv" OPT; do
             ;;
         p)
             PHP_VERSION=${OPTARG}
-            if ! [[ ${PHP_VERSION} =~ ^(8.1|8.2|8.3|8.4|8.5)$ ]]; then
+            if ! [[ ${PHP_VERSION} =~ ^(8.2|8.3|8.4|8.5)$ ]]; then
                 INVALID_OPTIONS+=("p ${OPTARG}")
             fi
             ;;
         t)
             TYPO3_VERSION=${OPTARG}
-            if ! [[ ${TYPO3_VERSION} =~ ^(12|13)$ ]]; then
+            if ! [[ ${TYPO3_VERSION} =~ ^(13|14)$ ]]; then
                 INVALID_OPTIONS+=("t ${OPTARG}")
-            fi
-            if [[ (${TYPO3_VERSION} == "13" && ${PHP_VERSION} == "8.1") ]]; then
-                INVALID_OPTIONS+=("t ${OPTARG} with -p 8.1")
             fi
             ;;
         x)
@@ -485,18 +478,20 @@ case ${TEST_SUITE} in
         ;;
     composerUpdate)
         cp composer.json composer.json.orig
-        if [ ${TYPO3_VERSION} -eq 12 ]; then
-            COMMAND=(composer req --dev --no-update --no-interaction typo3/cms-composer-installers:^5.0 typo3/cms-workspaces:^12.4 typo3/cms-impexp:^12.4 typo3/cms-redirects:^12.4 "$@")
-            ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-update-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
-            COMMAND=(composer req --no-update --no-interaction typo3/cms-core:^12.4 "$@")
-            ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-update-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
-        fi
         if [ ${TYPO3_VERSION} -eq 13 ]; then
             COMMAND=(composer req --dev --no-update --no-interaction typo3/cms-composer-installers:^5.0 typo3/cms-workspaces:^13.4 typo3/cms-impexp:^13.4 typo3/cms-redirects:^13.4 "$@")
             ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-update-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
             COMMAND=(composer rm --no-update --no-interaction --dev typo3/cms-install "$@")
             ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-update-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
             COMMAND=(composer req --no-update --no-interaction typo3/cms-core:^13.4 typo3/cms-install:^13.4 "$@")
+            ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-update-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
+        fi
+        if [ ${TYPO3_VERSION} -eq 14 ]; then
+            COMMAND=(composer req --dev --no-update --no-interaction typo3/cms-composer-installers:^5.0 typo3/cms-workspaces:^14.3 typo3/cms-impexp:^14.3 typo3/cms-redirects:^14.3 "$@")
+            ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-update-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
+            COMMAND=(composer rm --no-update --no-interaction --dev typo3/cms-install "$@")
+            ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-update-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
+            COMMAND=(composer req --no-update --no-interaction typo3/cms-core:^14.3 typo3/cms-install:^14.3 "$@")
             ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-update-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
         fi
         COMMAND=(composer update --no-progress --no-interaction "$@")

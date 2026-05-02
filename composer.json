@@ -13,8 +13,8 @@
     "GPL-2.0-or-later"
   ],
   "require": {
-    "php": "^8.1",
-    "typo3/cms-core": "^12.4 || ^13.4"
+    "php": "^8.2",
+    "typo3/cms-core": "^13.4 || ^14.3"
   },
   "config": {
     "sort-packages": true,
@@ -31,11 +31,11 @@
     "phpstan/phpstan": "^2.1.17",
     "phpstan/phpstan-phpunit": "^2.0.6",
     "phpunit/phpunit": "^10.5.47 || ^11.5.26 || ^12.2.6",
-    "typo3/cms-impexp": "^12.4 || ^13.4",
-    "typo3/cms-install": "^12.4 || ^13.4",
-    "typo3/cms-redirects": "^12.4 || ^13.4",
-    "typo3/cms-workspaces": "^12.4 || ^13.4",
-    "typo3/testing-framework": "^8.2.7 || ^9.2.0"
+    "typo3/cms-impexp": "^13.4 || ^14.3",
+    "typo3/cms-install": "^13.4 || ^14.3",
+    "typo3/cms-redirects": "^13.4 || ^14.3",
+    "typo3/cms-workspaces": "^13.4 || ^14.3",
+    "typo3/testing-framework": "^9.5.0"
   },
   "autoload": {
     "psr-4": {
@@ -49,12 +49,16 @@
   },
   "extra": {
     "branch-alias": {
-      "dev-main": "1.x-dev"
+      "dev-main": "2.x-dev"
     },
     "typo3/cms": {
       "app-dir": ".Build",
       "web-dir": ".Build/Web",
-      "extension-key": "dbdoctor"
+      "extension-key": "dbdoctor",
+      "version": "2.0.0",
+      "Package": {
+        "providesPackages": []
+      }
     }
   }
 }
