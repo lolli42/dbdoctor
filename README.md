@@ -363,28 +363,21 @@ regarding SQL dumps must not be forgotten when doing this:
 # Tagging and releasing
 
 [packagist.org](https://packagist.org/packages/lolli/dbdoctor) is enabled via the casual github hook.
-TER releases are created by the "publish.yml" github workflow when tagging versions
-using [tailor](https://github.com/typo3/tailor). The commit message of the tagged commit is
-used as TER upload comment.
+TER uploads are done manually: create a zip from the tag and upload it via the TER web interface,
+using the commit message as upload comment.
 
 Example:
 
 ```
 Build/Scripts/runTests.sh -s clean
 Build/Scripts/runTests.sh -s composerUpdate
-composer req --dev typo3/tailor
-.Build/bin/tailor set-version 0.3.2
+# manually bump 'version' in ext_emconf.php to 0.3.2
 composer config extra.typo3/cms.version 0.3.2
-composer rem --dev typo3/tailor
 git commit -am "[RELEASE] 0.3.2 Added some basic inline foreign field related checks"
 git tag 0.3.2
 git push
 git push --tags
+git archive -o "dbdoctor_0.3.2.zip" 0.3.2
 ```
 
-If TER upload is broken again (check token and maybe update TYPO3_API_TOKEN), create
-the zip manually and upload manually with the above commit message, example:
-
-```
-git archive -o "dbdoctor_0.6.3.zip" 0.6.3
-```
+Then upload `dbdoctor_0.3.2.zip` to TER manually, using the `[RELEASE] ...` commit message as upload comment.

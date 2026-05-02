@@ -5,3 +5,4 @@ composer.json.testing
 composer.lock
 config/
 var/
+dbdoctor_*.zip
