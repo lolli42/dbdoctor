@@ -47,7 +47,7 @@ class InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferentTest e
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferentTestImport.csv');
         /** @var InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent $subject */
         $subject = $this->get(InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferentTestFixed.csv');
     }
 }

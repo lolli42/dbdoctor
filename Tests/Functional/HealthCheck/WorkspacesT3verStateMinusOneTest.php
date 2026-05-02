@@ -50,7 +50,7 @@ class WorkspacesT3verStateMinusOneTest extends FunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesT3verStateMinusOneImport.csv');
         /** @var WorkspacesT3verStateMinusOne $subject */
         $subject = $this->get(WorkspacesT3verStateMinusOne::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesT3verStateMinusOneFixed.csv');
     }
 }

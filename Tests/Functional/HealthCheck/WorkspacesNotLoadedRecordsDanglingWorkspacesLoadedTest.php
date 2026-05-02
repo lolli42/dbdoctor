@@ -49,7 +49,7 @@ class WorkspacesNotLoadedRecordsDanglingWorkspacesLoadedTest extends FunctionalT
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesNotLoadedRecordsDanglingImport.csv');
         /** @var WorkspacesNotLoadedRecordsDangling $subject */
         $subject = $this->get(WorkspacesNotLoadedRecordsDangling::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesNotLoadedRecordsDanglingWorkspacesLoadedFixed.csv');
     }
 }

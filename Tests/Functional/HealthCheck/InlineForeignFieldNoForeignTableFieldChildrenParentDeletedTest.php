@@ -47,7 +47,7 @@ class InlineForeignFieldNoForeignTableFieldChildrenParentDeletedTest extends Fun
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/InlineForeignFieldNoForeignTableFieldChildrenParentDeletedTestImport.csv');
         /** @var InlineForeignFieldNoForeignTableFieldChildrenParentDeleted $subject */
         $subject = $this->get(InlineForeignFieldNoForeignTableFieldChildrenParentDeleted::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/InlineForeignFieldNoForeignTableFieldChildrenParentDeletedTestFixed.csv');
     }
 }

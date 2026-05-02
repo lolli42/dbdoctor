@@ -46,7 +46,7 @@ class InlineForeignFieldChildrenParentMissingTest extends FunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/InlineForeignFieldChildrenParentMissingTestImport.csv');
         /** @var InlineForeignFieldChildrenParentMissing $subject */
         $subject = $this->get(InlineForeignFieldChildrenParentMissing::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/InlineForeignFieldChildrenParentMissingTestFixed.csv');
     }
 }
