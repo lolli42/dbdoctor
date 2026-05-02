@@ -27,7 +27,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * sys_redirect records should be on pid 0, or pids having a site config.
- * This was improved with v12, but well keep this:
  * sys_redirects records with deleted=0 on pages that are deleted=1 or
  * don't exist, still match! Since we have other checks that set records
  * deleted=1 if they are on pages with deleted=1, we need to move those
@@ -50,7 +49,7 @@ final class SysRedirectInvalidPid extends AbstractHealthCheck implements HealthC
         $this->outputTags($io, self::TAG_UPDATE);
         $io->text([
             'Redirect records should be located on pages having a site config, or pid 0.',
-            'There is a TYPO3 core v12 upgrade wizard to deal with this. This check takes',
+            'A TYPO3 core upgrade wizard introduced in v12 deals with this. This check takes',
             'care of affected records as well: Records on pages that have no site config',
             'are moved to the first page up in rootline that has a site config, or to pid 0.',
         ]);

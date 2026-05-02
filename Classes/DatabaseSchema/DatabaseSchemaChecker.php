@@ -50,17 +50,6 @@ final class DatabaseSchemaChecker
                     // Column missing
                     return true;
                 }
-                // @todo: Core seems to have an issue with postgres and "unsigned".
-                //        It mumbles about int fields not being unsigned on postgres.
-                //        This needs to be fixed in core, before the below check can
-                //        be activated as well.
-                /*
-                if (!empty(method_exists($changedTable, 'getChangedColumns') ? $changedTable->getChangedColumns() : $changedTable->getModifiedColumns())) {
-                    // Column has to be changed
-                    return true;
-                }
-                */
-
                 if (!empty($changedTable->getAddedIndexes())) {
                     // Index missing
                     return true;

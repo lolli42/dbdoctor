@@ -23,7 +23,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * TYPO3 v10 migrated workspace related records away from pid=-1.
  * This check finds leftovers and removes them from the database.
  *
- * Note this check has no functional test since pid is declared unsigned since TYPO3 v12
+ * Note this check has no functional test since pid is declared unsigned in TYPO3
  * and setting up a "broken" database schema is cumbersome for functional tests.
  */
 final class WorkspacesPidNegative extends AbstractHealthCheck implements HealthCheckInterface
