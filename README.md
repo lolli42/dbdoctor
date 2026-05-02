@@ -144,13 +144,14 @@ blindly!
 
 * 0.x: TYPO3 v11 & v12
 * 1.x: TYPO3 v12 & v13
+* 2.x: TYPO3 v13 & v14
 
 
 # Installation
 
 ## Composer
 
-The extension currently supports TYPO3 v11 and TYPO3 v12. The extension can be installed
+The extension currently supports TYPO3 v12 and TYPO3 v13. The extension can be installed
 as non-dev dependency (not adding `--dev` to `composer require`): It has no impact on a
 live instance (except dependency injection definitions) as long as it is not actively
 executed via CLI.
@@ -293,9 +294,9 @@ prompting for user input after each failed check.
   Log all data changing queries to a file. The argument must be an *absolute file name*.
   **Never put such a file into the public web folder of your instance**. Option `-f` is **available**
   in "interactive" and **mandatory** in "execute" mode. Executed data changing queries are not only
-  displayed, but also  logged to a file. This can be useful if the command has been executed on a
-  staging system  using a current live database image: The queries can be reviewed again and then
-  executed  on a live instance using something like `mysql my_database < file.sql` or similar for
+  displayed, but also logged to a file. This can be useful if the command has been executed on a
+  staging system using a current live database image: The queries can be reviewed again and then
+  executed on a live instance using something like `mysql my_database < file.sql` or similar for
   other DBMS.
 
 
@@ -328,7 +329,7 @@ regarding SQL dumps must not be forgotten when doing this:
   $ bin/typo3 dbdoctor:health
   $ mysqldump --skip-extended-insert myDatabase > /tmp/myDatabase-`date +%Y-%m-%d-%H-%M-%S`-dbdoctor-after.sql
   ```
-  It's always possible to deviate from with when you know what you're doing, though. I practice, it might
+  It's always possible to deviate from this when you know what you're doing, though. In practice, it might
   be a good idea to create two dumps: One with `--skip-extended-insert` and one without. A disaster recovery
   is much quicker when loading from a file that has no "one row per line", but to debug, it's much easier
   to diff dumps that were based on skipped extended inserts.
@@ -359,16 +360,11 @@ regarding SQL dumps must not be forgotten when doing this:
   > to programmatically adapt things. This option is not for the faint of heart, please
   > understand the event class comment before following this path.
 
-* Will support for TYPO3 v10 or other older core versions added?
-  > No. TYPO3 v11 had quite a few DB changes, and it is not planned to implement
-  > a v10 backwards compatible layer.
-
-
 # Tagging and releasing
 
 [packagist.org](https://packagist.org/packages/lolli/dbdoctor) is enabled via the casual github hook.
 TER releases are created by the "publish.yml" github workflow when tagging versions
-using [tailor](https://github.com/typo33/tailor). The commit message of the tagged commit is
+using [tailor](https://github.com/typo3/tailor). The commit message of the tagged commit is
 used as TER upload comment.
 
 Example:
