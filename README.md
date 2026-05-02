@@ -1,5 +1,5 @@
-![tests core v12](https://github.com/lolli42/dbdoctor/actions/workflows/testscorev12.yml/badge.svg)
 ![tests core v13](https://github.com/lolli42/dbdoctor/actions/workflows/testscorev13.yml/badge.svg)
+![tests core v14](https://github.com/lolli42/dbdoctor/actions/workflows/testscorev14.yml/badge.svg)
 
 TYPO3 DB doctor
 ===============
@@ -151,7 +151,7 @@ blindly!
 
 ## Composer
 
-The extension currently supports TYPO3 v12 and TYPO3 v13. The extension can be installed
+The extension currently supports TYPO3 v13 and TYPO3 v14. The extension can be installed
 as non-dev dependency (not adding `--dev` to `composer require`): It has no impact on a
 live instance (except dependency injection definitions) as long as it is not actively
 executed via CLI.
@@ -374,6 +374,7 @@ Build/Scripts/runTests.sh -s clean
 Build/Scripts/runTests.sh -s composerUpdate
 composer req --dev typo3/tailor
 .Build/bin/tailor set-version 0.3.2
+composer config extra.typo3/cms.version 0.3.2
 composer rem --dev typo3/tailor
 git commit -am "[RELEASE] 0.3.2 Added some basic inline foreign field related checks"
 git tag 0.3.2

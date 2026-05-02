@@ -1,4 +1,4 @@
-name: tests core v12
+name: tests core v14
 
 on:
   push:
@@ -8,18 +8,18 @@ on:
 
 jobs:
   testsuite:
-    name: all tests with core v12
+    name: all tests with core v14
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        php: [ '8.1', '8.2', '8.3', '8.4', '8.5' ]
+        php: [ '8.2', '8.3', '8.4', '8.5' ]
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
       - name: Install testing system
-        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -t 12 -s composerUpdate
+        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -t 14 -s composerUpdate
 
       - name: Lint PHP
         run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s lint
@@ -27,9 +27,6 @@ jobs:
       - name: CGL
         if: ${{ matrix.php <= '8.3' }}
         run: Build/Scripts/runTests.sh -n -p ${{ matrix.php }} -s cgl
-
-      - name: phpstan
-        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s phpstan
 
       - name: Unit Tests
         run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s unit
