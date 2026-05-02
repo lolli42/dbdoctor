@@ -46,7 +46,7 @@ class TtContentLocalizationSourceLogicWithParentTest extends FunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizationSourceLogicWithParentImport.csv');
         /** @var TtContentLocalizationSourceLogicWithParent $subject */
         $subject = $this->get(TtContentLocalizationSourceLogicWithParent::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizationSourceLogicWithParentFixed.csv');
     }
 }

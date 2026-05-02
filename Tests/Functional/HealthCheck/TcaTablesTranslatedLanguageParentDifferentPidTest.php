@@ -50,7 +50,7 @@ class TcaTablesTranslatedLanguageParentDifferentPidTest extends FunctionalTestCa
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidImport.csv');
         /** @var TcaTablesTranslatedLanguageParentDifferentPid $subject */
         $subject = $this->get(TcaTablesTranslatedLanguageParentDifferentPid::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidFixed.csv');
     }
 
@@ -61,7 +61,7 @@ class TcaTablesTranslatedLanguageParentDifferentPidTest extends FunctionalTestCa
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidTtContentNotHiddenAwareImport.csv');
         /** @var TcaTablesTranslatedLanguageParentDifferentPid $subject */
         $subject = $this->get(TcaTablesTranslatedLanguageParentDifferentPid::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidTtContentNotHiddenAwareFixed.csv');
     }
 
@@ -73,7 +73,7 @@ class TcaTablesTranslatedLanguageParentDifferentPidTest extends FunctionalTestCa
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidTtContentNotHiddenNotDeleteAwareImport.csv');
         /** @var TcaTablesTranslatedLanguageParentDifferentPid $subject */
         $subject = $this->get(TcaTablesTranslatedLanguageParentDifferentPid::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidTtContentNotHiddenNotDeleteAwareFixed.csv');
     }
 }

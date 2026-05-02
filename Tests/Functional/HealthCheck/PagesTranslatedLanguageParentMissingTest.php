@@ -47,7 +47,7 @@ class PagesTranslatedLanguageParentMissingTest extends FunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/PagesTranslatedLanguageParentMissingImport.csv');
         /** @var PagesTranslatedLanguageParentMissing $subject */
         $subject = $this->get(PagesTranslatedLanguageParentMissing::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/PagesTranslatedLanguageParentMissingFixed.csv');
     }
 }

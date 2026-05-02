@@ -46,7 +46,7 @@ class TcaTablesTranslatedLanguageParentMissingTest extends FunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentMissingImport.csv');
         /** @var TcaTablesTranslatedLanguageParentMissing $subject */
         $subject = $this->get(TcaTablesTranslatedLanguageParentMissing::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentMissingFixed.csv');
     }
 }

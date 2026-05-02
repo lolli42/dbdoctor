@@ -46,7 +46,7 @@ class InlineForeignFieldChildrenParentLanguageDifferentTest extends FunctionalTe
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/InlineForeignFieldChildrenParentLanguageDifferentTestImport.csv');
         /** @var InlineForeignFieldChildrenParentLanguageDifferent $subject */
         $subject = $this->get(InlineForeignFieldChildrenParentLanguageDifferent::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/InlineForeignFieldChildrenParentLanguageDifferentTestFixed.csv');
     }
 }

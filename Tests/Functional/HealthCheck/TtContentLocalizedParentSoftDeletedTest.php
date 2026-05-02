@@ -50,7 +50,7 @@ class TtContentLocalizedParentSoftDeletedTest extends FunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizedParentSoftDeletedImport.csv');
         /** @var TtContentLocalizedParentSoftDeleted $subject */
         $subject = $this->get(TtContentLocalizedParentSoftDeleted::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizedParentSoftDeletedFixed.csv');
     }
 }

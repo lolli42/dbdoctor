@@ -46,7 +46,7 @@ class TcaTablesPidMissingTest extends FunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingImport.csv');
         /** @var TcaTablesPidMissing $subject */
         $subject = $this->get(TcaTablesPidMissing::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingFixed.csv');
     }
 }

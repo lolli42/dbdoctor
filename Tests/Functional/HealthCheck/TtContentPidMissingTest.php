@@ -50,7 +50,7 @@ class TtContentPidMissingTest extends FunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TtContentPidMissingImport.csv');
         /** @var TtContentPidMissing $subject */
         $subject = $this->get(TtContentPidMissing::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TtContentPidMissingFixed.csv');
     }
 }

@@ -47,7 +47,7 @@ class InlineForeignFieldNoForeignTableFieldChildrenParentMissingTest extends Fun
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/InlineForeignFieldNoForeignTableFieldChildrenParentMissingTestImport.csv');
         /** @var InlineForeignFieldNoForeignTableFieldChildrenParentMissing $subject */
         $subject = $this->get(InlineForeignFieldNoForeignTableFieldChildrenParentMissing::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/InlineForeignFieldNoForeignTableFieldChildrenParentMissingTestFixed.csv');
     }
 }

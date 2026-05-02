@@ -50,7 +50,7 @@ class PagesTranslatedLanguageParentSelfTest extends FunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/PagesTranslatedLanguageParentSelfImport.csv');
         /** @var PagesTranslatedLanguageParentSelf $subject */
         $subject = $this->get(PagesTranslatedLanguageParentSelf::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/PagesTranslatedLanguageParentSelfFixed.csv');
     }
 }

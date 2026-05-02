@@ -46,7 +46,7 @@ class TcaTablesTranslatedParentSelfTest extends FunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedParentSelfImport.csv');
         /** @var TcaTablesTranslatedParentSelf $subject */
         $subject = $this->get(TcaTablesTranslatedParentSelf::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedParentSelfFixed.csv');
     }
 }

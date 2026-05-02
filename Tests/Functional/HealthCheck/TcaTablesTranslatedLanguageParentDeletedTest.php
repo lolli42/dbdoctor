@@ -50,7 +50,7 @@ class TcaTablesTranslatedLanguageParentDeletedTest extends FunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDeletedImport.csv');
         /** @var TcaTablesTranslatedLanguageParentDeleted $subject */
         $subject = $this->get(TcaTablesTranslatedLanguageParentDeleted::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDeletedFixed.csv');
     }
 }

@@ -50,7 +50,7 @@ class PagesBrokenTreeTest extends FunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/PagesBrokenTreeImport.csv');
         /** @var PagesBrokenTree $subject */
         $subject = $this->get(PagesBrokenTree::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/PagesBrokenTreeFixed.csv');
     }
 }

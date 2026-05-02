@@ -50,7 +50,7 @@ class SysFileReferenceLocalizedParentDeletedTest extends FunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceLocalizedParentDeletedImport.csv');
         /** @var SysFileReferenceLocalizedParentDeleted $subject */
         $subject = $this->get(SysFileReferenceLocalizedParentDeleted::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/SysFileReferenceLocalizedParentDeletedFixed.csv');
     }
 }

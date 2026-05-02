@@ -50,7 +50,7 @@ class WorkspacesRecordsOfDeletedWorkspacesTest extends FunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesRecordsOfDeletedWorkspacesImport.csv');
         /** @var WorkspacesRecordsOfDeletedWorkspaces $subject */
         $subject = $this->get(WorkspacesRecordsOfDeletedWorkspaces::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesRecordsOfDeletedWorkspacesFixed.csv');
     }
 }

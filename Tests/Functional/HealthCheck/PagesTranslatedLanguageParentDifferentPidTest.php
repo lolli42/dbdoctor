@@ -50,7 +50,7 @@ class PagesTranslatedLanguageParentDifferentPidTest extends FunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/PagesTranslatedLanguageParentDifferentPidImport.csv');
         /** @var PagesTranslatedLanguageParentDifferentPid $subject */
         $subject = $this->get(PagesTranslatedLanguageParentDifferentPid::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/PagesTranslatedLanguageParentDifferentPidFixed.csv');
     }
 }

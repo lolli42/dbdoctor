@@ -51,7 +51,7 @@ class InlineForeignFieldChildrenParentDeletedTest extends FunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/InlineForeignFieldChildrenParentDeletedTestImport.csv');
         /** @var InlineForeignFieldChildrenParentDeleted $subject */
         $subject = $this->get(InlineForeignFieldChildrenParentDeleted::class);
-        $subject->handle($this->createMock(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/InlineForeignFieldChildrenParentDeletedTestFixed.csv');
     }
 }
