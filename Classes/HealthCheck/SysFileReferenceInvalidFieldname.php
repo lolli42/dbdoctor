@@ -27,7 +27,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  *        - First, it gives headaches with 'flex' fields and already skips
  *          records that point to a parent table which has *any* flex field configured.
  *          Looking especially at you, tt_content!
- *        - Second, the (v12 deprecated) EMU::getFileFieldTCAConfig() allowed to set
+ *        - Second, the now-removed EMU::getFileFieldTCAConfig() allowed to set
  *          ['foreign_match_fields']['fieldname'] to something different than the
  *          column name of the parent table. That's probably problematic to do, but it
  *          seems at least the Backend can deal with this?

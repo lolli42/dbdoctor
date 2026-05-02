@@ -77,7 +77,7 @@ Scan for records with t3ver_wsid=0 and t3ver_state!=0
  There should be no t3ver_state non-zero (0) records in live.
  If this check finds records, ABORT NOW and run these upgrades wizards:
  WorkspaceVersionRecordsMigration (TYPO3 v10 & v11),
- WorkspaceNewPlaceholderRemovalMigration (TYPO3 11 & v12),
+ WorkspaceNewPlaceholderRemovalMigration (TYPO3 v11 & v12),
  WorkspaceMovePlaceholderRemovalMigration (TYPO3 v11 & v12).
  If there are still affected records, this check will remove, soft-delete or update them,
  depending on their specific t3ver_state value: Records typically shown in FE are kept,
@@ -94,7 +94,7 @@ Scan for records with t3ver_state=-1
  Until TYPO3 v11, they were paired with a t3ver_state=-1 record. A core upgrade
  wizard migrates affected records. This check removes left over records having t3ver_state=-1.
  If this check finds records, it may indicate the upgrade wizard "WorkspaceNewPlaceholderRemovalMigration"
- has not been run. ABORT NOW and run the wizard, it is included in TYPO3 core v11 and v12.
+ has not been run. ABORT NOW and run the wizard if it is still available in your TYPO3 version.
 
  [OK] No affected records found%w
 
@@ -107,7 +107,7 @@ Scan for records with t3ver_state=3
  Until TYPO3 v11, they were paired with a t3ver_state=4 record. A core upgrade
  wizard migrates affected records. This check removes left over records having t3ver_state=3.
  If this check finds records, it may indicate the upgrade wizard "WorkspaceMovePlaceholderRemovalMigration"
- has not been run. ABORT NOW and run the wizard, it is included in TYPO3 core v11 and v12.
+ has not been run. ABORT NOW and run the wizard if it is still available in your TYPO3 version.
 
  [OK] No affected records found%w
 
@@ -117,7 +117,7 @@ Scan for sys_redirect records on wrong pid
  Class: SysRedirectInvalidPid
  Actions: update-fields
  Redirect records should be located on pages having a site config, or pid 0.
- There is a TYPO3 core v12 upgrade wizard to deal with this. This check takes
+ A TYPO3 core upgrade wizard introduced in v12 deals with this. This check takes
  care of affected records as well: Records on pages that have no site config
  are moved to the first page up in rootline that has a site config, or to pid 0.
 

@@ -35,7 +35,7 @@ final class WorkspacesT3verStateNotZeroInLive extends AbstractHealthCheck implem
             'There should be no t3ver_state non-zero (0) records in live.',
             'If this check finds records, ABORT NOW and run these upgrades wizards:',
             'WorkspaceVersionRecordsMigration (TYPO3 v10 & v11),',
-            'WorkspaceNewPlaceholderRemovalMigration (TYPO3 11 & v12),',
+            'WorkspaceNewPlaceholderRemovalMigration (TYPO3 v11 & v12),',
             'WorkspaceMovePlaceholderRemovalMigration (TYPO3 v11 & v12).',
             'If there are still affected records, this check will remove, soft-delete or update them,',
             'depending on their specific t3ver_state value: Records typically shown in FE are kept,',
@@ -97,7 +97,7 @@ final class WorkspacesT3verStateNotZeroInLive extends AbstractHealthCheck implem
                     $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid']);
                     $deleteCount++;
                 } elseif ((int)$tableRow['t3ver_state'] <= -1) {
-                    // t3ver_state < 0 lead to exceptions in BE page module in v12, but are
+                    // t3ver_state < 0 lead to exceptions in the BE page module, but are
                     // SHOWN in FE - we update to t3ver_state=0 and keep them.
                     $updateFields = [
                         't3ver_state' => [
@@ -108,7 +108,7 @@ final class WorkspacesT3verStateNotZeroInLive extends AbstractHealthCheck implem
                     $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid'], $updateFields);
                     $updateCount++;
                 } elseif ($isTableDeleteAware) {
-                    // t3ver_state > 0 are never shown in FE and may lead to exceptions in BE page module in v12.
+                    // t3ver_state > 0 are never shown in FE and may lead to exceptions in the BE page module.
                     // If the table is soft-delete aware, we set those records deleted=1 and t3ver_state=0
                     $updateFields = [
                         $deleteField => [
@@ -123,7 +123,7 @@ final class WorkspacesT3verStateNotZeroInLive extends AbstractHealthCheck implem
                     $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid'], $updateFields);
                     $updateCount++;
                 } else {
-                    // t3ver_state > 0 are never shown in FE and may lead to exceptions in BE page module in v12.
+                    // t3ver_state > 0 are never shown in FE and may lead to exceptions in the BE page module.
                     // The table is not soft-delete aware, we remove the record.
                     $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid']);
                     $deleteCount++;
