@@ -18,89 +18,51 @@ namespace Lolli\Dbdoctor\HealthFactory;
  */
 
 use Lolli\Dbdoctor\Event\ModifyHealthClassListEvent;
-use Lolli\Dbdoctor\HealthCheck;
+use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
 use Psr\Container\ContainerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 
-final class HealthFactory implements HealthFactoryInterface
+final readonly class HealthFactory implements HealthFactoryInterface
 {
-    /**
-     * @var string[]
-     */
-    private array $healthClasses = [
-        HealthCheck\WorkspacesNotLoadedRecordsDangling::class,
-        HealthCheck\WorkspacesRecordsOfDeletedWorkspaces::class,
-        HealthCheck\TcaTablesDeleteFlagZeroOrOne::class,
-        HealthCheck\WorkspacesSoftDeletedRecords::class,
-        HealthCheck\WorkspacesPidNegative::class,
-        HealthCheck\WorkspacesT3verStateNotZeroInLive::class,
-        HealthCheck\WorkspacesT3verStateMinusOne::class,
-        HealthCheck\WorkspacesT3verStateThree::class,
-        // Note we have "move sys_redirects" *before* PagesBrokenTree for a better chance to move to correct pid
-        HealthCheck\SysRedirectInvalidPid::class,
-        HealthCheck\TcaTablesLanguageLessThanOneHasZeroLanguageParent::class,
-        HealthCheck\TcaTablesLanguageLessThanOneHasZeroLanguageSource::class,
-        HealthCheck\PagesBrokenTree::class,
-        HealthCheck\PagesTranslatedLanguageParentSelf::class,
-        HealthCheck\PagesTranslatedLanguageParentMissing::class,
-        HealthCheck\PagesTranslatedLanguageParentDeleted::class,
-        HealthCheck\PagesTranslatedLanguageParentDifferentPid::class,
-        HealthCheck\TcaTablesTranslatedParentSelf::class,
-        // This one is relatively early since it is rather safe and prevents loops on checks below.
-        HealthCheck\TcaTablesTranslatedParentInvalidPointer::class,
-        HealthCheck\TtContentPidMissing::class,
-        HealthCheck\TtContentPidDeleted::class,
-        HealthCheck\TtContentDeletedLocalizedParentExists::class,
-        HealthCheck\TtContentLocalizedParentExists::class,
-        HealthCheck\TtContentLocalizedParentSoftDeleted::class,
-        HealthCheck\TtContentDeletedLocalizedParentDifferentPid::class,
-        HealthCheck\TtContentLocalizedParentDifferentPid::class,
-        HealthCheck\TtContentLocalizedDuplicates::class,
-        HealthCheck\TtContentLocalizationSourceExists::class,
-        HealthCheck\TtContentLocalizationSourceSetWithParent::class,
-        HealthCheck\TtContentLocalizationSourceLogicWithParent::class,
-        HealthCheck\SysFileReferenceDangling::class,
-        HealthCheck\SysFileReferenceDeletedLocalizedParentExists::class,
-        HealthCheck\SysFileReferenceLocalizedParentExists::class,
-        HealthCheck\SysFileReferenceLocalizedParentDeleted::class,
-        HealthCheck\SysFileReferenceLocalizedFieldSync::class,
-        HealthCheck\SysFileReferenceInvalidPid::class,
-        HealthCheck\TcaTablesPidMissing::class,
-        // @todo: Disabled for now, see the class comment
-        // SysFileReferenceInvalidFieldname::class,
-        HealthCheck\TcaTablesPidDeleted::class,
-        HealthCheck\TcaTablesTranslatedLanguageParentMissing::class,
-        // Check sys_file_reference pointing to not existing records *again*, TcaTablesTranslatedLanguageParentMissing may have deleted some.
-        HealthCheck\SysFileReferenceDangling::class,
-        HealthCheck\TcaTablesTranslatedLanguageParentDeleted::class,
-        HealthCheck\TcaTablesTranslatedLanguageParentDifferentPid::class,
-        // TcaTablesInvalidLanguageParent::class,
-        HealthCheck\InlineForeignFieldChildrenParentMissing::class,
-        HealthCheck\InlineForeignFieldNoForeignTableFieldChildrenParentMissing::class,
-        HealthCheck\InlineForeignFieldChildrenParentDeleted::class,
-        HealthCheck\InlineForeignFieldNoForeignTableFieldChildrenParentDeleted::class,
-        // @todo: Maybe that's not a good position when we start scanning for records translated more than once (issue #9)?
-        HealthCheck\InlineForeignFieldChildrenParentLanguageDifferent::class,
-        HealthCheck\InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent::class,
-    ];
-
     public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly EventDispatcherInterface $eventDispatcher,
+        private iterable $healthChecks,
+        private ContainerInterface $container,
+        private EventDispatcherInterface $eventDispatcher,
     ) {}
 
     public function getNext(): iterable
     {
-        $event = new ModifyHealthClassListEvent($this->healthClasses);
+        $healthChecksMap = [];
+        $healthClasses = [];
+
+        foreach ($this->healthChecks as $healthCheck) {
+            $healthClasses[] = $healthCheck::class;
+            $healthChecksMap[$healthCheck::class] = $healthCheck;
+        }
+
+        $event = new ModifyHealthClassListEvent($healthClasses);
         $this->eventDispatcher->dispatch($event);
-        $healthClasses = $event->healthClasses;
-        foreach ($healthClasses as $class) {
-            /** @var object $instance */
-            $instance = $this->container->get($class);
-            if (!$instance instanceof HealthCheck\HealthCheckInterface) {
-                throw new \InvalidArgumentException(get_class($instance) . 'does not implement HealthInterface');
+
+        foreach ($event->healthClasses as $healthClass) {
+            if (isset($healthChecksMap[$healthClass])) {
+                yield $healthChecksMap[$healthClass];
+                continue;
             }
-            yield $instance;
+
+            // Fall back for newly added class by the event
+            $healthCheck = $this->container->get($healthClass);
+
+            if (!$healthCheck instanceof HealthCheckInterface) {
+                throw new \InvalidArgumentException(
+                    sprintf(
+                        '%s does not implement %s',
+                        $healthClass,
+                        HealthCheckInterface::class,
+                    ),
+                );
+            }
+
+            yield $healthCheck;
         }
     }
 }
