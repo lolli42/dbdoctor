@@ -469,6 +469,18 @@ Scan for not-deleted records on pages set to deleted
 
  [OK] No affected records found%w
 
+Scan for records on translated pages
+------------------------------------
+
+ Class: TcaTablesPidTranslatedPage
+ Actions: update-fields
+ TCA records have a pid field set to a single page. This must be a default language
+ page: Records attached to a translated page, for instance "sys_file_reference" records
+ of the translated page "media" field, are located on the default language page, too.
+ Records pointing to a translated page are moved to its default language page.
+
+ [OK] No affected records found%w
+
 Scan for record translations with missing parent
 ------------------------------------------------
 
