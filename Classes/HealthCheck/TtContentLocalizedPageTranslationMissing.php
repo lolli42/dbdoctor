@@ -44,7 +44,8 @@ final class TtContentLocalizedPageTranslationMissing extends AbstractHealthCheck
             'in their language on their page, otherwise they are never rendered in frontend. This check',
             'finds such records and soft-deletes them, workspace records are removed. tt_content records',
             'in sys folders are not checked: They are typically rendered by "Insert records" elements on',
-            'other pages, which works without a page translation of the sys folder.',
+            'other pages, which works without a page translation of the sys folder. Records on translated',
+            'pages are not checked either: TcaTablesPidTranslatedPage moves them to the default page.',
         ]);
     }
 
@@ -53,7 +54,7 @@ final class TtContentLocalizedPageTranslationMissing extends AbstractHealthCheck
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
 
-        /** @var array<int, array{doktype: int, translations: array<int, array<int, true>>}> $pageCache */
+        /** @var array<int, array{doktype: int, language: int, translations: array<int, array<int, true>>}> $pageCache */
         $pageCache = [];
 
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
@@ -73,7 +74,7 @@ final class TtContentLocalizedPageTranslationMissing extends AbstractHealthCheck
             $pid = (int)$row['pid'];
             if (!isset($pageCache[$pid])) {
                 try {
-                    $pageRow = $recordsHelper->getRecord('pages', ['uid', 'doktype'], $pid);
+                    $pageRow = $recordsHelper->getRecord('pages', ['uid', 'doktype', 'sys_language_uid'], $pid);
                 } catch (NoSuchRecordException $e) {
                     // Earlier test should have fixed this.
                     throw new \RuntimeException(
@@ -84,10 +85,16 @@ final class TtContentLocalizedPageTranslationMissing extends AbstractHealthCheck
                 }
                 $pageCache[$pid] = [
                     'doktype' => (int)$pageRow['doktype'],
+                    'language' => (int)$pageRow['sys_language_uid'],
                     'translations' => $this->getPageTranslationWorkspaces($pid),
                 ];
             }
             if ($pageCache[$pid]['doktype'] === PageRepository::DOKTYPE_SYSFOLDER) {
+                continue;
+            }
+            if ($pageCache[$pid]['language'] > 0) {
+                // A translated page as pid, for instance by core bug #110892: TcaTablesPidTranslatedPage
+                // moves the record to the default language page, it is checked there in the next run.
                 continue;
             }
             $languageId = (int)$row['sys_language_uid'];
