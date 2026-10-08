@@ -205,29 +205,29 @@ services:
         identifier: 'dbdoctor-tt-content-localized-page-translation-missing'
         after: 'dbdoctor-tt-content-localized-duplicates'
 
-  Lolli\Dbdoctor\HealthCheck\TtContentLocalizationSourceExists:
+  Lolli\Dbdoctor\HealthCheck\TcaTablesTranslationSourceExists:
     tags:
       - name: 'lolli.dbdoctor.health'
-        identifier: 'dbdoctor-tt-content-localization-source-exists'
+        identifier: 'dbdoctor-tca-tables-translation-source-exists'
         after: 'dbdoctor-tt-content-localized-page-translation-missing'
 
-  Lolli\Dbdoctor\HealthCheck\TtContentLocalizationSourceSetWithParent:
+  Lolli\Dbdoctor\HealthCheck\TcaTablesTranslationSourceSetWithParent:
     tags:
       - name: 'lolli.dbdoctor.health'
-        identifier: 'dbdoctor-tt-content-localization-source-set-with-parent'
-        after: 'dbdoctor-tt-content-localization-source-exists'
+        identifier: 'dbdoctor-tca-tables-translation-source-set-with-parent'
+        after: 'dbdoctor-tca-tables-translation-source-exists'
 
-  Lolli\Dbdoctor\HealthCheck\TtContentLocalizationSourceLogicWithParent:
+  Lolli\Dbdoctor\HealthCheck\TcaTablesTranslationSourceLogicWithParent:
     tags:
       - name: 'lolli.dbdoctor.health'
-        identifier: 'dbdoctor-tt-content-localization-source-logic-with-parent'
-        after: 'dbdoctor-tt-content-localization-source-set-with-parent'
+        identifier: 'dbdoctor-tca-tables-translation-source-logic-with-parent'
+        after: 'dbdoctor-tca-tables-translation-source-set-with-parent'
 
   Lolli\Dbdoctor\HealthCheck\SysFileReferenceDangling:
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-sys-file-reference-dangling'
-        after: 'dbdoctor-tt-content-localization-source-logic-with-parent'
+        after: 'dbdoctor-tca-tables-translation-source-logic-with-parent'
 
   Lolli\Dbdoctor\HealthCheck\SysFileReferenceDeletedLocalizedParentExists:
     tags:

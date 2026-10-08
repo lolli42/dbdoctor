@@ -17,17 +17,13 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
-use Lolli\Dbdoctor\HealthCheck\TtContentLocalizationSourceExists;
+use Lolli\Dbdoctor\HealthCheck\TcaTablesTranslationSourceLogicWithParent;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-class TtContentLocalizationSourceExistsTest extends AbstractFunctionalTestCase
+class TcaTablesTranslationSourceLogicWithParentTest extends AbstractFunctionalTestCase
 {
-    protected array $coreExtensionsToLoad = [
-        'workspaces',
-    ];
-
     protected array $testExtensionsToLoad = [
         'lolli/dbdoctor',
     ];
@@ -35,10 +31,10 @@ class TtContentLocalizationSourceExistsTest extends AbstractFunctionalTestCase
     #[Test]
     public function showDetails(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizationSourceExistsImport.csv');
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslationSourceLogicWithParentImport.csv');
         $io = $this->createMock(SymfonyStyle::class);
-        /** @var TtContentLocalizationSourceExists $subject */
-        $subject = $this->get(TtContentLocalizationSourceExists::class);
+        /** @var TcaTablesTranslationSourceLogicWithParent $subject */
+        $subject = $this->get(TcaTablesTranslationSourceLogicWithParent::class);
         $io->expects(self::atLeastOnce())->method('warning');
         $io->expects(self::atLeastOnce())->method('ask')->willReturn('p', 'd', 'a');
         $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
@@ -47,10 +43,10 @@ class TtContentLocalizationSourceExistsTest extends AbstractFunctionalTestCase
     #[Test]
     public function fixBrokenRecords(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizationSourceExistsImport.csv');
-        /** @var TtContentLocalizationSourceExists $subject */
-        $subject = $this->get(TtContentLocalizationSourceExists::class);
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslationSourceLogicWithParentImport.csv');
+        /** @var TcaTablesTranslationSourceLogicWithParent $subject */
+        $subject = $this->get(TcaTablesTranslationSourceLogicWithParent::class);
         $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
-        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizationSourceExistsFixed.csv');
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslationSourceLogicWithParentFixed.csv');
     }
 }
