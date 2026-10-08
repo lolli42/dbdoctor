@@ -104,11 +104,17 @@ services:
         identifier: 'dbdoctor-pages-translated-language-parent-different-pid'
         after: 'dbdoctor-pages-translated-language-parent-deleted'
 
+  Lolli\Dbdoctor\HealthCheck\PagesTranslatedLanguageParentDuplicates:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-pages-translated-language-parent-duplicates'
+        after: 'dbdoctor-pages-translated-language-parent-different-pid'
+
   Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedParentSelf:
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-tca-tables-translated-parent-self'
-        after: 'dbdoctor-pages-translated-language-parent-different-pid'
+        after: 'dbdoctor-pages-translated-language-parent-duplicates'
 
   # Relatively early since it is rather safe and prevents loops in checks below
   Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedParentInvalidPointer:
