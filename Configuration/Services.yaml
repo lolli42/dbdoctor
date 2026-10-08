@@ -7,6 +7,303 @@ services:
   Lolli\Dbdoctor\:
     resource: '../Classes/*'
 
+  Lolli\Dbdoctor\HealthCheck\WorkspacesNotLoadedRecordsDangling:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-workspaces-not-loaded-records-dangling'
+
+  Lolli\Dbdoctor\HealthCheck\WorkspacesRecordsOfDeletedWorkspaces:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-workspaces-records-of-deleted-workspaces'
+        after: 'dbdoctor-workspaces-not-loaded-records-dangling'
+
+  Lolli\Dbdoctor\HealthCheck\TcaTablesDeleteFlagZeroOrOne:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tca-tables-delete-flag-zero-or-one'
+        after: 'dbdoctor-workspaces-records-of-deleted-workspaces'
+
+  Lolli\Dbdoctor\HealthCheck\WorkspacesSoftDeletedRecords:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-workspaces-soft-deleted-records'
+        after: 'dbdoctor-tca-tables-delete-flag-zero-or-one'
+
+  Lolli\Dbdoctor\HealthCheck\WorkspacesPidNegative:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-workspaces-pid-negative'
+        after: 'dbdoctor-workspaces-soft-deleted-records'
+
+  Lolli\Dbdoctor\HealthCheck\WorkspacesT3verStateNotZeroInLive:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-workspaces-t3ver-state-not-zero-in-live'
+        after: 'dbdoctor-workspaces-pid-negative'
+
+  Lolli\Dbdoctor\HealthCheck\WorkspacesT3verStateMinusOne:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-workspaces-t3ver-state-minus-one'
+        after: 'dbdoctor-workspaces-t3ver-state-not-zero-in-live'
+
+  Lolli\Dbdoctor\HealthCheck\WorkspacesT3verStateThree:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-workspaces-t3ver-state-three'
+        after: 'dbdoctor-workspaces-t3ver-state-minus-one'
+
+  # "move sys_redirects" before PagesBrokenTree for a better chance to move records to the correct pid
+  Lolli\Dbdoctor\HealthCheck\SysRedirectInvalidPid:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-sys-redirect-invalid-pid'
+        before: 'dbdoctor-pages-broken-tree'
+        after: 'dbdoctor-workspaces-t3ver-state-three'
+
+  Lolli\Dbdoctor\HealthCheck\TcaTablesLanguageLessThanOneHasZeroLanguageParent:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tca-tables-language-less-than-one-has-zero-language-parent'
+        after: 'dbdoctor-sys-redirect-invalid-pid'
+
+  Lolli\Dbdoctor\HealthCheck\TcaTablesLanguageLessThanOneHasZeroLanguageSource:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tca-tables-language-less-than-one-has-zero-language-source'
+        after: 'dbdoctor-tca-tables-language-less-than-one-has-zero-language-parent'
+
+  Lolli\Dbdoctor\HealthCheck\PagesBrokenTree:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-pages-broken-tree'
+        after: 'dbdoctor-tca-tables-language-less-than-one-has-zero-language-source'
+
+  Lolli\Dbdoctor\HealthCheck\PagesTranslatedLanguageParentSelf:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-pages-translated-language-parent-self'
+        after: 'dbdoctor-pages-broken-tree'
+
+  Lolli\Dbdoctor\HealthCheck\PagesTranslatedLanguageParentMissing:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-pages-translated-language-parent-missing'
+        after: 'dbdoctor-pages-translated-language-parent-self'
+
+  Lolli\Dbdoctor\HealthCheck\PagesTranslatedLanguageParentDeleted:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-pages-translated-language-parent-deleted'
+        after: 'dbdoctor-pages-translated-language-parent-missing'
+
+  Lolli\Dbdoctor\HealthCheck\PagesTranslatedLanguageParentDifferentPid:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-pages-translated-language-parent-different-pid'
+        after: 'dbdoctor-pages-translated-language-parent-deleted'
+
+  Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedParentSelf:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tca-tables-translated-parent-self'
+        after: 'dbdoctor-pages-translated-language-parent-different-pid'
+
+  # Relatively early since it is rather safe and prevents loops in checks below
+  Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedParentInvalidPointer:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tca-tables-translated-parent-invalid-pointer'
+        after: 'dbdoctor-tca-tables-translated-parent-self'
+
+  Lolli\Dbdoctor\HealthCheck\TtContentPidMissing:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tt-content-pid-missing'
+        after: 'dbdoctor-tca-tables-translated-parent-invalid-pointer'
+
+  Lolli\Dbdoctor\HealthCheck\TtContentPidDeleted:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tt-content-pid-deleted'
+        after: 'dbdoctor-tt-content-pid-missing'
+
+  Lolli\Dbdoctor\HealthCheck\TtContentDeletedLocalizedParentExists:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tt-content-deleted-localized-parent-exists'
+        after: 'dbdoctor-tt-content-pid-deleted'
+
+  Lolli\Dbdoctor\HealthCheck\TtContentLocalizedParentExists:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tt-content-localized-parent-exists'
+        after: 'dbdoctor-tt-content-deleted-localized-parent-exists'
+
+  Lolli\Dbdoctor\HealthCheck\TtContentLocalizedParentSoftDeleted:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tt-content-localized-parent-soft-deleted'
+        after: 'dbdoctor-tt-content-localized-parent-exists'
+
+  Lolli\Dbdoctor\HealthCheck\TtContentDeletedLocalizedParentDifferentPid:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tt-content-deleted-localized-parent-different-pid'
+        after: 'dbdoctor-tt-content-localized-parent-soft-deleted'
+
+  Lolli\Dbdoctor\HealthCheck\TtContentLocalizedParentDifferentPid:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tt-content-localized-parent-different-pid'
+        after: 'dbdoctor-tt-content-deleted-localized-parent-different-pid'
+
+  Lolli\Dbdoctor\HealthCheck\TtContentLocalizedDuplicates:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tt-content-localized-duplicates'
+        after: 'dbdoctor-tt-content-localized-parent-different-pid'
+
+  Lolli\Dbdoctor\HealthCheck\TtContentLocalizationSourceExists:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tt-content-localization-source-exists'
+        after: 'dbdoctor-tt-content-localized-duplicates'
+
+  Lolli\Dbdoctor\HealthCheck\TtContentLocalizationSourceSetWithParent:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tt-content-localization-source-set-with-parent'
+        after: 'dbdoctor-tt-content-localization-source-exists'
+
+  Lolli\Dbdoctor\HealthCheck\TtContentLocalizationSourceLogicWithParent:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tt-content-localization-source-logic-with-parent'
+        after: 'dbdoctor-tt-content-localization-source-set-with-parent'
+
+  # This check deliberately occurs twice in the health check chain
+  Lolli\Dbdoctor\HealthCheck\SysFileReferenceDangling:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-sys-file-reference-dangling'
+        after: 'dbdoctor-tt-content-localization-source-logic-with-parent'
+
+      # Check sys_file_reference pointing to not existing records *again*
+      # TcaTablesTranslatedLanguageParentMissing may have deleted some
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-sys-file-reference-dangling-second-pass'
+        after: 'dbdoctor-tca-tables-translated-language-parent-missing'
+
+  Lolli\Dbdoctor\HealthCheck\SysFileReferenceDeletedLocalizedParentExists:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-sys-file-reference-deleted-localized-parent-exists'
+        after: 'dbdoctor-sys-file-reference-dangling'
+
+  Lolli\Dbdoctor\HealthCheck\SysFileReferenceLocalizedParentExists:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-sys-file-reference-localized-parent-exists'
+        after: 'dbdoctor-sys-file-reference-deleted-localized-parent-exists'
+
+  Lolli\Dbdoctor\HealthCheck\SysFileReferenceLocalizedParentDeleted:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-sys-file-reference-localized-parent-deleted'
+        after: 'dbdoctor-sys-file-reference-localized-parent-exists'
+
+  Lolli\Dbdoctor\HealthCheck\SysFileReferenceLocalizedFieldSync:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-sys-file-reference-localized-field-sync'
+        after: 'dbdoctor-sys-file-reference-localized-parent-deleted'
+
+  Lolli\Dbdoctor\HealthCheck\SysFileReferenceInvalidPid:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-sys-file-reference-invalid-pid'
+        after: 'dbdoctor-sys-file-reference-localized-field-sync'
+
+  Lolli\Dbdoctor\HealthCheck\TcaTablesPidMissing:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tca-tables-pid-missing'
+        after: 'dbdoctor-sys-file-reference-invalid-pid'
+
+  # Disabled for now, see the class comment
+  Lolli\Dbdoctor\HealthCheck\SysFileReferenceInvalidFieldname:
+    autoconfigure: false
+    public: true
+
+  Lolli\Dbdoctor\HealthCheck\TcaTablesPidDeleted:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tca-tables-pid-deleted'
+        after: 'dbdoctor-tca-tables-pid-missing'
+
+  Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedLanguageParentMissing:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tca-tables-translated-language-parent-missing'
+        after: 'dbdoctor-tca-tables-pid-deleted'
+
+  Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedLanguageParentDeleted:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tca-tables-translated-language-parent-deleted'
+        after: 'dbdoctor-sys-file-reference-dangling-second-pass'
+
+  Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedLanguageParentDifferentPid:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tca-tables-translated-language-parent-different-pid'
+        after: 'dbdoctor-tca-tables-translated-language-parent-deleted'
+
+  # Disabled for now, as in the current HealthFactory
+  Lolli\Dbdoctor\HealthCheck\TcaTablesInvalidLanguageParent:
+    autoconfigure: false
+    public: true
+
+  Lolli\Dbdoctor\HealthCheck\InlineForeignFieldChildrenParentMissing:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-inline-foreign-field-children-parent-missing'
+        after: 'dbdoctor-tca-tables-translated-language-parent-different-pid'
+
+  Lolli\Dbdoctor\HealthCheck\InlineForeignFieldNoForeignTableFieldChildrenParentMissing:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-inline-foreign-field-no-foreign-table-field-children-parent-missing'
+        after: 'dbdoctor-inline-foreign-field-children-parent-missing'
+
+  Lolli\Dbdoctor\HealthCheck\InlineForeignFieldChildrenParentDeleted:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-inline-foreign-field-children-parent-deleted'
+        after: 'dbdoctor-inline-foreign-field-no-foreign-table-field-children-parent-missing'
+
+  Lolli\Dbdoctor\HealthCheck\InlineForeignFieldNoForeignTableFieldChildrenParentDeleted:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-inline-foreign-field-no-foreign-table-field-children-parent-deleted'
+        after: 'dbdoctor-inline-foreign-field-children-parent-deleted'
+
+  # @todo Maybe that's not a good position when scanning for records
+  # translated more than once is added
+  Lolli\Dbdoctor\HealthCheck\InlineForeignFieldChildrenParentLanguageDifferent:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-inline-foreign-field-children-parent-language-different'
+        after: 'dbdoctor-inline-foreign-field-no-foreign-table-field-children-parent-deleted'
+
+  Lolli\Dbdoctor\HealthCheck\InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-inline-foreign-field-no-foreign-table-field-children-parent-language-different'
+        after: 'dbdoctor-inline-foreign-field-children-parent-language-different'
+
   Lolli\Dbdoctor\Helper\PagesRootlineHelper:
     public: true
     shared: false
