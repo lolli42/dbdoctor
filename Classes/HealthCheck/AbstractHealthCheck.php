@@ -44,6 +44,8 @@ abstract class AbstractHealthCheck
     protected const TAG_WORKSPACE_REMOVE = 'workspace-remove';
     // Used in IO when a check may UPDATE single fields of records
     protected const TAG_UPDATE = 'update-fields';
+    // Used in IO when a check may INSERT missing records
+    protected const TAG_INSERT = 'insert';
 
     /**
      * Set to an absolute, not-empty file path string when sql command should be logged.
@@ -310,6 +312,19 @@ abstract class AbstractHealthCheck
     }
 
     /**
+     * INSERT and log a single row.
+     * This needs an instance of RecordsHelper to make use of prepared statements, which
+     * should be created by the calling method.
+     *
+     * @param array<string, array{value: int|string, type: ParameterType}> $fields
+     */
+    final protected function insertSingleTcaRecord(SymfonyStyle $io, bool $simulate, RecordsHelper $recordsHelper, string $tableName, array $fields): void
+    {
+        $sql = $recordsHelper->insertTcaRecord($simulate, $tableName, $fields);
+        $this->logAndOutputSql($io, $simulate, $sql);
+    }
+
+    /**
      * UPDATE and log a single row.
      * This needs an instance of RecordsHelper to make use of prepared statements, which
      * should be created by the calling method.
@@ -449,6 +464,24 @@ abstract class AbstractHealthCheck
             $io->note('[SIMULATE] Updated "' . $count . '" records from "' . $tableName . '" table');
         } else {
             $io->warning('Updated "' . $count . '" records from "' . $tableName . '" table');
+        }
+    }
+
+    final protected function outputTableInsertBefore(SymfonyStyle $io, bool $simulate, string $tableName): void
+    {
+        if ($simulate) {
+            $io->note('[SIMULATE] Insert records into table: ' . $tableName);
+        } else {
+            $io->note('Insert records into table: ' . $tableName);
+        }
+    }
+
+    final protected function outputTableInsertAfter(SymfonyStyle $io, bool $simulate, string $tableName, int $count): void
+    {
+        if ($simulate) {
+            $io->note('[SIMULATE] Inserted "' . $count . '" records into "' . $tableName . '" table');
+        } else {
+            $io->warning('Inserted "' . $count . '" records into "' . $tableName . '" table');
         }
     }
 

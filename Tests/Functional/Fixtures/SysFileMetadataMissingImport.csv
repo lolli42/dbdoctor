@@ -1,0 +1,25 @@
+"sys_file_storage"
+,"uid","pid","deleted","name","driver","configuration","is_online","is_browsable","is_public","is_writable","is_default"
+,1,0,0,"fileadmin","Local","<?xml version=""1.0"" encoding=""utf-8"" standalone=""yes"" ?><T3FlexForms><data><sheet index=""sDEF""><language index=""lDEF""><field index=""basePath""><value index=""vDEF"">fileadmin/</value></field><field index=""pathType""><value index=""vDEF"">relative</value></field><field index=""caseSensitive""><value index=""vDEF"">1</value></field></language></sheet></data></T3FlexForms>",1,1,1,1,1
+"sys_file"
+,"uid","pid","storage","identifier","name","missing","type","mime_type","extension"
+,1,0,1,"/ok.png","ok.png",0,2,"image/png","png"
+# Should get a metadata record without dimensions - file is missing
+,2,0,1,"/missing.png","missing.png",1,2,"image/png","png"
+# Should get a metadata record - only a translated metadata record exists
+,3,0,1,"/translated-only.pdf","translated-only.pdf",0,5,"application/pdf","pdf"
+,4,0,1,"/all-languages.pdf","all-languages.pdf",0,5,"application/pdf","pdf"
+# Should get a metadata record - only a workspace metadata record exists
+,5,0,1,"/workspace-only.pdf","workspace-only.pdf",0,5,"application/pdf","pdf"
+# Should get a metadata record with width 3 and height 2 read from the file
+,6,0,1,"/dbdoctor-image.png","dbdoctor-image.png",0,2,"image/png","png"
+# Should get a metadata record without dimensions - file does not exist in storage
+,7,0,1,"/not-in-storage.png","not-in-storage.png",0,2,"image/png","png"
+# Should get a metadata record without dimensions - invalid identifier
+,8,0,1,"/../invalid.png","invalid.png",0,2,"image/png","png"
+"sys_file_metadata"
+,"uid","pid","file","sys_language_uid","l10n_parent","t3ver_wsid","width","height"
+,1,0,1,0,0,0,10,20
+,2,0,3,1,0,0,0,0
+,3,0,4,-1,0,0,0,0
+,4,0,5,0,0,1,0,0
