@@ -156,6 +156,18 @@ Check page tree integrity
 
  [OK] No affected records found%w
 
+Check pages within deleted pages
+--------------------------------
+
+ Class: PagesPidDeleted
+ Actions: soft-delete, workspace-remove
+ This health check finds not deleted "pages" records with their "pid" set to a soft-deleted
+ page, including whole sub trees below a deleted page. The core deletes sub pages when a
+ page is deleted, those pages are not reachable in backend and frontend anymore. They are
+ soft-deleted in live and removed if they are workspace records.
+
+ [OK] No affected records found%w
+
 Check localized pages having language parent set to self
 --------------------------------------------------------
 

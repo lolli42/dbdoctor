@@ -80,11 +80,17 @@ services:
         identifier: 'dbdoctor-pages-broken-tree'
         after: 'dbdoctor-tca-tables-language-less-than-one-has-zero-language-source'
 
+  Lolli\Dbdoctor\HealthCheck\PagesPidDeleted:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-pages-pid-deleted'
+        after: 'dbdoctor-pages-broken-tree'
+
   Lolli\Dbdoctor\HealthCheck\PagesTranslatedLanguageParentSelf:
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-pages-translated-language-parent-self'
-        after: 'dbdoctor-pages-broken-tree'
+        after: 'dbdoctor-pages-pid-deleted'
 
   Lolli\Dbdoctor\HealthCheck\PagesTranslatedLanguageParentMissing:
     tags:
