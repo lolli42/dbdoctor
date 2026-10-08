@@ -258,12 +258,13 @@ Scan for record translations pointing to non default language parent
 --------------------------------------------------------------------
 
  Class: TcaTablesTranslatedParentInvalidPointer
- Actions: update-fields
+ Actions: update-fields, soft-delete, remove, workspace-remove
  Record translations ("translate" / "connected" mode, as opposed to "free" mode) use the
  database field "transOrigPointerField" (field name usually "l10n_parent" or "l18n_parent").
  This field points to the default language record. This health check verifies that target
  actually has sys_language_uid = 0. Violating localizations are set to the transOrigPointerField
- of the current target record.
+ of the current target record. Localizations of a sys_language_uid = -1 record are soft deleted
+ if possible, or removed: The "all languages" record is shown in their language already.
 
  [OK] No affected records found%w
 

@@ -16,9 +16,17 @@
 ,8,1,0,1,8,0,"Ok lang 1 pointing to itself"
 # skipped since it points to a record that has l18n_parent=uid
 ,9,1,0,2,8,0,"Ok lang 1 pointing to broken 8"
+,10,2,0,-1,0,0,"Ok content on sub page 1 sys_language_uid -1"
+# Should be set to deleted=1, points to 10 which is a sys_language_uid=-1 record
+,11,2,0,1,10,0,"Not ok content on sub page 1 translated from sys_language_uid -1"
+# Should be removed, points to 10 which is a sys_language_uid=-1 record
+,12,2,0,2,10,1,"Not ok content on sub page 1 translated from sys_language_uid -1 ws-1"
 "sys_file_reference"
 ,"uid","pid","sys_language_uid","l10n_parent","deleted","uid_local","uid_foreign","tablenames","title"
 ,1,1,0,0,0,1,1,"pages","Ok pages lang 0"
 ,2,1,1,1,0,1,1,"pages","Ok pages lang 1"
 # points to 3 which is not a sys_language_uid=0 record
 ,3,1,2,2,0,1,1,"pages","Not Ok lang 1"
+,4,1,-1,0,0,1,1,"pages","Ok pages lang -1"
+# Should be set to deleted=1, points to 4 which is a sys_language_uid=-1 record
+,5,1,1,4,0,1,1,"pages","Not Ok lang 1 translated from lang -1"

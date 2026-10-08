@@ -34,13 +34,14 @@ final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck 
     {
         $io->section('Scan for record translations pointing to non default language parent');
         $this->outputClass($io);
-        $this->outputTags($io, self::TAG_UPDATE);
+        $this->outputTags($io, self::TAG_UPDATE, self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE);
         $io->text([
             'Record translations ("translate" / "connected" mode, as opposed to "free" mode) use the',
             'database field "transOrigPointerField" (field name usually "l10n_parent" or "l18n_parent").',
             'This field points to the default language record. This health check verifies that target',
             'actually has sys_language_uid = 0. Violating localizations are set to the transOrigPointerField',
-            'of the current target record.',
+            'of the current target record. Localizations of a sys_language_uid = -1 record are soft deleted',
+            'if possible, or removed: The "all languages" record is shown in their language already.',
         ]);
     }
 
@@ -55,6 +56,11 @@ final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck 
             $languageField = $this->tcaHelper->getLanguageField($tableName);
             /** @var string $translationParentField */
             $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
+            $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
+            $selectFields = ['uid', 'pid', $translationParentField];
+            if ($workspaceIdField) {
+                $selectFields[] = $workspaceIdField;
+            }
 
             $parentRowFields = [
                 'uid',
@@ -66,7 +72,7 @@ final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck 
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
             // Query could be potentially optimized with a self-join, but well ...
-            $result = $queryBuilder->select('uid', 'pid', $translationParentField)->from($tableName)
+            $result = $queryBuilder->select(...$selectFields)->from($tableName)
                 ->where(
                     // localized records
                     $queryBuilder->expr()->gt($languageField, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
@@ -88,6 +94,8 @@ final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck 
                         // Skip record if the parent row has l10n_parent=uid
                         && (int)$parentRow[$translationParentField] !== (int)$parentRow['uid']
                     ) {
+                        $localizedRow['_parentRowLanguage'] = (int)$parentRow[$languageField];
+                        $localizedRow['_reasonBroken'] = 'Parent record language ' . (int)$parentRow[$languageField];
                         $affectedRows[$tableName][] = $localizedRow;
                     }
                 } catch (NoSuchRecordException $e) {
@@ -104,7 +112,13 @@ final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck 
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         foreach ($affectedRecords as $tableName => $affectedTableRecords) {
-            foreach ($affectedTableRecords as $affectedTableRecord) {
+            // Localizations of an "all languages" record are obsolete, the -1 record is shown in their language.
+            $allLanguagesParentRows = array_filter($affectedTableRecords, static fn(array $row): bool => (int)$row['_parentRowLanguage'] < 0);
+            if ($allLanguagesParentRows !== []) {
+                $this->softOrHardDeleteRecordsOfTable($io, $simulate, $tableName, array_values($allLanguagesParentRows));
+            }
+            $otherRows = array_filter($affectedTableRecords, static fn(array $row): bool => (int)$row['_parentRowLanguage'] >= 0);
+            foreach ($otherRows as $affectedTableRecord) {
                 /** @var string $translationParentField */
                 $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
                 $parentRow = $recordsHelper->getRecord($tableName, ['uid', $translationParentField], (int)$affectedTableRecord[$translationParentField]);
@@ -121,6 +135,6 @@ final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck 
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
     {
-        $this->outputRecordDetails($io, $affectedRecords, '', ['languageField', 'transOrigPointerField']);
+        $this->outputRecordDetails($io, $affectedRecords, '_reasonBroken', ['languageField', 'transOrigPointerField']);
     }
 }
