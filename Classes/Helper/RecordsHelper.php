@@ -162,6 +162,50 @@ final class RecordsHelper
         return $sqlString;
     }
 
+    /**
+     * @param array<string, array{value: int|string, type: ParameterType}> $fields
+     */
+    public function insertTcaRecord(bool $simulate, string $tableName, array $fields): string
+    {
+        $statementHash = md5('insert' . $tableName . implode('', array_keys($fields)));
+        if (!isset($this->preparedStatements[$statementHash])) {
+            $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
+            $queryBuilder->insert($tableName);
+            foreach ($fields as $fieldName => $valueAndType) {
+                $queryBuilder->setValue($fieldName, '?', false);
+            }
+            $this->preparedStatements[$statementHash]['sqlString'] = $queryBuilder->getSQL();
+            $this->preparedStatements[$statementHash]['statement'] = $queryBuilder->prepare();
+        }
+        /** @var Statement $statement */
+        $statement = $this->preparedStatements[$statementHash]['statement'];
+        $sqlString = $this->preparedStatements[$statementHash]['sqlString'];
+        $currentParam = 1;
+        foreach ($fields as $valueAndType) {
+            if ($valueAndType['type'] === Connection::PARAM_STR || $valueAndType['type'] === Connection::PARAM_LOB) {
+                $sqlValue = '\'' . $valueAndType['value'] . '\'';
+            } else {
+                $sqlValue = (string)$valueAndType['value'];
+            }
+            $sqlString = $this->strReplaceFirst('?', $sqlValue, $sqlString);
+            if (!$simulate) {
+                $statement->bindValue($currentParam, $valueAndType['value'], $valueAndType['type']);
+            }
+            $currentParam++;
+        }
+        $sqlString .= ';';
+        if (!$simulate) {
+            $affectedRows = $statement->executeStatement();
+            if ($affectedRows !== 1) {
+                throw new UnexpectedNumberOfAffectedRowsException(
+                    'Insert query "' . $sqlString . '" had "' . $affectedRows . '" affected rows, 1 expected.',
+                    1791476400
+                );
+            }
+        }
+        return $sqlString;
+    }
+
     private function strReplaceFirst(string $search, string $replace, string $subject): string
     {
         $search = '/' . preg_quote($search, '/') . '/';

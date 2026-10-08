@@ -682,3 +682,15 @@ Scan for translated records with values not in sync with default language
  it is not overwritten when the default language record is changed.
 
  [OK] No affected records found%w
+
+Scan for sys_file records without sys_file_metadata record
+----------------------------------------------------------
+
+ Class: SysFileMetadataMissing
+ Actions: insert
+ Each "sys_file" record needs a default language "sys_file_metadata" record. The core creates
+ it when a file is indexed, but does not re-create a missing one: Image dimensions are then
+ unknown and images can not be cropped in backend. This check creates missing records. As
+ with core indexing, width and height of images in local storages are read from the file.
+
+ [OK] No affected records found%w

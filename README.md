@@ -83,6 +83,9 @@ There are usually three options for a specific "fix":
 * Set the record `deleted=1` for soft-delete aware tables
 * Update the record to something "more correct"
 
+In rare cases, a record that belongs to another one is missing, and dbdoctor inserts it,
+for instance the default language `sys_file_metadata` record of a `sys_file` record.
+
 The general strategy is to create as little damage as possible from a TYPO3 *Frontend rendering*
 point of view.
 
