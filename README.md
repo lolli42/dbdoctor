@@ -365,8 +365,9 @@ regarding SQL dumps must not be forgotten when doing this:
   > things the same way without giving options or choices. Adding this would quickly lead
   > to a multiplication of system state permutations rendering maintenance of this already
   > complex project impossible. If really needed, ModifyHealthClassListEvent can be used
-  > to programmatically adapt things. This option is not for the faint of heart, please
-  > understand the event class comment before following this path.
+  > to remove or reorder checks programmatically, for instance to skip checks tagged as
+  > risky. This option is not for the faint of heart, please understand the event class
+  > comment before following this path. To replace a check, use `disables`, see below.
 
 * Can I add my own health checks?
   > Technically yes, but you are on your own. Health checks are collected via dependency
