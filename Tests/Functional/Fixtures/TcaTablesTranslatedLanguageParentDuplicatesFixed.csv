@@ -12,6 +12,10 @@
 ,4,1,0,2,1,0,1,1,"pages","media","Ok lang 2"
 ,5,1,1,2,1,0,1,1,"pages","media","Ok lang 2, deleted duplicate"
 ,6,1,0,2,1,1,1,1,"pages","media","Ok lang 2, workspace record"
+# Ok, translations of 7 attached to two different translated parents: Not duplicates of each other
+,7,1,0,0,0,0,1,1,"tx_dbdoctortestsforeignfield_hotels","images","Ok default language, inline child of hotel 1"
+,8,1,0,1,7,0,1,2,"tx_dbdoctortestsforeignfield_hotels","images","Ok lang 1, inline child of hotel 2"
+,9,1,0,1,7,0,1,3,"tx_dbdoctortestsforeignfield_hotels","images","Ok lang 1, inline child of hotel 3"
 "tx_dbdoctortestsforeignfield_hotels"
 ,"uid","pid","deleted","hidden","sorting","sys_language_uid","l18n_parent","parentid","title"
 ,1,1,0,0,0,0,0,1,"Ok default language"
