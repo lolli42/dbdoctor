@@ -281,6 +281,9 @@ CGLCHECK_DRY_RUN=""
 DATABASE_DRIVER=""
 CONTAINER_BIN=""
 CONTAINER_INTERACTIVE="-it --init"
+# Composer can not detect the root version from git in the container, for instance in git worktrees
+# whose .git file points outside the mounted directory. "dev-main" is aliased to "2.x-dev".
+COMPOSER_ROOT_VERSION="${COMPOSER_ROOT_VERSION:-dev-main}"
 HOST_UID=$(id -u)
 HOST_PID=$(id -g)
 USERSET=""
