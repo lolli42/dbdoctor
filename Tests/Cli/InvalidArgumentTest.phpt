@@ -400,7 +400,8 @@ Scan for localized tt_content records without page translation
  in their language on their page, otherwise they are never rendered in frontend. This check
  finds such records and soft-deletes them, workspace records are removed. tt_content records
  in sys folders are not checked: They are typically rendered by "Insert records" elements on
- other pages, which works without a page translation of the sys folder.
+ other pages, which works without a page translation of the sys folder. Records on translated
+ pages are not checked either: TcaTablesPidTranslatedPage moves them to the default page.
 
  [OK] No affected records found%w
 
