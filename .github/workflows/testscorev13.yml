@@ -7,6 +7,10 @@ on:
   schedule:
     - cron:  '56 4 * * *'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   testsuite:
     name: all tests with core v13
