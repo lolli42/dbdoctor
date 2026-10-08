@@ -183,18 +183,11 @@ services:
         identifier: 'dbdoctor-tt-content-localization-source-logic-with-parent'
         after: 'dbdoctor-tt-content-localization-source-set-with-parent'
 
-  # This check deliberately occurs twice in the health check chain
   Lolli\Dbdoctor\HealthCheck\SysFileReferenceDangling:
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-sys-file-reference-dangling'
         after: 'dbdoctor-tt-content-localization-source-logic-with-parent'
-
-      # Check sys_file_reference pointing to not existing records *again*
-      # TcaTablesTranslatedLanguageParentMissing may have deleted some
-      - name: 'lolli.dbdoctor.health'
-        identifier: 'dbdoctor-sys-file-reference-dangling-second-pass'
-        after: 'dbdoctor-tca-tables-translated-language-parent-missing'
 
   Lolli\Dbdoctor\HealthCheck\SysFileReferenceDeletedLocalizedParentExists:
     tags:
@@ -263,7 +256,7 @@ services:
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-tca-tables-translated-language-parent-deleted'
-        after: 'dbdoctor-sys-file-reference-dangling-second-pass'
+        after: 'dbdoctor-tca-tables-translated-language-parent-missing'
 
   Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedLanguageParentDifferentPid:
     tags:
