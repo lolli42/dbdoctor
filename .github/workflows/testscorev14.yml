@@ -1,6 +1,7 @@
 name: tests core v14
 
 on:
+  workflow_dispatch:
   push:
   pull_request:
   schedule:
