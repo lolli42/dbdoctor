@@ -49,8 +49,12 @@ fix them before going to the next check. Updates and deletes of not-ok records
 are done with low-level database queries directly, not using the DataHandler.
 
 Single checks are carefully crafted and functionally tested and the order in which
-they are executed is important. It can happen that a single check is run multiple
-times in the chain.
+they are executed is important.
+
+A single run does not guarantee a clean database: Fixing something in a later check
+can create new findings for an earlier check, for instance when a deleted record leaves
+sys_file_reference rows pointing to nothing. Run dbdoctor again until a run finds
+nothing, `-m check` returns 0 (zero) then.
 
 Single checks rather try to avoid memory consumption and assumed state at the cost
 of more queries being executed. Queries are often performed as prepared statements
@@ -270,8 +274,9 @@ prompting for user input after each failed check.
   $ bin/typo3 dbdoctor:health -m check
   ```
   Run all checks but don't perform any DB changes. Returns 0 (zero) if all checks
-  are fine and non-zero if something was found by any check. Useful to run
-  as cron job to see if any check "goes red" over time after everything has been fixed once.
+  are fine and non-zero if something was found by any check. Useful to verify a fix
+  run was complete, and as cron job to see if any check "goes red" over time after
+  everything has been fixed once.
 
 * Execute mode: `--mode execute` or `-m execute`:
   ```
@@ -383,11 +388,10 @@ regarding SQL dumps must not be forgotten when doing this:
   > ```
   > The replaced check is not executed, and your check runs at its position in the chain,
   > no `before` or `after` needed. A tag replaces exactly one check. To replace multiple
-  > checks, or a check that runs multiple times in the chain, add one tag with its own
-  > identifier per replaced identifier. Identifiers in `disables` that do not exist are ignored
-  > silently: When dbdoctor renames or removes a check you replaced, the dbdoctor check may
-  > run again, and yours ends up at some position nobody chose. Verify your replacements
-  > after each dbdoctor update.
+  > checks, add one tag with its own identifier per replaced check. Identifiers in
+  > `disables` that do not exist are ignored silently: When dbdoctor renames or removes a
+  > check you replaced, the dbdoctor check may run again, and yours ends up at some
+  > position nobody chose. Verify your replacements after each dbdoctor update.
 
 
 # Tagging and releasing

@@ -493,16 +493,6 @@ Scan for record translations with missing parent
 
  [OK] No affected records found%w
 
-Scan for orphan sys_file_reference records
-------------------------------------------
-
- Class: SysFileReferenceDangling
- Actions: remove
- Basic check of sys_file_reference: Records referenced in uid_local and uid_foreign
- must exist, otherwise that sys_file_reference row is obsolete and removed.
-
- [OK] No affected records found%w
-
 Scan for not-deleted record translations with deleted parent
 ------------------------------------------------------------
 
