@@ -67,8 +67,8 @@ handleDbmsOptions() {
                 echo "Use \"./Build/Scripts/runTests.sh -h\" to display help and valid options" >&2
                 exit 1
             fi
-            [ -z "${DBMS_VERSION}" ] && DBMS_VERSION="5.5"
-            if ! [[ ${DBMS_VERSION} =~ ^(5.5|5.6|5.7|8.0|8.1|8.2|8.3|8.4)$ ]]; then
+            [ -z "${DBMS_VERSION}" ] && DBMS_VERSION="8.0"
+            if ! [[ ${DBMS_VERSION} =~ ^(8.0|8.1|8.2|8.3|8.4)$ ]]; then
                 echo "Invalid combination -d ${DBMS} -i ${DBMS_VERSION}" >&2
                 echo >&2
                 echo "Use \"./Build/Scripts/runTests.sh -h\" to display help and valid options" >&2
@@ -207,10 +207,7 @@ Options:
             - 11.3   short-term development series, rolling release
             - 11.4   long-term, maintained until 2029-05
         With "-d mysql":
-            - 5.5   unmaintained since 2018-12 (default)
-            - 5.6   unmaintained since 2021-02
-            - 5.7   maintained until 2023-10
-            - 8.0   maintained until 2026-04
+            - 8.0   maintained until 2026-04 (default)
             - 8.1   unmaintained since 2023-10
             - 8.2   unmaintained since 2024-01
             - 8.3   maintained until 2024-04
