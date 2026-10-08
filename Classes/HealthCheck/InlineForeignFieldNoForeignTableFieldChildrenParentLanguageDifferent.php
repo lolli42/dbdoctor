@@ -34,7 +34,7 @@ final class InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent
     {
         $io->section('Scan for inline foreign field records with different language than their parent');
         $this->outputClass($io);
-        $this->outputTags($io, self::TAG_UPDATE, self::TAG_RISKY);
+        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE, self::TAG_UPDATE, self::TAG_RISKY);
         $io->text([
             'TCA inline foreign field child records point to a parent record. This check finds',
             'child records that have a different language than the parent record.',

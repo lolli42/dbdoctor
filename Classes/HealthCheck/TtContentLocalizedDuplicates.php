@@ -33,7 +33,7 @@ final class TtContentLocalizedDuplicates extends AbstractHealthCheck implements 
     {
         $io->section('Duplicate localized tt_content records');
         $this->outputClass($io);
-        $this->outputTags($io, self::TAG_REMOVE);
+        $this->outputTags($io, self::TAG_SOFT_DELETE);
         $io->text([
             'There must be only one localized record in "tt_content" per target language.',
             'Having more than one leads to various issues in FE and BE. This check finds',
