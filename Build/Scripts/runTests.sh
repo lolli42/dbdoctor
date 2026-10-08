@@ -365,6 +365,12 @@ fi
 
 handleDbmsOptions
 
+# Allocate a TTY only when called from a terminal: Without one, for instance when called by a script
+# or an agent, podman and docker warn "The input device is not a TTY".
+if [ ! -t 0 ] || [ ! -t 1 ]; then
+    CONTAINER_INTERACTIVE="--init"
+fi
+
 # ENV var "CI" is set by github ci. Use it to force some CI details.
 if [ "${CI}" == "true" ]; then
     CONTAINER_INTERACTIVE=""
