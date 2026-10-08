@@ -9,15 +9,15 @@ TYPO3 DB doctor
 The mission of this extension is to find database inconsistencies that may
 have been introduced in a living TYPO3 instance over time, and to fix them.
 
-As example, when a page tree is deleted by an editor, it sometimes happens
+As an example, when a page tree is deleted by an editor, it sometimes happens
 that most pages are properly set to deleted, but some pages are missed, or a
 content element on one page is not deleted. This leads to orphan pages or
 content elements in the database.
 
 There can be many reasons to end up with invalid database state like the above:
-TYPO3 in general has no referential integrity constrains on database tables,
+TYPO3 in general has no referential integrity constraints on database tables,
 inconsistencies can be triggered by a dying PHP process, a lost DB connection, a
-core bug, a buggy extension, a broken deployment, and more. Long living active
+core bug, a buggy extension, a broken deployment, and more. Long-lived active
 instances that were upgraded through multiple major core versions tend to end up
 with something that isn't quite right anymore.
 
@@ -36,10 +36,10 @@ We're not aware of other open extensions that try to achieve the same in a simil
 systematic way. The core `lowlevel` extension comes with a few commands that try to
 find and clean up some fishy DB state cases, but dbdoctor solves far more things.
 
-This extension is not a substitution of `lowlevel` commands (yet?), it's more an
+This extension is not a substitute for `lowlevel` commands (yet?), it's more of an
 incubator to see if a certain strategy dealing with inconsistencies actually works
 out in projects. It will grow over time. Maybe it ends up in the core, or the core
-refers to this extension as "maintenance" extensions in the future. We'll see.
+refers to this extension as a "maintenance" extension in the future. We'll see.
 
 
 # Strategy
@@ -48,14 +48,14 @@ The strategy of this command is to check for single things one-at-a-time and to
 fix them before going to the next check. Updates and deletes of not-ok records
 are done with low-level database queries directly, not using the DataHandler.
 
-Single checks are carefully crafted and functional tested and the order in which
+Single checks are carefully crafted and functionally tested and the order in which
 they are executed is important. It can happen that a single check is run multiple
 times in the chain.
 
 Single checks rather try to avoid memory consumption and assumed state at the cost
 of more queries being executed. Queries are often performed as prepared statements
 to re-use them often in a single check. Statements are properly closed when a single
-check finished, effectively using the PHP garbage collection. All-in-all, this command
+check has finished, effectively using the PHP garbage collection. All-in-all, this command
 should perform relatively well even with big-sized instances, but it will hammer the
 database a lot.
 
@@ -63,11 +63,11 @@ database a lot.
 # Impact on Frontend rendering
 
 When a health check finds something fishy, dbdoctor allows only one hard
-coded solution to deal with it. The user is not asked for a solution, it either
-accepts the proposed UPDATE or DELETE database changes, or it needs to abort and take
+coded solution to deal with it. The user is not asked for a solution, they either
+accept the proposed UPDATE or DELETE database changes, or need to abort and take
 care manually (and then restart).
 
-Implementing a per-record question/answer feature to dbdoctor is not feasible since
+Implementing a per-record question/answer feature in dbdoctor is not feasible since
 this would add an orthogonal vector of complexity to the system which would
 quickly render it unmaintainable: Single checks are designed to work
 on top of each other, dbdoctor needs to establish a "chain of correctness" to
@@ -79,12 +79,12 @@ There are usually three options for a specific "fix":
 * Set the record `deleted=1` for soft-delete aware tables
 * Update the record to something "more correct"
 
-The general strategy is to create as little damage as possible from a TYPO3 *Frontend rending*
+The general strategy is to create as little damage as possible from a TYPO3 *Frontend rendering*
 point of view.
 
 For example, when there are *two* localizations for a default language record in a specific
-language, dbdoctor detects this as invalid and suggests to set one of them to `deleted=1`. From
-the two records, it will try to set the one deleted that is typically *not* rendered in Frontend.
+language, dbdoctor detects this as invalid and suggests setting one of them to `deleted=1`. Of
+the two records, it tries to set the one to deleted that is typically *not* rendered in Frontend.
 
 This general strategy isn't always as simple as with the above example, though: Since
 the TYPO3 Frontend rendering is so flexible, the actual rendered record sometimes depends
@@ -102,41 +102,41 @@ the "delete" column of soft-delete aware TCA tables is **assumed** to be an inte
 and **not** a text or varchar or similar. The correct schema of this column is
 usually created by the core as long as there is no explicit definition of it in a
 `ext_tables.sql` file. However, if an extension gets this wrong and defines such
-a field in some broken way, dbdoctor may create hazard by suggesting delete or
+a field in some broken way, dbdoctor may cause damage by suggesting deletes or
 updates of all rows.
 
 There are further assumptions: For instance, dbdoctor assumes some TCA settings the core
-provides for standard tables (especially `pages`, `tt_content` and `sys_file_reference`
-are **not** changed by extensions. As example, those tables are assumed to be both
-soft-delete aware and workspace aware, according fields are queried by dbdoctor on such
-tables, and dbdoctor will fail if an extension tampered with according TCA `ctrl` settings.
+provides for standard tables (especially `pages`, `tt_content` and `sys_file_reference`)
+are **not** changed by extensions. For example, those tables are assumed to be both
+soft-delete aware and workspace aware, the corresponding fields are queried by dbdoctor on such
+tables, and dbdoctor will fail if an extension tampered with the corresponding TCA `ctrl` settings.
 
-There are further scenarios dbdoctor can not deal with: For example, let's say some extension declares
+There are further scenarios dbdoctor cannot deal with: For example, let's say some extension declares
 a table soft-delete-aware by having a TCA entry `['ctrl']['delete'] = 'deleted'`,
 and you have some rows that are `deleted=1`. Later, that TCA table is set to be no
 longer soft-delete-aware by removing the `['ctrl']['delete']` declaration. The core
-database analyzer will then suggest to first rename the `deleted` column to `zzz_deleted_deleted`,
-and will then allow to remove the column. Doing this will effectively push all previously
-deleted records "live", when you missed to remove all affected `deleted=1` records beforehand.
+database analyzer will then suggest first renaming the `deleted` column to `zzz_deleted_deleted`,
+and will then allow removing the column. Doing this will effectively push all previously
+deleted records "live", if you failed to remove all affected `deleted=1` records beforehand.
 There are similar scenarios when TCA tables are changed to be no longer workspace-aware, but
 you still have workspace related records in the table, or when TCA tables
-are no longer "starttime" / "endtime" aware with having timed records it the table.
+are no longer "starttime" / "endtime" aware while there are still timed records in the table.
 
 dbdoctor always works on the current TCA state. It never knows if some TCA table has
 been defined "soft-delete-aware" before, and if this has been changed later. When you push
 records live by removing the "deleted" column, by removing the "workspaces" extension, workspaces
-related columns, or timing related fields, this can end up with non-repairable state
-dbdoctor will not be able to fix. Instead, it will tend to find additional database relations
+related columns, or timing related fields, this can end up in a broken state
+dbdoctor is not able to fix. Instead, it will tend to find additional database relations
 that are broken, and will suggest changes that make the situation worse than before. Also,
 dbdoctor never looks at potentially existing `zzz_deleted` columns - those do not exist
-from dbdoctor point of view since they depend on some "before" TCA state that can not be
-reconstructed again. State created from scenarios like the above ones are not repairable
+from dbdoctor's point of view since they depend on some "before" TCA state that cannot be
+reconstructed. State created by scenarios like the above is not repairable
 and need manual reconstruction. Good luck.
 
-All in all, TCA and `ext_tables.sql` of extensions should be in a good shape before working
+All in all, TCA and `ext_tables.sql` of extensions should be in good shape before working
 with dbdoctor, and changes suggested by health checks should **always be checked manually**
 before committing them to the database. Also, never forget to back up the database to
-prepare for an eventually needed disaster recovery. Do not accept dbdoctor suggestions
+prepare for a disaster recovery that may become necessary. Do not accept dbdoctor suggestions
 blindly!
 
 
@@ -186,9 +186,9 @@ instance. As such, a few things should be kept in mind:
 
 # Postprocessing
 
-* [!!!] Run the reference index updater when this command finished! It is very likely
+* [!!!] Run the reference index updater after this command has finished! It is very likely
   it will update something. A clean reference index becomes more and more important
-  with younger core versions. The CLI command to do this: `bin/typo3 referenceindex:update`.
+  with newer core versions. The CLI command to do this: `bin/typo3 referenceindex:update`.
 
 
 # Usage
@@ -199,8 +199,8 @@ $ bin/typo3 dbdoctor:health
 
 Note dbdoctor is "runtime static" with TCA: When dbdoctor is running, TCA is **not**
 expected to change meanwhile. When you are looking at single changes and decide to change
-TCA, then clear all caches and abort dbdoctor (press "a" in  interactive mode) to
-start again. Failing to do so may lead to dbdoctor committing hazard to the database,
+TCA, then clear all caches and abort dbdoctor (press "a" in interactive mode) to
+start again. Failing to do so may lead to dbdoctor writing harmful changes to the database,
 depending on what you did with TCA.
 
 The interface looks like this:
@@ -209,11 +209,11 @@ The interface looks like this:
 
 Note the above image is notoriously outdated, the interface of the current version
 may look slightly different. We're too lazy to update the image often, but it should
-give a solid idea on how the interface looks like.
+give a solid idea of what the interface looks like.
 
 The main command is a chain of single checks. They are done one by one. Affected
 record details can be shown on a per-page and a per-record basis to give a quick
-overview. The interface allows deleting or updating of affected records, depending
+overview. The interface allows deleting or updating affected records, depending
 on the type of the check.
 
 The default interactive mode will never perform updates automatically and
@@ -284,7 +284,7 @@ prompting for user input after each failed check.
   at least give you the theoretical option to debug issues after dbdoctor destroyed your database.
   The `-f` option should thus have some date or similar in it, to make it unique.
 
-* Log execute queries to file: `--file` or `-f`:
+* Log executed queries to file: `--file` or `-f`:
   ```
   $ bin/typo3 dbdoctor:health -f /tmp/foo.sql
   ```
@@ -302,7 +302,7 @@ prompting for user input after each failed check.
 
 # Current health checks
 
-Single tests are described in details when running the CLI command. Rough overview:
+Single tests are described in detail when running the CLI command. Rough overview:
 
 * Page tree integrity checks
 * FAL related sys_file_reference and friends checks
@@ -317,13 +317,13 @@ We highly encourage admins to back up databases when working with dbdoctor. Some
 regarding SQL dumps must not be forgotten when doing this:
 
 * When dumping an existing MySQL / MariaDB database *before and after* executing the CLI command,
-  it can be helpful to toggle-off the "extended inserts" option: `mysqldump` by default merges
+  it can be helpful to turn off the "extended inserts" option: `mysqldump` by default merges
   multiple INSERT statements into one call for efficiency and speed. This is both quicker to dump and
   to import, and consumes less disk space.
 
   However, when looking for single DB changes, it is much more convenient to turn this off and have
-  one line for each inserted row. Tools like `diff` are then far easier to grasp when searching for
-  something that eventually went wrong. Example shell commands:
+  one line for each inserted row. The output of tools like `diff` is then far easier to read when searching for
+  something that may have gone wrong. Example shell commands:
   ```
   $ mysqldump --skip-extended-insert myDatabase > /tmp/myDatabase-`date +%Y-%m-%d-%H-%M-%S`-dbdoctor-before.sql
   $ bin/typo3 dbdoctor:health
@@ -337,12 +337,12 @@ regarding SQL dumps must not be forgotten when doing this:
 * When dumping databases, it is a **crucial security measure** to **never** put such dumps into
   a public directory accessible by a web server or some third party server user. Violating this
   basic rule is a common source of data leaks in the wild! There is no excuse to get this wrong.
-  It is also a good idea to put SQL files at a place that is rotated into backups to allow debugging
+  It is also a good idea to put SQL files in a place that is rotated into backups to allow debugging
   later in case issues only pop up after a while. To follow GDPR rules, those files should still be
   removed at some point!
 
 * When dumping databases, it is often a good idea to gzip .sql files: This typically reduces file size
-  by around factor eight. Lets save some precious server disk and backup size! It's also possible to
+  by a factor of around eight. Let's save some precious server disk and backup size! It's also possible to
   directly 'pipe' to gzip when dumping. Either do that, or remember to gzip stuff before logging out
   of a system.
 
@@ -350,7 +350,7 @@ regarding SQL dumps must not be forgotten when doing this:
 # FAQ
 
 * Will the functionality be made available in a backend GUI?
-  > No. CLI is the only sane way for these kind of things.
+  > No. CLI is the only sane way for this kind of thing.
 
 * Can I manipulate health checks?
   > No and yes. dbdoctor CLI does not allow skipping checks and single checks always fix
@@ -360,19 +360,21 @@ regarding SQL dumps must not be forgotten when doing this:
   > to programmatically adapt things. This option is not for the faint of heart, please
   > understand the event class comment before following this path.
 
-* Can I add own health checks?
+* Can I add my own health checks?
   > Technically yes, but you are on your own. Health checks are collected via dependency
-  > injection: Every autoconfigured service implementing HealthCheckInterface is tagged `lolli.dbdoctor.health`
-  > automatically and becomes part of the chain, also when it lives in a different extension.
+  > injection: Every autoconfigured service implementing HealthCheckInterface is tagged
+  > `lolli.dbdoctor.health` automatically and becomes part of the chain, also when it lives
+  > in a different extension.
   > Its position is determined by the `before` and `after` tag attributes in Services.yaml,
   > referencing identifiers of other checks. Neither the identifiers, nor the order, nor
   > HealthCheckInterface are API: dbdoctor adds, renames, reorders or removes checks at any
   > time. A check without `before` and `after` ends up at some position nobody chose. Do
   > not additionally add such a check using ModifyHealthClassListEvent, it would run twice.
 
+
 # Tagging and releasing
 
-[packagist.org](https://packagist.org/packages/lolli/dbdoctor) is enabled via the casual github hook.
+[packagist.org](https://packagist.org/packages/lolli/dbdoctor) is enabled via the usual GitHub hook.
 TER uploads are done manually: create a zip from the tag and upload it via the TER web interface,
 using the commit message as upload comment. Each tag gets a GitHub release, too: Create it in
 the GitHub web interface from the tag, using "Generate release notes".
