@@ -19,6 +19,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Composer cache
+        uses: actions/cache@v6
+        with:
+          path: .cache/composer
+          key: composer-${{ github.run_id }}
+          restore-keys: composer-
+
       - name: Install testing system
         run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -t 14 -s composerUpdate
 
