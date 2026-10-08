@@ -403,38 +403,41 @@ Scan for localized tt_content records without page translation
 
  [OK] No affected records found%w
 
-Localized tt_content records must point to existing localization source
------------------------------------------------------------------------
+Scan for translated records with not existing translation source
+----------------------------------------------------------------
 
- Class: TtContentLocalizationSourceExists
+ Class: TcaTablesTranslationSourceExists
  Actions: update-fields
- When l10n_source is not zero, the target record must exist.
- A broken l10n_source especially confuses the "Translate" button in page module.
- Affected records l10n_source is set to l18n_parent if set, to zero otherwise.
+ When the "translationSource" field (typically l10n_source) of a translated record is not zero,
+ the target record must exist. A broken translation source especially confuses the "Translate"
+ button in page module. The translation source of affected records is set to the value of the
+ "transOrigPointerField" (typically l10n_parent) if set, to zero otherwise.
 
  [OK] No affected records found%w
 
-Localized tt_content records must have localization source when parent is set
------------------------------------------------------------------------------
+Scan for translated records with parent but without translation source
+----------------------------------------------------------------------
 
- Class: TtContentLocalizationSourceSetWithParent
+ Class: TcaTablesTranslationSourceSetWithParent
  Actions: update-fields
- When l18n_parent is not zero ("Connected mode"), l10n_source must not be zero.
- A broken l10n_source especially confuses the "Translate" button in page module.
- Affected records l10n_source is set to l18n_parent.
+ When the "transOrigPointerField" (typically l10n_parent) of a translated record is not zero
+ ("Connected mode"), the "translationSource" field (typically l10n_source) must not be zero.
+ A broken translation source especially confuses the "Translate" button in page module.
+ The translation source of affected records is set to the value of the "transOrigPointerField".
 
  [OK] No affected records found%w
 
-Localized tt_content records must have logically correct localization source
-----------------------------------------------------------------------------
+Scan for translated records with logically wrong translation source
+-------------------------------------------------------------------
 
- Class: TtContentLocalizationSourceLogicWithParent
+ Class: TcaTablesTranslationSourceLogicWithParent
  Actions: update-fields
- When tt_content l18n_parent and l10n_source are not zero but point to different uids,
- it indicates this record "source" has been derived from a different language record
- and not from the default language record. That different language record should have the
- same l18n_parent. If this is not the case, set the tt_content l10n_source to the
- value of l18n_parent to fix the inheritance chain.
+ When "transOrigPointerField" (typically l10n_parent) and "translationSource" (typically
+ l10n_source) of a translated record are not zero but point to different uids, it indicates
+ the record has been derived from a different language record and not from the default language
+ record. That different language record should have the same "transOrigPointerField" value. If
+ this is not the case, set the translation source to the value of "transOrigPointerField" to fix
+ the inheritance chain.
 
  [OK] No affected records found%w
 

@@ -17,13 +17,17 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
-use Lolli\Dbdoctor\HealthCheck\TtContentLocalizationSourceLogicWithParent;
+use Lolli\Dbdoctor\HealthCheck\TcaTablesTranslationSourceSetWithParent;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-class TtContentLocalizationSourceLogicWithParentTest extends AbstractFunctionalTestCase
+class TcaTablesTranslationSourceSetWithParentTest extends AbstractFunctionalTestCase
 {
+    protected array $coreExtensionsToLoad = [
+        'workspaces',
+    ];
+
     protected array $testExtensionsToLoad = [
         'lolli/dbdoctor',
     ];
@@ -31,10 +35,10 @@ class TtContentLocalizationSourceLogicWithParentTest extends AbstractFunctionalT
     #[Test]
     public function showDetails(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizationSourceLogicWithParentImport.csv');
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslationSourceSetWithParentImport.csv');
         $io = $this->createMock(SymfonyStyle::class);
-        /** @var TtContentLocalizationSourceLogicWithParent $subject */
-        $subject = $this->get(TtContentLocalizationSourceLogicWithParent::class);
+        /** @var TcaTablesTranslationSourceSetWithParent $subject */
+        $subject = $this->get(TcaTablesTranslationSourceSetWithParent::class);
         $io->expects(self::atLeastOnce())->method('warning');
         $io->expects(self::atLeastOnce())->method('ask')->willReturn('p', 'd', 'a');
         $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
@@ -43,10 +47,10 @@ class TtContentLocalizationSourceLogicWithParentTest extends AbstractFunctionalT
     #[Test]
     public function fixBrokenRecords(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizationSourceLogicWithParentImport.csv');
-        /** @var TtContentLocalizationSourceLogicWithParent $subject */
-        $subject = $this->get(TtContentLocalizationSourceLogicWithParent::class);
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslationSourceSetWithParentImport.csv');
+        /** @var TcaTablesTranslationSourceSetWithParent $subject */
+        $subject = $this->get(TcaTablesTranslationSourceSetWithParent::class);
         $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
-        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizationSourceLogicWithParentFixed.csv');
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslationSourceSetWithParentFixed.csv');
     }
 }
