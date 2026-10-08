@@ -90,4 +90,28 @@ class TableHelperTest extends AbstractFunctionalTestCase
         $connectionPool = $this->getContainer()->get(ConnectionPool::class);
         self::assertTrue((new TableHelper($connectionPool))->fieldExistsInTable('pages', 'title'));
     }
+
+    #[Test]
+    public function fieldIsIntegerReturnsFalseIfFieldDoesNotExist(): void
+    {
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = $this->getContainer()->get(ConnectionPool::class);
+        self::assertFalse((new TableHelper($connectionPool))->fieldIsInteger('pages', 'field-does-not-exist'));
+    }
+
+    #[Test]
+    public function fieldIsIntegerReturnsFalseForTextField(): void
+    {
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = $this->getContainer()->get(ConnectionPool::class);
+        self::assertFalse((new TableHelper($connectionPool))->fieldIsInteger('pages', 'title'));
+    }
+
+    #[Test]
+    public function fieldIsIntegerReturnsTrueForIntegerField(): void
+    {
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = $this->getContainer()->get(ConnectionPool::class);
+        self::assertTrue((new TableHelper($connectionPool))->fieldIsInteger('pages', 'shortcut'));
+    }
 }

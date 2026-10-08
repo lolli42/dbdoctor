@@ -211,6 +211,84 @@ final class TcaHelper
     }
 
     /**
+     * Fields of type 'group' that store their relations as comma separated
+     * list in the field itself, without MM table:
+     *
+     * 'config' => [
+     *     'type' => 'group',
+     *     'allowed' => 'tt_content',
+     * ],
+     *
+     * Language pointer fields (TCA ctrl "transOrigPointerField" and "translationSource")
+     * are skipped, they are handled by language related checks.
+     *
+     * @return iterable<array{tableName: string, fieldName: string, allowedTables: array<int, string>}>
+     */
+    public function getNextGroupFieldWithoutMm(): iterable
+    {
+        $this->verifyTcaIsArray();
+        foreach ($GLOBALS['TCA'] as $tableName => $config) {
+            foreach (($config['columns'] ?? []) as $fieldName => $columnConfig) {
+                if (is_array($columnConfig['config'] ?? false)
+                    && ($columnConfig['config']['type'] ?? '') === 'group'
+                    && empty($columnConfig['config']['MM'])
+                    && !empty($columnConfig['config']['allowed'])
+                    && $fieldName !== $this->getTranslationParentField($tableName)
+                    && $fieldName !== $this->getTranslationSourceField($tableName)
+                ) {
+                    yield [
+                        'tableName' => $tableName,
+                        'fieldName' => $fieldName,
+                        'allowedTables' => GeneralUtility::trimExplode(',', $columnConfig['config']['allowed'], true),
+                    ];
+                }
+            }
+        }
+    }
+
+    /**
+     * Fields of type 'group' that store their relations in an MM table, and are
+     * the "local" side of the relation: The MM rows have the uid of the record
+     * in uid_local, and the related record in uid_foreign and tablenames.
+     *
+     * 'config' => [
+     *     'type' => 'group',
+     *     'allowed' => '*',
+     *     'MM' => 'sys_category_record_mm',
+     * ],
+     *
+     * The "foreign" side of a relation (MM_opposite_field set) is skipped: Its
+     * relations are the MM rows of the local side. Fields with MM_table_where
+     * are skipped as well: It is unclear which MM rows belong to them.
+     *
+     * @return iterable<array{tableName: string, fieldName: string, mmTableName: string, allowedTables: array<int, string>, matchFields: array<string, int|string>}>
+     */
+    public function getNextGroupFieldWithMm(): iterable
+    {
+        $this->verifyTcaIsArray();
+        foreach ($GLOBALS['TCA'] as $tableName => $config) {
+            foreach (($config['columns'] ?? []) as $fieldName => $columnConfig) {
+                if (is_array($columnConfig['config'] ?? false)
+                    && ($columnConfig['config']['type'] ?? '') === 'group'
+                    && !empty($columnConfig['config']['MM'])
+                    && is_string($columnConfig['config']['MM'])
+                    && empty($columnConfig['config']['MM_opposite_field'])
+                    && empty($columnConfig['config']['MM_table_where'])
+                    && !empty($columnConfig['config']['allowed'])
+                ) {
+                    yield [
+                        'tableName' => $tableName,
+                        'fieldName' => $fieldName,
+                        'mmTableName' => $columnConfig['config']['MM'],
+                        'allowedTables' => GeneralUtility::trimExplode(',', $columnConfig['config']['allowed'], true),
+                        'matchFields' => is_array($columnConfig['config']['MM_match_fields'] ?? false) ? $columnConfig['config']['MM_match_fields'] : [],
+                    ];
+                }
+            }
+        }
+    }
+
+    /**
      * Determine if a TCA table has at least one type='flex' field.
      */
     public function hasFlexField(string $tableName): bool

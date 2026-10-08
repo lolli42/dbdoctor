@@ -17,6 +17,9 @@ namespace Lolli\Dbdoctor\Helper;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Doctrine\DBAL\Types\BigIntType;
+use Doctrine\DBAL\Types\IntegerType;
+use Doctrine\DBAL\Types\SmallIntType;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
 final class TableHelper
@@ -30,6 +33,11 @@ final class TableHelper
      * @var array<string, bool>
      */
     private array $fieldExistsCache = [];
+
+    /**
+     * @var array<string, bool>
+     */
+    private array $fieldIsIntegerCache = [];
 
     private ConnectionPool $connectionPool;
 
@@ -74,5 +82,31 @@ final class TableHelper
             }
         }
         return $this->fieldExistsCache[$cacheKey];
+    }
+
+    /**
+     * True if the database column of a field is of type integer (smallint, int, bigint).
+     * False if the column is of a different type, or if it does not exist.
+     */
+    public function fieldIsInteger(string $tableName, string $fieldName): bool
+    {
+        if (!$this->fieldExistsInTable($tableName, $fieldName)) {
+            return false;
+        }
+        $cacheKey = $tableName . '-' . $fieldName;
+        if (array_key_exists($cacheKey, $this->fieldIsIntegerCache)) {
+            return $this->fieldIsIntegerCache[$cacheKey];
+        }
+        $this->fieldIsIntegerCache[$cacheKey] = false;
+        $connection = $this->connectionPool->getConnectionForTable($tableName);
+        $tableColumns = $connection->createSchemaManager()->listTableColumns($tableName);
+        foreach ($tableColumns as $column) {
+            if ($column->getName() === $fieldName) {
+                $type = $column->getType();
+                $this->fieldIsIntegerCache[$cacheKey] = $type instanceof IntegerType || $type instanceof SmallIntType || $type instanceof BigIntType;
+                break;
+            }
+        }
+        return $this->fieldIsIntegerCache[$cacheKey];
     }
 }
