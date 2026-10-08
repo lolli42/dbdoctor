@@ -1,0 +1,30 @@
+"pages"
+,"uid","pid","deleted","title"
+,1,0,0,"Ok"
+"tt_content"
+,"uid","pid","deleted","header"
+,1,1,0,"Ok"
+,2,1,1,"Ok - soft-deleted"
+"tx_dbdoctortestsgroup_item"
+,"uid","pid","deleted","title","relations_mm","relations_mm_single"
+,1,1,0,"Not Ok - relations to missing records",2,1
+,2,1,0,"Ok - relation to soft-deleted record",1,0
+# Soft-deleted records are handled as well
+,3,1,1,"Not Ok - soft-deleted with relation to missing record",0,0
+"tx_dbdoctortestsgroup_item_mm"
+,"uid_local","uid_foreign","tablenames","fieldname"
+,1,1,"pages","relations_mm"
+,1,1,"tt_content","relations_mm"
+# Not an allowed table: Not a relation of this field, not touched and not counted
+,1,96,"sys_file","relations_mm"
+# Empty tablenames point to the first allowed table "tt_content"
+,1,1,"","relations_mm_single"
+,2,2,"tt_content","relations_mm"
+# Local record does not exist: Not handled by this check
+,4,95,"tt_content","relations_mm"
+"sys_category"
+,"uid","pid","deleted","title","items"
+,1,1,0,"Not Ok - relation to missing record",1
+"sys_category_record_mm"
+,"uid_local","uid_foreign","tablenames","fieldname"
+,1,1,"tt_content","categories"

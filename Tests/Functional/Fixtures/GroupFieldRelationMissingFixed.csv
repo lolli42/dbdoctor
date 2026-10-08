@@ -1,0 +1,24 @@
+"pages"
+,"uid","pid","deleted","title","shortcut"
+,1,0,0,"Ok",0
+,2,0,1,"Ok - soft-deleted",0
+,3,0,0,"Not Ok - shortcut to missing page",0
+,4,0,0,"Ok - shortcut to soft-deleted page",2
+"tt_content"
+,"uid","pid","deleted","header","records"
+,1,1,0,"Ok",""
+,2,1,1,"Ok - soft-deleted",""
+,10,1,0,"Not Ok - one relation to missing record","1,2"
+,11,1,0,"Not Ok - only relation to missing record",""
+,12,1,0,"Ok - relation to existing record","1"
+# Soft-deleted records are handled as well
+,13,1,1,"Not Ok - soft-deleted with relation to missing record","1"
+"tx_dbdoctortestsgroup_item"
+,"uid","pid","deleted","title","relations_csv"
+,1,1,0,"Not Ok - two relations to missing records","pages_1,tt_content_1"
+# Items without table name point to the first allowed table "pages"
+,2,1,0,"Not Ok - relation without table name to missing page","1"
+,3,1,0,"Ok - relation to soft-deleted record","tt_content_2,pages_2"
+# Not allowed tables, invalid items and uid zero are not touched
+,4,1,0,"Ok - no valid relation","sys_file_5,foo,pages_0"
+,5,1,0,"Ok - empty",""

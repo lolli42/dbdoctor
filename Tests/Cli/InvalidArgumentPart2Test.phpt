@@ -253,6 +253,35 @@ Scan for inline foreign field records with different language than their parent
 
  [OK] No affected records found%w
 
+Scan for group fields with relations to missing records
+-------------------------------------------------------
+
+ Class: GroupFieldRelationMissing
+ Actions: update-fields
+ Fields of TCA type "group" without MM table store their relations as comma
+ separated list, for instance the tt_content field "records" of content type
+ "Insert records". This check finds relations to records that do not exist
+ and removes them from the list. Relations to soft-deleted records are kept:
+ The backend does not remove them when a record is deleted, and they are
+ needed when a record is restored using the recycler.
+
+ [OK] No affected records found%w
+
+Scan for group fields with MM relations to missing records
+----------------------------------------------------------
+
+ Class: GroupFieldMmRelationMissing
+ Actions: remove, update-fields
+ Fields of TCA type "group" with MM table store their relations as rows in
+ the MM table, for instance the sys_category field "items". This check finds
+ MM rows pointing to records that do not exist, removes them, and updates the
+ number of relations in the field of the local record. Relations to
+ soft-deleted records are kept: The backend does not remove them when a
+ record is deleted, and they are needed when a record is restored using the
+ recycler.
+
+ [OK] No affected records found%w
+
 Scan for duplicate record translations
 --------------------------------------
 

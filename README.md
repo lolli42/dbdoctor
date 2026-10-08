@@ -316,6 +316,7 @@ Single tests are described in detail when running the CLI command. Rough overvie
 * Language handling related checks
 * Workspace related checks
 * Inline parent-child relation related checks
+* Relations of TCA type "group" fields to missing records
 
 
 # Further hints

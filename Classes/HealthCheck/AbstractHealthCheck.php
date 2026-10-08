@@ -338,6 +338,19 @@ abstract class AbstractHealthCheck
     }
 
     /**
+     * DELETE and log rows of an MM table.
+     * This needs an instance of RecordsHelper to make use of prepared statements, which
+     * should be created by the calling method.
+     *
+     * @param array<string, array{value: int|string, type: ParameterType}> $whereFields
+     */
+    final protected function deleteMmRows(SymfonyStyle $io, bool $simulate, RecordsHelper $recordsHelper, string $mmTableName, array $whereFields): void
+    {
+        $sql = $recordsHelper->deleteMmRows($simulate, $mmTableName, $whereFields);
+        $this->logAndOutputSql($io, $simulate, $sql);
+    }
+
+    /**
      * DELETE or soft-delete multiple records from many tables.
      * Convenient method to save a foreach loop.
      * Calls softOrHardDeleteRecordsOfTable() per table.

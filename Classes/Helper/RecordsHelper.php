@@ -206,6 +206,57 @@ final class RecordsHelper
         return $sqlString;
     }
 
+    /**
+     * DELETE rows of an MM table. MM tables are no TCA tables and have no uid
+     * column: Rows are identified by all given fields. There may be duplicate
+     * rows, so at least one affected row is expected.
+     *
+     * @param array<string, array{value: int|string, type: ParameterType}> $whereFields
+     */
+    public function deleteMmRows(bool $simulate, string $mmTableName, array $whereFields): string
+    {
+        if (empty($whereFields)) {
+            throw new \RuntimeException('Must restrict MM rows to delete by at least one field.', 1791484210);
+        }
+        $statementHash = md5('deleteMm' . $mmTableName . implode('', array_keys($whereFields)));
+        if (!isset($this->preparedStatements[$statementHash])) {
+            $queryBuilder = $this->connectionPool->getQueryBuilderForTable($mmTableName);
+            $queryBuilder->delete($mmTableName);
+            foreach ($whereFields as $fieldName => $valueAndType) {
+                $queryBuilder->andWhere($queryBuilder->expr()->eq($fieldName, '?'));
+            }
+            $this->preparedStatements[$statementHash]['sqlString'] = $queryBuilder->getSQL();
+            $this->preparedStatements[$statementHash]['statement'] = $queryBuilder->prepare();
+        }
+        /** @var Statement $statement */
+        $statement = $this->preparedStatements[$statementHash]['statement'];
+        $sqlString = $this->preparedStatements[$statementHash]['sqlString'];
+        $currentParam = 1;
+        foreach ($whereFields as $valueAndType) {
+            if ($valueAndType['type'] === Connection::PARAM_STR) {
+                $sqlValue = '\'' . $valueAndType['value'] . '\'';
+            } else {
+                $sqlValue = (string)$valueAndType['value'];
+            }
+            $sqlString = $this->strReplaceFirst('= ?', '= ' . $sqlValue, $sqlString);
+            if (!$simulate) {
+                $statement->bindValue($currentParam, $valueAndType['value'], $valueAndType['type']);
+            }
+            $currentParam++;
+        }
+        $sqlString .= ';';
+        if (!$simulate) {
+            $affectedRows = $statement->executeStatement();
+            if ($affectedRows < 1) {
+                throw new UnexpectedNumberOfAffectedRowsException(
+                    'Delete query "' . $sqlString . '" had "' . $affectedRows . '" affected rows, at least 1 expected.',
+                    1791484211
+                );
+            }
+        }
+        return $sqlString;
+    }
+
     private function strReplaceFirst(string $search, string $replace, string $subject): string
     {
         $search = '/' . preg_quote($search, '/') . '/';

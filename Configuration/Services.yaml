@@ -357,12 +357,25 @@ services:
         identifier: 'dbdoctor-inline-foreign-field-no-foreign-table-field-children-parent-language-different'
         after: 'dbdoctor-inline-foreign-field-children-parent-language-different'
 
+  # Late in the chain: Many checks before remove records, which may leave relations to missing records
+  Lolli\Dbdoctor\HealthCheck\GroupFieldRelationMissing:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-group-field-relation-missing'
+        after: 'dbdoctor-inline-foreign-field-no-foreign-table-field-children-parent-language-different'
+
+  Lolli\Dbdoctor\HealthCheck\GroupFieldMmRelationMissing:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-group-field-mm-relation-missing'
+        after: 'dbdoctor-group-field-relation-missing'
+
   # Late in the chain: Inline children of duplicate parent translations must have been handled before
   Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedLanguageParentDuplicates:
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-tca-tables-translated-language-parent-duplicates'
-        after: 'dbdoctor-inline-foreign-field-no-foreign-table-field-children-parent-language-different'
+        after: 'dbdoctor-group-field-mm-relation-missing'
 
   Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedWithAllowLanguageSynchronization:
     tags:

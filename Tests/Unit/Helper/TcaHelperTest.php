@@ -1011,6 +1011,155 @@ class TcaHelperTest extends UnitTestCase
         self::assertSame($expected, $result);
     }
 
+    #[Test]
+    public function getNextGroupFieldWithoutMmThrowsExceptionIfTcaIsNotAnArray(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionCode(1688203176);
+        $GLOBALS['TCA'] = null;
+        $subject = new TcaHelper();
+        foreach ($subject->getNextGroupFieldWithoutMm() as $item) {
+            // Trigger iterable
+        }
+    }
+
+    #[Test]
+    public function getNextGroupFieldWithoutMmReturnsGroupFields(): void
+    {
+        $GLOBALS['TCA'] = self::getGroupFieldTca();
+        $result = [];
+        foreach ((new TcaHelper())->getNextGroupFieldWithoutMm() as $item) {
+            $result[] = $item;
+        }
+        $expected = [
+            [
+                'tableName' => 'foo',
+                'fieldName' => 'csv',
+                'allowedTables' => ['pages', 'tt_content'],
+            ],
+        ];
+        self::assertSame($expected, $result);
+    }
+
+    #[Test]
+    public function getNextGroupFieldWithMmThrowsExceptionIfTcaIsNotAnArray(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionCode(1688203176);
+        $GLOBALS['TCA'] = null;
+        $subject = new TcaHelper();
+        foreach ($subject->getNextGroupFieldWithMm() as $item) {
+            // Trigger iterable
+        }
+    }
+
+    #[Test]
+    public function getNextGroupFieldWithMmReturnsGroupFields(): void
+    {
+        $GLOBALS['TCA'] = self::getGroupFieldTca();
+        $result = [];
+        foreach ((new TcaHelper())->getNextGroupFieldWithMm() as $item) {
+            $result[] = $item;
+        }
+        $expected = [
+            [
+                'tableName' => 'foo',
+                'fieldName' => 'mm',
+                'mmTableName' => 'foo_mm',
+                'allowedTables' => ['*'],
+                'matchFields' => [],
+            ],
+            [
+                'tableName' => 'foo',
+                'fieldName' => 'mmMatchFields',
+                'mmTableName' => 'foo_mm',
+                'allowedTables' => ['tt_content'],
+                'matchFields' => ['fieldname' => 'mmMatchFields'],
+            ],
+        ];
+        self::assertSame($expected, $result);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function getGroupFieldTca(): array
+    {
+        return [
+            'foo' => [
+                'ctrl' => [
+                    'transOrigPointerField' => 'l10n_parent',
+                    'translationSource' => 'l10n_source',
+                ],
+                'columns' => [
+                    'noConfig' => [],
+                    'notGroup' => [
+                        'config' => [
+                            'type' => 'select',
+                            'foreign_table' => 'pages',
+                        ],
+                    ],
+                    'noAllowed' => [
+                        'config' => [
+                            'type' => 'group',
+                        ],
+                    ],
+                    'l10n_parent' => [
+                        'config' => [
+                            'type' => 'group',
+                            'allowed' => 'foo',
+                        ],
+                    ],
+                    'l10n_source' => [
+                        'config' => [
+                            'type' => 'group',
+                            'allowed' => 'foo',
+                        ],
+                    ],
+                    'csv' => [
+                        'config' => [
+                            'type' => 'group',
+                            'allowed' => 'pages, tt_content',
+                        ],
+                    ],
+                    'mm' => [
+                        'config' => [
+                            'type' => 'group',
+                            'allowed' => '*',
+                            'MM' => 'foo_mm',
+                        ],
+                    ],
+                    'mmMatchFields' => [
+                        'config' => [
+                            'type' => 'group',
+                            'allowed' => 'tt_content',
+                            'MM' => 'foo_mm',
+                            'MM_match_fields' => [
+                                'fieldname' => 'mmMatchFields',
+                            ],
+                        ],
+                    ],
+                    'mmOppositeField' => [
+                        'config' => [
+                            'type' => 'group',
+                            'allowed' => 'bar',
+                            'MM' => 'bar_mm',
+                            'MM_opposite_field' => 'foos',
+                        ],
+                    ],
+                    'mmTableWhere' => [
+                        'config' => [
+                            'type' => 'group',
+                            'allowed' => 'bar',
+                            'MM' => 'bar_mm',
+                            'MM_table_where' => 'AND {#bar_mm}.{#uid_local} = ###THIS_UID###',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
     /**
      * @return array<string, array<mixed>>
      */
