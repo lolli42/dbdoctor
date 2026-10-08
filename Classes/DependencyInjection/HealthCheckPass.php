@@ -61,11 +61,17 @@ final readonly class HealthCheckPass implements CompilerPassInterface
                     'id' => $id,
                     'before' => GeneralUtility::trimExplode(',', $tag['before'] ?? '', true),
                     'after' => GeneralUtility::trimExplode(',', $tag['after'] ?? '', true),
+                    'disabled' => $this->resolveDisabled($id, $tag),
                 ];
             }
         }
 
-        $healthChecks = (new DependencyOrderingService())->orderByDependencies($healthChecks);
+        // Disabled checks take part in ordering and are removed afterwards: They keep their
+        // position in the chain, and before / after of other checks can still reference them.
+        $healthChecks = array_filter(
+            (new DependencyOrderingService())->orderByDependencies($healthChecks),
+            static fn(array $healthCheck): bool => !$healthCheck['disabled'],
+        );
 
         $references = array_map(
             static fn(array $healthCheck): Reference => new Reference($healthCheck['id']),
@@ -88,7 +94,8 @@ final readonly class HealthCheckPass implements CompilerPassInterface
                 $tags,
                 static fn(array $tag): bool => array_key_exists('identifier', $tag)
                     || array_key_exists('before', $tag)
-                    || array_key_exists('after', $tag),
+                    || array_key_exists('after', $tag)
+                    || array_key_exists('disabled', $tag),
             ),
         );
 
@@ -97,6 +104,25 @@ final readonly class HealthCheckPass implements CompilerPassInterface
         }
 
         return [[]];
+    }
+
+    /**
+     * @param array<string, mixed> $tag
+     */
+    private function resolveDisabled(string $serviceId, array $tag): bool
+    {
+        $disabled = $tag['disabled'] ?? false;
+
+        if (!is_bool($disabled)) {
+            throw new \LogicException(
+                sprintf(
+                    'Health check service "%s" has an invalid "disabled", it must be a boolean.',
+                    $serviceId,
+                ),
+            );
+        }
+
+        return $disabled;
     }
 
     /**
