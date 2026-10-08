@@ -404,7 +404,6 @@ Example:
 ```
 Build/Scripts/runTests.sh -s clean
 Build/Scripts/runTests.sh -s composerUpdate
-# manually bump 'version' in ext_emconf.php to 0.3.2
 composer config extra.typo3/cms.version 0.3.2
 git commit -am "[RELEASE] 0.3.2 Added some basic inline foreign field related checks"
 git tag 0.3.2
