@@ -39,7 +39,7 @@ final class TtContentPidDeleted extends AbstractHealthCheck implements HealthChe
     {
         $io->section('Scan for tt_content on soft-deleted pages');
         $this->outputClass($io);
-        $this->outputTags($io, self::TAG_REMOVE);
+        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE);
         $io->text([
             'tt_content not soft-delete must have a "pid" page record that is not soft-deleted. Otherwise, they are',
             'most likely not editable. This is similar to the previous check, affected records will be soft-deleted',

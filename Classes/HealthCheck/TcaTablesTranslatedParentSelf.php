@@ -30,7 +30,7 @@ final class TcaTablesTranslatedParentSelf extends AbstractHealthCheck implements
     {
         $io->section('Scan for record translations pointing to self');
         $this->outputClass($io);
-        $this->outputTags($io, self::TAG_UPDATE, self::TAG_WORKSPACE_REMOVE, self::TAG_RISKY);
+        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE, self::TAG_RISKY);
         $io->text([
             'Record translations ("translate" / "connected" mode, as opposed to "free" mode) use the',
             'database field "transOrigPointerField" (field name usually "l10n_parent" or "l18n_parent").',

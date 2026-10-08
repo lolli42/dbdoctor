@@ -218,7 +218,7 @@ Scan for record translations pointing to self
 ---------------------------------------------
 
  Class: TcaTablesTranslatedParentSelf
- Actions: update-fields, workspace-remove, risky
+ Actions: soft-delete, remove, workspace-remove, risky
  Record translations ("translate" / "connected" mode, as opposed to "free" mode) use the
  database field "transOrigPointerField" (field name usually "l10n_parent" or "l18n_parent").
  This field should point to the default language record. This health check scans for not
@@ -260,7 +260,7 @@ Scan for tt_content on soft-deleted pages
 -----------------------------------------
 
  Class: TtContentPidDeleted
- Actions: remove
+ Actions: soft-delete, workspace-remove
  tt_content not soft-delete must have a "pid" page record that is not soft-deleted. Otherwise, they are
  most likely not editable. This is similar to the previous check, affected records will be soft-deleted
  if in live, and removed if in workspaces.
@@ -332,7 +332,7 @@ Duplicate localized tt_content records
 --------------------------------------
 
  Class: TtContentLocalizedDuplicates
- Actions: remove
+ Actions: soft-delete
  There must be only one localized record in "tt_content" per target language.
  Having more than one leads to various issues in FE and BE. This check finds
  duplicates, keeps the one with the lowest uid and soft-deletes others.
@@ -555,7 +555,7 @@ Scan for inline foreign field records with deleted=1 parent
 -----------------------------------------------------------
 
  Class: InlineForeignFieldChildrenParentDeleted
- Actions: soft-delete, remove, workspace-remove
+ Actions: soft-delete, workspace-remove
  TCA inline foreign field records point to a parent record. When this parent is
  soft-deleted, all children must be soft-deleted, too.
  This check finds not soft-deleted children and sets soft-deleted for for live records,
@@ -567,7 +567,7 @@ Scan for inline foreign field records with deleted=1 parent
 -----------------------------------------------------------
 
  Class: InlineForeignFieldNoForeignTableFieldChildrenParentDeleted
- Actions: soft-delete, remove, workspace-remove
+ Actions: soft-delete, workspace-remove
  TCA inline foreign field records point to a parent record. When this parent is
  soft-deleted, all children must be soft-deleted, too.
  This check is for inline children defined *without* foreign_table_field in TCA.
@@ -580,7 +580,7 @@ Scan for inline foreign field records with different language than their parent
 -------------------------------------------------------------------------------
 
  Class: InlineForeignFieldChildrenParentLanguageDifferent
- Actions: update-fields, risky
+ Actions: soft-delete, remove, workspace-remove, update-fields, risky
  TCA inline foreign field child records point to a parent record. This check finds
  child records that have a different language than the parent record.
  Affected children are soft-deleted if the table is soft-delete aware, and
@@ -594,7 +594,7 @@ Scan for inline foreign field records with different language than their parent
 -------------------------------------------------------------------------------
 
  Class: InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent
- Actions: update-fields, risky
+ Actions: soft-delete, remove, workspace-remove, update-fields, risky
  TCA inline foreign field child records point to a parent record. This check finds
  child records that have a different language than the parent record.
  This check is for inline children defined *without* foreign_table_field in TCA.
