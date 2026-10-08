@@ -360,6 +360,16 @@ regarding SQL dumps must not be forgotten when doing this:
   > to programmatically adapt things. This option is not for the faint of heart, please
   > understand the event class comment before following this path.
 
+* Can I add own health checks?
+  > Technically yes, but you are on your own. Health checks are collected via dependency
+  > injection: Every autoconfigured service implementing HealthCheckInterface is tagged `lolli.dbdoctor.health`
+  > automatically and becomes part of the chain, also when it lives in a different extension.
+  > Its position is determined by the `before` and `after` tag attributes in Services.yaml,
+  > referencing identifiers of other checks. Neither the identifiers, nor the order, nor
+  > HealthCheckInterface are API: dbdoctor adds, renames, reorders or removes checks at any
+  > time. A check without `before` and `after` ends up at some position nobody chose. Do
+  > not additionally add such a check using ModifyHealthClassListEvent, it would run twice.
+
 # Tagging and releasing
 
 [packagist.org](https://packagist.org/packages/lolli/dbdoctor) is enabled via the casual github hook.

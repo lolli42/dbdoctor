@@ -24,6 +24,9 @@ use Psr\EventDispatcher\EventDispatcherInterface;
 
 final readonly class HealthFactory implements HealthFactoryInterface
 {
+    /**
+     * @param iterable<HealthCheckInterface> $healthChecks
+     */
     public function __construct(
         private iterable $healthChecks,
         private ContainerInterface $container,

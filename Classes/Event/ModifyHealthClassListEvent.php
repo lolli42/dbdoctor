@@ -30,6 +30,8 @@ namespace Lolli\Dbdoctor\Event;
  *   or may not change anytime, even HealthCheckInterface may change without further notice.
  * * It is a very good idea to establish tests backed by regularly scheduled CI runs to verify your event
  *   listener continues to work with new dbdoctor releases.
+ * * Classes implementing HealthCheckInterface are added to the list automatically via dependency injection,
+ *   including classes of other extensions. Adding such a class with this event again makes it run twice.
  */
 final class ModifyHealthClassListEvent
 {
