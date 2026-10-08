@@ -1,0 +1,31 @@
+"pages"
+,"uid","pid","sys_language_uid","l10n_parent","t3ver_wsid","nav_hide","author","author_email","l10n_state","title"
+# Empty l10n_state means "parent" for all fields
+,1,0,0,0,0,0,"Author","author@example.org","","Default page 1"
+# Should get l10n_state {"author":"custom","author_email":"custom"}
+,2,0,1,1,0,0,"","","","Translation of page 1 with different author and author_email"
+# l10n_state with value for another field
+,3,0,0,0,0,0,"Author","","","Default page 3"
+# Should get l10n_state {"no_search":"custom","author":"custom"}
+,4,0,1,3,0,0,"","","{""no_search"":""custom""}","Translation of page 3 with different author"
+# l10n_state "parent" for the field
+,5,0,0,0,0,0,"Author","","","Default page 5"
+# Should get l10n_state {"author":"custom"}
+,6,0,1,5,0,0,"","","{""author"":""parent""}","Translation of page 5 with different author"
+# Invalid l10n_state for the field is "parent" in core
+,7,0,0,0,0,0,"Author","","","Default page 7"
+# Should get l10n_state {"author":"custom"}
+,8,0,1,7,0,0,"","","{""author"":""foo""}","Translation of page 7 with different author"
+# Integer field
+,9,0,0,0,0,1,"","","","Default page 9"
+# Should get l10n_state {"nav_hide":"custom"}
+,10,0,1,9,0,0,"","","","Translation of page 9 with different nav_hide"
+# Ok: l10n_state "custom" for the field
+,11,0,0,0,0,0,"Author","","","Default page 11"
+,12,0,1,11,0,0,"","","{""author"":""custom""}","Ok translation of page 11"
+# Ok: same value
+,13,0,0,0,0,0,"Author","","","Default page 13"
+,14,0,1,13,0,0,"Author","","","Ok translation of page 13"
+# Ok: workspace records are not checked
+,15,0,0,0,0,0,"Author","","","Default page 15"
+,16,0,1,15,1,0,"","","","Ok translation of page 15 ws-1"

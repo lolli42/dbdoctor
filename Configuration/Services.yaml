@@ -348,6 +348,12 @@ services:
         identifier: 'dbdoctor-tca-tables-translated-language-parent-duplicates'
         after: 'dbdoctor-inline-foreign-field-no-foreign-table-field-children-parent-language-different'
 
+  Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedWithAllowLanguageSynchronization:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tca-tables-translated-with-allow-language-synchronization'
+        after: 'dbdoctor-tca-tables-translated-language-parent-duplicates'
+
   Lolli\Dbdoctor\Helper\PagesRootlineHelper:
     public: true
     shared: false

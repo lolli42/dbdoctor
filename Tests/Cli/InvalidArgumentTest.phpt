@@ -668,3 +668,17 @@ Scan for duplicate record translations
  table is not soft-delete aware.
 
  [OK] No affected records found%w
+
+Scan for translated records with values not in sync with default language
+-------------------------------------------------------------------------
+
+ Class: TcaTablesTranslatedWithAllowLanguageSynchronization
+ Actions: update-fields
+ Fields with TCA "allowLanguageSynchronization" can use the value of the default language
+ record in translations, the database field "l10n_state" stores this per field. This check
+ finds live translations with l10n_state "parent" for a field, but a value different from
+ the default language record. The frontend renders the value of the translation, so the
+ l10n_state of such fields is set to "custom": The backend then shows the value as well, and
+ it is not overwritten when the default language record is changed.
+
+ [OK] No affected records found%w
