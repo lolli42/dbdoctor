@@ -584,7 +584,9 @@ Scan for inline foreign field records with different language than their parent
  TCA inline foreign field child records point to a parent record. This check finds
  child records that have a different language than the parent record.
  Affected children are soft-deleted if the table is soft-delete aware, and
- hard deleted if not.
+ hard deleted if not. Children with language -1 (all languages) of a translated
+ parent are shown in frontend along with their parent: Their language is set to
+ the language of the parent instead.
 
  [OK] No affected records found%w
 
@@ -597,7 +599,9 @@ Scan for inline foreign field records with different language than their parent
  child records that have a different language than the parent record.
  This check is for inline children defined *without* foreign_table_field in TCA.
  Affected children are soft-deleted if the table is soft-delete aware, and
- hard deleted if not.
+ hard deleted if not. Children with language -1 (all languages) of a translated
+ parent are shown in frontend along with their parent: Their language is set to
+ the language of the parent instead.
 
  [OK] No affected records found%w
 
