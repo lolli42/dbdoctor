@@ -18,11 +18,11 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  */
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
 use Lolli\Dbdoctor\HealthCheck\TcaTablesPidTranslatedPage;
+use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
-class TcaTablesPidTranslatedPageTest extends FunctionalTestCase
+class TcaTablesPidTranslatedPageTest extends AbstractFunctionalTestCase
 {
     protected array $testExtensionsToLoad = [
         'lolli/dbdoctor',

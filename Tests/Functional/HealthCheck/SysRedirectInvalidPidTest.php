@@ -18,13 +18,13 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  */
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
 use Lolli\Dbdoctor\HealthCheck\SysRedirectInvalidPid;
+use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Yaml\Yaml;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
-class SysRedirectInvalidPidTest extends FunctionalTestCase
+class SysRedirectInvalidPidTest extends AbstractFunctionalTestCase
 {
     protected array $coreExtensionsToLoad = [
         'redirects',

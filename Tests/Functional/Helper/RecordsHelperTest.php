@@ -17,10 +17,10 @@ namespace Lolli\Dbdoctor\Tests\Functional\Helper;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Helper\RecordsHelper;
+use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
-use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
-class RecordsHelperTest extends FunctionalTestCase
+class RecordsHelperTest extends AbstractFunctionalTestCase
 {
     protected array $testExtensionsToLoad = [
         'lolli/dbdoctor',

@@ -18,11 +18,11 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  */
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
 use Lolli\Dbdoctor\HealthCheck\TtContentLocalizationSourceExists;
+use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
-class TtContentLocalizationSourceExistsTest extends FunctionalTestCase
+class TtContentLocalizationSourceExistsTest extends AbstractFunctionalTestCase
 {
     protected array $coreExtensionsToLoad = [
         'workspaces',

@@ -18,11 +18,11 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  */
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
 use Lolli\Dbdoctor\HealthCheck\InlineForeignFieldChildrenParentDeleted;
+use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
-class InlineForeignFieldChildrenParentDeletedTest extends FunctionalTestCase
+class InlineForeignFieldChildrenParentDeletedTest extends AbstractFunctionalTestCase
 {
     protected array $coreExtensionsToLoad = [
         // Fixture uses ws fields, so it must be loaded
