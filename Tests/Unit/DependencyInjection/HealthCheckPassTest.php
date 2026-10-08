@@ -109,6 +109,26 @@ class HealthCheckPassTest extends UnitTestCase
     }
 
     #[Test]
+    public function cyclicBeforeAndAfterThrowsExceptionNamingTheChecks(): void
+    {
+        $container = new ContainerBuilder();
+        $container->register(HealthFactory::class);
+        $container->register('check.a')->addTag('lolli.dbdoctor.health', ['identifier' => 'a', 'after' => 'b']);
+        $container->register('check.b')->addTag('lolli.dbdoctor.health', ['identifier' => 'b']);
+        $container->register('check.c')->addTag('lolli.dbdoctor.health', ['identifier' => 'c', 'after' => 'a', 'before' => 'b']);
+
+        try {
+            (new HealthCheckPass('lolli.dbdoctor.health'))->process($container);
+            self::fail('Expected exception not thrown');
+        } catch (\LogicException $e) {
+            self::assertSame(1791561600, $e->getCode());
+            self::assertStringContainsString('lolli.dbdoctor.health', $e->getMessage());
+            self::assertStringContainsString('Cycles found:', $e->getMessage());
+            self::assertInstanceOf(\UnexpectedValueException::class, $e->getPrevious());
+        }
+    }
+
+    #[Test]
     public function multipleTagsWithoutIdentifierThrowsException(): void
     {
         $container = new ContainerBuilder();
