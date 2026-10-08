@@ -61,7 +61,6 @@
       "dev-main": "2.x-dev"
     },
     "typo3/cms": {
-      "app-dir": ".Build",
       "web-dir": ".Build/Web",
       "extension-key": "dbdoctor",
       "version": "2.2.0",
