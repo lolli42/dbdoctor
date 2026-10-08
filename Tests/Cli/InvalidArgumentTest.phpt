@@ -290,7 +290,9 @@ Scan for record translations pointing to non default language parent
  This field points to the default language record. This health check verifies that target
  actually has sys_language_uid = 0. Violating localizations are set to the transOrigPointerField
  of the current target record. Localizations of a sys_language_uid = -1 record are soft deleted
- if possible, or removed: The "all languages" record is shown in their language already.
+ if possible, or removed: The "all languages" record is shown in their language already. Inline
+ children of a translated parent record are an exception: The frontend shows the children of the
+ translated parent, not the "all languages" child of the default parent. They are set to free mode.
 
  [OK] No affected records found%w
 

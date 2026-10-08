@@ -41,7 +41,9 @@ final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck 
             'This field points to the default language record. This health check verifies that target',
             'actually has sys_language_uid = 0. Violating localizations are set to the transOrigPointerField',
             'of the current target record. Localizations of a sys_language_uid = -1 record are soft deleted',
-            'if possible, or removed: The "all languages" record is shown in their language already.',
+            'if possible, or removed: The "all languages" record is shown in their language already. Inline',
+            'children of a translated parent record are an exception: The frontend shows the children of the',
+            'translated parent, not the "all languages" child of the default parent. They are set to free mode.',
         ]);
     }
 
@@ -49,6 +51,14 @@ final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck 
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
+
+        $inlineChildTables = [];
+        foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChildTable) {
+            $inlineChildTables[$inlineChildTable['tableName']] = $inlineChildTable;
+        }
+        foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldChildTcaTable() as $inlineChildTable) {
+            $inlineChildTables[$inlineChildTable['tableName']] ??= $inlineChildTable;
+        }
 
         $affectedRows = [];
         foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {
@@ -96,6 +106,14 @@ final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck 
                     ) {
                         $localizedRow['_parentRowLanguage'] = (int)$parentRow[$languageField];
                         $localizedRow['_reasonBroken'] = 'Parent record language ' . (int)$parentRow[$languageField];
+                        $localizedRow['_childOfTranslatedRecord'] = 0;
+                        if ((int)$parentRow[$languageField] < 0
+                            && isset($inlineChildTables[$tableName])
+                            && $this->isChildOfTranslatedRecord($recordsHelper, $inlineChildTables[$tableName], (int)$localizedRow['uid'])
+                        ) {
+                            $localizedRow['_childOfTranslatedRecord'] = 1;
+                            $localizedRow['_reasonBroken'] .= ', inline child of a translated record';
+                        }
                         $affectedRows[$tableName][] = $localizedRow;
                     }
                 } catch (NoSuchRecordException $e) {
@@ -113,11 +131,19 @@ final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck 
         $recordsHelper = $this->container->get(RecordsHelper::class);
         foreach ($affectedRecords as $tableName => $affectedTableRecords) {
             // Localizations of an "all languages" record are obsolete, the -1 record is shown in their language.
-            $allLanguagesParentRows = array_filter($affectedTableRecords, static fn(array $row): bool => (int)$row['_parentRowLanguage'] < 0);
+            // Not for inline children of a translated record: The frontend shows the children of the translated
+            // record, the "all languages" child is attached to the default language record. They are kept.
+            $allLanguagesParentRows = array_filter(
+                $affectedTableRecords,
+                static fn(array $row): bool => (int)$row['_parentRowLanguage'] < 0 && (int)$row['_childOfTranslatedRecord'] === 0
+            );
             if ($allLanguagesParentRows !== []) {
                 $this->softOrHardDeleteRecordsOfTable($io, $simulate, $tableName, array_values($allLanguagesParentRows));
             }
-            $otherRows = array_filter($affectedTableRecords, static fn(array $row): bool => (int)$row['_parentRowLanguage'] >= 0);
+            $otherRows = array_filter(
+                $affectedTableRecords,
+                static fn(array $row): bool => (int)$row['_parentRowLanguage'] >= 0 || (int)$row['_childOfTranslatedRecord'] === 1
+            );
             foreach ($otherRows as $affectedTableRecord) {
                 /** @var string $translationParentField */
                 $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
@@ -136,5 +162,33 @@ final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
     {
         $this->outputRecordDetails($io, $affectedRecords, '_reasonBroken', ['languageField', 'transOrigPointerField']);
+    }
+
+    /**
+     * True if the inline parent record of a child is a translated record (TCA "languageField" > 0).
+     *
+     * @param array<string, string> $inlineChildTable
+     */
+    private function isChildOfTranslatedRecord(RecordsHelper $recordsHelper, array $inlineChildTable, int $uid): bool
+    {
+        $fields = [$inlineChildTable['fieldNameOfParentTableUid']];
+        if (isset($inlineChildTable['fieldNameOfParentTableName'])) {
+            $fields[] = $inlineChildTable['fieldNameOfParentTableName'];
+        }
+        $childRow = $recordsHelper->getRecord($inlineChildTable['tableName'], $fields, $uid);
+        $parentTableName = isset($inlineChildTable['fieldNameOfParentTableName'])
+            ? (string)$childRow[$inlineChildTable['fieldNameOfParentTableName']]
+            : $inlineChildTable['parentTableName'];
+        $parentLanguageField = $this->tcaHelper->getLanguageField($parentTableName);
+        if ($parentLanguageField === null) {
+            return false;
+        }
+        try {
+            $parentRow = $recordsHelper->getRecord($parentTableName, [$parentLanguageField], (int)$childRow[$inlineChildTable['fieldNameOfParentTableUid']]);
+        } catch (NoSuchRecordException $e) {
+            // Missing inline parent: Handled by later inline checks.
+            return false;
+        }
+        return (int)$parentRow[$parentLanguageField] > 0;
     }
 }
