@@ -317,6 +317,13 @@ services:
         identifier: 'dbdoctor-inline-foreign-field-no-foreign-table-field-children-parent-language-different'
         after: 'dbdoctor-inline-foreign-field-children-parent-language-different'
 
+  # Late in the chain: Inline children of duplicate parent translations must have been handled before
+  Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedLanguageParentDuplicates:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tca-tables-translated-language-parent-duplicates'
+        after: 'dbdoctor-inline-foreign-field-no-foreign-table-field-children-parent-language-different'
+
   Lolli\Dbdoctor\Helper\PagesRootlineHelper:
     public: true
     shared: false

@@ -600,3 +600,16 @@ Scan for inline foreign field records with different language than their parent
  hard deleted if not.
 
  [OK] No affected records found%w
+
+Scan for duplicate record translations
+--------------------------------------
+
+ Class: TcaTablesTranslatedLanguageParentDuplicates
+ Actions: soft-delete, remove
+ There must be only one translated record (TCA ctrl "languageField" > 0) per
+ default language record (TCA ctrl "transOrigPointerField") and language.
+ This check finds duplicates in all tables except "pages" and "tt_content", keeps
+ the one with the lowest uid and soft-deletes others, or removes them if the
+ table is not soft-delete aware.
+
+ [OK] No affected records found%w
