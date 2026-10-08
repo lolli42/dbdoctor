@@ -74,11 +74,17 @@ services:
         identifier: 'dbdoctor-tca-tables-language-less-than-one-has-zero-language-source'
         after: 'dbdoctor-tca-tables-language-less-than-one-has-zero-language-parent'
 
+  Lolli\Dbdoctor\HealthCheck\PagesLanguageNegative:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-pages-language-negative'
+        after: 'dbdoctor-tca-tables-language-less-than-one-has-zero-language-source'
+
   Lolli\Dbdoctor\HealthCheck\PagesBrokenTree:
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-pages-broken-tree'
-        after: 'dbdoctor-tca-tables-language-less-than-one-has-zero-language-source'
+        after: 'dbdoctor-pages-language-negative'
 
   Lolli\Dbdoctor\HealthCheck\PagesTranslatedLanguageParentSelf:
     tags:

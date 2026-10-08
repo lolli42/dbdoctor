@@ -145,6 +145,19 @@ Scan for records in default language not having language source zero
 
  [OK] No affected records found%w
 
+Check pages with negative language
+----------------------------------
+
+ Class: PagesLanguageNegative
+ Actions: soft-delete, workspace-remove
+ This health check finds not deleted "pages" records with sys_language_uid < 0. The
+ backend does not allow language "-1" (all languages) for pages. Such pages are not shown
+ in the page tree, menus and routing, but their sub pages and records may still be in use.
+ They are soft-deleted in live and removed if they are workspace records. Later checks
+ handle sub pages, translations and records of these pages.
+
+ [OK] No affected records found%w
+
 Check page tree integrity
 -------------------------
 
