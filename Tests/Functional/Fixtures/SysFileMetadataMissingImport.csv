@@ -1,6 +1,9 @@
 "sys_file_storage"
 ,"uid","pid","deleted","name","driver","configuration","is_online","is_browsable","is_public","is_writable","is_default"
 ,1,0,0,"fileadmin","Local","<?xml version=""1.0"" encoding=""utf-8"" standalone=""yes"" ?><T3FlexForms><data><sheet index=""sDEF""><language index=""lDEF""><field index=""basePath""><value index=""vDEF"">fileadmin/</value></field><field index=""pathType""><value index=""vDEF"">relative</value></field><field index=""caseSensitive""><value index=""vDEF"">1</value></field></language></sheet></data></T3FlexForms>",1,1,1,1,1
+# Storage 2 is soft-deleted, the driver of storage 3 is not registered, storage 4 does not exist
+,2,0,1,"deleted","Local","<?xml version=""1.0"" encoding=""utf-8"" standalone=""yes"" ?><T3FlexForms><data><sheet index=""sDEF""><language index=""lDEF""><field index=""basePath""><value index=""vDEF"">fileadmin/</value></field><field index=""pathType""><value index=""vDEF"">relative</value></field><field index=""caseSensitive""><value index=""vDEF"">1</value></field></language></sheet></data></T3FlexForms>",1,1,1,1,0
+,3,0,0,"driver not registered","NotRegisteredDriver","",1,1,1,1,0
 "sys_file"
 ,"uid","pid","storage","identifier","name","missing","type","mime_type","extension"
 ,1,0,1,"/ok.png","ok.png",0,2,"image/png","png"
@@ -17,6 +20,12 @@
 ,7,0,1,"/not-in-storage.png","not-in-storage.png",0,2,"image/png","png"
 # Should get a metadata record without dimensions - invalid identifier
 ,8,0,1,"/../invalid.png","invalid.png",0,2,"image/png","png"
+# Should get a metadata record without dimensions - storage is soft-deleted
+,9,0,2,"/dbdoctor-image.png","dbdoctor-image.png",0,2,"image/png","png"
+# Should get a metadata record without dimensions - storage driver is not registered
+,10,0,3,"/dbdoctor-image.png","dbdoctor-image.png",0,2,"image/png","png"
+# Should get a metadata record without dimensions - storage does not exist
+,11,0,4,"/dbdoctor-image.png","dbdoctor-image.png",0,2,"image/png","png"
 "sys_file_metadata"
 ,"uid","pid","file","sys_language_uid","l10n_parent","t3ver_wsid","width","height"
 ,1,0,1,0,0,0,10,20

@@ -19,6 +19,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
+use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Resource\Exception\FileDoesNotExistException;
 use TYPO3\CMS\Core\Resource\Exception\InvalidPathException;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
@@ -83,6 +84,7 @@ final class SysFileMetadataMissing extends AbstractHealthCheck implements Health
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         $this->outputTableInsertBefore($io, $simulate, 'sys_file_metadata');
+        $localStorageUids = $this->getLocalStorageUids();
         $count = 0;
         foreach ($affectedRecords['sys_file'] ?? [] as $fileRow) {
             $fields = [
@@ -107,7 +109,7 @@ final class SysFileMetadataMissing extends AbstractHealthCheck implements Health
                     'type' => Connection::PARAM_LOB,
                 ],
             ];
-            [$width, $height] = $this->getImageDimensions($fileRow);
+            [$width, $height] = $this->getImageDimensions($fileRow, $localStorageUids);
             if ($width > 0 && $height > 0) {
                 $fields['width'] = [
                     'value' => $width,
@@ -130,16 +132,44 @@ final class SysFileMetadataMissing extends AbstractHealthCheck implements Health
     }
 
     /**
+     * Uids of storages with driver "Local", including the built-in fallback storage 0.
+     *
+     * Files of other storages are not handed to FAL: Core throws when resolving a storage that
+     * is soft-deleted or does not exist ("A file needs to reside in a Storage"), or when the driver
+     * of a storage is not registered, for instance after uninstalling the extension providing it.
+     *
+     * @return array<int, true>
+     */
+    private function getLocalStorageUids(): array
+    {
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_storage');
+        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
+        $result = $queryBuilder->select('uid')
+            ->from('sys_file_storage')
+            ->where($queryBuilder->expr()->eq('driver', $queryBuilder->createNamedParameter('Local')))
+            ->executeQuery();
+        $localStorageUids = [0 => true];
+        while ($uid = $result->fetchOne()) {
+            $localStorageUids[(int)$uid] = true;
+        }
+        return $localStorageUids;
+    }
+
+    /**
      * Width and height of images in local storages, as core Indexer->extractRequiredMetaData() does
      * when indexing a file. Remote storages must provide dimensions by metadata extractors, which
-     * is out of scope here. Missing files and broken identifiers get no dimensions.
+     * is out of scope here. Missing files, broken identifiers and files of soft-deleted or not
+     * existing storages get no dimensions.
      *
      * @param array<string, int|string> $fileRow
+     * @param array<int, true> $localStorageUids
      * @return array{0: int, 1: int}
      */
-    private function getImageDimensions(array $fileRow): array
+    private function getImageDimensions(array $fileRow, array $localStorageUids): array
     {
-        if ((int)$fileRow['missing'] === 1) {
+        if ((int)$fileRow['missing'] === 1
+            || !isset($localStorageUids[(int)$fileRow['storage']])
+        ) {
             return [0, 0];
         }
         try {
