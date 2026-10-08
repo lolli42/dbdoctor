@@ -32,6 +32,10 @@ namespace Lolli\Dbdoctor\Event;
  *   listener continues to work with new dbdoctor releases.
  * * Classes implementing HealthCheckInterface are added to the list automatically via dependency injection,
  *   including classes of other extensions. Adding such a class with this event again makes it run twice.
+ * * The intended use is removing or reordering checks, for instance skipping checks tagged as risky.
+ *   Health checks are private services: A class that is not in the list, for instance a check disabled
+ *   or replaced in Services.yaml, can only be added if its service is declared public, otherwise getting
+ *   it from the container fails. To replace a check, use "disables" in Services.yaml.
  */
 final class ModifyHealthClassListEvent
 {
