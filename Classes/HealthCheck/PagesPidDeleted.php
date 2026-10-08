@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Helper\PagesTreeHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -23,6 +24,10 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  */
 final class PagesPidDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
+    public function __construct(
+        private readonly PagesTreeHelper $pagesTreeHelper,
+    ) {}
+
     public function header(SymfonyStyle $io): void
     {
         $io->section('Check pages within deleted pages');
@@ -41,37 +46,33 @@ final class PagesPidDeleted extends AbstractHealthCheck implements HealthCheckIn
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         $queryBuilder->getRestrictions()->removeAll();
         $result = $queryBuilder->select('uid', 'pid', 'deleted', 't3ver_wsid')->from('pages')->orderBy('uid')->executeQuery();
+        $uidToPid = [];
         $deletedPageUids = [];
         $notDeletedPageRows = [];
         while ($pageRow = $result->fetchAssociative()) {
             /** @var array<string, int|string> $pageRow */
+            $uidToPid[(int)$pageRow['uid']] = (int)$pageRow['pid'];
             if ((int)$pageRow['deleted'] === 1) {
                 $deletedPageUids[(int)$pageRow['uid']] = true;
-            } elseif ((int)$pageRow['pid'] > 0) {
+            } else {
                 $notDeletedPageRows[(int)$pageRow['uid']] = $pageRow;
             }
         }
-        $affectedPageRows = [];
-        if (!empty($deletedPageUids)) {
-            // Each loop adds pages one level further down the tree, until nothing changes anymore.
-            // Affected pages are added to the deleted list, so their sub pages are found in the next loop.
-            do {
-                $foundAffectedPage = false;
-                foreach ($notDeletedPageRows as $uid => $pageRow) {
-                    if (isset($deletedPageUids[(int)$pageRow['pid']])) {
-                        $affectedPageRows[$uid] = $pageRow;
-                        $deletedPageUids[$uid] = true;
-                        unset($notDeletedPageRows[$uid]);
-                        $foundAffectedPage = true;
-                    }
-                }
-            } while ($foundAffectedPage);
-        }
-        if (empty($affectedPageRows)) {
+        if ($deletedPageUids === []) {
             return [];
         }
-        ksort($affectedPageRows);
-        return ['pages' => array_values($affectedPageRows)];
+        // A not deleted page is affected if a deleted page is found up the tree.
+        $withinDeletedPage = $this->pagesTreeHelper->resolveClosestSeed($uidToPid, $deletedPageUids);
+        $affectedPageRows = [];
+        foreach ($notDeletedPageRows as $uid => $pageRow) {
+            if ($withinDeletedPage[$uid] === true) {
+                $affectedPageRows[] = $pageRow;
+            }
+        }
+        if ($affectedPageRows === []) {
+            return [];
+        }
+        return ['pages' => $affectedPageRows];
     }
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void

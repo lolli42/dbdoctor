@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Helper\PagesTreeHelper;
 use Lolli\Dbdoctor\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
@@ -34,6 +35,7 @@ final class TcaTablesTranslatedLanguageNotInSiteConfiguration extends AbstractHe
 {
     public function __construct(
         private readonly SiteFinder $siteFinder,
+        private readonly PagesTreeHelper $pagesTreeHelper,
     ) {}
 
     public function header(SymfonyStyle $io): void
@@ -54,11 +56,8 @@ final class TcaTablesTranslatedLanguageNotInSiteConfiguration extends AbstractHe
         /** @var TableHelper $tableHelper */
         $tableHelper = $this->container->get(TableHelper::class);
 
-        // Resolve sites with an own page tree walk instead of SiteFinder->getSiteByPageId(). This is
-        // deliberate: SiteFinder uses RootlineUtility, which is unsuitable for bulk lookups. It fetches
-        // full page rows including relation fields per page, keeps them in runtime cache for the whole
-        // run and writes persistent rootline cache entries as side effect. In instances with many pages
-        // this costs lots of queries and memory. A single uid / pid query and a tree walk is enough here.
+        // Resolve sites with PagesTreeHelper instead of SiteFinder->getSiteByPageId(). This is deliberate:
+        // SiteFinder uses RootlineUtility, which is unsuitable for bulk lookups, see PagesTreeHelper.
         $rootPageIdToSiteIdentifier = [];
         /** @var array<string, array<int, true>> $siteLanguageIds */
         $siteLanguageIds = [];
@@ -71,9 +70,12 @@ final class TcaTablesTranslatedLanguageNotInSiteConfiguration extends AbstractHe
         if ($rootPageIdToSiteIdentifier === []) {
             return [];
         }
-        $pageUidToPid = $this->getLivePageUidToPid();
-        /** @var array<int, string|false> $pageUidToSiteIdentifier */
-        $pageUidToSiteIdentifier = [];
+        // Records on deleted pages or on pages that exist in workspaces only are not resolved
+        // to a site, as with the core rootline in live context.
+        $pageUidToSiteIdentifier = $this->pagesTreeHelper->resolveClosestSeed(
+            $this->pagesTreeHelper->getLivePageUidToPid(),
+            $rootPageIdToSiteIdentifier
+        );
 
         $affectedRows = [];
         foreach ($this->tcaHelper->getNextLanguageAwareTcaTable() as $tableName) {
@@ -124,8 +126,8 @@ final class TcaTablesTranslatedLanguageNotInSiteConfiguration extends AbstractHe
 
                 // Records on pages without site config (e.g. pid 0 or pages not below a site root)
                 // are skipped: No site means no language configuration to validate against.
-                $siteIdentifier = $this->resolveSiteIdentifier($sitePageId, $pageUidToPid, $rootPageIdToSiteIdentifier, $pageUidToSiteIdentifier);
-                if ($siteIdentifier === false) {
+                $siteIdentifier = $pageUidToSiteIdentifier[$sitePageId] ?? null;
+                if ($siteIdentifier === null) {
                     continue;
                 }
                 if (!isset($siteLanguageIds[$siteIdentifier][$langId])) {
@@ -135,64 +137,6 @@ final class TcaTablesTranslatedLanguageNotInSiteConfiguration extends AbstractHe
             }
         }
         return $affectedRows;
-    }
-
-    /**
-     * Not deleted live pages, uid => pid. Records on deleted pages or on pages that exist in
-     * workspaces only are not resolved to a site, as with the core rootline in live context.
-     *
-     * @return array<int, int>
-     */
-    private function getLivePageUidToPid(): array
-    {
-        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
-        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-        $result = $queryBuilder->select('uid', 'pid')
-            ->from('pages')
-            ->where($queryBuilder->expr()->eq('t3ver_wsid', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)))
-            ->executeQuery();
-        $pageUidToPid = [];
-        while ($row = $result->fetchAssociative()) {
-            $pageUidToPid[(int)$row['uid']] = (int)$row['pid'];
-        }
-        return $pageUidToPid;
-    }
-
-    /**
-     * Walk up the page tree until a site root page is found, like SiteFinder->getSiteByPageId().
-     * Results are added to $pageUidToSiteIdentifier for all pages on the way, so each page is
-     * walked only once.
-     *
-     * @param array<int, int> $pageUidToPid
-     * @param array<int, string> $rootPageIdToSiteIdentifier
-     * @param array<int, string|false> $pageUidToSiteIdentifier
-     */
-    private function resolveSiteIdentifier(int $pageId, array $pageUidToPid, array $rootPageIdToSiteIdentifier, array &$pageUidToSiteIdentifier): string|false
-    {
-        $walkedPageIds = [];
-        $currentPageId = $pageId;
-        $siteIdentifier = false;
-        while (true) {
-            if (array_key_exists($currentPageId, $pageUidToSiteIdentifier)) {
-                $siteIdentifier = $pageUidToSiteIdentifier[$currentPageId];
-                break;
-            }
-            if (isset($rootPageIdToSiteIdentifier[$currentPageId])) {
-                $siteIdentifier = $rootPageIdToSiteIdentifier[$currentPageId];
-                break;
-            }
-            if (!isset($pageUidToPid[$currentPageId]) || isset($walkedPageIds[$currentPageId])) {
-                // Page not in live tree, or pid loop: No site.
-                break;
-            }
-            $walkedPageIds[$currentPageId] = true;
-            $currentPageId = $pageUidToPid[$currentPageId];
-        }
-        foreach ($walkedPageIds as $walkedPageId => $_) {
-            $pageUidToSiteIdentifier[$walkedPageId] = $siteIdentifier;
-        }
-        $pageUidToSiteIdentifier[$pageId] = $siteIdentifier;
-        return $siteIdentifier;
     }
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
