@@ -183,11 +183,17 @@ services:
         identifier: 'dbdoctor-tt-content-localized-duplicates'
         after: 'dbdoctor-tt-content-localized-parent-different-pid'
 
+  Lolli\Dbdoctor\HealthCheck\TtContentLocalizedPageTranslationMissing:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tt-content-localized-page-translation-missing'
+        after: 'dbdoctor-tt-content-localized-duplicates'
+
   Lolli\Dbdoctor\HealthCheck\TtContentLocalizationSourceExists:
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-tt-content-localization-source-exists'
-        after: 'dbdoctor-tt-content-localized-duplicates'
+        after: 'dbdoctor-tt-content-localized-page-translation-missing'
 
   Lolli\Dbdoctor\HealthCheck\TtContentLocalizationSourceSetWithParent:
     tags:
