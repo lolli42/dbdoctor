@@ -166,8 +166,7 @@ $ composer require lolli/dbdoctor
 
 ## TYPO3 Extension Repository
 
-For non-composer projects, the extension is available in TER as extension key
-`dbdoctor` and can be installed using the extension manager.
+2.2.0 is the last version in TER. Later versions are available via composer only.
 
 
 # Preparation
@@ -397,9 +396,8 @@ regarding SQL dumps must not be forgotten when doing this:
 # Tagging and releasing
 
 [packagist.org](https://packagist.org/packages/lolli/dbdoctor) is enabled via the usual GitHub hook.
-TER uploads are done manually: create a zip from the tag and upload it via the TER web interface,
-using the commit message as upload comment. Each tag gets a GitHub release, too: Create it in
-the GitHub web interface from the tag, using "Generate release notes".
+Each tag gets a GitHub release, too: Create it in the GitHub web interface from the tag, using
+"Generate release notes".
 
 Example:
 
@@ -412,7 +410,4 @@ git commit -am "[RELEASE] 0.3.2 Added some basic inline foreign field related ch
 git tag 0.3.2
 git push
 git push --tags
-git archive -o "dbdoctor_0.3.2.zip" 0.3.2
 ```
-
-Then upload `dbdoctor_0.3.2.zip` to TER manually, using the `[RELEASE] ...` commit message as upload comment.
