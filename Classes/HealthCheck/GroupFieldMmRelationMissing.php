@@ -102,7 +102,9 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
                     continue;
                 }
                 if ($uidForeign > 0 && $this->isRecordMissing($recordsHelper, $tableHelper, $targetTableName, $uidForeign)) {
-                    $missingRelations[] = [
+                    // Once per DELETE condition: Fields without match fields, like sys_category "items", read
+                    // rows of all fields of the opposite side, one DELETE removes all of them.
+                    $missingRelations[($tablenames ?? '') . ':' . $uidForeign] = [
                         'tableName' => $targetTableName,
                         'uid_foreign' => $uidForeign,
                         'tablenames' => $tablenames,
@@ -178,7 +180,7 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
 
     /**
      * @param array{tableName: string, fieldName: string, mmTableName: string, allowedTables: array<int, string>, matchFields: array<string, int|string>} $groupField
-     * @param array<int, array{tableName: string, uid_foreign: int, tablenames: string|null}> $missingRelations
+     * @param array<string, array{tableName: string, uid_foreign: int, tablenames: string|null}> $missingRelations
      * @return array<string, int|string>|null
      */
     private function getAffectedRow(RecordsHelper $recordsHelper, array $groupField, int $uidLocal, array $missingRelations): ?array
