@@ -72,8 +72,26 @@ final readonly class HealthCheckPass implements CompilerPassInterface
 
         // Disabled checks take part in ordering and are removed afterwards: They keep their
         // position in the chain, and before / after of other checks can still reference them.
+        try {
+            $orderedHealthChecks = (new DependencyOrderingService())->orderByDependencies($healthChecks);
+        } catch (\UnexpectedValueException $e) {
+            // Contradicting before / after break the container build of the entire instance. Fail
+            // loudly, but name the culprit: Typically a check of another extension that relies
+            // on an order of dbdoctor checks that changed with a dbdoctor update.
+            throw new \LogicException(
+                sprintf(
+                    'The "before" and "after" attributes of tag "%s" (dbdoctor health checks) contradict each'
+                    . ' other. Health checks of other extensions may rely on an order of dbdoctor checks that'
+                    . ' changed. Adapt their "before" and "after". %s',
+                    $this->tagName,
+                    $e->getMessage(),
+                ),
+                1791561600,
+                $e
+            );
+        }
         $healthChecks = array_filter(
-            (new DependencyOrderingService())->orderByDependencies($healthChecks),
+            $orderedHealthChecks,
             static fn(array $healthCheck): bool => !$healthCheck['disabled'],
         );
 

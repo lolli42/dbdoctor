@@ -376,7 +376,9 @@ regarding SQL dumps must not be forgotten when doing this:
   > Its position is determined by the `before` and `after` tag attributes in Services.yaml,
   > referencing identifiers of other checks. Neither the identifiers, nor the order, nor
   > HealthCheckInterface are API: dbdoctor adds, renames, reorders or removes checks at any
-  > time. A check without `before` and `after` ends up at some position nobody chose. Do
+  > time. A check without `before` and `after` ends up at some position nobody chose. If
+  > `before` and `after` contradict each other, for instance after dbdoctor reordered checks,
+  > building the dependency injection container fails with an exception naming the cycle. Do
   > not additionally add such a check using ModifyHealthClassListEvent, it would run twice.
 
 * Can I replace a health check of dbdoctor?
