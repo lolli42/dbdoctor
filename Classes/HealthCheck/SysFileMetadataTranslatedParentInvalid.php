@@ -30,7 +30,9 @@ use TYPO3\CMS\Core\Database\Connection;
  * missing or self-pointing language parent: The language parent of a metadata translation is known,
  * it is the default language record of its file. SysFileMetadataMissing runs before this check and
  * creates missing default language records, so translated alternative texts, titles and descriptions
- * can be kept by pointing them to the right record.
+ * can be kept by pointing them to the right record. The default record may be an "all languages"
+ * record (sys_language_uid -1), as in MetaDataRepository->findByFileUid(). The frontend never overlays
+ * it, so TcaTablesTranslatedParentInvalidPointer removes its translations later.
  */
 final class SysFileMetadataTranslatedParentInvalid extends AbstractHealthCheck implements HealthCheckInterface
 {
@@ -44,7 +46,8 @@ final class SysFileMetadataTranslatedParentInvalid extends AbstractHealthCheck i
             'file in "l10n_parent". This check finds live translations pointing to a not existing record,',
             'to no record, to themselves, or to the record of a different file, and sets "l10n_parent" to',
             'the default language record of their file. The translation is kept this way, instead of being',
-            'deleted by later generic checks.',
+            'deleted by later generic checks. Translations of an "all languages" default record (language',
+            '-1) are never shown in frontend, a later check removes them.',
         ]);
     }
 
