@@ -203,6 +203,17 @@ Check pages with different pid than their language parent
 
  [OK] No affected records found%w
 
+Scan for duplicate page translations
+------------------------------------
+
+ Class: PagesTranslatedLanguageParentDuplicates
+ Actions: soft-delete
+ There must be only one translated "pages" record (sys_language_uid > 0) per
+ default language page (l10n_parent) and language. This check finds duplicates,
+ keeps the one with the lowest uid and soft-deletes others.
+
+ [OK] No affected records found%w
+
 Scan for record translations pointing to self
 ---------------------------------------------
 
