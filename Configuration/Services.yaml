@@ -243,11 +243,17 @@ services:
         identifier: 'dbdoctor-tca-tables-pid-deleted'
         after: 'dbdoctor-tca-tables-pid-missing'
 
+  Lolli\Dbdoctor\HealthCheck\TcaTablesPidTranslatedPage:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tca-tables-pid-translated-page'
+        after: 'dbdoctor-tca-tables-pid-deleted'
+
   Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedLanguageParentMissing:
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-tca-tables-translated-language-parent-missing'
-        after: 'dbdoctor-tca-tables-pid-deleted'
+        after: 'dbdoctor-tca-tables-pid-translated-page'
 
   Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedLanguageParentDeleted:
     tags:
