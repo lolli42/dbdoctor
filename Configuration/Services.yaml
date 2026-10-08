@@ -288,13 +288,19 @@ services:
         identifier: 'dbdoctor-tca-tables-translated-language-parent-different-pid'
         after: 'dbdoctor-tca-tables-translated-language-parent-deleted'
 
+  Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedLanguageNotInSiteConfiguration:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tca-tables-translated-language-not-in-site-configuration'
+        after: 'dbdoctor-tca-tables-translated-language-parent-different-pid'
+
   # Disabled for now
   Lolli\Dbdoctor\HealthCheck\TcaTablesInvalidLanguageParent:
     public: true
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-tca-tables-invalid-language-parent'
-        after: 'dbdoctor-tca-tables-translated-language-parent-different-pid'
+        after: 'dbdoctor-tca-tables-translated-language-not-in-site-configuration'
         disabled: true
 
   Lolli\Dbdoctor\HealthCheck\InlineForeignFieldChildrenParentMissing:
