@@ -371,6 +371,24 @@ regarding SQL dumps must not be forgotten when doing this:
   > time. A check without `before` and `after` ends up at some position nobody chose. Do
   > not additionally add such a check using ModifyHealthClassListEvent, it would run twice.
 
+* Can I replace a health check of dbdoctor?
+  > Same as above: Yes, but you are on your own. Tag your check with `disables`, the
+  > identifier of the check it replaces:
+  > ```yaml
+  >   Vendor\MyExtension\HealthCheck\MyTtContentPidMissing:
+  >     tags:
+  >       - name: 'lolli.dbdoctor.health'
+  >         identifier: 'vendor-tt-content-pid-missing'
+  >         disables: 'dbdoctor-tt-content-pid-missing'
+  > ```
+  > The replaced check is not executed, and your check runs at its position in the chain,
+  > no `before` or `after` needed. A tag replaces exactly one check. To replace multiple
+  > checks, or a check that runs multiple times in the chain, add one tag with its own
+  > identifier per replaced identifier. Identifiers in `disables` that do not exist are ignored
+  > silently: When dbdoctor renames or removes a check you replaced, the dbdoctor check may
+  > run again, and yours ends up at some position nobody chose. Verify your replacements
+  > after each dbdoctor update.
+
 
 # Tagging and releasing
 
