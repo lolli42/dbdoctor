@@ -122,11 +122,27 @@ services:
         identifier: 'dbdoctor-pages-translated-language-parent-duplicates'
         after: 'dbdoctor-pages-translated-language-parent-different-pid'
 
+  # sys_file_metadata is a bit special due to its cross dependency with sys_file: Each sys_file needs
+  # a default language metadata record, and translations must point to the one of their file. These
+  # two run before the generic transOrigPointerField checks, which would delete metadata translations
+  # with invalid language parent, while they can be connected to the right record instead.
+  Lolli\Dbdoctor\HealthCheck\SysFileMetadataMissing:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-sys-file-metadata-missing'
+        after: 'dbdoctor-pages-translated-language-parent-duplicates'
+
+  Lolli\Dbdoctor\HealthCheck\SysFileMetadataTranslatedParentInvalid:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-sys-file-metadata-translated-parent-invalid'
+        after: 'dbdoctor-sys-file-metadata-missing'
+
   Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedParentSelf:
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-tca-tables-translated-parent-self'
-        after: 'dbdoctor-pages-translated-language-parent-duplicates'
+        after: 'dbdoctor-sys-file-metadata-translated-parent-invalid'
 
   # Relatively early since it is rather safe and prevents loops in checks below
   Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedParentInvalidPointer:
@@ -353,12 +369,6 @@ services:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-tca-tables-translated-with-allow-language-synchronization'
         after: 'dbdoctor-tca-tables-translated-language-parent-duplicates'
-
-  Lolli\Dbdoctor\HealthCheck\SysFileMetadataMissing:
-    tags:
-      - name: 'lolli.dbdoctor.health'
-        identifier: 'dbdoctor-sys-file-metadata-missing'
-        after: 'dbdoctor-tca-tables-translated-with-allow-language-synchronization'
 
   Lolli\Dbdoctor\Helper\PagesRootlineHelper:
     public: true

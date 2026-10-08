@@ -239,6 +239,31 @@ Scan for duplicate page translations
 
  [OK] No affected records found%w
 
+Scan for sys_file records without sys_file_metadata record
+----------------------------------------------------------
+
+ Class: SysFileMetadataMissing
+ Actions: insert
+ Each "sys_file" record needs a default language "sys_file_metadata" record. The core creates
+ it when a file is indexed, but does not re-create a missing one: Image dimensions are then
+ unknown and images can not be cropped in backend. This check creates missing records. As
+ with core indexing, width and height of images in local storages are read from the file.
+
+ [OK] No affected records found%w
+
+Scan for translated sys_file_metadata records with invalid language parent
+--------------------------------------------------------------------------
+
+ Class: SysFileMetadataTranslatedParentInvalid
+ Actions: update-fields
+ Translated "sys_file_metadata" records must point to the default language record of their
+ file in "l10n_parent". This check finds live translations pointing to a not existing record,
+ to no record, to themselves, or to the record of a different file, and sets "l10n_parent" to
+ the default language record of their file. The translation is kept this way, instead of being
+ deleted by later generic checks.
+
+ [OK] No affected records found%w
+
 Scan for record translations pointing to self
 ---------------------------------------------
 
@@ -680,17 +705,5 @@ Scan for translated records with values not in sync with default language
  the default language record. The frontend renders the value of the translation, so the
  l10n_state of such fields is set to "custom": The backend then shows the value as well, and
  it is not overwritten when the default language record is changed.
-
- [OK] No affected records found%w
-
-Scan for sys_file records without sys_file_metadata record
-----------------------------------------------------------
-
- Class: SysFileMetadataMissing
- Actions: insert
- Each "sys_file" record needs a default language "sys_file_metadata" record. The core creates
- it when a file is indexed, but does not re-create a missing one: Image dimensions are then
- unknown and images can not be cropped in backend. This check creates missing records. As
- with core indexing, width and height of images in local storages are read from the file.
 
  [OK] No affected records found%w
