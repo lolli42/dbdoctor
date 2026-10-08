@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\Helper;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Statement;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
@@ -113,7 +114,7 @@ final class RecordsHelper
     }
 
     /**
-     * @param array<string, array<string, int|string>> $fields
+     * @param array<string, array{value: int|string, type: ParameterType}> $fields
      */
     public function updateTcaRecord(bool $simulate, string $tableName, int $uid, array $fields): string
     {

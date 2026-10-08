@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Doctrine\DBAL\ParameterType;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Helper\TcaHelper;
 use Lolli\Dbdoctor\Renderer\AffectedPagesRenderer;
@@ -293,7 +294,7 @@ abstract class AbstractHealthCheck
      * Outputs a summary before and after, while updateSingleTcaRecord() logs and outputs single queries.
      *
      * @param array<int, array<string, int|string>> $rows
-     * @param array<string, array<string, int|string>> $fields
+     * @param array<string, array{value: int|string, type: ParameterType}> $fields
      */
     final protected function updateTcaRecordsOfTable(SymfonyStyle $io, bool $simulate, string $tableName, array $rows, array $fields): void
     {
@@ -313,7 +314,7 @@ abstract class AbstractHealthCheck
      * This needs an instance of RecordsHelper to make use of prepared statements, which
      * should be created by the calling method.
      *
-     * @param array<string, array<string, int|string>> $fields
+     * @param array<string, array{value: int|string, type: ParameterType}> $fields
      */
     final protected function updateSingleTcaRecord(SymfonyStyle $io, bool $simulate, RecordsHelper $recordsHelper, string $tableName, int $uid, array $fields): void
     {
