@@ -450,7 +450,9 @@ case ${TEST_SUITE} in
                 # --init: A host AppArmor profile for /usr/sbin/mysqld (ubuntu with mysql installed, e.g. GH runners)
                 # also confines mysqld in the container and denies signals from crun. Stopping the container then
                 # fails. With --init, PID 1 is the init process, which receives the signal and ends the container.
-                ${CONTAINER_BIN} run --rm --init ${CI_PARAMS} --name mysql-func-${SUFFIX} --network ${NETWORK} -d -e MYSQL_DATABASE=func -e MYSQL_ROOT_PASSWORD=funcp --tmpfs /var/lib/mysql/:rw,noexec,nosuid ${IMAGE_MYSQL} >/dev/null
+                # --skip-name-resolve: mysqld does a reverse DNS lookup of each new client IP, which runs into a 10s
+                # timeout in the container network. mariadb images skip this by default.
+                ${CONTAINER_BIN} run --rm --init ${CI_PARAMS} --name mysql-func-${SUFFIX} --network ${NETWORK} -d -e MYSQL_DATABASE=func -e MYSQL_ROOT_PASSWORD=funcp --tmpfs /var/lib/mysql/:rw,noexec,nosuid ${IMAGE_MYSQL} --skip-name-resolve >/dev/null
                 waitFor mysql-func-${SUFFIX} 3306
                 SETUPCOMMAND=(./.Build/bin/typo3 setup -n --force --admin-username=admin --admin-user-password='Admin123!' --admin-email='john.doe@example.com' --project-name='clitest' --server-type=other --driver=mysqli --dbname=func --username=root --password=funcp --host=mysql-func-${SUFFIX})
                 ${CONTAINER_BIN} run --rm ${CONTAINER_COMMON_PARAMS} --name functional-setup-${SUFFIX} ${IMAGE_PHP} "${SETUPCOMMAND[@]}"
@@ -513,7 +515,9 @@ case ${TEST_SUITE} in
                 # --init: A host AppArmor profile for /usr/sbin/mysqld (ubuntu with mysql installed, e.g. GH runners)
                 # also confines mysqld in the container and denies signals from crun. Stopping the container then
                 # fails. With --init, PID 1 is the init process, which receives the signal and ends the container.
-                ${CONTAINER_BIN} run --rm --init ${CI_PARAMS} --name mysql-func-${SUFFIX} --network ${NETWORK} -d -e MYSQL_ROOT_PASSWORD=funcp --tmpfs /var/lib/mysql/:rw,noexec,nosuid ${IMAGE_MYSQL} >/dev/null
+                # --skip-name-resolve: mysqld does a reverse DNS lookup of each new client IP, which runs into a 10s
+                # timeout in the container network. mariadb images skip this by default.
+                ${CONTAINER_BIN} run --rm --init ${CI_PARAMS} --name mysql-func-${SUFFIX} --network ${NETWORK} -d -e MYSQL_ROOT_PASSWORD=funcp --tmpfs /var/lib/mysql/:rw,noexec,nosuid ${IMAGE_MYSQL} --skip-name-resolve >/dev/null
                 waitFor mysql-func-${SUFFIX} 3306
                 CONTAINERPARAMS="-e typo3DatabaseDriver=${DATABASE_DRIVER} -e typo3DatabaseName=func_test -e typo3DatabaseUsername=root -e typo3DatabaseHost=mysql-func-${SUFFIX} -e typo3DatabasePassword=funcp"
                 ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name functional-${SUFFIX} ${XDEBUG_MODE} -e XDEBUG_CONFIG="${XDEBUG_CONFIG}" ${CONTAINERPARAMS} ${IMAGE_PHP} "${COMMAND[@]}"
