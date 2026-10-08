@@ -210,6 +210,120 @@ class HealthCheckPassTest extends UnitTestCase
         (new HealthCheckPass('lolli.dbdoctor.health'))->process($container);
     }
 
+    #[Test]
+    public function replacingCheckTakesPositionOfDisabledCheck(): void
+    {
+        $container = new ContainerBuilder();
+        $container->register(HealthFactory::class);
+        $container->register('check.a')->addTag('lolli.dbdoctor.health', ['identifier' => 'a']);
+        $container->register('check.b')->addTag('lolli.dbdoctor.health', ['identifier' => 'b', 'after' => 'a']);
+        $container->register('check.c')->addTag('lolli.dbdoctor.health', ['identifier' => 'c', 'after' => 'b']);
+        $container->register('check.r')->addTag('lolli.dbdoctor.health', ['identifier' => 'r', 'disables' => 'b']);
+
+        (new HealthCheckPass('lolli.dbdoctor.health'))->process($container);
+
+        self::assertSame(['check.a', 'check.r', 'check.c'], $this->getOrderedServiceIds($container));
+    }
+
+    #[Test]
+    public function replacingCheckInheritsBeforeOfDisabledCheck(): void
+    {
+        $container = new ContainerBuilder();
+        $container->register(HealthFactory::class);
+        $container->register('check.a')->addTag('lolli.dbdoctor.health', ['identifier' => 'a']);
+        $container->register('check.b')->addTag('lolli.dbdoctor.health', ['identifier' => 'b', 'after' => 'a', 'before' => 'c']);
+        $container->register('check.c')->addTag('lolli.dbdoctor.health', ['identifier' => 'c']);
+        $container->register('check.r')->addTag('lolli.dbdoctor.health', ['identifier' => 'r', 'disables' => 'b']);
+
+        (new HealthCheckPass('lolli.dbdoctor.health'))->process($container);
+
+        self::assertSame(['check.a', 'check.r', 'check.c'], $this->getOrderedServiceIds($container));
+    }
+
+    #[Test]
+    public function unknownIdentifierInDisablesIsIgnored(): void
+    {
+        $container = new ContainerBuilder();
+        $container->register(HealthFactory::class);
+        $container->register('check.a')->addTag('lolli.dbdoctor.health', ['identifier' => 'a']);
+        $container->register('check.r')->addTag('lolli.dbdoctor.health', ['identifier' => 'r', 'after' => 'a', 'disables' => 'unknown']);
+
+        (new HealthCheckPass('lolli.dbdoctor.health'))->process($container);
+
+        self::assertSame(['check.a', 'check.r'], $this->getOrderedServiceIds($container));
+    }
+
+    #[Test]
+    public function disabledCheckDoesNotDisableOtherChecks(): void
+    {
+        $container = new ContainerBuilder();
+        $container->register(HealthFactory::class);
+        $container->register('check.a')->addTag('lolli.dbdoctor.health', ['identifier' => 'a']);
+        $container->register('check.r')->addTag('lolli.dbdoctor.health', ['identifier' => 'r', 'after' => 'a', 'disabled' => true, 'disables' => 'a']);
+
+        (new HealthCheckPass('lolli.dbdoctor.health'))->process($container);
+
+        self::assertSame(['check.a'], $this->getOrderedServiceIds($container));
+    }
+
+    #[Test]
+    public function replacingOnePassOfMultiTaggedCheckKeepsOtherPass(): void
+    {
+        $container = new ContainerBuilder();
+        $container->register(HealthFactory::class);
+        $container->register('check.a')
+            ->addTag('lolli.dbdoctor.health', ['identifier' => 'a-first'])
+            ->addTag('lolli.dbdoctor.health', ['identifier' => 'a-second', 'after' => 'b']);
+        $container->register('check.b')->addTag('lolli.dbdoctor.health', ['identifier' => 'b', 'after' => 'a-first']);
+        $container->register('check.r')->addTag('lolli.dbdoctor.health', ['identifier' => 'r', 'disables' => 'a-first']);
+
+        (new HealthCheckPass('lolli.dbdoctor.health'))->process($container);
+
+        self::assertSame(['check.r', 'check.b', 'check.a'], $this->getOrderedServiceIds($container));
+    }
+
+    #[Test]
+    public function replacingAllPassesOfMultiTaggedCheckWithOneTagPerPass(): void
+    {
+        $container = new ContainerBuilder();
+        $container->register(HealthFactory::class);
+        $container->register('check.a')
+            ->addTag('lolli.dbdoctor.health', ['identifier' => 'a-first'])
+            ->addTag('lolli.dbdoctor.health', ['identifier' => 'a-second', 'after' => 'b']);
+        $container->register('check.b')->addTag('lolli.dbdoctor.health', ['identifier' => 'b', 'after' => 'a-first']);
+        $container->register('check.r')
+            ->addTag('lolli.dbdoctor.health', ['identifier' => 'r-first', 'disables' => 'a-first'])
+            ->addTag('lolli.dbdoctor.health', ['identifier' => 'r-second', 'disables' => 'a-second']);
+
+        (new HealthCheckPass('lolli.dbdoctor.health'))->process($container);
+
+        self::assertSame(['check.r', 'check.b', 'check.r'], $this->getOrderedServiceIds($container));
+    }
+
+    #[Test]
+    public function multipleIdentifiersInDisablesThrowsException(): void
+    {
+        $container = new ContainerBuilder();
+        $container->register(HealthFactory::class);
+        $container->register('check.a')->addTag('lolli.dbdoctor.health', ['identifier' => 'a']);
+        $container->register('check.b')->addTag('lolli.dbdoctor.health', ['identifier' => 'b', 'after' => 'a']);
+        $container->register('check.r')->addTag('lolli.dbdoctor.health', ['identifier' => 'r', 'disables' => 'a, b']);
+
+        $this->expectException(\LogicException::class);
+        (new HealthCheckPass('lolli.dbdoctor.health'))->process($container);
+    }
+
+    #[Test]
+    public function emptyDisablesThrowsException(): void
+    {
+        $container = new ContainerBuilder();
+        $container->register(HealthFactory::class);
+        $container->register('check.r')->addTag('lolli.dbdoctor.health', ['identifier' => 'r', 'disables' => ' ']);
+
+        $this->expectException(\LogicException::class);
+        (new HealthCheckPass('lolli.dbdoctor.health'))->process($container);
+    }
+
     /**
      * @return list<string>
      */

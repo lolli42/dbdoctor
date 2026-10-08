@@ -40,6 +40,7 @@ final readonly class HealthCheckPass implements CompilerPassInterface
             return;
         }
 
+        /** @var array<string, array{id: string, before: list<string>, after: list<string>, disabled: bool, disables: ?string}> $healthChecks */
         $healthChecks = [];
 
         foreach ($container->findTaggedServiceIds($this->tagName) as $id => $tags) {
@@ -62,9 +63,12 @@ final readonly class HealthCheckPass implements CompilerPassInterface
                     'before' => GeneralUtility::trimExplode(',', $tag['before'] ?? '', true),
                     'after' => GeneralUtility::trimExplode(',', $tag['after'] ?? '', true),
                     'disabled' => $this->resolveDisabled($id, $tag),
+                    'disables' => $this->resolveDisables($id, $tag),
                 ];
             }
         }
+
+        $healthChecks = $this->applyReplacements($healthChecks);
 
         // Disabled checks take part in ordering and are removed afterwards: They keep their
         // position in the chain, and before / after of other checks can still reference them.
@@ -84,6 +88,55 @@ final readonly class HealthCheckPass implements CompilerPassInterface
     }
 
     /**
+     * An enabled check can disable other checks to replace them: The disabled check stays in
+     * the chain, the replacing check is put directly after it, and checks that were ordered
+     * after the disabled check are ordered after the replacing check. Unknown identifiers are
+     * ignored: Checks may be renamed or removed, and an exception here would break the
+     * container build of the entire instance.
+     *
+     * @param array<string, array{id: string, before: list<string>, after: list<string>, disabled: bool, disables: ?string}> $healthChecks
+     * @return array<string, array{id: string, before: list<string>, after: list<string>, disabled: bool, disables: ?string}>
+     */
+    private function applyReplacements(array $healthChecks): array
+    {
+        $disabled = [];
+        $additionalBefore = [];
+        $additionalAfter = [];
+        foreach ($healthChecks as $replacingIdentifier => $replacingCheck) {
+            $disabledIdentifier = $replacingCheck['disables'];
+            if ($replacingCheck['disabled']
+                || $disabledIdentifier === null
+                || $disabledIdentifier === $replacingIdentifier
+                || !isset($healthChecks[$disabledIdentifier])
+            ) {
+                continue;
+            }
+            $disabled[$disabledIdentifier] = true;
+            $additionalAfter[$replacingIdentifier][] = $disabledIdentifier;
+            foreach ($healthChecks[$disabledIdentifier]['before'] as $beforeIdentifier) {
+                $additionalBefore[$replacingIdentifier][] = $beforeIdentifier;
+            }
+            foreach ($healthChecks as $identifier => $healthCheck) {
+                if ($identifier !== $replacingIdentifier && in_array($disabledIdentifier, $healthCheck['after'], true)) {
+                    $additionalAfter[$identifier][] = $replacingIdentifier;
+                }
+            }
+        }
+
+        $result = [];
+        foreach ($healthChecks as $identifier => $healthCheck) {
+            $result[$identifier] = [
+                'id' => $healthCheck['id'],
+                'before' => [...$healthCheck['before'], ...($additionalBefore[$identifier] ?? [])],
+                'after' => [...$healthCheck['after'], ...($additionalAfter[$identifier] ?? [])],
+                'disabled' => $healthCheck['disabled'] || isset($disabled[$identifier]),
+                'disables' => $healthCheck['disables'],
+            ];
+        }
+        return $result;
+    }
+
+    /**
      * @param array<array<string, mixed>> $tags
      * @return list<array<string, mixed>>
      */
@@ -95,7 +148,8 @@ final readonly class HealthCheckPass implements CompilerPassInterface
                 static fn(array $tag): bool => array_key_exists('identifier', $tag)
                     || array_key_exists('before', $tag)
                     || array_key_exists('after', $tag)
-                    || array_key_exists('disabled', $tag),
+                    || array_key_exists('disabled', $tag)
+                    || array_key_exists('disables', $tag),
             ),
         );
 
@@ -104,6 +158,33 @@ final readonly class HealthCheckPass implements CompilerPassInterface
         }
 
         return [[]];
+    }
+
+    /**
+     * A tag disables at most one check: Disabling multiple checks that are not next to each
+     * other in the chain would create a cycle. Replacing multiple checks needs one tag each.
+     *
+     * @param array<string, mixed> $tag
+     */
+    private function resolveDisables(string $serviceId, array $tag): ?string
+    {
+        $disables = $tag['disables'] ?? null;
+
+        if ($disables === null) {
+            return null;
+        }
+
+        if (!is_string($disables) || trim($disables) === '' || str_contains($disables, ',')) {
+            throw new \LogicException(
+                sprintf(
+                    'Health check service "%s" has an invalid "disables", it must be a single identifier.'
+                    . ' Use one tag per replaced check.',
+                    $serviceId,
+                ),
+            );
+        }
+
+        return trim($disables);
     }
 
     /**
