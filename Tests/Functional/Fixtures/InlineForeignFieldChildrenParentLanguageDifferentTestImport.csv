@@ -24,7 +24,7 @@
 ,12,1,0,0,0,0,4,"tt_content","Ok - parent -1, child 0"
 ,13,1,1,0,0,0,4,"tt_content","Ok - parent -1, child 1"
 ,14,1,-1,0,0,0,1,"tt_content","Ok - parent 0, child -1"
-,15,1,-1,0,0,0,2,"tt_content","Not Ok - parent 1, child -1"
+,15,1,-1,0,0,0,2,"tt_content","Not ok - parent 1, child -1, language is set to 1"
 "sys_file"
 ,"uid","pid","identifier"
 ,1,1,"a-file.txt"

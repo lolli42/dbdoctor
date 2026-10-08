@@ -40,7 +40,9 @@ final class InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent
             'child records that have a different language than the parent record.',
             'This check is for inline children defined *without* foreign_table_field in TCA.',
             'Affected children are soft-deleted if the table is soft-delete aware, and',
-            'hard deleted if not.',
+            'hard deleted if not. Children with language -1 (all languages) of a translated',
+            'parent are shown in frontend along with their parent: Their language is set to',
+            'the language of the parent instead.',
         ]);
     }
 
@@ -103,7 +105,9 @@ final class InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent
                         // If parent row is sys_language_uid = 0, and child row is -1, that's fine.
                         && !($parentRowLanguage === 0 && $childRowLanguage === -1)
                     ) {
-                        $inlineChildRow['_reasonBroken'] = 'Parent record language ' . $parentRowLanguage;
+                        $inlineChildRow['_reasonBroken'] = $childRowLanguage === -1
+                            ? 'Language -1 with parent record language ' . $parentRowLanguage
+                            : 'Parent record language ' . $parentRowLanguage;
                         $inlineChildRow['_parentTableName'] = $parentTableName;
                         $inlineChildRow['_fieldNameOfParentTableUid'] = $fieldNameOfParentTableUid;
                         $inlineChildRow['_parentRowLanguage'] = $parentRowLanguage;
@@ -121,7 +125,30 @@ final class InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent
 
     protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
     {
-        $this->softOrHardDeleteRecords($io, $simulate, $affectedRecords);
+        /** @var RecordsHelper $recordsHelper */
+        $recordsHelper = $this->container->get(RecordsHelper::class);
+        foreach ($affectedRecords as $tableName => $rows) {
+            /** @var string $languageField */
+            $languageField = $this->tcaHelper->getLanguageField($tableName);
+            $allLanguagesRows = array_filter($rows, static fn(array $row): bool => (int)$row[$languageField] === -1);
+            $otherRows = array_filter($rows, static fn(array $row): bool => (int)$row[$languageField] !== -1);
+            if ($allLanguagesRows !== []) {
+                $this->outputTableUpdateBefore($io, $simulate, $tableName);
+                foreach ($allLanguagesRows as $row) {
+                    $fields = [
+                        $languageField => [
+                            'value' => (int)$row['_parentRowLanguage'],
+                            'type' => Connection::PARAM_INT,
+                        ],
+                    ];
+                    $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
+                }
+                $this->outputTableUpdateAfter($io, $simulate, $tableName, count($allLanguagesRows));
+            }
+            if ($otherRows !== []) {
+                $this->softOrHardDeleteRecordsOfTable($io, $simulate, $tableName, array_values($otherRows));
+            }
+        }
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
