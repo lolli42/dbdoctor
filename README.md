@@ -396,6 +396,16 @@ regarding SQL dumps must not be forgotten when doing this:
   > check you replaced, the dbdoctor check may run again, and yours ends up at some
   > position nobody chose. Verify your replacements after each dbdoctor update.
 
+* Does dbdoctor fix the number of relations stored in inline and MM fields?
+  > No. The field of a record with inline children (TCA `foreign_field`) or MM relations
+  > (TCA `MM`) stores the number of relations, for instance `tt_content.image` or
+  > `sys_category.items`. The relations themselves live in the child or MM table, and the
+  > core reads them from there, not from this count. The count is not reliable: For instance,
+  > `sys_category.items` is not updated when categories are assigned from the other side
+  > of the relation, like the categories field of a content element, and discarding workspace
+  > changes removes MM rows without touching counts. dbdoctor ignores these count fields: It
+  > does not check them, and checks that remove child records or MM rows do not update them.
+
 
 # Tagging and releasing
 

@@ -32,15 +32,15 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
     {
         $io->section('Scan for group fields with MM relations to missing records');
         $this->outputClass($io);
-        $this->outputTags($io, self::TAG_REMOVE, self::TAG_UPDATE);
+        $this->outputTags($io, self::TAG_REMOVE);
         $io->text([
             'Fields of TCA type "group" with MM table store their relations as rows in',
             'the MM table, for instance the sys_category field "items". This check finds',
-            'MM rows pointing to records that do not exist, removes them, and updates the',
-            'number of relations in the field of the local record. Relations to',
+            'MM rows pointing to records that do not exist and removes them. Relations to',
             'soft-deleted records are kept: The backend does not remove them when a',
             'record is deleted, and they are needed when a record is restored using the',
-            'recycler.',
+            'recycler. The number of relations in the field of the local record is not',
+            'updated: dbdoctor ignores these count fields, see README.md.',
         ]);
     }
 
@@ -81,29 +81,26 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
             // MM rows are sorted by uid_local: Collect relations of one local record,
             // and handle them when the next local record starts.
             $currentUidLocal = null;
-            $numberOfRelations = 0;
             $missingRelations = [];
             while ($mmRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string|null> $mmRow */
                 if ($currentUidLocal !== (int)$mmRow['uid_local']) {
                     if ($currentUidLocal !== null && !empty($missingRelations)) {
-                        $affectedRow = $this->getAffectedRow($recordsHelper, $groupField, $currentUidLocal, $numberOfRelations, $missingRelations);
+                        $affectedRow = $this->getAffectedRow($recordsHelper, $groupField, $currentUidLocal, $missingRelations);
                         if ($affectedRow !== null) {
                             $affectedRows[$tableName][] = $affectedRow;
                         }
                     }
                     $currentUidLocal = (int)$mmRow['uid_local'];
-                    $numberOfRelations = 0;
                     $missingRelations = [];
                 }
                 $tablenames = $hasTablenamesField ? (string)$mmRow['tablenames'] : null;
                 $uidForeign = (int)$mmRow['uid_foreign'];
                 $targetTableName = $this->getTargetTableName($tablenames, $groupField['allowedTables']);
-                if ($targetTableName === '' || ($uidForeign === 0 && $targetTableName !== 'pages')) {
+                if ($targetTableName === '') {
                     // Not a relation of this field, as in core RelationHandler->readMM().
                     continue;
                 }
-                $numberOfRelations++;
                 if ($uidForeign > 0 && $this->isRecordMissing($recordsHelper, $tableHelper, $targetTableName, $uidForeign)) {
                     $missingRelations[] = [
                         'tableName' => $targetTableName,
@@ -113,7 +110,7 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
                 }
             }
             if ($currentUidLocal !== null && !empty($missingRelations)) {
-                $affectedRow = $this->getAffectedRow($recordsHelper, $groupField, $currentUidLocal, $numberOfRelations, $missingRelations);
+                $affectedRow = $this->getAffectedRow($recordsHelper, $groupField, $currentUidLocal, $missingRelations);
                 if ($affectedRow !== null) {
                     $affectedRows[$tableName][] = $affectedRow;
                 }
@@ -126,11 +123,16 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
-        foreach ($affectedRecords as $tableName => $rows) {
-            $this->outputTableUpdateBefore($io, $simulate, $tableName);
+        $rowsByMmTable = [];
+        foreach ($affectedRecords as $rows) {
+            foreach ($rows as $row) {
+                $rowsByMmTable[(string)$row['_mmTableName']][] = $row;
+            }
+        }
+        foreach ($rowsByMmTable as $mmTableName => $rows) {
+            $this->outputTableDeleteBefore($io, $simulate, $mmTableName);
             $count = 0;
             foreach ($rows as $row) {
-                $mmTableName = (string)$row['_mmTableName'];
                 /** @var array<string, int|string> $matchFields */
                 $matchFields = json_decode((string)$row['_matchFields'], true, 512, JSON_THROW_ON_ERROR);
                 /** @var array<int, array{uid_foreign: int, tablenames: string|null}> $missingRelations */
@@ -159,17 +161,10 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
                         ];
                     }
                     $this->deleteMmRows($io, $simulate, $recordsHelper, $mmTableName, $whereFields);
+                    $count++;
                 }
-                $updateFields = [
-                    (string)$row['_fieldName'] => [
-                        'value' => (int)$row['_numberOfRemainingRelations'],
-                        'type' => Connection::PARAM_INT,
-                    ],
-                ];
-                $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $updateFields);
-                $count++;
             }
-            $this->outputTableUpdateAfter($io, $simulate, $tableName, $count);
+            $this->outputTableDeleteAfter($io, $simulate, $mmTableName, $count);
         }
     }
 
@@ -186,7 +181,7 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
      * @param array<int, array{tableName: string, uid_foreign: int, tablenames: string|null}> $missingRelations
      * @return array<string, int|string>|null
      */
-    private function getAffectedRow(RecordsHelper $recordsHelper, array $groupField, int $uidLocal, int $numberOfRelations, array $missingRelations): ?array
+    private function getAffectedRow(RecordsHelper $recordsHelper, array $groupField, int $uidLocal, array $missingRelations): ?array
     {
         try {
             $localRecord = $recordsHelper->getRecord($groupField['tableName'], ['uid', 'pid'], $uidLocal);
@@ -210,7 +205,6 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
             '_mmTableName' => $groupField['mmTableName'],
             '_matchFields' => json_encode($groupField['matchFields'], JSON_THROW_ON_ERROR),
             '_missingRelations' => json_encode($missingRelationRows, JSON_THROW_ON_ERROR),
-            '_numberOfRemainingRelations' => $numberOfRelations - count($missingRelations),
             '_reasonBroken' => 'Field "' . $groupField['fieldName'] . '": Missing ' . implode(', ', $missingRelationLabels),
         ];
     }
