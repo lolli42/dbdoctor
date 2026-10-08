@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Lolli\Dbdoctor\Tests\Functional\DatabaseSchema;
 
 use Lolli\Dbdoctor\DatabaseSchema\DatabaseSchemaChecker;
+use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\DependencyInjection\Container;
 use TYPO3\CMS\Core\Database\Event\AlterTableDefinitionStatementsEvent;
 use TYPO3\CMS\Core\EventDispatcher\ListenerProvider;
-use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
-final class DatabaseSchemaCheckerTest extends FunctionalTestCase
+final class DatabaseSchemaCheckerTest extends AbstractFunctionalTestCase
 {
     protected array $testExtensionsToLoad = [
         'lolli/dbdoctor',

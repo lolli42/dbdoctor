@@ -18,11 +18,11 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  */
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
 use Lolli\Dbdoctor\HealthCheck\SysFileReferenceLocalizedParentDeleted;
+use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
-class SysFileReferenceLocalizedParentDeletedTest extends FunctionalTestCase
+class SysFileReferenceLocalizedParentDeletedTest extends AbstractFunctionalTestCase
 {
     protected array $coreExtensionsToLoad = [
         'workspaces',
