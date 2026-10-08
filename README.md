@@ -374,7 +374,8 @@ regarding SQL dumps must not be forgotten when doing this:
 
 [packagist.org](https://packagist.org/packages/lolli/dbdoctor) is enabled via the casual github hook.
 TER uploads are done manually: create a zip from the tag and upload it via the TER web interface,
-using the commit message as upload comment.
+using the commit message as upload comment. Each tag gets a GitHub release, too: Create it in
+the GitHub web interface from the tag, using "Generate release notes".
 
 Example:
 
