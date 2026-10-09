@@ -32,10 +32,12 @@ final class TcaTablesTranslationSourceSetWithParent extends AbstractHealthCheck 
         $this->outputClass($io);
         $this->outputTags($io, self::TAG_UPDATE);
         $io->text([
-            'When the "transOrigPointerField" (typically l10n_parent) of a translated record is not zero',
-            '("Connected mode"), the "translationSource" field (typically l10n_source) must not be zero.',
-            'A broken translation source especially confuses the "Translate" button in page module.',
-            'The translation source of affected records is set to the value of the "transOrigPointerField".',
+            'Translated records with a language parent ("connected mode", "transOrigPointerField",',
+            'typically l10n_parent) should have their "translationSource" (typically l10n_source) set,',
+            'the backend uses it to show where a translation came from. Records translated with old',
+            'TYPO3 versions or created by imports often have zero there, so this check may find many',
+            'records. Setting the translation source to the language parent is what the core does',
+            'when translating from the default language, the frontend output does not change.',
         ]);
     }
 
