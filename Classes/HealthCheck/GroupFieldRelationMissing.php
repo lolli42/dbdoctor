@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Helper\TableHelper;
@@ -76,6 +77,14 @@ final class GroupFieldRelationMissing extends AbstractHealthCheck implements Hea
             while ($row = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $row */
                 $missingRelations = $this->getMissingRelations($recordsHelper, $tableHelper, (string)$row[$fieldName], $groupField['allowedTables']);
+                if (!empty($missingRelations) && $tableName === 'sys_file_reference' && $fieldName === 'uid_local') {
+                    // Emptying uid_local would leave a broken file reference, it must be removed instead.
+                    throw new EarlierCheckNotFixedException(
+                        'sys_file_reference record with uid="' . $row['uid'] . '" has uid_local="' . $row[$fieldName] . '",'
+                        . ' but that sys_file does not exist. The earlier check SysFileReferenceDangling finds and fixes this.',
+                        1791633600
+                    );
+                }
                 if (!empty($missingRelations)) {
                     $affectedRows[$tableName][] = [
                         'uid' => (int)$row['uid'],

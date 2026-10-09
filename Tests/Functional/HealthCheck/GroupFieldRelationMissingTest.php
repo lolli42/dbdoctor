@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\HealthCheck\GroupFieldRelationMissing;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
@@ -49,5 +50,29 @@ class GroupFieldRelationMissingTest extends AbstractFunctionalTestCase
         $subject = $this->get(GroupFieldRelationMissing::class);
         $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldRelationMissingFixed.csv');
+    }
+
+    #[Test]
+    public function checkModeSkipsCheckIfFileReferenceToMissingFileExists(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldRelationMissingFileReferenceImport.csv');
+        $io = $this->createMock(SymfonyStyle::class);
+        /** @var GroupFieldRelationMissing $subject */
+        $subject = $this->get(GroupFieldRelationMissing::class);
+        $io->expects(self::once())->method('warning')->with(self::callback(
+            static fn(mixed $message): bool => is_array($message) && str_starts_with((string)$message[0], 'Check skipped')
+        ));
+        self::assertSame(HealthCheckInterface::RESULT_BROKEN, $subject->handle($io, HealthCheckInterface::MODE_CHECK, ''));
+    }
+
+    #[Test]
+    public function executeModeThrowsIfFileReferenceToMissingFileExists(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldRelationMissingFileReferenceImport.csv');
+        /** @var GroupFieldRelationMissing $subject */
+        $subject = $this->get(GroupFieldRelationMissing::class);
+        $this->expectException(EarlierCheckNotFixedException::class);
+        $this->expectExceptionCode(1791633600);
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
     }
 }

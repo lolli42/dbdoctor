@@ -1,0 +1,10 @@
+"pages"
+,"uid","pid","title"
+,1,0,"Ok site root"
+"tt_content"
+,"uid","pid","header"
+,1,1,"Ok content"
+"sys_file_reference"
+,"uid","pid","uid_local","uid_foreign","tablenames","fieldname"
+# SysFileReferenceDangling removes this, the check can not run before
+,1,1,42,1,"tt_content","image"
