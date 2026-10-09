@@ -16,3 +16,7 @@
 ,14,0,1,13,0,0,"Author","","","Ok translation of page 13"
 ,15,0,0,0,0,0,"Author","","","Default page 15"
 ,16,0,1,15,1,0,"","","","Ok translation of page 15 ws-1"
+,17,0,0,0,0,0,"Author","","","Default page 17"
+,18,0,1,17,0,0,"","","{""author"":""custom""}","Translation of page 17 with different author and string l10n_state"
+,19,0,0,0,0,0,"Author","","","Default page 19"
+,20,0,1,19,0,0,"","","{""author"":""custom""}","Translation of page 19 with different author and integer l10n_state"

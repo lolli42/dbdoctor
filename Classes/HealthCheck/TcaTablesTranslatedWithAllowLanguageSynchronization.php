@@ -121,7 +121,10 @@ final class TcaTablesTranslatedWithAllowLanguageSynchronization extends Abstract
             $result = $queryBuilder->executeQuery();
             while ($row = $result->fetchAssociative()) {
                 /** @var array<string, int|string|null> $row */
-                $state = State::fromJSON($tableName, (string)$row['l10n_state']);
+                // A JSON scalar like '"x"' would make State throw: Handle it like invalid JSON, which
+                // core treats as no state, all fields are "parent".
+                $l10nState = json_decode((string)$row['l10n_state'], true);
+                $state = State::fromJSON($tableName, is_array($l10nState) ? (string)$row['l10n_state'] : null);
                 $affectedFieldNames = [];
                 foreach ($fieldNames as $fieldName) {
                     if ($state?->isParentState($fieldName)
