@@ -39,7 +39,9 @@ class WorkspacesNotLoadedRecordsDanglingWorkspacesLoadedTest extends AbstractFun
         $io = $this->createMock(SymfonyStyle::class);
         /** @var WorkspacesNotLoadedRecordsDangling $subject */
         $subject = $this->get(WorkspacesNotLoadedRecordsDangling::class);
-        $io->expects(self::atLeastOnce())->method('success');
+        // No affected records: A single line, details are shown with -v only.
+        $io->expects(self::once())->method('writeln')->with('<info>OK</info>  WorkspacesNotLoadedRecordsDangling');
+        $io->expects(self::never())->method('success');
         $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
     }
 
