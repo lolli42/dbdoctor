@@ -90,7 +90,8 @@ final class TcaTablesTranslatedWithAllowLanguageSynchronization extends Abstract
                 $parentField = 'parent.' . $fieldName;
                 $selectFields[] = $translationField;
                 $selectFields[] = $parentField . ' AS _parent_' . $fieldName;
-                // Null safe "not equal"
+                // Null safe "not equal". It follows the column collation: Case insensitive
+                // collations of mysql and mariadb miss values differing only in case or accents.
                 $differentValueConstraints[] = $expr->or(
                     $expr->neq($translationField, $queryBuilder->quoteIdentifier($parentField)),
                     $expr->and($expr->isNull($translationField), $expr->isNotNull($parentField)),
