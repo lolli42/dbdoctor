@@ -38,7 +38,9 @@ final class PagesTranslatedLanguageParentDuplicates extends AbstractHealthCheck 
         $io->text([
             'There must be only one translated "pages" record (sys_language_uid > 0) per',
             'default language page (l10n_parent) and language. This check finds duplicates,',
-            'keeps the one with the lowest uid and soft-deletes others.',
+            'keeps the one the frontend shows and soft-deletes others: The visible one (not',
+            'hidden, start and end time not excluding it) with the highest uid, or the one with',
+            'the highest uid if none is visible.',
         ]);
     }
 
@@ -64,7 +66,7 @@ final class PagesTranslatedLanguageParentDuplicates extends AbstractHealthCheck 
             /** @var array<string, int|string> $duplicate */
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
             $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-            $translations = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'l10n_parent')
+            $translations = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'l10n_parent', 'hidden', 'starttime', 'endtime')
                 ->from('pages')
                 ->where(
                     $queryBuilder->expr()->eq('t3ver_wsid', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
@@ -74,8 +76,17 @@ final class PagesTranslatedLanguageParentDuplicates extends AbstractHealthCheck 
                 ->orderBy('uid')
                 ->executeQuery()
                 ->fetchAllAssociative();
-            // The translation with the lowest uid is kept, others are soft-deleted.
-            array_shift($translations);
+            // Keep the translation the frontend shows: PageRepository->getPageOverlaysForLanguage() only
+            // selects visible translations, and with multiple ones, the last row wins. There is no ORDER BY,
+            // the highest uid is the typical last row. If none is visible, the highest uid is kept as well.
+            $keepIndex = count($translations) - 1;
+            foreach (array_reverse($translations, true) as $index => $translation) {
+                if ($this->isVisible($translation)) {
+                    $keepIndex = $index;
+                    break;
+                }
+            }
+            unset($translations[$keepIndex]);
             foreach ($translations as $translation) {
                 /** @var array<string, int|string> $translation */
                 $affectedRecords['pages'][] = $translation;
@@ -98,5 +109,16 @@ final class PagesTranslatedLanguageParentDuplicates extends AbstractHealthCheck 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
     {
         $this->outputRecordDetails($io, $affectedRecords, '', ['transOrigPointerField']);
+    }
+
+    /**
+     * @param array<string, int|string> $translation
+     */
+    private function isVisible(array $translation): bool
+    {
+        $now = (int)$GLOBALS['EXEC_TIME'];
+        return (int)$translation['hidden'] === 0
+            && (int)$translation['starttime'] <= $now
+            && ((int)$translation['endtime'] === 0 || (int)$translation['endtime'] > $now);
     }
 }
