@@ -29,3 +29,10 @@
 # Ok: workspace records are not checked
 ,15,0,0,0,0,0,"Author","","","Default page 15"
 ,16,0,1,15,1,0,"","","","Ok translation of page 15 ws-1"
+# JSON scalar l10n_state means "parent" for all fields, as invalid JSON in core
+,17,0,0,0,0,0,"Author","","","Default page 17"
+# Should get l10n_state {"author":"custom"}
+,18,0,1,17,0,0,"","","""x""","Translation of page 17 with different author and string l10n_state"
+,19,0,0,0,0,0,"Author","","","Default page 19"
+# Should get l10n_state {"author":"custom"}
+,20,0,1,19,0,0,"","","1","Translation of page 19 with different author and integer l10n_state"
