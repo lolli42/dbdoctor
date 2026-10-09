@@ -23,15 +23,6 @@
     "allow-plugins": {
       "typo3/class-alias-loader": true,
       "typo3/cms-composer-installers": true
-    },
-    "policy": {
-      "advisories": {
-        "ignore-id": [
-          "PKSA-8j6w-3kr7-s9xk",
-          "PKSA-6j95-1jtb-x6wc",
-          "PKSA-cbx2-m9db-bmzd"
-        ]
-      }
     }
   },
   "require-dev": {
