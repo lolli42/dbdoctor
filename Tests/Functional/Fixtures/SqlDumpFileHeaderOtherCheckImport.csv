@@ -1,0 +1,4 @@
+"tt_content"
+,"uid","pid","deleted","t3ver_wsid","header"
+# Set to deleted=1 by TcaTablesDeleteFlagZeroOrOne
+,1,1,2,0,"Not ok content with deleted=2"

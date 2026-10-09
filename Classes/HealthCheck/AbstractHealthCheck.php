@@ -57,7 +57,8 @@ abstract class AbstractHealthCheck
      * Set to true as soon as a health check got a first change and wrote a comment
      * "Triggered by" to $sqlDumpFile. This helps to find out which specific health check
      * triggered a change when reading the dump file. It is used to ensure this comment
-     * header is only wrote once per single health check on first SQL change.
+     * header is only wrote once per single health check on first SQL change. Reset per
+     * handle() call: A service with multiple tags runs at multiple chain positions.
      */
     private bool $sqlDumpFileHeaderWritten = false;
 
@@ -83,6 +84,7 @@ abstract class AbstractHealthCheck
     final public function handle(SymfonyStyle $io, int $mode, string $file): int
     {
         $this->sqlDumpFile = $file;
+        $this->sqlDumpFileHeaderWritten = false;
         try {
             $affectedRecords = $this->getAffectedRecords();
         } catch (EarlierCheckNotFixedException $e) {

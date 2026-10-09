@@ -1,0 +1,5 @@
+"pages"
+,"uid","pid","deleted","sys_language_uid","l10n_parent","t3ver_wsid","title"
+,4,1,1,0,0,0,"Ok another deleted page"
+# Set to deleted=1 by PagesTranslatedLanguageParentDeleted in second pass
+,5,1,0,1,4,0,"Not ok translation of another deleted page"
