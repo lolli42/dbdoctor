@@ -150,6 +150,8 @@ blindly!
 * 1.x: TYPO3 v12 & v13
 * 2.x: TYPO3 v13 & v14
 
+dbdoctor supports the PHP versions and database systems of the TYPO3 core versions it supports.
+
 
 # Installation
 
@@ -311,18 +313,6 @@ prompting for user input after each failed check.
   description.
 
 
-# Current health checks
-
-Single tests are described in detail when running the CLI command. Rough overview:
-
-* Page tree integrity checks
-* FAL related sys_file_reference and friends checks
-* Language handling related checks
-* Workspace related checks
-* Inline parent-child relation related checks
-* Relations of TCA type "group" fields to missing records
-
-
 # Further hints
 
 We highly encourage admins to back up databases when working with dbdoctor. Some basic rules
@@ -365,13 +355,12 @@ regarding SQL dumps must not be forgotten when doing this:
   > No. CLI is the only sane way for this kind of thing.
 
 * Can I manipulate health checks?
-  > No and yes. dbdoctor CLI does not allow skipping checks and single checks always fix
-  > things the same way without giving options or choices. Adding this would quickly lead
-  > to a multiplication of system state permutations rendering maintenance of this already
-  > complex project impossible. If really needed, ModifyHealthClassListEvent can be used
-  > to remove or reorder checks programmatically, for instance to skip checks tagged as
-  > risky. This option is not for the faint of heart, please understand the event class
-  > comment before following this path. To replace a check, use `disables`, see below.
+  > Not via the CLI: It has no options to skip or configure checks, every check always fixes
+  > things the same way. Options would multiply the possible system states and render
+  > maintenance of this already complex project impossible.
+  > Programmatically, ModifyHealthClassListEvent can remove or reorder checks, for instance
+  > to skip checks tagged as risky, and `disables` replaces a check, see below. Both work,
+  > but you are on your own: Read the event class comment first.
 
 * Can I add my own health checks?
   > Technically yes, but you are on your own. Health checks are collected via dependency
