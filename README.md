@@ -210,9 +210,8 @@ The interface looks like this:
 
 ![](Documentation/cli-example.png)
 
-Note the above image is notoriously outdated, the interface of the current version
-may look slightly different. We're too lazy to update the image often, but it should
-give a solid idea of what the interface looks like.
+A run with TYPO3 v14: Healthy checks are a single "OK" line, a check that finds something
+shows its records and asks what to do.
 
 The main command is a chain of single checks. They are done one by one. Affected
 record details can be shown on a per-page and a per-record basis to give a quick
