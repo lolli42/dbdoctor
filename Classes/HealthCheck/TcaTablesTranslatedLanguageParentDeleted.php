@@ -26,7 +26,8 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Tables with not-deleted record translations must point to not-deleted records in transOrigPointerField
  *
- * @todo: needs update to skip tt_content?!
+ * The table specific variants for tt_content and sys_file_reference run earlier in the chain,
+ * this check is the fallback for them. pages has its own checks and is excluded.
  */
 final class TcaTablesTranslatedLanguageParentDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {

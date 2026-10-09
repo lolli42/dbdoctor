@@ -24,7 +24,8 @@ use TYPO3\CMS\Core\Database\Connection;
 /**
  * Tables with record translations must point to existing records in transOrigPointerField
  *
- * @todo: needs update to skip tt_content?!
+ * The table specific variants for tt_content and sys_file_reference run earlier in the chain,
+ * this check is the fallback for them. pages has its own checks and is excluded.
  */
 final class TcaTablesTranslatedLanguageParentMissing extends AbstractHealthCheck implements HealthCheckInterface
 {

@@ -1,3 +1,12 @@
+# Health checks are ordered by layers: Workspaces, language basics, pages, then records on those pages,
+# relations last, since many checks before remove records. A check may rely on earlier checks having
+# fixed their cases.
+# Some rules exist in table specific variants, for instance "translation points to a missing language
+# parent" for pages, tt_content and sys_file_reference, when a table needs a different fix. The specific
+# variant runs first, the generic TcaTables* check afterwards covers all other tables and stays a fallback
+# for the specific ones. pages has its own checks for the page tree and translation parents and is
+# excluded from the generic variants of those rules. Other tables are excluded from a generic check
+# only when its fix would be wrong for them, with a comment why.
 services:
   _defaults:
     autowire: true

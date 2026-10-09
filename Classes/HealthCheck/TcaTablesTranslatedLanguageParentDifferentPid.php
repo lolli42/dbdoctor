@@ -26,7 +26,9 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Tables with record translations must have their pid set to the same pid the default language record points to.
  *
- * @todo: needs update to skip tt_content?!
+ * The table specific variant for tt_content runs earlier in the chain, this check is the
+ * fallback for it. pages has its own checks and is excluded, sys_file_reference is excluded
+ * since this fix would be wrong for it, see below.
  */
 final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealthCheck implements HealthCheckInterface
 {

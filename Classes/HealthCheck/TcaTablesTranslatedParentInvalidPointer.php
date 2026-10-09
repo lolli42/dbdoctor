@@ -26,7 +26,8 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Records in localization tables must point to a sys_language_uid=0 record in their transOrigPointerField.
  *
- * @todo: needs update to skip tt_content?!
+ * There is no table specific variant for tt_content or sys_file_reference: This check runs
+ * before their checks and covers them. pages has its own checks and is excluded.
  */
 final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck implements HealthCheckInterface
 {
