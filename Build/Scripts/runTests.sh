@@ -238,8 +238,7 @@ Options:
     -x
         Only with -s functional|unit|cli
         Send information to host instance for test or system under test break points. This is especially
-        useful if a local PhpStorm instance is listening on default xdebug port 9003. A different port
-        can be selected with -y
+        useful if a local PhpStorm instance is listening on default xdebug port 9003.
 
     -n
         Only with -s cgl
@@ -426,7 +425,7 @@ if [ ${PHP_XDEBUG_ON} -eq 0 ]; then
     XDEBUG_CONFIG=" "
 else
     XDEBUG_MODE="-e XDEBUG_MODE=debug -e XDEBUG_TRIGGER=foo"
-    XDEBUG_CONFIG="client_port=${PHP_XDEBUG_PORT} client_host=${CONTAINER_HOST}"
+    XDEBUG_CONFIG="client_port=9003 client_host=${CONTAINER_HOST}"
 fi
 
 # Suite execution
