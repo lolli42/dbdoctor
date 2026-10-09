@@ -51,8 +51,8 @@ handleDbmsOptions() {
                 echo "Use \"./Build/Scripts/runTests.sh -h\" to display help and valid options" >&2
                 exit 1
             fi
-            [ -z "${DBMS_VERSION}" ] && DBMS_VERSION="10.3"
-            if ! [[ ${DBMS_VERSION} =~ ^(10.1|10.2|10.3|10.4|10.5|10.6|10.7|10.8|10.9|10.10|10.11|11.0|11.1|11.2|11.3|11.4)$ ]]; then
+            [ -z "${DBMS_VERSION}" ] && DBMS_VERSION="10.4"
+            if ! [[ ${DBMS_VERSION} =~ ^(10.4|10.5|10.6|10.11|11.4|11.8)$ ]]; then
                 echo "Invalid combination -d ${DBMS} -i ${DBMS_VERSION}" >&2
                 echo >&2
                 echo "Use \"./Build/Scripts/runTests.sh -h\" to display help and valid options" >&2
@@ -68,19 +68,10 @@ handleDbmsOptions() {
                 exit 1
             fi
             [ -z "${DBMS_VERSION}" ] && DBMS_VERSION="8.0"
-            if ! [[ ${DBMS_VERSION} =~ ^(8.0|8.1|8.2|8.3|8.4)$ ]]; then
+            if ! [[ ${DBMS_VERSION} =~ ^(8.0|8.4)$ ]]; then
                 echo "Invalid combination -d ${DBMS} -i ${DBMS_VERSION}" >&2
                 echo >&2
                 echo "Use \"./Build/Scripts/runTests.sh -h\" to display help and valid options" >&2
-                exit 1
-            fi
-            ;;
-        mssql)
-            [ -z ${DATABASE_DRIVER} ] && DATABASE_DRIVER="sqlsrv"
-            if [ "${DATABASE_DRIVER}" != "sqlsrv" ] && [ "${DATABASE_DRIVER}" != "pdo_sqlsrv" ]; then
-                echo "Invalid option -a ${DATABASE_DRIVER} with -d ${DBMS}" >&2
-                echo >&2
-                echo "call \"./Build/Scripts/runTests.sh -h\" to display help and valid options" >&2
                 exit 1
             fi
             ;;
@@ -92,7 +83,7 @@ handleDbmsOptions() {
                 exit 1
             fi
             [ -z "${DBMS_VERSION}" ] && DBMS_VERSION="10"
-            if ! [[ ${DBMS_VERSION} =~ ^(9.6|10|11|12|13|14|15|16)$ ]]; then
+            if ! [[ ${DBMS_VERSION} =~ ^(10|11|12|13|14|15|16)$ ]]; then
                 echo "Invalid combination -d ${DBMS} -i ${DBMS_VERSION}" >&2
                 echo >&2
                 echo "Use \"./Build/Scripts/runTests.sh -h\" to display help and valid options" >&2
@@ -107,7 +98,7 @@ handleDbmsOptions() {
                 exit 1
             fi
             if [ -n "${DBMS_VERSION}" ]; then
-                echo "Invalid combination -d ${DBMS} -i ${DATABASE_DRIVER}" >&2
+                echo "Invalid combination -d ${DBMS} -i ${DBMS_VERSION}" >&2
                 echo >&2
                 echo "Use \"./Build/Scripts/runTests.sh -h\" to display help and valid options" >&2
                 exit 1
@@ -190,37 +181,23 @@ Options:
     -i version
         Specify a specific database version
         With "-d mariadb":
-            - 10.1   short-term, no longer maintained
-            - 10.2   short-term, no longer maintained
-            - 10.3   short-term, maintained until 2023-05-25 (default)
-            - 10.4   short-term, maintained until 2024-06-18
-            - 10.5   short-term, maintained until 2025-06-24
-            - 10.6   long-term, maintained until 2026-06
-            - 10.7   short-term, no longer maintained
-            - 10.8   short-term, maintained until 2023-05
-            - 10.9   short-term, maintained until 2023-08
-            - 10.10  short-term, maintained until 2023-11
-            - 10.11  long-term, maintained until 2028-02
-            - 11.0   development series
-            - 11.1   short-term development series, maintained until 2024-08
-            - 11.2   short-term development series, maintained until 2024-11
-            - 11.3   short-term development series, rolling release
-            - 11.4   long-term, maintained until 2029-05
+            - 10.4 (default)
+            - 10.5
+            - 10.6
+            - 10.11
+            - 11.4
+            - 11.8
         With "-d mysql":
-            - 8.0   maintained until 2026-04 (default)
-            - 8.1   unmaintained since 2023-10
-            - 8.2   unmaintained since 2024-01
-            - 8.3   maintained until 2024-04
-            - 8.4   maintained until 2032-04 LTS
+            - 8.0 (default)
+            - 8.4
         With "-d postgres":
-            - 9.6   unmaintained since 2021-11-11
-            - 10    unmaintained since 2022-11-10 (default)
-            - 11    unmaintained since 2023-11-09
-            - 12    maintained until 2024-11-14
-            - 13    maintained until 2025-11-13
-            - 14    maintained until 2026-11-12
-            - 15    maintained until 2027-11-11
-            - 16    maintained until 2028-11-09
+            - 10 (default)
+            - 11
+            - 12
+            - 13
+            - 14
+            - 15
+            - 16
 
     -p <8.2|8.3|8.4|8.5>
         Specifies the PHP minor version to be used
