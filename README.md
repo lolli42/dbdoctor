@@ -306,6 +306,14 @@ prompting for user input after each failed check.
   executed on a live instance using something like `mysql my_database < file.sql` or similar for
   other DBMS.
 
+* Verbose output: `--verbose` or `-v`:
+  ```
+  $ bin/typo3 dbdoctor:health -m check -v
+  ```
+  Checks without affected records are a single "OK" line by default, details are shown for
+  checks that found something only. With `-v`, all checks show their title, actions and
+  description.
+
 
 # Current health checks
 

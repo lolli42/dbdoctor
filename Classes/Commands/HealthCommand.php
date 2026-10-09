@@ -116,7 +116,6 @@ final class HealthCommand extends Command
 
         $result = HealthCheckInterface::RESULT_OK;
         foreach ($this->healthFactory->getNext() as $healthInstance) {
-            $healthInstance->header($io);
             $result |= $healthInstance->handle($io, $mode, $file);
             if (($result & HealthCheckInterface::RESULT_ABORT) === HealthCheckInterface::RESULT_ABORT) {
                 $io->warning('Aborting ...');

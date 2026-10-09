@@ -82,18 +82,28 @@ abstract class AbstractHealthCheck
     final public function handle(SymfonyStyle $io, int $mode, string $file): int
     {
         $this->sqlDumpFile = $file;
+        $affectedRecords = $this->getAffectedRecords();
+        if (empty($affectedRecords) && !$io->isVerbose()) {
+            // Keep the output short: A check without affected records is a single line,
+            // header and description are shown with -v.
+            $io->writeln('<info>OK</info>  ' . (new \ReflectionClass($this))->getShortName());
+            return HealthCheckInterface::RESULT_OK;
+        }
+        $this->header($io);
         if ($mode === HealthCheckInterface::MODE_CHECK) {
-            return $this->check($io);
+            return $this->check($io, $affectedRecords);
         }
         if ($mode === HealthCheckInterface::MODE_EXECUTE) {
-            return $this->execute($io);
+            return $this->execute($io, $affectedRecords);
         }
-        return $this->interactive($io);
+        return $this->interactive($io, $affectedRecords);
     }
 
-    private function check(SymfonyStyle $io): int
+    /**
+     * @param array<string, array<int, array<string, int|string>>> $affectedRecords
+     */
+    private function check(SymfonyStyle $io, array $affectedRecords): int
     {
-        $affectedRecords = $this->getAffectedRecords();
         $this->outputMainSummary($io, $affectedRecords);
         if (empty($affectedRecords)) {
             return HealthCheckInterface::RESULT_OK;
@@ -101,9 +111,11 @@ abstract class AbstractHealthCheck
         return HealthCheckInterface::RESULT_BROKEN;
     }
 
-    private function execute(SymfonyStyle $io): int
+    /**
+     * @param array<string, array<int, array<string, int|string>>> $affectedRecords
+     */
+    private function execute(SymfonyStyle $io, array $affectedRecords): int
     {
-        $affectedRecords = $this->getAffectedRecords();
         $this->outputMainSummary($io, $affectedRecords);
         if (empty($affectedRecords)) {
             return HealthCheckInterface::RESULT_OK;
@@ -112,9 +124,11 @@ abstract class AbstractHealthCheck
         return HealthCheckInterface::RESULT_BROKEN;
     }
 
-    private function interactive(SymfonyStyle $io): int
+    /**
+     * @param array<string, array<int, array<string, int|string>>> $affectedRecords
+     */
+    private function interactive(SymfonyStyle $io, array $affectedRecords): int
     {
-        $affectedRecords = $this->getAffectedRecords();
         $this->outputMainSummary($io, $affectedRecords);
         if (empty($affectedRecords)) {
             return HealthCheckInterface::RESULT_OK;
@@ -164,6 +178,8 @@ abstract class AbstractHealthCheck
             }
         }
     }
+
+    abstract public function header(SymfonyStyle $io): void;
 
     /**
      * @return array<string, array<int, array<string, int|string>>>

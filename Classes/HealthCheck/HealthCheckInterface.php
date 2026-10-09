@@ -34,6 +34,12 @@ interface HealthCheckInterface
     /** @var int Bitmask - Error occurred */
     public const RESULT_ERROR = 4;
 
+    /**
+     * Section title, class name, actions and description of the check. AbstractHealthCheck->handle()
+     * calls this only if there are affected records or output is verbose (-v), checks without
+     * affected records are a single line otherwise. Checks not extending AbstractHealthCheck call
+     * it in their handle() themselves.
+     */
     public function header(SymfonyStyle $io): void;
     public function handle(SymfonyStyle $io, int $mode, string $file): int;
 }
