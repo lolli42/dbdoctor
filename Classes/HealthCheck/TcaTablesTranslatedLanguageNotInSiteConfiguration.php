@@ -21,6 +21,7 @@ use Lolli\Dbdoctor\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
+use TYPO3\CMS\Core\Domain\Repository\PageRepository;
 use TYPO3\CMS\Core\Site\SiteFinder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -30,6 +31,10 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * in the site configuration are orphaned translations, typically created by copying
  * pages between sites before DataHandler restricted copied translations to the
  * languages of the target site, or by removing a language from a site configuration.
+ *
+ * Records in sys folders are not checked: Sys folders are typically used as storage
+ * for records rendered by other pages, possibly of other sites with more languages,
+ * for instance a news storage shared by multiple sites.
  */
 final class TcaTablesTranslatedLanguageNotInSiteConfiguration extends AbstractHealthCheck implements HealthCheckInterface
 {
@@ -42,12 +47,14 @@ final class TcaTablesTranslatedLanguageNotInSiteConfiguration extends AbstractHe
     {
         $io->section('Scan for translated records with language not in site configuration');
         $this->outputClass($io);
-        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE);
+        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE, self::TAG_RISKY);
         $io->text([
             'Translated records reference a sys_language_uid. This language must be configured',
             'in the site configuration of the page they are located on. This check finds records',
             'with a sys_language_uid that does not exist in the site configuration. They are soft',
-            'deleted if possible, or removed. Records outside of a site are not checked.',
+            'deleted if possible, or removed. Records outside of a site are not checked, records in',
+            'sys folders neither: They may be rendered by other sites, for instance as shared storage.',
+            'Records on other pages may be rendered by other sites as well, check them carefully.',
         ]);
     }
 
@@ -76,6 +83,7 @@ final class TcaTablesTranslatedLanguageNotInSiteConfiguration extends AbstractHe
             $this->pagesTreeHelper->getLivePageUidToPid(),
             $rootPageIdToSiteIdentifier
         );
+        $sysFolderUids = $this->getLiveSysFolderUids();
 
         $affectedRows = [];
         foreach ($this->tcaHelper->getNextLanguageAwareTcaTable() as $tableName) {
@@ -130,6 +138,10 @@ final class TcaTablesTranslatedLanguageNotInSiteConfiguration extends AbstractHe
                 if ($siteIdentifier === null) {
                     continue;
                 }
+                if ($tableName !== 'pages' && isset($sysFolderUids[(int)$row['pid']])) {
+                    // Records in sys folders may be rendered by other sites, for instance as shared storage.
+                    continue;
+                }
                 if (!isset($siteLanguageIds[$siteIdentifier][$langId])) {
                     $row['_reasonBroken'] = 'Language not in site "' . $siteIdentifier . '"';
                     $affectedRows[$tableName][(int)$row['uid']] = $row;
@@ -147,5 +159,26 @@ final class TcaTablesTranslatedLanguageNotInSiteConfiguration extends AbstractHe
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
     {
         $this->outputRecordDetails($io, $affectedRecords, '_reasonBroken', ['languageField', 'transOrigPointerField']);
+    }
+
+    /**
+     * @return array<int, true>
+     */
+    private function getLiveSysFolderUids(): array
+    {
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
+        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
+        $result = $queryBuilder->select('uid')
+            ->from('pages')
+            ->where(
+                $queryBuilder->expr()->eq('doktype', $queryBuilder->createNamedParameter(PageRepository::DOKTYPE_SYSFOLDER, Connection::PARAM_INT)),
+                $queryBuilder->expr()->eq('t3ver_wsid', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT))
+            )
+            ->executeQuery();
+        $sysFolderUids = [];
+        while ($uid = $result->fetchOne()) {
+            $sysFolderUids[(int)$uid] = true;
+        }
+        return $sysFolderUids;
     }
 }

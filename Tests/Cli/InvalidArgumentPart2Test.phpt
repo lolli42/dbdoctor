@@ -169,11 +169,13 @@ Scan for translated records with language not in site configuration
 -------------------------------------------------------------------
 
  Class: TcaTablesTranslatedLanguageNotInSiteConfiguration
- Actions: soft-delete, remove, workspace-remove
+ Actions: soft-delete, remove, workspace-remove, risky
  Translated records reference a sys_language_uid. This language must be configured
  in the site configuration of the page they are located on. This check finds records
  with a sys_language_uid that does not exist in the site configuration. They are soft
- deleted if possible, or removed. Records outside of a site are not checked.
+ deleted if possible, or removed. Records outside of a site are not checked, records in
+ sys folders neither: They may be rendered by other sites, for instance as shared storage.
+ Records on other pages may be rendered by other sites as well, check them carefully.
 
  [OK] No affected records found%w
 
