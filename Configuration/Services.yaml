@@ -265,20 +265,11 @@ services:
         identifier: 'dbdoctor-tca-tables-pid-missing'
         after: 'dbdoctor-sys-file-reference-invalid-pid'
 
-  # Disabled for now, see the class comment
-  Lolli\Dbdoctor\HealthCheck\SysFileReferenceInvalidFieldname:
-    public: true
-    tags:
-      - name: 'lolli.dbdoctor.health'
-        identifier: 'dbdoctor-sys-file-reference-invalid-fieldname'
-        after: 'dbdoctor-tca-tables-pid-missing'
-        disabled: true
-
   Lolli\Dbdoctor\HealthCheck\TcaTablesPidDeleted:
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-tca-tables-pid-deleted'
-        after: 'dbdoctor-sys-file-reference-invalid-fieldname'
+        after: 'dbdoctor-tca-tables-pid-missing'
 
   Lolli\Dbdoctor\HealthCheck\TcaTablesPidTranslatedPage:
     tags:
@@ -310,20 +301,11 @@ services:
         identifier: 'dbdoctor-tca-tables-translated-language-not-in-site-configuration'
         after: 'dbdoctor-tca-tables-translated-language-parent-different-pid'
 
-  # Disabled for now
-  Lolli\Dbdoctor\HealthCheck\TcaTablesInvalidLanguageParent:
-    public: true
-    tags:
-      - name: 'lolli.dbdoctor.health'
-        identifier: 'dbdoctor-tca-tables-invalid-language-parent'
-        after: 'dbdoctor-tca-tables-translated-language-not-in-site-configuration'
-        disabled: true
-
   Lolli\Dbdoctor\HealthCheck\InlineForeignFieldChildrenParentMissing:
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-inline-foreign-field-children-parent-missing'
-        after: 'dbdoctor-tca-tables-invalid-language-parent'
+        after: 'dbdoctor-tca-tables-translated-language-not-in-site-configuration'
 
   Lolli\Dbdoctor\HealthCheck\InlineForeignFieldNoForeignTableFieldChildrenParentMissing:
     tags:
