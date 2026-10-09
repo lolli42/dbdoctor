@@ -32,11 +32,10 @@ final class PagesLanguageNegative extends AbstractHealthCheck implements HealthC
         $this->outputClass($io);
         $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE);
         $io->text([
-            'This health check finds not deleted "pages" records with sys_language_uid < 0. The',
-            'backend does not allow language "-1" (all languages) for pages. Such pages are not shown',
-            'in the page tree, menus and routing, but their sub pages and records may still be in use.',
-            'They are soft-deleted in live and removed if they are workspace records. Later checks',
-            'handle sub pages, translations and records of these pages.',
+            'This health check finds not deleted "pages" records with sys_language_uid < 0. The backend',
+            'never offers this language for pages, and does not show such pages in the page tree, together',
+            'with their whole sub tree. They are soft-deleted in live and removed if they are workspace',
+            'records. Later checks remove their sub pages and records as well.',
         ]);
     }
 
