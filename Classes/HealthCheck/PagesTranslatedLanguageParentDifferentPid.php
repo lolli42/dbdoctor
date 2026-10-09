@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -66,10 +67,10 @@ final class PagesTranslatedLanguageParentDifferentPid extends AbstractHealthChec
                 }
             } catch (NoSuchRecordException $e) {
                 // Earlier test should have fixed this.
-                throw new \RuntimeException(
+                throw new EarlierCheckNotFixedException(
                     'Pages record with uid="' . $row['uid'] . '" and sys_language_uid="' . $row['sys_language_uid'] . '"'
-                    . ' has l10n_parent="' . $row['l10n_parent'] . '", but that record does not exist. A previous check'
-                    . ' should have found and fixed this. Please repeat.',
+                    . ' has l10n_parent="' . $row['l10n_parent'] . '", but that record does not exist.'
+                    . ' An earlier check finds and fixes this.',
                     1647793649
                 );
             }

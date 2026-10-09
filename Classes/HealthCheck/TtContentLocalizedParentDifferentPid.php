@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
@@ -73,8 +74,9 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
                     $affectedRows['tt_content'][] = $row;
                 }
             } catch (NoSuchRecordException|NoSuchTableException $e) {
-                throw new \RuntimeException(
-                    'Should not happen: Existence was checked by previous checks already.',
+                throw new EarlierCheckNotFixedException(
+                    'tt_content record with uid="' . $row['uid'] . '" has l18n_parent="' . $row['l18n_parent'] . '",'
+                    . ' but that record does not exist. The earlier check TtContentLocalizedParentExists finds and fixes this.',
                     1689066707
                 );
             }

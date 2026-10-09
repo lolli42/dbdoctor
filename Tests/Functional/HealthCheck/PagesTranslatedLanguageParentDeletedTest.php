@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
 use Lolli\Dbdoctor\HealthCheck\PagesTranslatedLanguageParentDeleted;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
@@ -52,5 +53,27 @@ class PagesTranslatedLanguageParentDeletedTest extends AbstractFunctionalTestCas
         $subject = $this->get(PagesTranslatedLanguageParentDeleted::class);
         $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/PagesTranslatedLanguageParentDeletedFixed.csv');
+    }
+
+    #[Test]
+    public function checkModeSkipsCheckIfEarlierCheckDidNotFix(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/PagesTranslatedLanguageParentDeletedEarlierCheckNotFixedImport.csv');
+        $io = $this->createMock(SymfonyStyle::class);
+        /** @var PagesTranslatedLanguageParentDeleted $subject */
+        $subject = $this->get(PagesTranslatedLanguageParentDeleted::class);
+        $io->expects(self::once())->method('warning');
+        self::assertSame(HealthCheckInterface::RESULT_BROKEN, $subject->handle($io, HealthCheckInterface::MODE_CHECK, ''));
+    }
+
+    #[Test]
+    public function executeModeThrowsIfEarlierCheckDidNotFix(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/PagesTranslatedLanguageParentDeletedEarlierCheckNotFixedImport.csv');
+        /** @var PagesTranslatedLanguageParentDeleted $subject */
+        $subject = $this->get(PagesTranslatedLanguageParentDeleted::class);
+        $this->expectException(EarlierCheckNotFixedException::class);
+        $this->expectExceptionCode(1647793648);
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
     }
 }
