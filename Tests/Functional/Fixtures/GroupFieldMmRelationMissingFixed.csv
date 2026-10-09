@@ -21,8 +21,8 @@
 # Empty tablenames point to the first allowed table "tt_content"
 ,1,1,"","relations_mm_single"
 ,2,2,"tt_content","relations_mm"
-# Local record does not exist: Not handled by this check
-,4,95,"tt_content","relations_mm"
+# Local record is soft-deleted: Kept
+,3,1,"pages","relations_mm"
 "sys_category"
 ,"uid","pid","deleted","title","items"
 # Count field "items" is not updated

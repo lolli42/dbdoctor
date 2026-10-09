@@ -50,4 +50,23 @@ class GroupFieldMmRelationMissingTest extends AbstractFunctionalTestCase
         $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldMmRelationMissingFixed.csv');
     }
+
+    #[Test]
+    public function rowsOfMissingLocalRecordAreKeptIfMmTableIsUsedByFieldsOfMultipleTables(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldMmRelationMissingAmbiguousImport.csv');
+        // uid_local of the MM table may now point to a tt_content record as well. The field has no
+        // database column, the check does not scan it, but it makes the local side ambiguous.
+        $GLOBALS['TCA']['tt_content']['columns']['dbdoctor_shared_mm'] = [
+            'config' => [
+                'type' => 'group',
+                'allowed' => 'pages',
+                'MM' => 'tx_dbdoctortestsgroup_item_mm',
+            ],
+        ];
+        /** @var GroupFieldMmRelationMissing $subject */
+        $subject = $this->get(GroupFieldMmRelationMissing::class);
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldMmRelationMissingAmbiguousImport.csv');
+    }
 }

@@ -23,8 +23,12 @@
 ,1,98,"","relations_mm_single"
 ,2,2,"tt_content","relations_mm"
 ,3,97,"pages","relations_mm"
-# Local record does not exist: Not handled by this check
+# Local record is soft-deleted: Kept
+,3,1,"pages","relations_mm"
+# Local record does not exist: All its rows are removed, also those to existing records
 ,4,95,"tt_content","relations_mm"
+,4,1,"tt_content","relations_mm"
+,4,1,"","relations_mm_single"
 "sys_category"
 ,"uid","pid","deleted","title","items"
 ,1,1,0,"Not Ok - relation to missing record",2
@@ -34,3 +38,6 @@
 ,1,94,"tt_content","categories"
 # Second field of the same table with the same missing record: "items" has no match fields, both rows are removed
 ,1,94,"tt_content","categories2"
+# Category does not exist: All its rows are removed
+,2,1,"tt_content","categories"
+,2,1,"pages","categories"
