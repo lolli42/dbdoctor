@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -100,10 +101,10 @@ final class TcaTablesTranslatedLanguageParentDeleted extends AbstractHealthCheck
                     }
                 } catch (NoSuchRecordException $e) {
                     // Earlier test should have fixed this.
-                    throw new \RuntimeException(
+                    throw new EarlierCheckNotFixedException(
                         'Record with uid="' . $localizedRow['uid'] . '" on table "' . $tableName . '"'
                         . ' has ' . $translationParentField . '="' . $localizedRow[$translationParentField] . '", but that record does not exist.'
-                        . ' A previous check should have found and fixed this. Please repeat.',
+                        . ' An earlier check finds and fixes this.',
                         1648031985
                     );
                 }

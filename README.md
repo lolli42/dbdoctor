@@ -276,7 +276,9 @@ prompting for user input after each failed check.
   Run all checks but don't perform any DB changes. Returns 0 (zero) if all checks
   are fine and non-zero if something was found by any check. Useful to verify a fix
   run was complete, and as cron job to see if any check "goes red" over time after
-  everything has been fixed once.
+  everything has been fixed once. Some checks rely on earlier checks having fixed their
+  findings: Since check mode fixes nothing, such a check is skipped with a warning when
+  it runs into an unfixed finding of an earlier check.
 
 * Execute mode: `--mode execute` or `-m execute`:
   ```

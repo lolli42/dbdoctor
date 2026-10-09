@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Doctrine\DBAL\ParameterType;
+use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Helper\TcaHelper;
 use Lolli\Dbdoctor\Renderer\AffectedPagesRenderer;
@@ -82,7 +83,22 @@ abstract class AbstractHealthCheck
     final public function handle(SymfonyStyle $io, int $mode, string $file): int
     {
         $this->sqlDumpFile = $file;
-        $affectedRecords = $this->getAffectedRecords();
+        try {
+            $affectedRecords = $this->getAffectedRecords();
+        } catch (EarlierCheckNotFixedException $e) {
+            if ($mode !== HealthCheckInterface::MODE_CHECK) {
+                throw $e;
+            }
+            // Check mode reports findings of earlier checks, but does not fix them. This
+            // check relies on those fixes and can not run.
+            $this->header($io);
+            $io->warning([
+                'Check skipped: It relies on findings of earlier checks being fixed.',
+                $e->getMessage(),
+                'Fix findings of earlier checks, then run check mode again.',
+            ]);
+            return HealthCheckInterface::RESULT_BROKEN;
+        }
         if (empty($affectedRecords) && !$io->isVerbose()) {
             // Keep the output short: A check without affected records is a single line,
             // header and description are shown with -v.

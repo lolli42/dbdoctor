@@ -1,0 +1,6 @@
+"pages"
+,"uid","pid","deleted","sys_language_uid","l10n_parent","t3ver_wsid","title"
+,1,0,0,0,0,0,"Ok site root"
+,2,1,0,0,0,0,"Ok sub page 1"
+# PagesTranslatedLanguageParentMissing removes this, the check can not run before
+,3,1,0,1,42,0,"Not ok sub page translated with missing language parent"

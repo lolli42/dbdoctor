@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -79,10 +80,10 @@ final class TcaTablesPidDeleted extends AbstractHealthCheck implements HealthChe
                     }
                 } catch (NoSuchRecordException $e) {
                     // Earlier test should have fixed this.
-                    throw new \RuntimeException(
+                    throw new EarlierCheckNotFixedException(
                         'Record with uid="' . $row['uid'] . '" on table "' . $tableName . '"'
-                        . ' has pid="' . $row['pid'] . '", but that page does not exist. A previous check'
-                        . ' should have found and fixed this. Please repeat.',
+                        . ' has pid="' . $row['pid'] . '", but that page does not exist.'
+                        . ' An earlier check finds and fixes this.',
                         1647793650
                     );
                 }

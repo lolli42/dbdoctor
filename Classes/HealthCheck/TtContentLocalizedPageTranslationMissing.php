@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -80,9 +81,9 @@ final class TtContentLocalizedPageTranslationMissing extends AbstractHealthCheck
                     $pageRow = $recordsHelper->getRecord('pages', ['uid', 'doktype', 'sys_language_uid'], $pid);
                 } catch (NoSuchRecordException $e) {
                     // Earlier test should have fixed this.
-                    throw new \RuntimeException(
+                    throw new EarlierCheckNotFixedException(
                         'tt_content record with uid="' . $row['uid'] . '" has pid="' . $pid . '", but that page'
-                        . ' does not exist. A previous check should have found and fixed this. Please repeat.',
+                        . ' does not exist. An earlier check finds and fixes this.',
                         1791475200
                     );
                 }
