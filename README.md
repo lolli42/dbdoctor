@@ -36,10 +36,7 @@ We're not aware of other open extensions that try to achieve the same in a simil
 systematic way. The core `lowlevel` extension comes with a few commands that try to
 find and clean up some fishy DB state cases, but dbdoctor solves far more things.
 
-This extension is not a substitute for `lowlevel` commands (yet?), it's more of an
-incubator to see if a certain strategy dealing with inconsistencies actually works
-out in projects. It will grow over time. Maybe it ends up in the core, or the core
-refers to this extension as a "maintenance" extension in the future. We'll see.
+This extension is not a substitute for `lowlevel` commands. It will grow over time.
 
 
 # Strategy
