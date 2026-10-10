@@ -79,11 +79,11 @@ final class SysFileMetadataMissing extends AbstractHealthCheck implements Health
         return $affectedRecords;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
-        $this->outputTableInsertBefore($io, $simulate, 'sys_file_metadata');
+        $this->outputTableInsertBefore($run, $simulate, 'sys_file_metadata');
         $localStorageUids = $this->getLocalStorageUids();
         $count = 0;
         foreach ($affectedRecords['sys_file'] ?? [] as $fileRow) {
@@ -120,10 +120,10 @@ final class SysFileMetadataMissing extends AbstractHealthCheck implements Health
                     'type' => Connection::PARAM_INT,
                 ];
             }
-            $this->insertSingleTcaRecord($io, $simulate, $recordsHelper, 'sys_file_metadata', $fields);
+            $this->insertSingleTcaRecord($run, $simulate, $recordsHelper, 'sys_file_metadata', $fields);
             $count++;
         }
-        $this->outputTableInsertAfter($io, $simulate, 'sys_file_metadata', $count);
+        $this->outputTableInsertAfter($run, $simulate, 'sys_file_metadata', $count);
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void

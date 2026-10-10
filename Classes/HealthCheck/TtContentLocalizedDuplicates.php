@@ -110,7 +110,7 @@ final class TtContentLocalizedDuplicates extends AbstractHealthCheck implements 
         return $affectedRecords;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         $updateFields = [
             'deleted' => [
@@ -118,6 +118,6 @@ final class TtContentLocalizedDuplicates extends AbstractHealthCheck implements 
                 'type' => Connection::PARAM_INT,
             ],
         ];
-        $this->updateTcaRecordsOfTable($io, $simulate, 'tt_content', $affectedRecords['tt_content'] ?? [], $updateFields);
+        $this->updateTcaRecordsOfTable($run, $simulate, 'tt_content', $affectedRecords['tt_content'] ?? [], $updateFields);
     }
 }

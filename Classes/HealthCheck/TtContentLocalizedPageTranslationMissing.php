@@ -117,9 +117,9 @@ final class TtContentLocalizedPageTranslationMissing extends AbstractHealthCheck
         return $affectedRecords;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
-        $this->softOrHardDeleteRecordsOfTable($io, $simulate, 'tt_content', $affectedRecords['tt_content'] ?? []);
+        $this->softOrHardDeleteRecordsOfTable($run, $simulate, 'tt_content', $affectedRecords['tt_content'] ?? []);
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void

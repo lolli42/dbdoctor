@@ -164,12 +164,12 @@ final class TcaTablesTranslatedWithAllowLanguageSynchronization extends Abstract
         return $affectedRows;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         foreach ($affectedRecords as $tableName => $rows) {
-            $this->outputTableUpdateBefore($io, $simulate, $tableName);
+            $this->outputTableUpdateBefore($run, $simulate, $tableName);
             foreach ($rows as $row) {
                 // Change only the affected fields and keep the rest of l10n_state as is: Fields
                 // without state are "parent" by default, see State->enrich().
@@ -184,9 +184,9 @@ final class TcaTablesTranslatedWithAllowLanguageSynchronization extends Abstract
                         'type' => Connection::PARAM_STR,
                     ],
                 ];
-                $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
+                $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
             }
-            $this->outputTableUpdateAfter($io, $simulate, $tableName, count($rows));
+            $this->outputTableUpdateAfter($run, $simulate, $tableName, count($rows));
         }
     }
 

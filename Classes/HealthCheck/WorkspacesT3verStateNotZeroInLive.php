@@ -78,12 +78,12 @@ final class WorkspacesT3verStateNotZeroInLive extends AbstractHealthCheck implem
         return $affectedRows;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         foreach ($affectedRecords as $tableName => $tableRows) {
-            $this->outputTableHandleBefore($io, $simulate, $tableName);
+            $this->outputTableHandleBefore($run, $simulate, $tableName);
 
             $updateCount = 0;
             $deleteCount = 0;
@@ -94,7 +94,7 @@ final class WorkspacesT3verStateNotZeroInLive extends AbstractHealthCheck implem
             foreach ($tableRows as $tableRow) {
                 if ($isTableDeleteAware && ((int)$tableRow[$deleteField] === 1)) {
                     // If row is soft-deleted already, we now fully remove it.
-                    $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid']);
+                    $this->deleteSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid']);
                     $deleteCount++;
                 } elseif ((int)$tableRow['t3ver_state'] <= -1) {
                     // t3ver_state < 0 lead to exceptions in the BE page module, but are
@@ -105,7 +105,7 @@ final class WorkspacesT3verStateNotZeroInLive extends AbstractHealthCheck implem
                             'type' => Connection::PARAM_INT,
                         ],
                     ];
-                    $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid'], $updateFields);
+                    $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid'], $updateFields);
                     $updateCount++;
                 } elseif ($isTableDeleteAware) {
                     // t3ver_state > 0 are never shown in FE and may lead to exceptions in the BE page module.
@@ -120,17 +120,17 @@ final class WorkspacesT3verStateNotZeroInLive extends AbstractHealthCheck implem
                             'type' => Connection::PARAM_INT,
                         ],
                     ];
-                    $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid'], $updateFields);
+                    $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid'], $updateFields);
                     $updateCount++;
                 } else {
                     // t3ver_state > 0 are never shown in FE and may lead to exceptions in the BE page module.
                     // The table is not soft-delete aware, we remove the record.
-                    $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid']);
+                    $this->deleteSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid']);
                     $deleteCount++;
                 }
             }
 
-            $this->outputTableHandleAfter($io, $simulate, $tableName, $updateCount, $deleteCount);
+            $this->outputTableHandleAfter($run, $simulate, $tableName, $updateCount, $deleteCount);
         }
     }
 }

@@ -112,12 +112,12 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
         return $affectedRows;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         foreach ($affectedRecords as $tableName => $tableRows) {
-            $this->outputTableHandleBefore($io, $simulate, $tableName);
+            $this->outputTableHandleBefore($run, $simulate, $tableName);
 
             $updateCount = 0;
             $deleteCount = 0;
@@ -176,7 +176,7 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
                     if (!$isTableSoftDeleteAware
                         || ($isTableWorkspaceAware && ((int)$localizedRow[$workspaceIdField] > 0))
                     ) {
-                        $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid']);
+                        $this->deleteSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid']);
                         $deleteCount++;
                     } else {
                         $updateFields = [
@@ -189,7 +189,7 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
                                 'type' => Connection::PARAM_INT,
                             ],
                         ];
-                        $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid'], $updateFields);
+                        $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid'], $updateFields);
                         $updateCount++;
                     }
                 } else {
@@ -205,7 +205,7 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
                                 'type' => \PDO::PARAM_INT,
                             ],
                         ];
-                        $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid'], $updateFields);
+                        $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid'], $updateFields);
                         $updateCount ++;
                     } else {
                     */
@@ -223,12 +223,12 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
                                 'type' => Connection::PARAM_INT,
                             ],
                         ];
-                        $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid'], $updateFields);
+                        $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid'], $updateFields);
                         $updateCount++;
                     } elseif (!$isTableSoftDeleteAware
                         || ($isTableWorkspaceAware && ((int)$localizedRow[$workspaceIdField] > 0))
                     ) {
-                        $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid']);
+                        $this->deleteSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid']);
                         $deleteCount++;
                     } else {
                         $updateFields = [
@@ -241,13 +241,13 @@ final class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealth
                                 'type' => Connection::PARAM_INT,
                             ],
                         ];
-                        $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid'], $updateFields);
+                        $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$localizedRow['uid'], $updateFields);
                         $updateCount++;
                     }
                 }
             }
 
-            $this->outputTableHandleAfter($io, $simulate, $tableName, $updateCount, $deleteCount);
+            $this->outputTableHandleAfter($run, $simulate, $tableName, $updateCount, $deleteCount);
         }
     }
 

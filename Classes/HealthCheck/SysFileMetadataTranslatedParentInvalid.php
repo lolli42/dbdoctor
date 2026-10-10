@@ -92,12 +92,12 @@ final class SysFileMetadataTranslatedParentInvalid extends AbstractHealthCheck i
         return $affectedRecords;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         $rows = $affectedRecords['sys_file_metadata'] ?? [];
-        $this->outputTableUpdateBefore($io, $simulate, 'sys_file_metadata');
+        $this->outputTableUpdateBefore($run, $simulate, 'sys_file_metadata');
         foreach ($rows as $row) {
             $fields = [
                 'l10n_parent' => [
@@ -105,9 +105,9 @@ final class SysFileMetadataTranslatedParentInvalid extends AbstractHealthCheck i
                     'type' => Connection::PARAM_INT,
                 ],
             ];
-            $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, 'sys_file_metadata', (int)$row['uid'], $fields);
+            $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, 'sys_file_metadata', (int)$row['uid'], $fields);
         }
-        $this->outputTableUpdateAfter($io, $simulate, 'sys_file_metadata', count($rows));
+        $this->outputTableUpdateAfter($run, $simulate, 'sys_file_metadata', count($rows));
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void

@@ -67,7 +67,7 @@ final class TcaTablesLanguageLessThanOneHasZeroLanguageParent extends AbstractHe
         return $affectedRows;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         foreach ($affectedRecords as $tableName => $tableRows) {
             $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
@@ -83,7 +83,7 @@ final class TcaTablesLanguageLessThanOneHasZeroLanguageParent extends AbstractHe
                     'type' => Connection::PARAM_INT,
                 ],
             ];
-            $this->updateTcaRecordsOfTable($io, $simulate, $tableName, $tableRows, $updateFields);
+            $this->updateTcaRecordsOfTable($run, $simulate, $tableName, $tableRows, $updateFields);
         }
     }
 }

@@ -66,13 +66,13 @@ final class TcaTablesPidTranslatedPage extends AbstractHealthCheck implements He
         return $affectedRows;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         $translatedPages = $this->getTranslatedPages();
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         foreach ($affectedRecords as $tableName => $rows) {
-            $this->outputTableUpdateBefore($io, $simulate, $tableName);
+            $this->outputTableUpdateBefore($run, $simulate, $tableName);
             $count = 0;
             foreach ($rows as $row) {
                 $fields = [
@@ -81,10 +81,10 @@ final class TcaTablesPidTranslatedPage extends AbstractHealthCheck implements He
                         'type' => Connection::PARAM_INT,
                     ],
                 ];
-                $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
+                $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
                 $count++;
             }
-            $this->outputTableUpdateAfter($io, $simulate, $tableName, $count);
+            $this->outputTableUpdateAfter($run, $simulate, $tableName, $count);
         }
     }
 

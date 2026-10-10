@@ -73,7 +73,7 @@ final class SysFileReferenceLocalizedParentExists extends AbstractHealthCheck im
         return $tableRows;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         // @todo: Possible improvement. We could try to look at the uid_foreign/tablesnames inline parent record,
         //        see if is "connected mode", has a sys_language_uid=0 l10n_parent on the same pid, look up the
@@ -88,7 +88,7 @@ final class SysFileReferenceLocalizedParentExists extends AbstractHealthCheck im
         //        Note there is also a scenario where inline parent and inline parent of default language are
         //        located on different pid's, which indicates the l10n_parent uid is even more borked. Also,
         //        l10n_parent record should be on the same pid, see https://github.com/lolli42/dbdoctor/issues/30
-        $this->deleteTcaRecordsOfTable($io, $simulate, 'sys_file_reference', $affectedRecords['sys_file_reference'] ?? []);
+        $this->deleteTcaRecordsOfTable($run, $simulate, 'sys_file_reference', $affectedRecords['sys_file_reference'] ?? []);
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void

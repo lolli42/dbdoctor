@@ -97,14 +97,14 @@ final class GroupFieldRelationMissing extends AbstractHealthCheck implements Hea
         return $affectedRows;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         /** @var TableHelper $tableHelper */
         $tableHelper = $this->container->get(TableHelper::class);
         foreach ($affectedRecords as $tableName => $rows) {
-            $this->outputTableUpdateBefore($io, $simulate, $tableName);
+            $this->outputTableUpdateBefore($run, $simulate, $tableName);
             $count = 0;
             foreach ($rows as $row) {
                 $fieldName = (string)$row['_fieldName'];
@@ -131,10 +131,10 @@ final class GroupFieldRelationMissing extends AbstractHealthCheck implements Hea
                         ],
                     ];
                 }
-                $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $updateFields);
+                $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $updateFields);
                 $count++;
             }
-            $this->outputTableUpdateAfter($io, $simulate, $tableName, $count);
+            $this->outputTableUpdateAfter($run, $simulate, $tableName, $count);
         }
     }
 
