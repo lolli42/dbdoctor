@@ -44,8 +44,9 @@ final class TcaTablesTranslatedLanguageParentDuplicates extends AbstractHealthCh
             'There must be only one translated record (TCA ctrl "languageField" > 0) per',
             'default language record (TCA ctrl "transOrigPointerField") and language.',
             'This check finds duplicates in all tables except "pages" and "tt_content", keeps',
-            'the one with the lowest uid and soft-deletes others, or removes them if the',
-            'table is not soft-delete aware.',
+            'the one the frontend shows: The visible one (not hidden, start and end time not',
+            'excluding it) with the lowest uid, or the one with the lowest uid if none is',
+            'visible. Others are soft-deleted, or removed if the table is not soft-delete aware.',
         ]);
     }
 
@@ -91,11 +92,12 @@ final class TcaTablesTranslatedLanguageParentDuplicates extends AbstractHealthCh
             if ($workspaceIdField) {
                 $selectFields[] = $workspaceIdField;
             }
+            $visibilityFields = $this->tcaHelper->getVisibilityFields($tableName);
             while ($duplicate = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $duplicate */
                 $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
                 $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-                $queryBuilder->select(...$selectFields)
+                $queryBuilder->select(...$selectFields, ...$visibilityFields)
                     ->from($tableName)
                     ->where(
                         $queryBuilder->expr()->eq($languageField, $queryBuilder->createNamedParameter((int)$duplicate[$languageField], Connection::PARAM_INT)),
@@ -113,8 +115,18 @@ final class TcaTablesTranslatedLanguageParentDuplicates extends AbstractHealthCh
                     $queryBuilder->andWhere($queryBuilder->expr()->eq($parentField, $parameter));
                 }
                 $translations = $queryBuilder->executeQuery()->fetchAllAssociative();
-                // The translation with the lowest uid is kept, others are soft-deleted or removed.
-                array_shift($translations);
+                // Keep the translation the frontend shows: PageRepository->getRecordOverlay() only selects
+                // visible translations, and with multiple ones, the first row wins. There is no ORDER BY, the
+                // lowest uid is the typical first row. If none is visible, the lowest uid is kept as well.
+                $keepIndex = 0;
+                foreach ($translations as $index => $translation) {
+                    /** @var array<string, int|string|null> $translation */
+                    if ($this->tcaHelper->isVisibleInFrontend($tableName, $translation, (int)$GLOBALS['EXEC_TIME'])) {
+                        $keepIndex = $index;
+                        break;
+                    }
+                }
+                unset($translations[$keepIndex]);
                 foreach ($translations as $translation) {
                     /** @var array<string, int|string> $translation */
                     $affectedRecords[$tableName][] = $translation;

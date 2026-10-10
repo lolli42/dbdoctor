@@ -37,7 +37,9 @@ final class TtContentLocalizedDuplicates extends AbstractHealthCheck implements 
         $io->text([
             'There must be only one localized record in "tt_content" per target language.',
             'Having more than one leads to various issues in FE and BE. This check finds',
-            'duplicates, keeps the one with the lowest uid and soft-deletes others.',
+            'duplicates, keeps the one the frontend shows and soft-deletes others: The visible',
+            'one (not hidden, start and end time not excluding it) with the lowest uid, or the',
+            'one with the lowest uid if none is visible.',
         ]);
     }
 
@@ -46,7 +48,7 @@ final class TtContentLocalizedDuplicates extends AbstractHealthCheck implements 
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
         // Ignore deleted=1 records
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-        $result = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'l18n_parent')->from('tt_content')
+        $result = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'l18n_parent', ...$this->tcaHelper->getVisibilityFields('tt_content'))->from('tt_content')
             ->where(
                 // Ignore workspace records
                 $queryBuilder->expr()->eq('t3ver_wsid', 0),
@@ -59,6 +61,8 @@ final class TtContentLocalizedDuplicates extends AbstractHealthCheck implements 
             ->executeQuery();
         // First build a map of all localized records per sys_language_uid and l18n_parent
         $candidates = [];
+        // Usually few: Not visible localizations only.
+        $notVisibleUids = [];
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             $languageUid = (int)$row['sys_language_uid'];
@@ -75,6 +79,9 @@ final class TtContentLocalizedDuplicates extends AbstractHealthCheck implements 
                 'pid' => (int)$row['pid'],
             ];
             $candidates[$languageUid][$l18nParent][$uid] = $record;
+            if (!$this->tcaHelper->isVisibleInFrontend('tt_content', $row, (int)$GLOBALS['EXEC_TIME'])) {
+                $notVisibleUids[$uid] = true;
+            }
         }
         $affectedRecords = [];
         foreach ($candidates as $l18nParents) {
@@ -82,8 +89,17 @@ final class TtContentLocalizedDuplicates extends AbstractHealthCheck implements 
                 if (count($localizations) > 1) {
                     // Sort existing localizations by uid, so we have lowest uid first.
                     ksort($localizations);
-                    // The first one with lowest uid should be kept, so remove it here.
-                    array_shift($localizations);
+                    // Keep the localization the frontend shows: PageRepository->getRecordOverlay() only selects
+                    // visible localizations, and with multiple ones, the first row wins. There is no ORDER BY,
+                    // the lowest uid is the typical first row. If none is visible, the lowest uid is kept as well.
+                    $keepUid = array_key_first($localizations);
+                    foreach (array_keys($localizations) as $uid) {
+                        if (!isset($notVisibleUids[$uid])) {
+                            $keepUid = $uid;
+                            break;
+                        }
+                    }
+                    unset($localizations[$keepUid]);
                     foreach ($localizations as $localization) {
                         // The others are target of soft-deletion.
                         $affectedRecords['tt_content'][] = $localization;

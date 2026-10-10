@@ -322,6 +322,41 @@ final readonly class TcaHelper
         return ($GLOBALS['TCA'][$tableName]['ctrl']['enablecolumns']['disabled'] ?? null) ?: null;
     }
 
+    /**
+     * Fields of TCA enablecolumns "disabled", "starttime" and "endtime" the table has.
+     *
+     * @return array<int, string>
+     */
+    public function getVisibilityFields(string $tableName): array
+    {
+        $fields = [];
+        foreach (['disabled', 'starttime', 'endtime'] as $enableColumn) {
+            $field = $GLOBALS['TCA'][$tableName]['ctrl']['enablecolumns'][$enableColumn] ?? '';
+            if (is_string($field) && $field !== '') {
+                $fields[] = $field;
+            }
+        }
+        return $fields;
+    }
+
+    /**
+     * If the frontend shows a record regarding hidden, start time and end time, as
+     * FrontendRestrictionContainer does. Frontend user groups are not considered.
+     * The row must contain the fields of getVisibilityFields().
+     *
+     * @param array<string, int|string|null> $row
+     */
+    public function isVisibleInFrontend(string $tableName, array $row, int $now): bool
+    {
+        $enableColumns = $GLOBALS['TCA'][$tableName]['ctrl']['enablecolumns'] ?? [];
+        $hiddenField = (string)($enableColumns['disabled'] ?? '');
+        $startTimeField = (string)($enableColumns['starttime'] ?? '');
+        $endTimeField = (string)($enableColumns['endtime'] ?? '');
+        return ($hiddenField === '' || (int)$row[$hiddenField] === 0)
+            && ($startTimeField === '' || (int)$row[$startTimeField] <= $now)
+            && ($endTimeField === '' || (int)$row[$endTimeField] === 0 || (int)$row[$endTimeField] > $now);
+    }
+
     public function getCreateUserIdField(string $tableName): ?string
     {
         return ($GLOBALS['TCA'][$tableName]['ctrl']['cruser_id'] ?? null) ?: null;
