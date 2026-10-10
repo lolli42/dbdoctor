@@ -39,12 +39,9 @@ final class TableHelper
      */
     private array $fieldIsIntegerCache = [];
 
-    private ConnectionPool $connectionPool;
-
-    public function __construct(ConnectionPool $connectionPool)
-    {
-        $this->connectionPool = $connectionPool;
-    }
+    public function __construct(
+        private readonly ConnectionPool $connectionPool,
+    ) {}
 
     public function tableExistsInDatabase(string $tableName): bool
     {

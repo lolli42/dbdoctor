@@ -27,13 +27,9 @@ final class PagesRootlineHelper
      */
     private array $rootlineCache = [];
 
-    private RecordsHelper $recordsHelper;
-
     public function __construct(
-        RecordsHelper $recordsHelper
-    ) {
-        $this->recordsHelper = $recordsHelper;
-    }
+        private readonly RecordsHelper $recordsHelper,
+    ) {}
 
     /**
      * @param array<int, array<string, int|string|bool>> $rootline
