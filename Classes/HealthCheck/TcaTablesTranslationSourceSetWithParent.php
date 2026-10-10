@@ -37,7 +37,8 @@ final class TcaTablesTranslationSourceSetWithParent extends AbstractHealthCheck 
             'the backend uses it to show where a translation came from. Records translated with old',
             'TYPO3 versions or created by imports often have zero there, so this check may find many',
             'records. Setting the translation source to the language parent is what the core does',
-            'when translating from the default language, the frontend output does not change.',
+            'when translating from the default language, the frontend output does not change. Records',
+            'pointing to themselves as language parent are skipped.',
         ]);
     }
 
@@ -55,7 +56,10 @@ final class TcaTablesTranslationSourceSetWithParent extends AbstractHealthCheck 
                     // Default language records are zero already due to TcaTablesLanguageLessThanOneHasZeroLanguageSource
                     $queryBuilder->expr()->gt($languageField, 0),
                     $queryBuilder->expr()->eq($translationSourceField, 0),
-                    $queryBuilder->expr()->gt($translationParentField, 0)
+                    $queryBuilder->expr()->gt($translationParentField, 0),
+                    // Not if the record points to itself as language parent: That parent is broken, a translation
+                    // source derived from it would point to the record itself. The ...ParentSelf checks handle these.
+                    $queryBuilder->expr()->neq('uid', $queryBuilder->quoteIdentifier($translationParentField))
                 )
                 ->orderBy('uid')
                 ->executeQuery();

@@ -8,6 +8,8 @@
 ,6,1,0,1,5,5,0,"Ok translated sub page 2 lang 1"
 ,7,1,0,2,5,5,0,"Not ok translated sub page 2 lang 2"
 ,8,1,0,3,5,99,0,"Ok translated sub page 2 lang 3 not existing source"
+,9,1,0,1,9,2,0,"Ok translated page with l10n_parent to itself"
+,10,1,1,1,10,2,0,"Ok deleted translated page with l10n_parent to itself"
 "tt_content",,,,,,,,,,,,,,,,,
 ,"uid","pid","deleted","sys_language_uid","l18n_parent","l10n_source","t3ver_wsid","t3ver_state","header"
 ,1,0,0,0,0,0,0,0,"Ok content on pid 0"
