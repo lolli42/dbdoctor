@@ -54,6 +54,7 @@ abstract class AbstractHealthCheck
     protected TcaHelper $tcaHelper;
     protected RecordsHelper $recordsHelper;
     private AffectedPagesRenderer $affectedPagesRenderer;
+    private RecordsRenderer $recordsRenderer;
 
     final public function injectContainer(ContainerInterface $container): void
     {
@@ -78,6 +79,11 @@ abstract class AbstractHealthCheck
     final public function injectAffectedPagesRenderer(AffectedPagesRenderer $affectedPagesRenderer): void
     {
         $this->affectedPagesRenderer = $affectedPagesRenderer;
+    }
+
+    final public function injectRecordsRenderer(RecordsRenderer $recordsRenderer): void
+    {
+        $this->recordsRenderer = $recordsRenderer;
     }
 
     final public function handle(SymfonyStyle $io, int $mode, string $file): int
@@ -280,13 +286,11 @@ abstract class AbstractHealthCheck
      */
     final protected function outputRecordDetails(HealthCheckRun $run, array $danglingRows, string $reasonField = '', array $extraCtrlFields = [], array $extraDbFields = []): void
     {
-        /** @var RecordsRenderer $recordsRenderer */
-        $recordsRenderer = $this->container->get(RecordsRenderer::class);
         foreach ($danglingRows as $tableName => $rows) {
             $run->io->note('Table "' . $tableName . '":');
             $run->io->table(
-                $recordsRenderer->getHeader($tableName, $reasonField, $extraCtrlFields, $extraDbFields),
-                $recordsRenderer->getRows($run->statements, $tableName, $rows, $reasonField, $extraCtrlFields, $extraDbFields)
+                $this->recordsRenderer->getHeader($tableName, $reasonField, $extraCtrlFields, $extraDbFields),
+                $this->recordsRenderer->getRows($run->statements, $tableName, $rows, $reasonField, $extraCtrlFields, $extraDbFields)
             );
         }
     }
