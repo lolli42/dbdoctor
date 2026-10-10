@@ -36,11 +36,12 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
         $io->text([
             'Fields of TCA type "group" with MM table store their relations as rows in',
             'the MM table, for instance the sys_category field "items". This check finds',
-            'MM rows pointing to records that do not exist and removes them. Relations to',
-            'soft-deleted records are kept: The backend does not remove them when a',
-            'record is deleted, and they are needed when a record is restored using the',
-            'recycler. The number of relations in the field of the local record is not',
-            'updated: dbdoctor ignores these count fields, see README.md.',
+            'MM rows pointing to records that do not exist, and MM rows of local records that',
+            'do not exist, and removes them. Relations of and to soft-deleted records are',
+            'kept: The backend does not remove them when a record is deleted, and they are',
+            'needed when a record is restored using the recycler. The number of relations in',
+            'the field of the local record is not updated: dbdoctor ignores these count',
+            'fields, see README.md.',
         ]);
     }
 
@@ -78,21 +79,34 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
                 );
             }
             $result = $queryBuilder->orderBy('uid_local')->addOrderBy('uid_foreign')->executeQuery();
+            $canHandleMissingLocalRecords = $this->canHandleMissingLocalRecords($mmTableName);
             // MM rows are sorted by uid_local: Collect relations of one local record,
             // and handle them when the next local record starts.
             $currentUidLocal = null;
+            $isLocalRecordMissing = false;
+            $mmRowCount = 0;
             $missingRelations = [];
             while ($mmRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string|null> $mmRow */
                 if ($currentUidLocal !== (int)$mmRow['uid_local']) {
-                    if ($currentUidLocal !== null && !empty($missingRelations)) {
+                    if ($currentUidLocal !== null && $isLocalRecordMissing) {
+                        $affectedRows[$mmTableName][] = $this->getMissingLocalRecordRow($groupField, $currentUidLocal, $mmRowCount);
+                    } elseif ($currentUidLocal !== null && !empty($missingRelations)) {
                         $affectedRow = $this->getAffectedRow($recordsHelper, $groupField, $currentUidLocal, $missingRelations);
                         if ($affectedRow !== null) {
                             $affectedRows[$tableName][] = $affectedRow;
                         }
                     }
                     $currentUidLocal = (int)$mmRow['uid_local'];
+                    $isLocalRecordMissing = $canHandleMissingLocalRecords
+                        && $this->isRecordMissing($recordsHelper, $tableHelper, $tableName, $currentUidLocal);
+                    $mmRowCount = 0;
                     $missingRelations = [];
+                }
+                if ($isLocalRecordMissing) {
+                    // All MM rows of a missing local record are removed, foreign records do not matter.
+                    $mmRowCount++;
+                    continue;
                 }
                 $tablenames = $hasTablenamesField ? (string)$mmRow['tablenames'] : null;
                 $uidForeign = (int)$mmRow['uid_foreign'];
@@ -111,7 +125,9 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
                     ];
                 }
             }
-            if ($currentUidLocal !== null && !empty($missingRelations)) {
+            if ($currentUidLocal !== null && $isLocalRecordMissing) {
+                $affectedRows[$mmTableName][] = $this->getMissingLocalRecordRow($groupField, $currentUidLocal, $mmRowCount);
+            } elseif ($currentUidLocal !== null && !empty($missingRelations)) {
                 $affectedRow = $this->getAffectedRow($recordsHelper, $groupField, $currentUidLocal, $missingRelations);
                 if ($affectedRow !== null) {
                     $affectedRows[$tableName][] = $affectedRow;
@@ -137,6 +153,23 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
             foreach ($rows as $row) {
                 /** @var array<string, int|string> $matchFields */
                 $matchFields = json_decode((string)$row['_matchFields'], true, 512, JSON_THROW_ON_ERROR);
+                if ((bool)($row['_localRecordMissing'] ?? false)) {
+                    $whereFields = [
+                        'uid_local' => [
+                            'value' => (int)$row['uid'],
+                            'type' => Connection::PARAM_INT,
+                        ],
+                    ];
+                    foreach ($matchFields as $matchFieldName => $matchFieldValue) {
+                        $whereFields[$matchFieldName] = [
+                            'value' => (string)$matchFieldValue,
+                            'type' => Connection::PARAM_STR,
+                        ];
+                    }
+                    $this->deleteMmRows($io, $simulate, $recordsHelper, $mmTableName, $whereFields);
+                    $count++;
+                    continue;
+                }
                 /** @var array<int, array{uid_foreign: int, tablenames: string|null}> $missingRelations */
                 $missingRelations = json_decode((string)$row['_missingRelations'], true, 512, JSON_THROW_ON_ERROR);
                 foreach ($missingRelations as $missingRelation) {
@@ -170,12 +203,80 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
         }
     }
 
+    protected function affectedPages(SymfonyStyle $io, array $affectedRecords): void
+    {
+        // MM rows of missing local records are on no page.
+        $this->outputAffectedPages($io, array_filter(
+            $affectedRecords,
+            static fn(array $rows): bool => !(bool)($rows[0]['_localRecordMissing'] ?? false)
+        ));
+    }
+
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
     {
         foreach ($affectedRecords as $tableName => $rows) {
+            if ((bool)($rows[0]['_localRecordMissing'] ?? false)) {
+                // Rows of MM table $tableName, their local record does not exist.
+                $io->note('MM table "' . $tableName . '":');
+                $io->table(
+                    ['uid_local', 'local table', 'field', 'MM rows'],
+                    array_map(
+                        static fn(array $row): array => [$row['uid'], $row['_localTableName'], $row['_fieldName'], $row['_mmRowCount']],
+                        $rows
+                    )
+                );
+                continue;
+            }
             $fieldNames = array_values(array_unique(array_map(static fn(array $row): string => (string)$row['_fieldName'], $rows)));
             $this->outputRecordDetails($io, [$tableName => $rows], '_reasonBroken', [], $fieldNames);
         }
+    }
+
+    /**
+     * MM rows of a local record that does not exist are no relation of any record and
+     * can be removed. Only if the local side is unambiguous: All TCA fields using this
+     * MM table as local side are in the same table, and if there are multiple fields,
+     * all have match fields. Otherwise, uid_local may point to a record of another table,
+     * or removing rows of one field would remove rows of another field, too.
+     */
+    private function canHandleMissingLocalRecords(string $mmTableName): bool
+    {
+        $localTableNames = [];
+        $fieldCount = 0;
+        $fieldsWithoutMatchFields = 0;
+        foreach ($GLOBALS['TCA'] as $tableName => $tableConfig) {
+            foreach ($tableConfig['columns'] ?? [] as $columnConfig) {
+                if (($columnConfig['config']['MM'] ?? '') !== $mmTableName
+                    || !empty($columnConfig['config']['MM_opposite_field'])
+                ) {
+                    continue;
+                }
+                $localTableNames[$tableName] = true;
+                $fieldCount++;
+                if (empty($columnConfig['config']['MM_match_fields'])) {
+                    $fieldsWithoutMatchFields++;
+                }
+            }
+        }
+        return count($localTableNames) === 1 && ($fieldCount === 1 || $fieldsWithoutMatchFields === 0);
+    }
+
+    /**
+     * @param array{tableName: string, fieldName: string, mmTableName: string, allowedTables: array<int, string>, matchFields: array<string, int|string>} $groupField
+     * @return array<string, int|string>
+     */
+    private function getMissingLocalRecordRow(array $groupField, int $uidLocal, int $mmRowCount): array
+    {
+        return [
+            'uid' => $uidLocal,
+            'pid' => 0,
+            '_localRecordMissing' => 1,
+            '_localTableName' => $groupField['tableName'],
+            '_fieldName' => $groupField['fieldName'],
+            '_mmTableName' => $groupField['mmTableName'],
+            '_matchFields' => json_encode($groupField['matchFields'], JSON_THROW_ON_ERROR),
+            '_mmRowCount' => $mmRowCount,
+        ];
     }
 
     /**
@@ -188,7 +289,8 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
         try {
             $localRecord = $recordsHelper->getRecord($groupField['tableName'], ['uid', 'pid'], $uidLocal);
         } catch (NoSuchRecordException $e) {
-            // MM rows of a missing local record are not a relation of an existing record.
+            // Only if the local side of the MM table is ambiguous, see canHandleMissingLocalRecords():
+            // The MM rows are no relation of an existing record of this table, they are kept.
             return null;
         }
         $missingRelationLabels = [];

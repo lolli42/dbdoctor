@@ -1,0 +1,7 @@
+"pages"
+,"uid","pid","deleted","title"
+,1,0,0,"Ok"
+"tx_dbdoctortestsgroup_item_mm"
+,"uid_local","uid_foreign","tablenames","fieldname"
+# Local record does not exist, but the MM table is used by fields of two tables: Kept
+,4,1,"pages","relations_mm"
