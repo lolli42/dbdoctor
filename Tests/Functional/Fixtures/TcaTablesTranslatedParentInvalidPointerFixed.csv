@@ -16,6 +16,11 @@
 ,9,1,0,2,8,0,"Ok lang 1 pointing to broken 8"
 ,10,2,0,-1,0,0,"Ok content on sub page 1 sys_language_uid -1"
 ,11,2,1,1,10,0,"Not ok content on sub page 1 translated from sys_language_uid -1"
+# 22 points to translated 21 and gets 20. 23 points to 22, which is updated before: 23 gets 20 as well
+,20,2,0,0,0,0,"Ok content on sub page 1 for a chain"
+,21,2,0,1,20,0,"Ok content on sub page 1 for a chain translated"
+,22,2,0,2,20,0,"Not ok content translated from translated 21"
+,23,2,0,1,20,0,"Not ok content translated from translated 22"
 "sys_file_reference"
 ,"uid","pid","sys_language_uid","l10n_parent","deleted","uid_local","uid_foreign","tablenames","title"
 ,1,1,0,0,0,1,1,"pages","Ok pages lang 0"

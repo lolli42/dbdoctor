@@ -17,6 +17,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -47,7 +52,7 @@ final readonly class TcaTablesTranslatedParentInvalidPointer extends AbstractHea
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
         $inlineChildTables = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChildTable) {
@@ -59,7 +64,7 @@ final readonly class TcaTablesTranslatedParentInvalidPointer extends AbstractHea
         }
         $inlineChildTables += $inlineChildTablesWithoutForeignTableField;
 
-        $affectedRows = [];
+        $findings = [];
         foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {
             /** @var string $languageField */
             $languageField = $this->tcaHelper->getLanguageField($tableName);
@@ -95,70 +100,83 @@ final readonly class TcaTablesTranslatedParentInvalidPointer extends AbstractHea
                 ->orderBy('uid')
                 ->executeQuery();
 
+            // Localizations of an "all languages" record are obsolete, the -1 record is shown in their language.
+            // Not for inline children of a translated record: The frontend shows the children of the translated
+            // record, the "all languages" child is attached to the default language record. They are set to the
+            // language parent of their parent, as other localizations pointing to a translated record.
+            // Per table, the deletes are done first, then the updates.
+            $deleteFindings = [];
+            $updateFindings = [];
+            // New transOrigPointerField of records updated earlier in this pass, by uid: A record pointing
+            // to such a record gets the new value, as if the parent pointer was read after the update.
+            $plannedParents = [];
             while ($localizedRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $localizedRow */
                 try {
                     $parentRow = $this->recordsHelper->getRecord($run->statements, $tableName, $parentRowFields, (int)$localizedRow[$translationParentField]);
-                    if ((int)$parentRow[$languageField] !== 0
-                        // Skip record if the parent row has l10n_parent=uid
-                        && (int)$parentRow[$translationParentField] !== (int)$parentRow['uid']
-                    ) {
-                        $localizedRow['_parentRowLanguage'] = (int)$parentRow[$languageField];
-                        $localizedRow['_reasonBroken'] = 'Parent record language ' . (int)$parentRow[$languageField];
-                        $localizedRow['_childOfTranslatedRecord'] = 0;
-                        if ((int)$parentRow[$languageField] < 0
-                            && isset($inlineChildTables[$tableName])
-                            && $this->isChildOfTranslatedRecord($run, $tableName, $inlineChildTables[$tableName], (int)$localizedRow['uid'])
-                        ) {
-                            $localizedRow['_childOfTranslatedRecord'] = 1;
-                            $localizedRow['_reasonBroken'] .= ', inline child of a translated record';
-                        }
-                        $affectedRows[$tableName][] = $localizedRow;
-                    }
                 } catch (NoSuchRecordException $e) {
                     // Ignore non-existing localization parent rows for now.
                     continue;
                 }
-            }
-        }
-        return $affectedRows;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        foreach ($affectedRecords as $tableName => $affectedTableRecords) {
-            // Localizations of an "all languages" record are obsolete, the -1 record is shown in their language.
-            // Not for inline children of a translated record: The frontend shows the children of the translated
-            // record, the "all languages" child is attached to the default language record. They are kept.
-            $allLanguagesParentRows = array_filter(
-                $affectedTableRecords,
-                static fn(array $row): bool => (int)$row['_parentRowLanguage'] < 0 && (int)$row['_childOfTranslatedRecord'] === 0
-            );
-            if ($allLanguagesParentRows !== []) {
-                $this->softOrHardDeleteRecordsOfTable($run, $simulate, $tableName, array_values($allLanguagesParentRows));
-            }
-            $otherRows = array_filter(
-                $affectedTableRecords,
-                static fn(array $row): bool => (int)$row['_parentRowLanguage'] >= 0 || (int)$row['_childOfTranslatedRecord'] === 1
-            );
-            foreach ($otherRows as $affectedTableRecord) {
-                /** @var string $translationParentField */
-                $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
-                $parentRow = $this->recordsHelper->getRecord($run->statements, $tableName, ['uid', $translationParentField], (int)$affectedTableRecord[$translationParentField]);
-                $fields = [
-                    $translationParentField => [
-                        'value' => (int)$parentRow[$translationParentField],
-                        'type' => Connection::PARAM_INT,
+                $parentRowLanguage = (int)$parentRow[$languageField];
+                if ($parentRowLanguage === 0
+                    // Skip record if the parent row has l10n_parent=uid
+                    || (int)$parentRow[$translationParentField] === (int)$parentRow['uid']
+                ) {
+                    continue;
+                }
+                $uid = (int)$localizedRow['uid'];
+                $isChildOfTranslatedRecord = $parentRowLanguage < 0
+                    && isset($inlineChildTables[$tableName])
+                    && $this->isChildOfTranslatedRecord($run, $tableName, $inlineChildTables[$tableName], $uid);
+                if ($parentRowLanguage < 0 && !$isChildOfTranslatedRecord) {
+                    $deleteFindings[] = new Finding(
+                        new RecordKey($tableName, $uid),
+                        (int)$localizedRow['pid'],
+                        [$this->softOrHardDeleteChange($tableName, $localizedRow)],
+                        new Reason(
+                            'parent-all-languages',
+                            'Parent record language ' . $parentRowLanguage,
+                            ['parentLanguage' => $parentRowLanguage]
+                        ),
+                    );
+                    continue;
+                }
+                // Set to the language parent of the parent record.
+                $newParent = $plannedParents[(int)$parentRow['uid']] ?? (int)$parentRow[$translationParentField];
+                $plannedParents[$uid] = $newParent;
+                $updateFindings[] = new Finding(
+                    new RecordKey($tableName, $uid),
+                    (int)$localizedRow['pid'],
+                    [
+                        new RecordChange(RecordChangeType::Update, $tableName, $uid, [
+                            $translationParentField => [
+                                'value' => $newParent,
+                                'type' => Connection::PARAM_INT,
+                            ],
+                        ]),
                     ],
-                ];
-                $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$affectedTableRecord['uid'], $fields);
+                    $isChildOfTranslatedRecord
+                        ? new Reason(
+                            'parent-all-languages-of-translated-inline-parent',
+                            'Parent record language ' . $parentRowLanguage . ', inline child of a translated record',
+                            ['parentLanguage' => $parentRowLanguage]
+                        )
+                        : new Reason(
+                            'parent-translated',
+                            'Parent record language ' . $parentRowLanguage,
+                            ['parentLanguage' => $parentRowLanguage]
+                        ),
+                );
             }
+            array_push($findings, ...$deleteFindings, ...$updateFindings);
         }
+        return $findings;
     }
 
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
+    protected function getDetailCtrlFields(string $tableName): array
     {
-        $this->outputRecordDetails($run, $affectedRecords, '_reasonBroken', ['languageField', 'transOrigPointerField']);
+        return ['languageField', 'transOrigPointerField'];
     }
 
     /**
