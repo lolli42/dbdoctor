@@ -17,7 +17,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -43,9 +42,6 @@ final class InlineForeignFieldChildrenParentDeleted extends AbstractHealthCheck 
 
     protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var TableHelper $tableHelper */
-        $tableHelper = $this->container->get(TableHelper::class);
-
         $affectedRows = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
             $childTableName = $inlineChild['tableName'];
@@ -86,7 +82,7 @@ final class InlineForeignFieldChildrenParentDeleted extends AbstractHealthCheck 
                     || (int)($inlineChildRow[$fieldNameOfParentTableUid]) === 0
                     // Parent TCA table must be defined and table must exist
                     || !is_array($GLOBALS['TCA'][$inlineChildRow[$fieldNameOfParentTableName]] ?? false)
-                    || !$tableHelper->tableExistsInDatabase((string)$inlineChildRow[$fieldNameOfParentTableName])
+                    || !$this->tableHelper->tableExistsInDatabase((string)$inlineChildRow[$fieldNameOfParentTableName])
                 ) {
                     // This was handled by previous InlineForeignFieldChildrenParentMissing already.
                     continue;

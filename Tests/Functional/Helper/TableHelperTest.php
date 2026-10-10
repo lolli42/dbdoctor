@@ -19,7 +19,6 @@ namespace Lolli\Dbdoctor\Tests\Functional\Helper;
 use Lolli\Dbdoctor\Helper\TableHelper;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
-use TYPO3\CMS\Core\Database\ConnectionPool;
 
 class TableHelperTest extends AbstractFunctionalTestCase
 {
@@ -30,88 +29,66 @@ class TableHelperTest extends AbstractFunctionalTestCase
     #[Test]
     public function tableExistsInDatabaseReturnTrueForExistingTable(): void
     {
-        /** @var ConnectionPool $connectionPool */
-        $connectionPool = $this->getContainer()->get(ConnectionPool::class);
-        self::assertTrue((new TableHelper($connectionPool))->tableExistsInDatabase('pages'));
+        self::assertTrue($this->get(TableHelper::class)->tableExistsInDatabase('pages'));
     }
 
     #[Test]
     public function tableExistsInDatabaseReturnFalseForEmptyString(): void
     {
-        /** @var ConnectionPool $connectionPool */
-        $connectionPool = $this->getContainer()->get(ConnectionPool::class);
-        self::assertFalse((new TableHelper($connectionPool))->tableExistsInDatabase(''));
+        self::assertFalse($this->get(TableHelper::class)->tableExistsInDatabase(''));
     }
 
     #[Test]
     public function tableExistsInDatabaseReturnFalseForNotExistingTable(): void
     {
-        /** @var ConnectionPool $connectionPool */
-        $connectionPool = $this->getContainer()->get(ConnectionPool::class);
-        self::assertFalse((new TableHelper($connectionPool))->tableExistsInDatabase('i_do_not_exist'));
+        self::assertFalse($this->get(TableHelper::class)->tableExistsInDatabase('i_do_not_exist'));
     }
 
     #[Test]
     public function fieldExistsInTableReturnsFalseWithEmptyTableName(): void
     {
-        /** @var ConnectionPool $connectionPool */
-        $connectionPool = $this->getContainer()->get(ConnectionPool::class);
-        self::assertFalse((new TableHelper($connectionPool))->fieldExistsInTable('', 'foo'));
+        self::assertFalse($this->get(TableHelper::class)->fieldExistsInTable('', 'foo'));
     }
 
     #[Test]
     public function fieldExistsInTableReturnsFalseWithEmptyFieldName(): void
     {
-        /** @var ConnectionPool $connectionPool */
-        $connectionPool = $this->getContainer()->get(ConnectionPool::class);
-        self::assertFalse((new TableHelper($connectionPool))->fieldExistsInTable('foo', ''));
+        self::assertFalse($this->get(TableHelper::class)->fieldExistsInTable('foo', ''));
     }
 
     #[Test]
     public function fieldExistsInTableReturnsFalseIfTableDoesNotExist(): void
     {
-        /** @var ConnectionPool $connectionPool */
-        $connectionPool = $this->getContainer()->get(ConnectionPool::class);
-        self::assertFalse((new TableHelper($connectionPool))->fieldExistsInTable('table-does-not-exist', 'uid'));
+        self::assertFalse($this->get(TableHelper::class)->fieldExistsInTable('table-does-not-exist', 'uid'));
     }
 
     #[Test]
     public function fieldExistsInTableReturnsFalseIfFieldDoesNotExist(): void
     {
-        /** @var ConnectionPool $connectionPool */
-        $connectionPool = $this->getContainer()->get(ConnectionPool::class);
-        self::assertFalse((new TableHelper($connectionPool))->fieldExistsInTable('pages', 'field-does-not-exist'));
+        self::assertFalse($this->get(TableHelper::class)->fieldExistsInTable('pages', 'field-does-not-exist'));
     }
 
     #[Test]
     public function fieldExistsInTableReturnsTrueIfFieldDoesExist(): void
     {
-        /** @var ConnectionPool $connectionPool */
-        $connectionPool = $this->getContainer()->get(ConnectionPool::class);
-        self::assertTrue((new TableHelper($connectionPool))->fieldExistsInTable('pages', 'title'));
+        self::assertTrue($this->get(TableHelper::class)->fieldExistsInTable('pages', 'title'));
     }
 
     #[Test]
     public function fieldIsIntegerReturnsFalseIfFieldDoesNotExist(): void
     {
-        /** @var ConnectionPool $connectionPool */
-        $connectionPool = $this->getContainer()->get(ConnectionPool::class);
-        self::assertFalse((new TableHelper($connectionPool))->fieldIsInteger('pages', 'field-does-not-exist'));
+        self::assertFalse($this->get(TableHelper::class)->fieldIsInteger('pages', 'field-does-not-exist'));
     }
 
     #[Test]
     public function fieldIsIntegerReturnsFalseForTextField(): void
     {
-        /** @var ConnectionPool $connectionPool */
-        $connectionPool = $this->getContainer()->get(ConnectionPool::class);
-        self::assertFalse((new TableHelper($connectionPool))->fieldIsInteger('pages', 'title'));
+        self::assertFalse($this->get(TableHelper::class)->fieldIsInteger('pages', 'title'));
     }
 
     #[Test]
     public function fieldIsIntegerReturnsTrueForIntegerField(): void
     {
-        /** @var ConnectionPool $connectionPool */
-        $connectionPool = $this->getContainer()->get(ConnectionPool::class);
-        self::assertTrue((new TableHelper($connectionPool))->fieldIsInteger('pages', 'shortcut'));
+        self::assertTrue($this->get(TableHelper::class)->fieldIsInteger('pages', 'shortcut'));
     }
 }

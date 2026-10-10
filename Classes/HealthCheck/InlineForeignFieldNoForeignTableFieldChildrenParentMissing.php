@@ -17,7 +17,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -40,15 +39,12 @@ final class InlineForeignFieldNoForeignTableFieldChildrenParentMissing extends A
 
     protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var TableHelper $tableHelper */
-        $tableHelper = $this->container->get(TableHelper::class);
-
         $affectedRows = [];
 
         foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldChildTcaTable() as $inlineChild) {
             $childTableName = $inlineChild['tableName'];
             $parentTableName = $inlineChild['parentTableName'];
-            if (!$tableHelper->tableExistsInDatabase($parentTableName)) {
+            if (!$this->tableHelper->tableExistsInDatabase($parentTableName)) {
                 continue;
             }
             $fieldNameOfParentTableUid = $inlineChild['fieldNameOfParentTableUid'];

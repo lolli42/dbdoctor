@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -40,9 +39,6 @@ final class InlineForeignFieldChildrenParentMissing extends AbstractHealthCheck 
 
     protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var TableHelper $tableHelper */
-        $tableHelper = $this->container->get(TableHelper::class);
-
         $affectedRows = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
             $childTableName = $inlineChild['tableName'];
@@ -65,7 +61,7 @@ final class InlineForeignFieldChildrenParentMissing extends AbstractHealthCheck 
                     || (int)($inlineChildRow[$fieldNameOfParentTableUid]) === 0
                     // Parent TCA table must be defined and table must exist
                     || !is_array($GLOBALS['TCA'][$inlineChildRow[$fieldNameOfParentTableName]] ?? false)
-                    || !$tableHelper->tableExistsInDatabase((string)$inlineChildRow[$fieldNameOfParentTableName])
+                    || !$this->tableHelper->tableExistsInDatabase((string)$inlineChildRow[$fieldNameOfParentTableName])
                 ) {
                     $inlineChildRow['_reasonBroken'] = 'Invalid parent';
                     $inlineChildRow['_fieldNameOfParentTableName'] = $fieldNameOfParentTableName;

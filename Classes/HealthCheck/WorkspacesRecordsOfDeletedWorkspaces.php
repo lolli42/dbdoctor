@@ -17,7 +17,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbdoctor\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
@@ -80,8 +79,7 @@ final class WorkspacesRecordsOfDeletedWorkspaces extends AbstractHealthCheck imp
     private function getAllowedWorkspaces(): array
     {
         $allowedWorkspaces = [];
-        $tableHelper = $this->container->get(TableHelper::class);
-        if ($tableHelper->tableExistsInDatabase('sys_workspace')) {
+        if ($this->tableHelper->tableExistsInDatabase('sys_workspace')) {
             // List of active workspaces.
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_workspace');
             $deletedRestriction = GeneralUtility::makeInstance(DeletedRestriction::class);

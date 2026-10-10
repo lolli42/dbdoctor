@@ -17,7 +17,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -45,9 +44,6 @@ final class InlineForeignFieldNoForeignTableFieldChildrenParentDeleted extends A
 
     protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var TableHelper $tableHelper */
-        $tableHelper = $this->container->get(TableHelper::class);
-
         $affectedRows = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldChildTcaTable() as $inlineChild) {
             $childTableName = $inlineChild['tableName'];
@@ -61,7 +57,7 @@ final class InlineForeignFieldNoForeignTableFieldChildrenParentDeleted extends A
                 // Skip if parent table is not soft-delete aware
                 continue;
             }
-            if (!$tableHelper->tableExistsInDatabase($parentTableName)) {
+            if (!$this->tableHelper->tableExistsInDatabase($parentTableName)) {
                 continue;
             }
             $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($childTableName);

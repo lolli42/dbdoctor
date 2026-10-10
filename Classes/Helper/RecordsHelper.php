@@ -22,7 +22,6 @@ use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
 use Lolli\Dbdoctor\Exception\UnexpectedNumberOfAffectedRowsException;
-use Psr\Container\ContainerInterface;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
@@ -32,7 +31,7 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 final readonly class RecordsHelper
 {
     public function __construct(
-        private ContainerInterface $container,
+        private TableHelper $tableHelper,
         private ConnectionPool $connectionPool,
     ) {}
 
@@ -50,9 +49,7 @@ final readonly class RecordsHelper
         $statementKey = 'select-' . $tableName . '-' . implode(',', $fields);
         $preparedStatement = $statements->get($statementKey);
         if ($preparedStatement === null) {
-            /** @var TableHelper $tableHelper */
-            $tableHelper = $this->container->get(TableHelper::class);
-            if (!$tableHelper->tableExistsInDatabase($tableName)) {
+            if (!$this->tableHelper->tableExistsInDatabase($tableName)) {
                 throw new NoSuchTableException('Table "' . $tableName . '" does not exist.');
             }
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);

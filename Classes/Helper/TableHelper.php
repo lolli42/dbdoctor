@@ -20,27 +20,21 @@ namespace Lolli\Dbdoctor\Helper;
 use Doctrine\DBAL\Types\BigIntType;
 use Doctrine\DBAL\Types\IntegerType;
 use Doctrine\DBAL\Types\SmallIntType;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use TYPO3\CMS\Core\Cache\Frontend\FrontendInterface;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
-final class TableHelper
+/**
+ * Database schema details. The schema of a table is read lazily once per process and kept in
+ * the core runtime cache: dbdoctor does not change the schema, and HealthCommand verifies it is
+ * in sync with TCA before checks run.
+ */
+final readonly class TableHelper
 {
-    /**
-     * @var array<string, bool>
-     */
-    private array $tableExistsCache = [];
-
-    /**
-     * @var array<string, bool>
-     */
-    private array $fieldExistsCache = [];
-
-    /**
-     * @var array<string, bool>
-     */
-    private array $fieldIsIntegerCache = [];
-
     public function __construct(
-        private readonly ConnectionPool $connectionPool,
+        private ConnectionPool $connectionPool,
+        #[Autowire(service: 'cache.runtime')]
+        private FrontendInterface $runtimeCache,
     ) {}
 
     public function tableExistsInDatabase(string $tableName): bool
@@ -48,12 +42,7 @@ final class TableHelper
         if (empty($tableName)) {
             return false;
         }
-        if (array_key_exists($tableName, $this->tableExistsCache)) {
-            return $this->tableExistsCache[$tableName];
-        }
-        $connection = $this->connectionPool->getConnectionForTable($tableName);
-        $this->tableExistsCache[$tableName] = $connection->createSchemaManager()->tablesExist([$tableName]);
-        return $this->tableExistsCache[$tableName];
+        return $this->getColumns($tableName) !== null;
     }
 
     public function fieldExistsInTable(string $tableName, string $fieldName): bool
@@ -61,24 +50,7 @@ final class TableHelper
         if (empty($tableName) || empty($fieldName)) {
             return false;
         }
-        $cacheKey = $tableName . '-' . $fieldName;
-        if (array_key_exists($cacheKey, $this->fieldExistsCache)) {
-            return $this->fieldExistsCache[$cacheKey];
-        }
-        if (!$this->tableExistsInDatabase($tableName)) {
-            return false;
-        }
-        $this->fieldExistsCache[$cacheKey] = false;
-
-        $connection = $this->connectionPool->getConnectionForTable($tableName);
-        $tableColumns = $connection->createSchemaManager()->listTableColumns($tableName);
-        foreach ($tableColumns as $column) {
-            if ($column->getName() === $fieldName) {
-                $this->fieldExistsCache[$cacheKey] = true;
-                break;
-            }
-        }
-        return $this->fieldExistsCache[$cacheKey];
+        return array_key_exists($fieldName, $this->getColumns($tableName) ?? []);
     }
 
     /**
@@ -87,23 +59,38 @@ final class TableHelper
      */
     public function fieldIsInteger(string $tableName, string $fieldName): bool
     {
-        if (!$this->fieldExistsInTable($tableName, $fieldName)) {
+        if (empty($tableName) || empty($fieldName)) {
             return false;
         }
-        $cacheKey = $tableName . '-' . $fieldName;
-        if (array_key_exists($cacheKey, $this->fieldIsIntegerCache)) {
-            return $this->fieldIsIntegerCache[$cacheKey];
+        return ($this->getColumns($tableName) ?? [])[$fieldName] ?? false;
+    }
+
+    /**
+     * Column names of a table, each with true if the column is of type integer.
+     * Null if the table does not exist.
+     *
+     * @return array<string, bool>|null
+     */
+    private function getColumns(string $tableName): ?array
+    {
+        // Table names may come from row data, for instance sys_file_reference.tablenames,
+        // and contain characters not allowed in cache identifiers.
+        $cacheIdentifier = 'dbdoctor-table-columns-' . md5($tableName);
+        if ($this->runtimeCache->has($cacheIdentifier)) {
+            /** @var array{columns: array<string, bool>|null} $cacheEntry */
+            $cacheEntry = $this->runtimeCache->get($cacheIdentifier);
+            return $cacheEntry['columns'];
         }
-        $this->fieldIsIntegerCache[$cacheKey] = false;
-        $connection = $this->connectionPool->getConnectionForTable($tableName);
-        $tableColumns = $connection->createSchemaManager()->listTableColumns($tableName);
-        foreach ($tableColumns as $column) {
-            if ($column->getName() === $fieldName) {
+        $schemaManager = $this->connectionPool->getConnectionForTable($tableName)->createSchemaManager();
+        $columns = null;
+        if ($schemaManager->tablesExist([$tableName])) {
+            $columns = [];
+            foreach ($schemaManager->listTableColumns($tableName) as $column) {
                 $type = $column->getType();
-                $this->fieldIsIntegerCache[$cacheKey] = $type instanceof IntegerType || $type instanceof SmallIntType || $type instanceof BigIntType;
-                break;
+                $columns[$column->getName()] = $type instanceof IntegerType || $type instanceof SmallIntType || $type instanceof BigIntType;
             }
         }
-        return $this->fieldIsIntegerCache[$cacheKey];
+        $this->runtimeCache->set($cacheIdentifier, ['columns' => $columns]);
+        return $columns;
     }
 }

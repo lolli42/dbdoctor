@@ -16,7 +16,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-use Lolli\Dbdoctor\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -48,22 +47,19 @@ final class TcaTablesTranslatedWithAllowLanguageSynchronization extends Abstract
 
     protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var TableHelper $tableHelper */
-        $tableHelper = $this->container->get(TableHelper::class);
-
         $affectedRows = [];
         foreach ($this->tcaHelper->getNextLanguageAwareTcaTable() as $tableName) {
             $fieldNames = State::getFieldNames($tableName);
             if ($fieldNames === []
-                || !$tableHelper->tableExistsInDatabase($tableName)
-                || !$tableHelper->fieldExistsInTable($tableName, 'l10n_state')
+                || !$this->tableHelper->tableExistsInDatabase($tableName)
+                || !$this->tableHelper->fieldExistsInTable($tableName, 'l10n_state')
             ) {
                 continue;
             }
             // Fields with allowLanguageSynchronization may have no database column, e.g. type "none".
             $fieldNames = array_values(array_filter(
                 $fieldNames,
-                static fn(string $fieldName): bool => $tableHelper->fieldExistsInTable($tableName, $fieldName)
+                fn(string $fieldName): bool => $this->tableHelper->fieldExistsInTable($tableName, $fieldName)
             ));
             // Fields of TCA type "json" are not compared: Postgres has no "<>" operator for column
             // type json, and equal json values may differ as text, like {"a":1} and {"a": 1}.
