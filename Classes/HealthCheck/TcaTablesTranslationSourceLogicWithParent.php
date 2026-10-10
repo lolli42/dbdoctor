@@ -40,7 +40,7 @@ final class TcaTablesTranslationSourceLogicWithParent extends AbstractHealthChec
             'the record has been derived from a different language record and not from the default language',
             'record. That different language record should have the same "transOrigPointerField" value. If',
             'this is not the case, set the translation source to the value of "transOrigPointerField" to fix',
-            'the inheritance chain.',
+            'the inheritance chain. Records pointing to themselves as language parent are skipped.',
         ]);
     }
 
@@ -60,7 +60,10 @@ final class TcaTablesTranslationSourceLogicWithParent extends AbstractHealthChec
                     $queryBuilder->expr()->gt($languageField, 0),
                     $queryBuilder->expr()->gt($translationSourceField, 0),
                     $queryBuilder->expr()->gt($translationParentField, 0),
-                    $queryBuilder->expr()->neq($translationSourceField, $queryBuilder->quoteIdentifier($translationParentField))
+                    $queryBuilder->expr()->neq($translationSourceField, $queryBuilder->quoteIdentifier($translationParentField)),
+                    // Not if the record points to itself as language parent: That parent is broken, a translation
+                    // source derived from it would point to the record itself. The ...ParentSelf checks handle these.
+                    $queryBuilder->expr()->neq('uid', $queryBuilder->quoteIdentifier($translationParentField))
                 )
                 ->orderBy('uid')
                 ->executeQuery();
