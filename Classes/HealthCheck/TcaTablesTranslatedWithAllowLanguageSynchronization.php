@@ -42,7 +42,8 @@ final class TcaTablesTranslatedWithAllowLanguageSynchronization extends Abstract
             'the default language record. The frontend renders the value of the translation, so the',
             'l10n_state of such fields is set to "custom": The backend then shows the value as well, and',
             'it is not overwritten when the default language record is changed. Fields of TCA type',
-            '"json" are not compared.',
+            '"json" are not compared. In relation fields, NULL, empty string and "0" are equal: They',
+            'all mean "no relation".',
         ]);
     }
 
@@ -74,6 +75,12 @@ final class TcaTablesTranslatedWithAllowLanguageSynchronization extends Abstract
             if ($fieldNames === []) {
                 continue;
             }
+            // NULL, '' and '0' all mean "no relation" in relation fields: DataHandler writes '', '0' is found
+            // in records written without DataHandler, for instance by imports or the styleguide generator.
+            $relationFieldNames = array_flip(array_filter(
+                $fieldNames,
+                fn(string $fieldName): bool => $this->isRelationField($tableName, $fieldName)
+            ));
             /** @var string $languageField */
             $languageField = $this->tcaHelper->getLanguageField($tableName);
             /** @var string $translationParentField */
@@ -135,8 +142,9 @@ final class TcaTablesTranslatedWithAllowLanguageSynchronization extends Abstract
                 $state = State::fromJSON($tableName, is_array($l10nState) ? (string)$row['l10n_state'] : null);
                 $affectedFieldNames = [];
                 foreach ($fieldNames as $fieldName) {
+                    $isRelationField = isset($relationFieldNames[$fieldName]);
                     if ($state?->isParentState($fieldName)
-                        && $this->normalizeValue($row[$fieldName]) !== $this->normalizeValue($row['_parent_' . $fieldName])
+                        && $this->normalizeValue($row[$fieldName], $isRelationField) !== $this->normalizeValue($row['_parent_' . $fieldName], $isRelationField)
                     ) {
                         $affectedFieldNames[] = $fieldName;
                     }
@@ -189,9 +197,25 @@ final class TcaTablesTranslatedWithAllowLanguageSynchronization extends Abstract
 
     /**
      * Database drivers return int columns as int or string: Compare as string, keep null.
+     * Relation fields without relation are an empty string.
      */
-    private function normalizeValue(int|string|null $value): ?string
+    private function normalizeValue(int|string|null $value, bool $isRelationField): ?string
     {
+        if ($isRelationField && ($value === null || (string)$value === '' || (string)$value === '0')) {
+            return '';
+        }
         return $value === null ? null : (string)$value;
+    }
+
+    /**
+     * Fields of type "group" and "category", and fields of type "select" with "foreign_table".
+     */
+    private function isRelationField(string $tableName, string $fieldName): bool
+    {
+        $config = $GLOBALS['TCA'][$tableName]['columns'][$fieldName]['config'] ?? [];
+        $type = $config['type'] ?? '';
+        return $type === 'group'
+            || $type === 'category'
+            || ($type === 'select' && !empty($config['foreign_table']));
     }
 }

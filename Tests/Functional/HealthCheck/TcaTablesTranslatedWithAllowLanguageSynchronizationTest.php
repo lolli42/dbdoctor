@@ -30,7 +30,7 @@ class TcaTablesTranslatedWithAllowLanguageSynchronizationTest extends AbstractFu
 
     protected array $testExtensionsToLoad = [
         'lolli/dbdoctor',
-        __DIR__ . '/../FixtureExtensions/tx_dbdoctortestsjson',
+        __DIR__ . '/../FixtureExtensions/tx_dbdoctortestssync',
     ];
 
     #[Test]
@@ -63,5 +63,15 @@ class TcaTablesTranslatedWithAllowLanguageSynchronizationTest extends AbstractFu
         $subject = $this->get(TcaTablesTranslatedWithAllowLanguageSynchronization::class);
         $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedWithAllowLanguageSynchronizationJsonFixed.csv');
+    }
+
+    #[Test]
+    public function emptyRelationValuesAreEqual(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedWithAllowLanguageSynchronizationEmptyRelationImport.csv');
+        /** @var TcaTablesTranslatedWithAllowLanguageSynchronization $subject */
+        $subject = $this->get(TcaTablesTranslatedWithAllowLanguageSynchronization::class);
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedWithAllowLanguageSynchronizationEmptyRelationFixed.csv');
     }
 }
