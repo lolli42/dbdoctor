@@ -16,6 +16,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -40,13 +45,13 @@ final readonly class TcaTablesPidTranslatedPage extends AbstractHealthCheck impl
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
         $translatedPages = $this->getTranslatedPages();
         if ($translatedPages === []) {
             return [];
         }
-        $affectedRows = [];
+        $findings = [];
         foreach ($this->tcaHelper->getNextTcaTable(['pages']) as $tableName) {
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             $queryBuilder->getRestrictions()->removeAll();
@@ -56,38 +61,30 @@ final readonly class TcaTablesPidTranslatedPage extends AbstractHealthCheck impl
                 ->executeQuery();
             while ($row = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $row */
-                if (isset($translatedPages[(int)$row['pid']])) {
-                    $row['_reasonBroken'] = 'Translated page, default language page: ' . $translatedPages[(int)$row['pid']];
-                    $affectedRows[$tableName][] = $row;
+                if (!isset($translatedPages[(int)$row['pid']])) {
+                    continue;
                 }
-            }
-        }
-        return $affectedRows;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        $translatedPages = $this->getTranslatedPages();
-        foreach ($affectedRecords as $tableName => $rows) {
-            $this->outputTableUpdateBefore($run, $simulate, $tableName);
-            $count = 0;
-            foreach ($rows as $row) {
-                $fields = [
-                    'pid' => [
-                        'value' => $translatedPages[(int)$row['pid']],
-                        'type' => Connection::PARAM_INT,
+                $defaultLanguagePage = $translatedPages[(int)$row['pid']];
+                $findings[] = new Finding(
+                    new RecordKey($tableName, (int)$row['uid']),
+                    (int)$row['pid'],
+                    [
+                        new RecordChange(RecordChangeType::Update, $tableName, (int)$row['uid'], [
+                            'pid' => [
+                                'value' => $defaultLanguagePage,
+                                'type' => Connection::PARAM_INT,
+                            ],
+                        ]),
                     ],
-                ];
-                $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid'], $fields);
-                $count++;
+                    new Reason(
+                        'translated-page',
+                        'Translated page, default language page: ' . $defaultLanguagePage,
+                        ['defaultLanguagePage' => $defaultLanguagePage]
+                    ),
+                );
             }
-            $this->outputTableUpdateAfter($run, $simulate, $tableName, $count);
         }
-    }
-
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        $this->outputRecordDetails($run, $affectedRecords, '_reasonBroken');
+        return $findings;
     }
 
     /**
