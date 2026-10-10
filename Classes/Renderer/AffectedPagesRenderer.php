@@ -27,20 +27,32 @@ final readonly class AffectedPagesRenderer
     ) {}
 
     /**
+     * Header and rows of a table with the rootline of each affected page. Rootlines are
+     * fetched once and used for both.
+     *
      * @param array<string, array<int, array<string, int|string>>> $tableRecordRows
-     * @return string[]
+     * @return array{header: string[], rows: array<int, array<int, int<1, max>|string>>}
      */
-    public function getHeader(PreparedStatements $statements, array $tableRecordRows): array
+    public function render(PreparedStatements $statements, array $tableRecordRows): array
     {
         $affectedPids = $this->getAffectedPids($tableRecordRows);
+        $rootlines = [];
         $maxRootlineCount = 0;
         foreach ($affectedPids as $pid => $count) {
-            $thisRootline = $this->pagesRootlineHelper->getRootline($statements, $pid);
-            $rootlineCount = count($thisRootline);
-            if ($rootlineCount > $maxRootlineCount) {
-                $maxRootlineCount = $rootlineCount;
-            }
+            $rootlines[$pid] = $this->pagesRootlineHelper->getRootline($statements, $pid);
+            $maxRootlineCount = max($maxRootlineCount, count($rootlines[$pid]));
         }
+        return [
+            'header' => $this->getHeader($maxRootlineCount),
+            'rows' => $this->getRows($affectedPids, $rootlines),
+        ];
+    }
+
+    /**
+     * @return string[]
+     */
+    private function getHeader(int $maxRootlineCount): array
+    {
         $header = ['records'];
         for ($i = 1; $i <= $maxRootlineCount; $i++) {
             $header[] = 'segment ' . $i;
@@ -49,15 +61,15 @@ final readonly class AffectedPagesRenderer
     }
 
     /**
-     * @param array<string, array<int, array<string, int|string>>> $tableRecordRows
+     * @param array<int, int<1, max>> $affectedPids
+     * @param array<int, array<int, array<string, int|string|bool>>> $rootlines
      * @return array<int, array<int, int<1, max>|string>>
      */
-    public function getRows(PreparedStatements $statements, array $tableRecordRows): array
+    private function getRows(array $affectedPids, array $rootlines): array
     {
-        $affectedPids = $this->getAffectedPids($tableRecordRows);
         $rows = [];
         foreach ($affectedPids as $pid => $count) {
-            $thisRootline = $this->pagesRootlineHelper->getRootline($statements, $pid);
+            $thisRootline = $rootlines[$pid];
             $row = [$count];
             foreach ($thisRootline as $rootlineItem) {
                 $rowParams = [$rootlineItem['uid']];

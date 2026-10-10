@@ -21,15 +21,10 @@ use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchPageException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 
-final class PagesRootlineHelper
+final readonly class PagesRootlineHelper
 {
-    /**
-     * @var array<int, array<string, int|string|bool>>
-     */
-    private array $rootlineCache = [];
-
     public function __construct(
-        private readonly RecordsHelper $recordsHelper,
+        private RecordsHelper $recordsHelper,
     ) {}
 
     /**
@@ -81,16 +76,12 @@ final class PagesRootlineHelper
      */
     private function getPage(PreparedStatements $statements, int $uid): array
     {
-        if (isset($this->rootlineCache[$uid])) {
-            return $this->rootlineCache[$uid];
-        }
         try {
             $currentPage = $this->recordsHelper->getRecord($statements, 'pages', ['uid', 'pid', 'deleted', 't3ver_wsid', 'title'], $uid);
         } catch (NoSuchRecordException) {
             throw new NoSuchPageException('record with uid "' . $uid . '" in table "pages" not found', 1646121409);
         }
         $currentPage['_isMissing'] = false;
-        $this->rootlineCache[(int)$currentPage['uid']] = $currentPage;
         return $currentPage;
     }
 }
