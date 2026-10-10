@@ -378,9 +378,6 @@ services:
     public: true
     shared: false
 
-  Lolli\Dbdoctor\Helper\RecordsHelper:
-    public: true
-
   Lolli\Dbdoctor\Helper\TableHelper:
     public: true
     shared: false
