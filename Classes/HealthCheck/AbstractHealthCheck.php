@@ -16,7 +16,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-use Doctrine\DBAL\ParameterType;
 use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Database\RecordChangeExecutor;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
@@ -37,6 +36,10 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 /**
  * Abstract implement by all single health check classes.
  * Has the main scaffolding of health checks and various convenient methods to handle details.
+ *
+ * A check implements detect(): It returns findings, each with the changes fixing it.
+ * This class shows, simulates and executes them, RecordChangeExecutor is the only place changing
+ * records.
  *
  * Health checks are stateless: State of a single handle() call is in HealthCheckRun. Services
  * are set by inject*() methods instead of a constructor, to keep constructors of checks free
@@ -116,11 +119,7 @@ abstract readonly class AbstractHealthCheck
     {
         $io = $run->io;
         try {
-            $findings = $this->detect($run);
-            if ($findings === null) {
-                return $this->handleLegacyRun($run, $mode);
-            }
-            return $this->handleFindings($run, $mode, $findings);
+            return $this->handleFindings($run, $mode, $this->detect($run));
         } catch (EarlierCheckNotFixedException $e) {
             // Thrown by detection. Interactive and execute mode detect again later, but
             // only check mode turns this into a skip.
@@ -167,17 +166,17 @@ abstract readonly class AbstractHealthCheck
         while (true) {
             switch ($io->ask('<info>Handle records [e,s,a,r,p,d,?]?</info> ', '?')) {
                 case 'e':
-                    $findings = $this->detectFindings($run);
+                    $findings = $this->detect($run);
                     $this->writeSqlDumpFileHeader($run);
                     $this->recordChangeExecutor->execute($run, false, $findings);
-                    $findings = $this->detectFindings($run);
+                    $findings = $this->detect($run);
                     $this->outputMainSummary($io, $this->groupFindingsByTable($findings));
                     if (empty($findings)) {
                         return HealthCheckInterface::RESULT_BROKEN;
                     }
                     break;
                 case 's':
-                    $findings = $this->detectFindings($run);
+                    $findings = $this->detect($run);
                     $this->recordChangeExecutor->execute($run, true, $findings);
                     $this->outputMainSummary($io, $this->groupFindingsByTable($findings));
                     if (empty($findings)) {
@@ -187,7 +186,7 @@ abstract readonly class AbstractHealthCheck
                 case 'a':
                     return HealthCheckInterface::RESULT_ABORT;
                 case 'r':
-                    $findings = $this->detectFindings($run);
+                    $findings = $this->detect($run);
                     $this->outputMainSummary($io, $this->groupFindingsByTable($findings));
                     if (empty($findings)) {
                         return HealthCheckInterface::RESULT_OK;
@@ -207,18 +206,6 @@ abstract readonly class AbstractHealthCheck
                     break;
             }
         }
-    }
-
-    /**
-     * @return list<Finding>
-     */
-    private function detectFindings(HealthCheckRun $run): array
-    {
-        $findings = $this->detect($run);
-        if ($findings === null) {
-            throw new \LogicException('detect() of a migrated check must not return null.', 1791700002);
-        }
-        return $findings;
     }
 
     /**
@@ -305,122 +292,14 @@ abstract readonly class AbstractHealthCheck
         }
     }
 
-    private function handleLegacyRun(HealthCheckRun $run, int $mode): int
-    {
-        // @todo Remove with the last check migrated to detect()
-        $io = $run->io;
-        $affectedRecords = $this->getAffectedRecords($run);
-        if (empty($affectedRecords) && !$io->isVerbose()) {
-            // Keep the output short: A check without affected records is a single line,
-            // header and description are shown with -v.
-            $io->writeln('<info>OK</info>  ' . (new \ReflectionClass($this))->getShortName());
-            return HealthCheckInterface::RESULT_OK;
-        }
-        $this->header($io);
-        if ($mode === HealthCheckInterface::MODE_CHECK) {
-            return $this->check($io, $affectedRecords);
-        }
-        if ($mode === HealthCheckInterface::MODE_EXECUTE) {
-            return $this->execute($run, $affectedRecords);
-        }
-        return $this->interactive($run, $affectedRecords);
-    }
-
-    /**
-     * @param array<string, array<int, array<string, int|string>>> $affectedRecords
-     */
-    private function check(SymfonyStyle $io, array $affectedRecords): int
-    {
-        $this->outputMainSummary($io, $affectedRecords);
-        if (empty($affectedRecords)) {
-            return HealthCheckInterface::RESULT_OK;
-        }
-        return HealthCheckInterface::RESULT_BROKEN;
-    }
-
-    /**
-     * @param array<string, array<int, array<string, int|string>>> $affectedRecords
-     */
-    private function execute(HealthCheckRun $run, array $affectedRecords): int
-    {
-        $this->outputMainSummary($run->io, $affectedRecords);
-        if (empty($affectedRecords)) {
-            return HealthCheckInterface::RESULT_OK;
-        }
-        $this->writeSqlDumpFileHeader($run);
-        $this->processRecords($run, false, $affectedRecords);
-        return HealthCheckInterface::RESULT_BROKEN;
-    }
-
-    /**
-     * @param array<string, array<int, array<string, int|string>>> $affectedRecords
-     */
-    private function interactive(HealthCheckRun $run, array $affectedRecords): int
-    {
-        $io = $run->io;
-        $this->outputMainSummary($io, $affectedRecords);
-        if (empty($affectedRecords)) {
-            return HealthCheckInterface::RESULT_OK;
-        }
-
-        while (true) {
-            switch ($io->ask('<info>Handle records [e,s,a,r,p,d,?]?</info> ', '?')) {
-                case 'e':
-                    $affectedRecords = $this->getAffectedRecords($run);
-                    $this->writeSqlDumpFileHeader($run);
-                    $this->processRecords($run, false, $affectedRecords);
-                    $affectedRecords = $this->getAffectedRecords($run);
-                    $this->outputMainSummary($io, $affectedRecords);
-                    if (empty($affectedRecords)) {
-                        return HealthCheckInterface::RESULT_BROKEN;
-                    }
-                    break;
-                case 's':
-                    $affectedRecords = $this->getAffectedRecords($run);
-                    $this->processRecords($run, true, $affectedRecords);
-                    $affectedRecords = $this->getAffectedRecords($run);
-                    $this->outputMainSummary($io, $affectedRecords);
-                    if (empty($affectedRecords)) {
-                        return HealthCheckInterface::RESULT_OK;
-                    }
-                    break;
-                case 'a':
-                    return HealthCheckInterface::RESULT_ABORT;
-                case 'r':
-                    $affectedRecords = $this->getAffectedRecords($run);
-                    $this->outputMainSummary($io, $affectedRecords);
-                    if (empty($affectedRecords)) {
-                        return HealthCheckInterface::RESULT_OK;
-                    }
-                    break;
-                case 'p':
-                    $this->outputMainSummary($io, $affectedRecords);
-                    $this->affectedPages($run, $affectedRecords);
-                    break;
-                case 'd':
-                    $this->outputMainSummary($io, $affectedRecords);
-                    $this->recordDetails($run, $affectedRecords);
-                    break;
-                case 'h':
-                default:
-                    $io->text($this->getHelp());
-                    break;
-            }
-        }
-    }
-
     abstract public function header(SymfonyStyle $io): void;
 
     /**
-     * Find broken things, each with the changes that fix it. Checks not migrated yet return
-     * null and implement getAffectedRecords() and processRecords() instead.
+     * Find broken things, each with the changes that fix it.
      *
-     * @return list<Finding>|null
+     * @return list<Finding>
      */
-    protected function detect(HealthCheckRun $run): ?array
-    {
-        return null;
-    }
+    abstract protected function detect(HealthCheckRun $run): array;
 
     /**
      * Ctrl fields like "transOrigPointerField" shown in record details of findings of a table,
@@ -445,49 +324,9 @@ abstract readonly class AbstractHealthCheck
     }
 
     /**
-     * Legacy, checks not migrated to detect() yet.
-     *
-     * @return array<string, array<int, array<string, int|string>>>
+     * @param array<string, list<Finding>> $danglingRows Findings per table
      */
-    protected function getAffectedRecords(HealthCheckRun $run): array
-    {
-        throw new \LogicException('Implement detect() or getAffectedRecords().', 1791700003);
-    }
-
-    /**
-     * Legacy, checks not migrated to detect() yet.
-     *
-     * @param array<string, array<int, array<string, int|string>>> $affectedRecords
-     */
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        throw new \LogicException('Implement detect() or processRecords().', 1791700004);
-    }
-
-    /**
-     * Default implementation. Overridden by subclasses sometimes to provide more specific details.
-     *
-     * @param array<string, array<int, array<string, int|string>>> $affectedRecords
-     */
-    protected function affectedPages(HealthCheckRun $run, array $affectedRecords): void
-    {
-        $this->outputAffectedPages($run, $affectedRecords);
-    }
-
-    /**
-     * Default implementation. Overridden by subclasses sometimes to provide more specific details.
-     *
-     * @param array<string, array<int, array<string, int|string>>> $affectedRecords
-     */
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        $this->outputRecordDetails($run, $affectedRecords);
-    }
-
-    /**
-     * @param array<string, array<int, mixed>> $danglingRows Affected rows or findings per table
-     */
-    final protected function outputMainSummary(SymfonyStyle $io, array $danglingRows): void
+    private function outputMainSummary(SymfonyStyle $io, array $danglingRows): void
     {
         if (!count($danglingRows)) {
             $io->success('No affected records found');
@@ -510,7 +349,7 @@ abstract readonly class AbstractHealthCheck
     /**
      * @param array<string, array<int, array<string, int|string>>> $danglingRows
      */
-    final protected function outputAffectedPages(HealthCheckRun $run, array $danglingRows): void
+    private function outputAffectedPages(HealthCheckRun $run, array $danglingRows): void
     {
         $run->io->note('Found records per page:');
         $affectedPages = $this->affectedPagesRenderer->render($run->statements, $danglingRows);
@@ -522,7 +361,7 @@ abstract readonly class AbstractHealthCheck
      * @param array<int, string> $extraCtrlFields
      * @param array<int, string> $extraDbFields
      */
-    final protected function outputRecordDetails(HealthCheckRun $run, array $danglingRows, string $reasonField = '', array $extraCtrlFields = [], array $extraDbFields = []): void
+    private function outputRecordDetails(HealthCheckRun $run, array $danglingRows, string $reasonField = '', array $extraCtrlFields = [], array $extraDbFields = []): void
     {
         foreach ($danglingRows as $tableName => $rows) {
             $run->io->note('Table "' . $tableName . '":');
@@ -531,135 +370,6 @@ abstract readonly class AbstractHealthCheck
                 $this->recordsRenderer->getRows($run->statements, $tableName, $rows, $reasonField, $extraCtrlFields, $extraDbFields)
             );
         }
-    }
-
-    /**
-     * DELETE multiple records from many TCA tables.
-     * Convenient method to save a foreach loop.
-     * Calls deleteTcaRecordsOfTable() per table.
-     *
-     * @param array<string, array<int, array<string, int|string>>> $affectedRecords
-     */
-    final protected function deleteTcaRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        foreach ($affectedRecords as $tableName => $tableRows) {
-            $this->deleteTcaRecordsOfTable($run, $simulate, $tableName, $tableRows);
-        }
-    }
-
-    /**
-     * DELETE multiple records from a single TCA table.
-     * Outputs a summary before and after, while deleteSingleTcaRecord() logs and outputs single queries.
-     *
-     * @param array<int, array<string, int|string>> $rows
-     */
-    final protected function deleteTcaRecordsOfTable(HealthCheckRun $run, bool $simulate, string $tableName, array $rows): void
-    {
-        $this->outputTableDeleteBefore($run, $simulate, $tableName);
-        $count = 0;
-        foreach ($rows as $row) {
-            $this->deleteSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid']);
-            $count++;
-        }
-        $this->outputTableDeleteAfter($run, $simulate, $tableName, $count);
-    }
-
-    /**
-     * DELETE and log a single row.
-     */
-    final protected function deleteSingleTcaRecord(HealthCheckRun $run, bool $simulate, string $tableName, int $uid): void
-    {
-        $this->recordChangeExecutor->executeChange($run, $simulate, new RecordChange(RecordChangeType::Delete, $tableName, $uid));
-    }
-
-    /**
-     * UPDATE many rows of a single TCA table.
-     * Outputs a summary before and after, while updateSingleTcaRecord() logs and outputs single queries.
-     *
-     * @param array<int, array<string, int|string>> $rows
-     * @param array<string, array{value: int|string, type: ParameterType}> $fields
-     */
-    final protected function updateTcaRecordsOfTable(HealthCheckRun $run, bool $simulate, string $tableName, array $rows, array $fields): void
-    {
-        $this->outputTableUpdateBefore($run, $simulate, $tableName);
-        $count = 0;
-        foreach ($rows as $row) {
-            $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid'], $fields);
-            $count++;
-        }
-        $this->outputTableUpdateAfter($run, $simulate, $tableName, $count);
-    }
-
-    /**
-     * INSERT and log a single row.
-     *
-     * @param array<string, array{value: int|string, type: ParameterType}> $fields
-     */
-    final protected function insertSingleTcaRecord(HealthCheckRun $run, bool $simulate, string $tableName, array $fields): void
-    {
-        $this->recordChangeExecutor->executeChange($run, $simulate, new RecordChange(RecordChangeType::Insert, $tableName, null, $fields));
-    }
-
-    /**
-     * UPDATE and log a single row.
-     *
-     * @param array<string, array{value: int|string, type: ParameterType}> $fields
-     */
-    final protected function updateSingleTcaRecord(HealthCheckRun $run, bool $simulate, string $tableName, int $uid, array $fields): void
-    {
-        $this->recordChangeExecutor->executeChange($run, $simulate, new RecordChange(RecordChangeType::Update, $tableName, $uid, $fields));
-    }
-
-    /**
-     * DELETE and log rows of an MM table.
-     *
-     * @param array<string, array{value: int|string, type: ParameterType}> $whereFields
-     */
-    final protected function deleteMmRows(HealthCheckRun $run, bool $simulate, string $mmTableName, array $whereFields): void
-    {
-        $this->recordChangeExecutor->executeChange($run, $simulate, new RecordChange(RecordChangeType::MmDelete, $mmTableName, null, [], $whereFields));
-    }
-
-    /**
-     * DELETE or soft-delete multiple records from many tables.
-     * Convenient method to save a foreach loop.
-     * Calls softOrHardDeleteRecordsOfTable() per table.
-     *
-     * @param array<string, array<int, array<string, int|string>>> $affectedRecords
-     */
-    final protected function softOrHardDeleteRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        foreach ($affectedRecords as $tableName => $tableRows) {
-            $this->softOrHardDeleteRecordsOfTable($run, $simulate, $tableName, $tableRows);
-        }
-    }
-
-    /**
-     * DELETE or UPDATE multiple rows of at table:
-     * * If the table is not delete-aware, records are DELETED
-     * * If the table is delete-aware and the record is live (t3ver_wsid = 0), the record is UPDATED with soft-delete=1
-     * * If the record is workspace-aware and the record is within a workspace (t3ver_wsid > 0), the record is DELETED
-     *
-     * The method outputs a summary before and after, while deleteSingleTcaRecord()
-     * and updateSingleTcaRecord() log and output single queries.
-     *
-     * @param array<int, array<string, int|string>> $rows
-     */
-    final protected function softOrHardDeleteRecordsOfTable(HealthCheckRun $run, bool $simulate, string $tableName, array $rows): void
-    {
-        $this->outputTableHandleBefore($run, $simulate, $tableName);
-        $updateCount = 0;
-        $deleteCount = 0;
-        foreach ($rows as $row) {
-            $change = $this->softOrHardDeleteChange($tableName, $row);
-            $this->recordChangeExecutor->executeChange($run, $simulate, $change);
-            if ($change->type === RecordChangeType::Delete) {
-                $deleteCount++;
-            } else {
-                $updateCount++;
-            }
-        }
-        $this->outputTableHandleAfter($run, $simulate, $tableName, $updateCount, $deleteCount);
     }
 
     /**
@@ -722,89 +432,6 @@ abstract readonly class AbstractHealthCheck
     {
         $io->text(('Class: <comment>' . (new \ReflectionClass($this))->getShortName()) . '</comment>');
     }
-
-    final protected function outputTableDeleteBefore(HealthCheckRun $run, bool $simulate, string $tableName): void
-    {
-        if ($simulate) {
-            $run->io->note('[SIMULATE] Delete records on table: ' . $tableName);
-        } else {
-            $run->io->note('Delete records on table: ' . $tableName);
-        }
-    }
-
-    final protected function outputTableDeleteAfter(HealthCheckRun $run, bool $simulate, string $tableName, int $count): void
-    {
-        if ($simulate) {
-            $run->io->note('[SIMULATE] Deleted "' . $count . '" records from "' . $tableName . '" table');
-        } else {
-            $run->io->warning('Deleted "' . $count . '" records from "' . $tableName . '" table');
-        }
-    }
-
-    final protected function outputTableUpdateBefore(HealthCheckRun $run, bool $simulate, string $tableName): void
-    {
-        if ($simulate) {
-            $run->io->note('[SIMULATE] Update records on table: ' . $tableName);
-        } else {
-            $run->io->note('Update records on table: ' . $tableName);
-        }
-    }
-
-    final protected function outputTableUpdateAfter(HealthCheckRun $run, bool $simulate, string $tableName, int $count): void
-    {
-        if ($simulate) {
-            $run->io->note('[SIMULATE] Updated "' . $count . '" records from "' . $tableName . '" table');
-        } else {
-            $run->io->warning('Updated "' . $count . '" records from "' . $tableName . '" table');
-        }
-    }
-
-    final protected function outputTableInsertBefore(HealthCheckRun $run, bool $simulate, string $tableName): void
-    {
-        if ($simulate) {
-            $run->io->note('[SIMULATE] Insert records into table: ' . $tableName);
-        } else {
-            $run->io->note('Insert records into table: ' . $tableName);
-        }
-    }
-
-    final protected function outputTableInsertAfter(HealthCheckRun $run, bool $simulate, string $tableName, int $count): void
-    {
-        if ($simulate) {
-            $run->io->note('[SIMULATE] Inserted "' . $count . '" records into "' . $tableName . '" table');
-        } else {
-            $run->io->warning('Inserted "' . $count . '" records into "' . $tableName . '" table');
-        }
-    }
-
-    final protected function outputTableHandleBefore(HealthCheckRun $run, bool $simulate, string $tableName): void
-    {
-        if ($simulate) {
-            $run->io->note('[SIMULATE] Handle records on table: ' . $tableName);
-        } else {
-            $run->io->note('Handle records on table: ' . $tableName);
-        }
-    }
-
-    final protected function outputTableHandleAfter(HealthCheckRun $run, bool $simulate, string $tableName, int $updateCount, int $deleteCount): void
-    {
-        if ($simulate) {
-            if ($updateCount > 0) {
-                $run->io->note('[SIMULATE] Updated "' . $updateCount . '" records from "' . $tableName . '" table');
-            }
-            if ($deleteCount > 0) {
-                $run->io->note('[SIMULATE] Deleted "' . $deleteCount . '" records from "' . $tableName . '" table');
-            }
-        } else {
-            if ($updateCount > 0) {
-                $run->io->warning('Updated "' . $updateCount . '" records from "' . $tableName . '" table');
-            }
-            if ($deleteCount > 0) {
-                $run->io->warning('Deleted "' . $deleteCount . '" records from "' . $tableName . '" table');
-            }
-        }
-    }
-
     /**
      * Comment "Triggered by" in the dump file before each pass of changes, to find out
      * which specific health check triggered the following statements when reading the
