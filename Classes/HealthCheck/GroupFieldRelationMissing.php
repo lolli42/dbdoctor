@@ -18,6 +18,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordFieldKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -43,9 +48,9 @@ final readonly class GroupFieldRelationMissing extends AbstractHealthCheck imple
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRows = [];
+        $findings = [];
         foreach ($this->tcaHelper->getNextGroupFieldWithoutMm() as $groupField) {
             $tableName = $groupField['tableName'];
             $fieldName = $groupField['fieldName'];
@@ -58,11 +63,12 @@ final readonly class GroupFieldRelationMissing extends AbstractHealthCheck imple
             if (!$this->tableHelper->fieldExistsInTable($tableName, $fieldName)) {
                 continue;
             }
+            $isIntegerField = $this->tableHelper->fieldIsInteger($tableName, $fieldName);
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             // Handle deleted=1 records, too.
             $queryBuilder->getRestrictions()->removeAll();
             $queryBuilder->select('uid', 'pid', $fieldName)->from($tableName);
-            if ($this->tableHelper->fieldIsInteger($tableName, $fieldName)) {
+            if ($isIntegerField) {
                 $queryBuilder->where(
                     $queryBuilder->expr()->neq($fieldName, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT))
                 );
@@ -75,65 +81,37 @@ final readonly class GroupFieldRelationMissing extends AbstractHealthCheck imple
             $result = $queryBuilder->orderBy('uid')->executeQuery();
             while ($row = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $row */
-                $missingRelations = $this->getMissingRelations($run, (string)$row[$fieldName], $groupField['allowedTables']);
-                if (!empty($missingRelations)) {
-                    $affectedRows[$tableName][] = [
-                        'uid' => (int)$row['uid'],
-                        'pid' => (int)$row['pid'],
-                        '_fieldName' => $fieldName,
-                        '_fieldValue' => (string)$row[$fieldName],
-                        '_allowedTables' => implode(',', $groupField['allowedTables']),
-                        '_reasonBroken' => 'Field "' . $fieldName . '": Missing ' . implode(', ', array_keys($missingRelations)),
-                    ];
+                $fieldValue = (string)$row[$fieldName];
+                $missingRelations = $this->getMissingRelations($run, $fieldValue, $groupField['allowedTables']);
+                if (empty($missingRelations)) {
+                    continue;
                 }
-            }
-        }
-        return $affectedRows;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        foreach ($affectedRecords as $tableName => $rows) {
-            $this->outputTableUpdateBefore($run, $simulate, $tableName);
-            $count = 0;
-            foreach ($rows as $row) {
-                $fieldName = (string)$row['_fieldName'];
-                $allowedTables = GeneralUtility::trimExplode(',', (string)$row['_allowedTables'], true);
-                $missingRelations = $this->getMissingRelations($run, (string)$row['_fieldValue'], $allowedTables);
+                // All items pointing to a missing record are removed, duplicates too, others keep their order.
                 $remainingItems = [];
-                foreach (GeneralUtility::trimExplode(',', (string)$row['_fieldValue'], true) as $item) {
+                foreach (GeneralUtility::trimExplode(',', $fieldValue, true) as $item) {
                     if (!in_array($item, $missingRelations, true)) {
                         $remainingItems[] = $item;
                     }
                 }
-                if (empty($remainingItems) && $this->tableHelper->fieldIsInteger($tableName, $fieldName)) {
-                    $updateFields = [
-                        $fieldName => [
-                            'value' => 0,
-                            'type' => Connection::PARAM_INT,
-                        ],
-                    ];
+                if (empty($remainingItems) && $isIntegerField) {
+                    $newValue = ['value' => 0, 'type' => Connection::PARAM_INT];
                 } else {
-                    $updateFields = [
-                        $fieldName => [
-                            'value' => implode(',', $remainingItems),
-                            'type' => Connection::PARAM_STR,
-                        ],
-                    ];
+                    $newValue = ['value' => implode(',', $remainingItems), 'type' => Connection::PARAM_STR];
                 }
-                $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid'], $updateFields);
-                $count++;
+                $missing = array_keys($missingRelations);
+                $findings[] = new Finding(
+                    new RecordFieldKey($tableName, (int)$row['uid'], $fieldName),
+                    (int)$row['pid'],
+                    [new RecordChange(RecordChangeType::Update, $tableName, (int)$row['uid'], [$fieldName => $newValue])],
+                    new Reason(
+                        'relation-missing',
+                        'Field "' . $fieldName . '": Missing ' . implode(', ', $missing),
+                        ['missing' => $missing]
+                    ),
+                );
             }
-            $this->outputTableUpdateAfter($run, $simulate, $tableName, $count);
         }
-    }
-
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        foreach ($affectedRecords as $tableName => $rows) {
-            $fieldNames = array_values(array_unique(array_map(static fn(array $row): string => (string)$row['_fieldName'], $rows)));
-            $this->outputRecordDetails($run, [$tableName => $rows], '_reasonBroken', [], $fieldNames);
-        }
+        return $findings;
     }
 
     /**
