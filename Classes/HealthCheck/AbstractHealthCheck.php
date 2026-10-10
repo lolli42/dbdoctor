@@ -53,15 +53,6 @@ abstract class AbstractHealthCheck
      */
     private string $sqlDumpFile;
 
-    /**
-     * Set to true as soon as a health check got a first change and wrote a comment
-     * "Triggered by" to $sqlDumpFile. This helps to find out which specific health check
-     * triggered a change when reading the dump file. It is used to ensure this comment
-     * header is only wrote once per single health check on first SQL change. Reset per
-     * handle() call: A service with multiple tags runs at multiple chain positions.
-     */
-    private bool $sqlDumpFileHeaderWritten = false;
-
     protected ContainerInterface $container;
     protected ConnectionPool $connectionPool;
     protected TcaHelper $tcaHelper;
@@ -84,7 +75,6 @@ abstract class AbstractHealthCheck
     final public function handle(SymfonyStyle $io, int $mode, string $file): int
     {
         $this->sqlDumpFile = $file;
-        $this->sqlDumpFileHeaderWritten = false;
         try {
             $affectedRecords = $this->getAffectedRecords();
         } catch (EarlierCheckNotFixedException $e) {
@@ -138,6 +128,7 @@ abstract class AbstractHealthCheck
         if (empty($affectedRecords)) {
             return HealthCheckInterface::RESULT_OK;
         }
+        $this->writeSqlDumpFileHeader();
         $this->processRecords($io, false, $affectedRecords);
         return HealthCheckInterface::RESULT_BROKEN;
     }
@@ -156,6 +147,7 @@ abstract class AbstractHealthCheck
             switch ($io->ask('<info>Handle records [e,s,a,r,p,d,?]?</info> ', '?')) {
                 case 'e':
                     $affectedRecords = $this->getAffectedRecords();
+                    $this->writeSqlDumpFileHeader();
                     $this->processRecords($io, false, $affectedRecords);
                     $affectedRecords = $this->getAffectedRecords();
                     $this->outputMainSummary($io, $affectedRecords);
@@ -560,15 +552,22 @@ abstract class AbstractHealthCheck
         }
     }
 
+    /**
+     * Comment "Triggered by" in the dump file before each pass of changes, to find out
+     * which specific health check triggered the following statements when reading the
+     * dump file. A service with multiple tags runs at multiple chain positions, each pass
+     * gets its own header.
+     */
+    private function writeSqlDumpFileHeader(): void
+    {
+        if ($this->sqlDumpFile) {
+            file_put_contents($this->sqlDumpFile, '# Triggered by ' . static::class . "\n", \FILE_APPEND);
+        }
+    }
+
     private function logAndOutputSql(SymfonyStyle $io, bool $simulate, string $sql): void
     {
         if ($this->sqlDumpFile && !$simulate) {
-            if (!$this->sqlDumpFileHeaderWritten) {
-                // Write a header to the dump file before first row is logged
-                file_put_contents($this->sqlDumpFile, '# Triggered by ' . static::class . "\n", \FILE_APPEND);
-                $this->sqlDumpFileHeaderWritten = true;
-            }
-            // Write that statement to file
             file_put_contents($this->sqlDumpFile, $sql . "\n", \FILE_APPEND);
         }
         $io->text($sql);
