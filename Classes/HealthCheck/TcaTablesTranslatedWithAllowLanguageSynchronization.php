@@ -41,7 +41,8 @@ final class TcaTablesTranslatedWithAllowLanguageSynchronization extends Abstract
             'finds live translations with l10n_state "parent" for a field, but a value different from',
             'the default language record. The frontend renders the value of the translation, so the',
             'l10n_state of such fields is set to "custom": The backend then shows the value as well, and',
-            'it is not overwritten when the default language record is changed.',
+            'it is not overwritten when the default language record is changed. Fields of TCA type',
+            '"json" are not compared.',
         ]);
     }
 
@@ -63,6 +64,12 @@ final class TcaTablesTranslatedWithAllowLanguageSynchronization extends Abstract
             $fieldNames = array_values(array_filter(
                 $fieldNames,
                 static fn(string $fieldName): bool => $tableHelper->fieldExistsInTable($tableName, $fieldName)
+            ));
+            // Fields of TCA type "json" are not compared: Postgres has no "<>" operator for column
+            // type json, and equal json values may differ as text, like {"a":1} and {"a": 1}.
+            $fieldNames = array_values(array_filter(
+                $fieldNames,
+                static fn(string $fieldName): bool => ($GLOBALS['TCA'][$tableName]['columns'][$fieldName]['config']['type'] ?? '') !== 'json'
             ));
             if ($fieldNames === []) {
                 continue;
