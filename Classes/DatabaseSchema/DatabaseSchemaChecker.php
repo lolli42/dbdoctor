@@ -20,18 +20,12 @@ namespace Lolli\Dbdoctor\DatabaseSchema;
 use TYPO3\CMS\Core\Database\Schema\SchemaMigrator;
 use TYPO3\CMS\Core\Database\Schema\SqlReader;
 
-final class DatabaseSchemaChecker
+final readonly class DatabaseSchemaChecker
 {
-    private SqlReader $sqlReader;
-    private SchemaMigrator $schemaMigrator;
-
     public function __construct(
-        SqlReader $sqlReader,
-        SchemaMigrator $schemaMigrator
-    ) {
-        $this->sqlReader = $sqlReader;
-        $this->schemaMigrator = $schemaMigrator;
-    }
+        private SqlReader $sqlReader,
+        private SchemaMigrator $schemaMigrator,
+    ) {}
 
     public function hasIncompleteTablesColumnsIndexes(): bool
     {

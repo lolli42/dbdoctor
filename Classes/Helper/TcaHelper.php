@@ -22,7 +22,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Stateless helper service for various TCA details.
  */
-final class TcaHelper
+final readonly class TcaHelper
 {
     /**
      * @return iterable<string>
