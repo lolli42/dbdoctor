@@ -17,7 +17,14 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Doctrine\DBAL\ParameterType;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\MmKey;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordFieldKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -43,9 +50,10 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRows = [];
+        // Findings per table they are counted for: The local table, or the MM table for MM rows of missing local records.
+        $findingsByTable = [];
         foreach ($this->tcaHelper->getNextGroupFieldWithMm() as $groupField) {
             $tableName = $groupField['tableName'];
             $fieldName = $groupField['fieldName'];
@@ -92,11 +100,11 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
                 /** @var array<string, int|string|null> $mmRow */
                 if ($currentUidLocal !== (int)$mmRow['uid_local']) {
                     if ($currentUidLocal !== null && $isLocalRecordMissing) {
-                        $affectedRows[$mmTableName][] = $this->getMissingLocalRecordRow($groupField, $currentUidLocal, $mmRowCount);
+                        $findingsByTable[$mmTableName][] = $this->getMissingLocalRecordFinding($groupField, $currentUidLocal, $mmRowCount);
                     } elseif ($currentUidLocal !== null && !empty($missingRelations)) {
-                        $affectedRow = $this->getAffectedRow($run, $groupField, $currentUidLocal, $missingRelations);
-                        if ($affectedRow !== null) {
-                            $affectedRows[$tableName][] = $affectedRow;
+                        $finding = $this->getMissingRelationsFinding($run, $groupField, $currentUidLocal, $missingRelations);
+                        if ($finding !== null) {
+                            $findingsByTable[$tableName][] = $finding;
                         }
                     }
                     $currentUidLocal = (int)$mmRow['uid_local'];
@@ -128,108 +136,22 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
                 }
             }
             if ($currentUidLocal !== null && $isLocalRecordMissing) {
-                $affectedRows[$mmTableName][] = $this->getMissingLocalRecordRow($groupField, $currentUidLocal, $mmRowCount);
+                $findingsByTable[$mmTableName][] = $this->getMissingLocalRecordFinding($groupField, $currentUidLocal, $mmRowCount);
             } elseif ($currentUidLocal !== null && !empty($missingRelations)) {
-                $affectedRow = $this->getAffectedRow($run, $groupField, $currentUidLocal, $missingRelations);
-                if ($affectedRow !== null) {
-                    $affectedRows[$tableName][] = $affectedRow;
+                $finding = $this->getMissingRelationsFinding($run, $groupField, $currentUidLocal, $missingRelations);
+                if ($finding !== null) {
+                    $findingsByTable[$tableName][] = $finding;
                 }
             }
         }
-        return $affectedRows;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        $rowsByMmTable = [];
-        foreach ($affectedRecords as $rows) {
-            foreach ($rows as $row) {
-                $rowsByMmTable[(string)$row['_mmTableName']][] = $row;
+        // Changes are done per MM table: Keep findings of one MM table together, in order of appearance.
+        $findingsByMmTable = [];
+        foreach ($findingsByTable as $findings) {
+            foreach ($findings as $finding) {
+                $findingsByMmTable[$finding->changes[0]->tableName][] = $finding;
             }
         }
-        foreach ($rowsByMmTable as $mmTableName => $rows) {
-            $this->outputTableDeleteBefore($run, $simulate, $mmTableName);
-            $count = 0;
-            foreach ($rows as $row) {
-                /** @var array<string, int|string> $matchFields */
-                $matchFields = json_decode((string)$row['_matchFields'], true, 512, JSON_THROW_ON_ERROR);
-                if ((bool)($row['_localRecordMissing'] ?? false)) {
-                    $whereFields = [
-                        'uid_local' => [
-                            'value' => (int)$row['uid'],
-                            'type' => Connection::PARAM_INT,
-                        ],
-                    ];
-                    foreach ($matchFields as $matchFieldName => $matchFieldValue) {
-                        $whereFields[$matchFieldName] = [
-                            'value' => (string)$matchFieldValue,
-                            'type' => Connection::PARAM_STR,
-                        ];
-                    }
-                    $this->deleteMmRows($run, $simulate, $mmTableName, $whereFields);
-                    $count++;
-                    continue;
-                }
-                /** @var array<int, array{uid_foreign: int, tablenames: string|null}> $missingRelations */
-                $missingRelations = json_decode((string)$row['_missingRelations'], true, 512, JSON_THROW_ON_ERROR);
-                foreach ($missingRelations as $missingRelation) {
-                    $whereFields = [
-                        'uid_local' => [
-                            'value' => (int)$row['uid'],
-                            'type' => Connection::PARAM_INT,
-                        ],
-                        'uid_foreign' => [
-                            'value' => $missingRelation['uid_foreign'],
-                            'type' => Connection::PARAM_INT,
-                        ],
-                    ];
-                    if ($missingRelation['tablenames'] !== null) {
-                        $whereFields['tablenames'] = [
-                            'value' => $missingRelation['tablenames'],
-                            'type' => Connection::PARAM_STR,
-                        ];
-                    }
-                    foreach ($matchFields as $matchFieldName => $matchFieldValue) {
-                        $whereFields[$matchFieldName] = [
-                            'value' => (string)$matchFieldValue,
-                            'type' => Connection::PARAM_STR,
-                        ];
-                    }
-                    $this->deleteMmRows($run, $simulate, $mmTableName, $whereFields);
-                    $count++;
-                }
-            }
-            $this->outputTableDeleteAfter($run, $simulate, $mmTableName, $count);
-        }
-    }
-
-    protected function affectedPages(HealthCheckRun $run, array $affectedRecords): void
-    {
-        // MM rows of missing local records are on no page.
-        $this->outputAffectedPages($run, array_filter(
-            $affectedRecords,
-            static fn(array $rows): bool => !(bool)($rows[0]['_localRecordMissing'] ?? false)
-        ));
-    }
-
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        foreach ($affectedRecords as $tableName => $rows) {
-            if ((bool)($rows[0]['_localRecordMissing'] ?? false)) {
-                // Rows of MM table $tableName, their local record does not exist.
-                $run->io->note('MM table "' . $tableName . '":');
-                $run->io->table(
-                    ['uid_local', 'local table', 'field', 'MM rows'],
-                    array_map(
-                        static fn(array $row): array => [$row['uid'], $row['_localTableName'], $row['_fieldName'], $row['_mmRowCount']],
-                        $rows
-                    )
-                );
-                continue;
-            }
-            $fieldNames = array_values(array_unique(array_map(static fn(array $row): string => (string)$row['_fieldName'], $rows)));
-            $this->outputRecordDetails($run, [$tableName => $rows], '_reasonBroken', [], $fieldNames);
-        }
+        return array_merge(...array_values($findingsByMmTable));
     }
 
     /**
@@ -272,29 +194,40 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
     }
 
     /**
+     * All MM rows of the missing local record within the match fields of the field are removed.
+     *
      * @param array{tableName: string, fieldName: string, mmTableName: string, allowedTables: array<int, string>, matchFields: array<string, int|string>} $groupField
-     * @return array<string, int|string>
      */
-    private function getMissingLocalRecordRow(array $groupField, int $uidLocal, int $mmRowCount): array
+    private function getMissingLocalRecordFinding(array $groupField, int $uidLocal, int $mmRowCount): Finding
     {
-        return [
-            'uid' => $uidLocal,
-            'pid' => 0,
-            '_localRecordMissing' => 1,
-            '_localTableName' => $groupField['tableName'],
-            '_fieldName' => $groupField['fieldName'],
-            '_mmTableName' => $groupField['mmTableName'],
-            '_matchFields' => json_encode($groupField['matchFields'], JSON_THROW_ON_ERROR),
-            '_mmRowCount' => $mmRowCount,
+        $where = [
+            'uid_local' => [
+                'value' => $uidLocal,
+                'type' => Connection::PARAM_INT,
+            ],
         ];
+        $where = array_merge($where, $this->getMatchFieldsWhere($groupField['matchFields']));
+        return new Finding(
+            new MmKey($groupField['mmTableName'], $uidLocal, $groupField['tableName'], $groupField['fieldName'], $groupField['matchFields']),
+            null,
+            [new RecordChange(RecordChangeType::MmDelete, $groupField['mmTableName'], null, [], $where)],
+            new Reason(
+                'local-record-missing',
+                'Local record "' . $groupField['tableName'] . ':' . $uidLocal . '" does not exist',
+                ['localRecord' => $groupField['tableName'] . ':' . $uidLocal]
+            ),
+            ['mmRowCount' => $mmRowCount],
+        );
     }
 
     /**
+     * One DELETE per missing relation. It may remove multiple MM rows: Duplicates, and rows of
+     * other fields of the opposite side for fields without match fields.
+     *
      * @param array{tableName: string, fieldName: string, mmTableName: string, allowedTables: array<int, string>, matchFields: array<string, int|string>} $groupField
      * @param array<string, array{tableName: string, uid_foreign: int, tablenames: string|null}> $missingRelations
-     * @return array<string, int|string>|null
      */
-    private function getAffectedRow(HealthCheckRun $run, array $groupField, int $uidLocal, array $missingRelations): ?array
+    private function getMissingRelationsFinding(HealthCheckRun $run, array $groupField, int $uidLocal, array $missingRelations): ?Finding
     {
         try {
             $localRecord = $this->recordsHelper->getRecord($run->statements, $groupField['tableName'], ['uid', 'pid'], $uidLocal);
@@ -303,24 +236,55 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
             // The MM rows are no relation of an existing record of this table, they are kept.
             return null;
         }
-        $missingRelationLabels = [];
-        $missingRelationRows = [];
+        $missing = [];
+        $changes = [];
         foreach ($missingRelations as $missingRelation) {
-            $missingRelationLabels[] = $missingRelation['tableName'] . ':' . $missingRelation['uid_foreign'];
-            $missingRelationRows[] = [
-                'uid_foreign' => $missingRelation['uid_foreign'],
-                'tablenames' => $missingRelation['tablenames'],
+            $missing[] = $missingRelation['tableName'] . ':' . $missingRelation['uid_foreign'];
+            $where = [
+                'uid_local' => [
+                    'value' => $uidLocal,
+                    'type' => Connection::PARAM_INT,
+                ],
+                'uid_foreign' => [
+                    'value' => $missingRelation['uid_foreign'],
+                    'type' => Connection::PARAM_INT,
+                ],
+            ];
+            if ($missingRelation['tablenames'] !== null) {
+                $where['tablenames'] = [
+                    'value' => $missingRelation['tablenames'],
+                    'type' => Connection::PARAM_STR,
+                ];
+            }
+            $where = array_merge($where, $this->getMatchFieldsWhere($groupField['matchFields']));
+            $changes[] = new RecordChange(RecordChangeType::MmDelete, $groupField['mmTableName'], null, [], $where);
+        }
+        return new Finding(
+            new RecordFieldKey($groupField['tableName'], (int)$localRecord['uid'], $groupField['fieldName']),
+            (int)$localRecord['pid'],
+            $changes,
+            new Reason(
+                'relation-missing',
+                'Field "' . $groupField['fieldName'] . '": Missing ' . implode(', ', $missing),
+                ['missing' => $missing]
+            ),
+        );
+    }
+
+    /**
+     * @param array<string, int|string> $matchFields
+     * @return array<string, array{value: string, type: ParameterType}>
+     */
+    private function getMatchFieldsWhere(array $matchFields): array
+    {
+        $where = [];
+        foreach ($matchFields as $matchFieldName => $matchFieldValue) {
+            $where[$matchFieldName] = [
+                'value' => (string)$matchFieldValue,
+                'type' => Connection::PARAM_STR,
             ];
         }
-        return [
-            'uid' => (int)$localRecord['uid'],
-            'pid' => (int)$localRecord['pid'],
-            '_fieldName' => $groupField['fieldName'],
-            '_mmTableName' => $groupField['mmTableName'],
-            '_matchFields' => json_encode($groupField['matchFields'], JSON_THROW_ON_ERROR),
-            '_missingRelations' => json_encode($missingRelationRows, JSON_THROW_ON_ERROR),
-            '_reasonBroken' => 'Field "' . $groupField['fieldName'] . '": Missing ' . implode(', ', $missingRelationLabels),
-        ];
+        return $where;
     }
 
     /**
