@@ -1,0 +1,7 @@
+"tx_dbdoctortestsjson_item"
+,"uid","pid","sys_language_uid","l10n_parent","l10n_state","title","settings"
+,1,0,0,0,"","Default","{""a"":1}"
+# Kept: The json field "settings" differs, json fields are not compared
+,2,0,1,1,"","Default","{""a"":2}"
+# Should get l10n_state {"title":"custom"}: Other fields of the table are still compared
+,3,0,1,1,"","Translated","{""a"":1}"
