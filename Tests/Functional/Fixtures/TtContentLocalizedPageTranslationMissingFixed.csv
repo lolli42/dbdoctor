@@ -25,3 +25,4 @@
 ,13,8,1,1,12,0,"Not ok lang 1 content on sub page 4"
 ,14,0,0,1,0,0,"Ok lang 1 content on pid 0"
 ,15,3,0,1,0,0,"Ok lang 1 free mode content on translated sub page 1"
+,16,2,1,2,1,0,"Not ok lang 2 content on sub page 1, high uid"

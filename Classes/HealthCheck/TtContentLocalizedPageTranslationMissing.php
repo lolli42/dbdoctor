@@ -58,8 +58,10 @@ final class TtContentLocalizedPageTranslationMissing extends AbstractHealthCheck
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
 
-        /** @var array<int, array{doktype: int, language: int, translations: array<int, array<int, true>>}> $pageCache */
-        $pageCache = [];
+        // Records are sorted by pid: Only the page of the current pid is kept.
+        $currentPid = null;
+        /** @var array{doktype: int, language: int, translations: array<int, array<int, true>>} $currentPage */
+        $currentPage = [];
 
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
         // Do not consider tt_content records that have been set to deleted already.
@@ -70,13 +72,14 @@ final class TtContentLocalizedPageTranslationMissing extends AbstractHealthCheck
                 $queryBuilder->expr()->gt('pid', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
                 $queryBuilder->expr()->gt('sys_language_uid', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT))
             )
-            ->orderBy('uid')
+            ->orderBy('pid')
+            ->addOrderBy('uid')
             ->executeQuery();
         $affectedRecords = [];
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             $pid = (int)$row['pid'];
-            if (!isset($pageCache[$pid])) {
+            if ($currentPid !== $pid) {
                 try {
                     $pageRow = $recordsHelper->getRecord('pages', ['uid', 'doktype', 'sys_language_uid'], $pid);
                 } catch (NoSuchRecordException $e) {
@@ -87,23 +90,24 @@ final class TtContentLocalizedPageTranslationMissing extends AbstractHealthCheck
                         1791475200
                     );
                 }
-                $pageCache[$pid] = [
+                $currentPid = $pid;
+                $currentPage = [
                     'doktype' => (int)$pageRow['doktype'],
                     'language' => (int)$pageRow['sys_language_uid'],
                     'translations' => $this->getPageTranslationWorkspaces($pid),
                 ];
             }
-            if ($pageCache[$pid]['doktype'] === PageRepository::DOKTYPE_SYSFOLDER) {
+            if ($currentPage['doktype'] === PageRepository::DOKTYPE_SYSFOLDER) {
                 continue;
             }
-            if ($pageCache[$pid]['language'] > 0) {
+            if ($currentPage['language'] > 0) {
                 // A translated page as pid, for instance by core bug #110892: TcaTablesPidTranslatedPage
                 // moves the record to the default language page, it is checked there in the next run.
                 continue;
             }
             $languageId = (int)$row['sys_language_uid'];
             $workspaceId = (int)$row['t3ver_wsid'];
-            $pageTranslationWorkspaces = $pageCache[$pid]['translations'][$languageId] ?? [];
+            $pageTranslationWorkspaces = $currentPage['translations'][$languageId] ?? [];
             // A live record needs a live page translation, a workspace record needs a
             // page translation in live or in its own workspace.
             if (!isset($pageTranslationWorkspaces[0]) && !isset($pageTranslationWorkspaces[$workspaceId])) {

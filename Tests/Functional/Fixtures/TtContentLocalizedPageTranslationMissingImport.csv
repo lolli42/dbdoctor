@@ -32,3 +32,5 @@
 ,14,0,0,1,0,0,"Ok lang 1 content on pid 0"
 # Skipped - pid is the translated page 3, TcaTablesPidTranslatedPage moves it to page 2 later
 ,15,3,0,1,0,0,"Ok lang 1 free mode content on translated sub page 1"
+# Should be set to deleted=1 - like uid 3, but after records of other pages in uid order
+,16,2,0,2,1,0,"Not ok lang 2 content on sub page 1, high uid"
