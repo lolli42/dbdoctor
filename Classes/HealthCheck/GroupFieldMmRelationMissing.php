@@ -67,6 +67,14 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
                     continue 2;
                 }
             }
+            if (empty($groupField['matchFields']) && count($this->getLocalFieldsOfMmTable($mmTableName)) > 1) {
+                // Broken TCA, ignored: A field without match fields sharing its MM table with other fields
+                // reads the rows of these fields as its own. Core RelationHandler is broken with this as well,
+                // readMM() and writeMM() restrict queries by match fields only. Without a "tablenames" column,
+                // their uid_foreign would be checked against the wrong table, and relations found missing by
+                // multiple fields would be removed more than once.
+                continue;
+            }
             $hasTablenamesField = $tableHelper->fieldExistsInTable($mmTableName, 'tablenames');
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($mmTableName);
             $queryBuilder->select('uid_local', 'uid_foreign')->from($mmTableName);
@@ -241,9 +249,20 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
      */
     private function canHandleMissingLocalRecords(string $mmTableName): bool
     {
-        $localTableNames = [];
-        $fieldCount = 0;
-        $fieldsWithoutMatchFields = 0;
+        $localFields = $this->getLocalFieldsOfMmTable($mmTableName);
+        $localTableNames = array_unique(array_column($localFields, 'tableName'));
+        $fieldsWithoutMatchFields = count(array_filter($localFields, static fn(array $localField): bool => !$localField['hasMatchFields']));
+        return count($localTableNames) === 1 && (count($localFields) === 1 || $fieldsWithoutMatchFields === 0);
+    }
+
+    /**
+     * All TCA fields using this MM table as local side.
+     *
+     * @return array<int, array{tableName: string, hasMatchFields: bool}>
+     */
+    private function getLocalFieldsOfMmTable(string $mmTableName): array
+    {
+        $localFields = [];
         foreach ($GLOBALS['TCA'] as $tableName => $tableConfig) {
             foreach ($tableConfig['columns'] ?? [] as $columnConfig) {
                 if (($columnConfig['config']['MM'] ?? '') !== $mmTableName
@@ -251,14 +270,13 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
                 ) {
                     continue;
                 }
-                $localTableNames[$tableName] = true;
-                $fieldCount++;
-                if (empty($columnConfig['config']['MM_match_fields'])) {
-                    $fieldsWithoutMatchFields++;
-                }
+                $localFields[] = [
+                    'tableName' => (string)$tableName,
+                    'hasMatchFields' => !empty($columnConfig['config']['MM_match_fields']),
+                ];
             }
         }
-        return count($localTableNames) === 1 && ($fieldCount === 1 || $fieldsWithoutMatchFields === 0);
+        return $localFields;
     }
 
     /**

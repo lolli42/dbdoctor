@@ -1,0 +1,16 @@
+"pages"
+,"uid","pid","deleted","title"
+,1,0,0,"Ok"
+"tt_content"
+,"uid","pid","deleted","header"
+,1,1,0,"Ok"
+"tx_dbdoctortestsgroup_item"
+,"uid","pid","deleted","title","relations_mm","relations_mm_without_match_fields"
+,1,1,0,"Not Ok - relation to missing record",2,1
+"tx_dbdoctortestsgroup_item_mm"
+,"uid_local","uid_foreign","tablenames","fieldname"
+,1,1,"tt_content","relations_mm"
+# Removed once by "relations_mm", the field without match fields is skipped
+,1,99,"tt_content","relations_mm"
+# Row of the field without match fields: Kept, the field is skipped
+,1,98,"tt_content",""

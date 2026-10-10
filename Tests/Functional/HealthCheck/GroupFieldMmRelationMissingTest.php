@@ -69,4 +69,22 @@ class GroupFieldMmRelationMissingTest extends AbstractFunctionalTestCase
         $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldMmRelationMissingAmbiguousImport.csv');
     }
+
+    #[Test]
+    public function fieldWithoutMatchFieldsIsSkippedIfMmTableIsSharedWithOtherFields(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldMmRelationMissingSharedImport.csv');
+        // Broken TCA: The field reads rows of "relations_mm" and "relations_mm_single" as its own.
+        $GLOBALS['TCA']['tx_dbdoctortestsgroup_item']['columns']['relations_mm_without_match_fields'] = [
+            'config' => [
+                'type' => 'group',
+                'allowed' => 'tt_content',
+                'MM' => 'tx_dbdoctortestsgroup_item_mm',
+            ],
+        ];
+        /** @var GroupFieldMmRelationMissing $subject */
+        $subject = $this->get(GroupFieldMmRelationMissing::class);
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldMmRelationMissingSharedFixed.csv');
+    }
 }
