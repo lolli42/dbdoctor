@@ -53,4 +53,16 @@ class TtContentLocalizedParentDifferentPidTest extends AbstractFunctionalTestCas
         $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizedParentDifferentPidFixed.csv');
     }
+
+    #[Test]
+    public function checkModeSkipsCheckWithUnexpectedT3verState(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizedParentDifferentPidStateMinusOneImport.csv');
+        $io = $this->createMock(SymfonyStyle::class);
+        $io->expects(self::once())->method('warning');
+        /** @var TtContentLocalizedParentDifferentPid $subject */
+        $subject = $this->get(TtContentLocalizedParentDifferentPid::class);
+        $result = $subject->handle($io, HealthCheckInterface::MODE_CHECK, '');
+        self::assertSame(HealthCheckInterface::RESULT_BROKEN, $result);
+    }
 }
