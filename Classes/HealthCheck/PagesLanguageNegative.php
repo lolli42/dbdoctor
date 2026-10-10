@@ -62,8 +62,8 @@ final class PagesLanguageNegative extends AbstractHealthCheck implements HealthC
         $this->softOrHardDeleteRecordsOfTable($run, $simulate, 'pages', $affectedRecords['pages'] ?? []);
     }
 
-    protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
+    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
     {
-        $this->outputRecordDetails($io, $affectedRecords, '', ['languageField']);
+        $this->outputRecordDetails($run, $affectedRecords, '', ['languageField']);
     }
 }

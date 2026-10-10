@@ -123,9 +123,9 @@ final class SysFileMetadataMissing extends AbstractHealthCheck implements Health
         $this->outputTableInsertAfter($run, $simulate, 'sys_file_metadata', $count);
     }
 
-    protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
+    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
     {
-        $this->outputRecordDetails($io, $affectedRecords, '', [], ['storage', 'identifier', 'missing']);
+        $this->outputRecordDetails($run, $affectedRecords, '', [], ['storage', 'identifier', 'missing']);
     }
 
     /**

@@ -80,8 +80,8 @@ final class PagesTranslatedLanguageParentDifferentPid extends AbstractHealthChec
         $this->deleteTcaRecordsOfTable($run, $simulate, 'pages', $affectedRecords['pages'] ?? []);
     }
 
-    protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
+    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
     {
-        $this->outputRecordDetails($io, $affectedRecords, '', ['transOrigPointerField']);
+        $this->outputRecordDetails($run, $affectedRecords, '', ['transOrigPointerField']);
     }
 }

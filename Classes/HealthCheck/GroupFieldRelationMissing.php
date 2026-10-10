@@ -133,11 +133,11 @@ final class GroupFieldRelationMissing extends AbstractHealthCheck implements Hea
         }
     }
 
-    protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
+    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
     {
         foreach ($affectedRecords as $tableName => $rows) {
             $fieldNames = array_values(array_unique(array_map(static fn(array $row): string => (string)$row['_fieldName'], $rows)));
-            $this->outputRecordDetails($io, [$tableName => $rows], '_reasonBroken', [], $fieldNames);
+            $this->outputRecordDetails($run, [$tableName => $rows], '_reasonBroken', [], $fieldNames);
         }
     }
 

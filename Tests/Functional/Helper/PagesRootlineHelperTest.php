@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\Helper;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Helper\PagesRootlineHelper;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -280,6 +281,6 @@ class PagesRootlineHelperTest extends AbstractFunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/PagesBrokenTreeImport.csv');
         /** @var PagesRootlineHelper $subject */
         $subject = $this->get(PagesRootlineHelper::class);
-        self::assertEquals($expected, $subject->getRootline($pid));
+        self::assertEquals($expected, $subject->getRootline(new PreparedStatements(), $pid));
     }
 }
