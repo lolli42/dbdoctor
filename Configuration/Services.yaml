@@ -378,10 +378,6 @@ services:
     public: true
     shared: false
 
-  Lolli\Dbdoctor\Renderer\RecordsRenderer:
-    public: true
-    shared: false
-
   Lolli\Dbdoctor\Commands\HealthCommand:
     tags:
       - name: 'console.command'

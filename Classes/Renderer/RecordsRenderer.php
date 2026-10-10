@@ -24,21 +24,12 @@ use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Helper\TableHelper;
 use Lolli\Dbdoctor\Helper\TcaHelper;
 
-final class RecordsRenderer
+final readonly class RecordsRenderer
 {
-    /**
-     * @var array<int, string>
-     */
-    private array $crUserCache = [];
-    /**
-     * @var array<int, string>
-     */
-    private array $workspaceCache = [];
-
     public function __construct(
-        private readonly RecordsHelper $recordsHelper,
-        private readonly TcaHelper $tcaHelper,
-        private readonly TableHelper $tableHelper,
+        private RecordsHelper $recordsHelper,
+        private TcaHelper $tcaHelper,
+        private TableHelper $tableHelper,
     ) {}
 
     /**
@@ -183,19 +174,15 @@ final class RecordsRenderer
         if ($crUserField) {
             $crUserUid = (int)$row[$crUserField];
             if ($crUserUid > 0) {
-                if (!($this->crUserCache[$crUserUid] ?? false)) {
-                    try {
-                        // Not checking TCA ctrl for be_users soft-delete-awareness here:
-                        // Hopefully nobody unsets this, and it is likely core would stumble on this, too.
-                        $user = $this->recordsHelper->getRecord($statements, 'be_users', ['username', 'deleted'], $crUserUid);
-                        $deletedString = $user['deleted'] ? '|<info>deleted</info>' : '';
-                        $crUserString = '[' . $crUserUid . $deletedString . ']' . $user['username'];
-                    } catch (NoSuchRecordException) {
-                        $crUserString = '[' . $crUserUid . '|<comment>missing</comment>]';
-                    }
-                    $this->crUserCache[$crUserUid] = $crUserString;
+                try {
+                    // Not checking TCA ctrl for be_users soft-delete-awareness here:
+                    // Hopefully nobody unsets this, and it is likely core would stumble on this, too.
+                    $user = $this->recordsHelper->getRecord($statements, 'be_users', ['username', 'deleted'], $crUserUid);
+                    $deletedString = $user['deleted'] ? '|<info>deleted</info>' : '';
+                    $row[$crUserField] = '[' . $crUserUid . $deletedString . ']' . $user['username'];
+                } catch (NoSuchRecordException) {
+                    $row[$crUserField] = '[' . $crUserUid . '|<comment>missing</comment>]';
                 }
-                $row[$crUserField] = $this->crUserCache[$crUserUid];
             } else {
                 $row[$crUserField] = '[<comment>0</comment>]';
             }
@@ -213,21 +200,17 @@ final class RecordsRenderer
         if ($workspaceIdField) {
             $workspaceUid = (int)$row[$workspaceIdField];
             if ($workspaceUid > 0) {
-                if (!($this->workspaceCache[$workspaceUid] ?? false)) {
-                    try {
-                        // Not checking TCA ctrl for sys_workspace soft-delete-awareness here:
-                        // Hopefully nobody unsets this, and it is likely core would stumble on this, too.
-                        $workspace = $this->recordsHelper->getRecord($statements, 'sys_workspace', ['title', 'deleted'], $workspaceUid);
-                        $deletedString = $workspace['deleted'] ? '|<info>deleted</info>' : '';
-                        $workspaceString = '[' . $workspaceUid . $deletedString . ']' . $workspace['title'];
-                    } catch (NoSuchRecordException) {
-                        $workspaceString = '[' . $workspaceUid . '|<comment>missing</comment>]';
-                    } catch (NoSuchTableException) {
-                        $workspaceString = '[' . $workspaceUid . '|<comment>no sys_workspace table</comment>]';
-                    }
-                    $this->workspaceCache[$workspaceUid] = $workspaceString;
+                try {
+                    // Not checking TCA ctrl for sys_workspace soft-delete-awareness here:
+                    // Hopefully nobody unsets this, and it is likely core would stumble on this, too.
+                    $workspace = $this->recordsHelper->getRecord($statements, 'sys_workspace', ['title', 'deleted'], $workspaceUid);
+                    $deletedString = $workspace['deleted'] ? '|<info>deleted</info>' : '';
+                    $row[$workspaceIdField] = '[' . $workspaceUid . $deletedString . ']' . $workspace['title'];
+                } catch (NoSuchRecordException) {
+                    $row[$workspaceIdField] = '[' . $workspaceUid . '|<comment>missing</comment>]';
+                } catch (NoSuchTableException) {
+                    $row[$workspaceIdField] = '[' . $workspaceUid . '|<comment>no sys_workspace table</comment>]';
                 }
-                $row[$workspaceIdField] = $this->workspaceCache[$workspaceUid];
             } else {
                 $row[$workspaceIdField] = '[0]Live';
             }
