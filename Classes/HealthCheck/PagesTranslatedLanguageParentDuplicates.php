@@ -81,7 +81,7 @@ final class PagesTranslatedLanguageParentDuplicates extends AbstractHealthCheck 
             // the highest uid is the typical last row. If none is visible, the highest uid is kept as well.
             $keepIndex = count($translations) - 1;
             foreach (array_reverse($translations, true) as $index => $translation) {
-                if ($this->isVisible($translation)) {
+                if ($this->tcaHelper->isVisibleInFrontend('pages', $translation, (int)$GLOBALS['EXEC_TIME'])) {
                     $keepIndex = $index;
                     break;
                 }
@@ -109,16 +109,5 @@ final class PagesTranslatedLanguageParentDuplicates extends AbstractHealthCheck 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
     {
         $this->outputRecordDetails($io, $affectedRecords, '', ['transOrigPointerField']);
-    }
-
-    /**
-     * @param array<string, int|string> $translation
-     */
-    private function isVisible(array $translation): bool
-    {
-        $now = (int)$GLOBALS['EXEC_TIME'];
-        return (int)$translation['hidden'] === 0
-            && (int)$translation['starttime'] <= $now
-            && ((int)$translation['endtime'] === 0 || (int)$translation['endtime'] > $now);
     }
 }

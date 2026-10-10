@@ -27,3 +27,14 @@
 ,4,1,0,0,0,1,1,1,"Not ok lang 1, second duplicate"
 ,5,1,0,0,0,0,0,1,"Ok other default language"
 ,6,1,0,0,0,1,5,1,"Ok lang 1 of other default language"
+,7,1,0,0,0,0,0,1,"Ok default language with hidden translation"
+# Should be set to deleted=1: Hidden, the frontend shows the visible one with the lowest uid
+,8,1,0,1,0,1,7,1,"Not ok lang 1, hidden, lowest uid"
+,9,1,0,0,0,1,7,1,"Ok lang 1, visible"
+# Should be set to deleted=1
+,10,1,0,0,0,1,7,1,"Not ok lang 1, second visible"
+,11,1,0,0,0,0,0,1,"Ok default language with hidden translations only"
+# None visible: The lowest uid is kept
+,12,1,0,1,0,1,11,1,"Ok lang 1, hidden, lowest uid"
+# Should be set to deleted=1
+,13,1,0,1,0,1,11,1,"Not ok lang 1, hidden duplicate"

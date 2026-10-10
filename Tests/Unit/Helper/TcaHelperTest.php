@@ -1303,6 +1303,77 @@ class TcaHelperTest extends UnitTestCase
     }
 
     #[Test]
+    public function getVisibilityFieldsReturnsFields(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['enablecolumns'] = [
+            'disabled' => 'hiddenField',
+            'starttime' => 'startTimeField',
+            'endtime' => 'endTimeField',
+            'fe_group' => 'feGroupField',
+        ];
+        self::assertSame(['hiddenField', 'startTimeField', 'endTimeField'], (new TcaHelper())->getVisibilityFields('foo'));
+    }
+
+    #[Test]
+    public function getVisibilityFieldsReturnsEmptyArray(): void
+    {
+        self::assertSame([], (new TcaHelper())->getVisibilityFields('foo'));
+    }
+
+    #[Test]
+    public function isVisibleInFrontendReturnsTrueWithoutEnableColumns(): void
+    {
+        self::assertTrue((new TcaHelper())->isVisibleInFrontend('foo', ['uid' => 1], 1000));
+    }
+
+    #[Test]
+    public function isVisibleInFrontendReturnsTrueIfVisible(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['enablecolumns'] = [
+            'disabled' => 'hidden',
+            'starttime' => 'starttime',
+            'endtime' => 'endtime',
+        ];
+        self::assertTrue((new TcaHelper())->isVisibleInFrontend('foo', ['hidden' => 0, 'starttime' => 1000, 'endtime' => 1001], 1000));
+    }
+
+    #[Test]
+    public function isVisibleInFrontendReturnsTrueWithoutEndTime(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['enablecolumns'] = [
+            'endtime' => 'endtime',
+        ];
+        self::assertTrue((new TcaHelper())->isVisibleInFrontend('foo', ['endtime' => 0], 1000));
+    }
+
+    #[Test]
+    public function isVisibleInFrontendReturnsFalseIfHidden(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['enablecolumns'] = [
+            'disabled' => 'hidden',
+        ];
+        self::assertFalse((new TcaHelper())->isVisibleInFrontend('foo', ['hidden' => 1], 1000));
+    }
+
+    #[Test]
+    public function isVisibleInFrontendReturnsFalseIfStartTimeIsInFuture(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['enablecolumns'] = [
+            'starttime' => 'starttime',
+        ];
+        self::assertFalse((new TcaHelper())->isVisibleInFrontend('foo', ['starttime' => 1001], 1000));
+    }
+
+    #[Test]
+    public function isVisibleInFrontendReturnsFalseIfEndTimeIsOver(): void
+    {
+        $GLOBALS['TCA']['foo']['ctrl']['enablecolumns'] = [
+            'endtime' => 'endtime',
+        ];
+        self::assertFalse((new TcaHelper())->isVisibleInFrontend('foo', ['endtime' => 1000], 1000));
+    }
+
+    #[Test]
     public function getCreateUserIdFieldReturnsField(): void
     {
         $GLOBALS['TCA']['foo']['ctrl']['cruser_id'] = 'cruserIdField';
