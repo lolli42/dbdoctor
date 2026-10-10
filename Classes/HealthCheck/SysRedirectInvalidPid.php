@@ -35,12 +35,9 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final class SysRedirectInvalidPid extends AbstractHealthCheck implements HealthCheckInterface
 {
-    private SiteFinder $siteFinder;
-
-    public function __construct(SiteFinder $siteFinder)
-    {
-        $this->siteFinder = $siteFinder;
-    }
+    public function __construct(
+        private readonly SiteFinder $siteFinder,
+    ) {}
 
     public function header(SymfonyStyle $io): void
     {

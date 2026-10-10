@@ -32,15 +32,10 @@ use TYPO3\CMS\Core\Utility\PathUtility;
  */
 final class HealthCommand extends Command
 {
-    private HealthFactoryInterface $healthFactory;
-    private DatabaseSchemaChecker $databaseSchemaChecker;
-
     public function __construct(
-        HealthFactoryInterface $healthFactory,
-        DatabaseSchemaChecker $databaseSchemaChecker
+        private readonly HealthFactoryInterface $healthFactory,
+        private readonly DatabaseSchemaChecker $databaseSchemaChecker,
     ) {
-        $this->healthFactory = $healthFactory;
-        $this->databaseSchemaChecker = $databaseSchemaChecker;
         parent::__construct();
     }
 

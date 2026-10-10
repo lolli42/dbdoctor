@@ -32,16 +32,10 @@ final class RecordsHelper
      */
     private array $preparedStatements = [];
 
-    private ContainerInterface $container;
-    private ConnectionPool $connectionPool;
-
     public function __construct(
-        ContainerInterface $container,
-        ConnectionPool $connectionPool
-    ) {
-        $this->container = $container;
-        $this->connectionPool = $connectionPool;
-    }
+        private readonly ContainerInterface $container,
+        private readonly ConnectionPool $connectionPool,
+    ) {}
 
     /**
      * @param array<int, string> $fields

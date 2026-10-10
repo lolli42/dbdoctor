@@ -19,10 +19,10 @@ namespace Lolli\Dbdoctor\Renderer;
 
 use Lolli\Dbdoctor\Helper\PagesRootlineHelper;
 
-final class AffectedPagesRenderer
+final readonly class AffectedPagesRenderer
 {
     public function __construct(
-        private readonly PagesRootlineHelper $pagesRootlineHelper,
+        private PagesRootlineHelper $pagesRootlineHelper,
     ) {}
 
     /**
