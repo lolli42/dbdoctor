@@ -17,6 +17,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -43,9 +48,9 @@ final readonly class TcaTablesTranslationSourceLogicWithParent extends AbstractH
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRecords = [];
+        $findings = [];
         foreach ($this->tcaHelper->getNextLanguageSourceAwareTcaTable() as $tableName) {
             [$languageField, $translationParentField, $translationSourceField] = $this->getFields($tableName);
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
@@ -74,30 +79,30 @@ final readonly class TcaTablesTranslationSourceLogicWithParent extends AbstractH
                     continue;
                 }
                 // The parent of the translation source must be the parent of the handled record.
-                if ((int)$translationSourceRecord[$translationParentField] !== (int)$row[$translationParentField]) {
-                    $affectedRecords[$tableName][] = $row;
+                $translationSourceParent = (int)$translationSourceRecord[$translationParentField];
+                if ($translationSourceParent !== (int)$row[$translationParentField]) {
+                    $translationSourceUid = (int)$row[$translationSourceField];
+                    $findings[] = new Finding(
+                        new RecordKey($tableName, (int)$row['uid']),
+                        (int)$row['pid'],
+                        [
+                            new RecordChange(RecordChangeType::Update, $tableName, (int)$row['uid'], [
+                                $translationSourceField => [
+                                    'value' => (int)$row[$translationParentField],
+                                    'type' => Connection::PARAM_INT,
+                                ],
+                            ]),
+                        ],
+                        new Reason(
+                            'source-parent-different',
+                            'Translation source "' . $translationSourceUid . '" has language parent "' . $translationSourceParent . '"',
+                            ['translationSource' => $translationSourceUid, 'translationSourceParent' => $translationSourceParent]
+                        ),
+                    );
                 }
             }
         }
-        return $affectedRecords;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        foreach ($affectedRecords as $tableName => $rows) {
-            [, $translationParentField, $translationSourceField] = $this->getFields($tableName);
-            $this->outputTableUpdateBefore($run, $simulate, $tableName);
-            foreach ($rows as $row) {
-                $updateFields = [
-                    $translationSourceField => [
-                        'value' => (int)$row[$translationParentField],
-                        'type' => Connection::PARAM_INT,
-                    ],
-                ];
-                $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid'], $updateFields);
-            }
-            $this->outputTableUpdateAfter($run, $simulate, $tableName, count($rows));
-        }
+        return $findings;
     }
 
     /**

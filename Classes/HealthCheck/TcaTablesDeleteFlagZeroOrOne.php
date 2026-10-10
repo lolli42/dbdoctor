@@ -16,6 +16,10 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -37,9 +41,9 @@ final readonly class TcaTablesDeleteFlagZeroOrOne extends AbstractHealthCheck im
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRows = [];
+        $findings = [];
         foreach ($this->tcaHelper->getNextSoftDeleteAwareTable() as $tableName) {
             $tableDeleteField = $this->tcaHelper->getDeletedField($tableName);
             if (empty($tableDeleteField)) {
@@ -58,30 +62,21 @@ final readonly class TcaTablesDeleteFlagZeroOrOne extends AbstractHealthCheck im
             $result = $queryBuilder->executeQuery();
             while ($row = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $row */
-                $affectedRows[$tableName][(int)$row['uid']] = $row;
-            }
-        }
-        return $affectedRows;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        foreach ($affectedRecords as $tableName => $tableRows) {
-            // Force "deleted=1" for affected rows.
-            $deletedField = $this->tcaHelper->getDeletedField($tableName);
-            if ($deletedField === null) {
-                throw new \RuntimeException(
-                    'The delete field must not be empty. This exception indicates a bug in getNextSoftDeleteAwareTable()',
-                    1761914758
+                // Force "deleted=1" for affected rows.
+                $findings[] = new Finding(
+                    new RecordKey($tableName, (int)$row['uid']),
+                    (int)$row['pid'],
+                    [
+                        new RecordChange(RecordChangeType::SoftDelete, $tableName, (int)$row['uid'], [
+                            $tableDeleteField => [
+                                'value' => 1,
+                                'type' => Connection::PARAM_INT,
+                            ],
+                        ]),
+                    ],
                 );
             }
-            $updateFields = [
-                $deletedField => [
-                    'value' => 1,
-                    'type' => Connection::PARAM_INT,
-                ],
-            ];
-            $this->updateTcaRecordsOfTable($run, $simulate, $tableName, $tableRows, $updateFields);
         }
+        return $findings;
     }
 }

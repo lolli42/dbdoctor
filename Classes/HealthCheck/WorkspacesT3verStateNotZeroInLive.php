@@ -16,6 +16,10 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -42,9 +46,9 @@ final readonly class WorkspacesT3verStateNotZeroInLive extends AbstractHealthChe
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRows = [];
+        $findings = [];
         foreach ($this->tcaHelper->getNextWorkspaceEnabledTcaTable() as $tableName) {
             $deleteField = $this->tcaHelper->getDeletedField($tableName);
             $isTableDeleteAware = !empty($deleteField);
@@ -69,45 +73,25 @@ final readonly class WorkspacesT3verStateNotZeroInLive extends AbstractHealthChe
                 )
                 ->orderBy('uid')
                 ->executeQuery();
-            while ($row = $result->fetchAssociative()) {
-                /** @var array<string, int|string> $row */
-                $affectedRows[$tableName][(int)$row['uid']] = $row;
-            }
-        }
-        return $affectedRows;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        foreach ($affectedRecords as $tableName => $tableRows) {
-            $this->outputTableHandleBefore($run, $simulate, $tableName);
-
-            $updateCount = 0;
-            $deleteCount = 0;
-
-            $deleteField = $this->tcaHelper->getDeletedField($tableName);
-            $isTableDeleteAware = !empty($deleteField);
-
-            foreach ($tableRows as $tableRow) {
+            while ($tableRow = $result->fetchAssociative()) {
+                /** @var array<string, int|string> $tableRow */
+                $uid = (int)$tableRow['uid'];
                 if ($isTableDeleteAware && ((int)$tableRow[$deleteField] === 1)) {
                     // If row is soft-deleted already, we now fully remove it.
-                    $this->deleteSingleTcaRecord($run, $simulate, $tableName, (int)$tableRow['uid']);
-                    $deleteCount++;
+                    $change = new RecordChange(RecordChangeType::Delete, $tableName, $uid);
                 } elseif ((int)$tableRow['t3ver_state'] <= -1) {
                     // t3ver_state < 0 lead to exceptions in the BE page module, but are
                     // SHOWN in FE - we update to t3ver_state=0 and keep them.
-                    $updateFields = [
+                    $change = new RecordChange(RecordChangeType::Update, $tableName, $uid, [
                         't3ver_state' => [
                             'value' => 0,
                             'type' => Connection::PARAM_INT,
                         ],
-                    ];
-                    $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$tableRow['uid'], $updateFields);
-                    $updateCount++;
+                    ]);
                 } elseif ($isTableDeleteAware) {
                     // t3ver_state > 0 are never shown in FE and may lead to exceptions in the BE page module.
                     // If the table is soft-delete aware, we set those records deleted=1 and t3ver_state=0
-                    $updateFields = [
+                    $change = new RecordChange(RecordChangeType::Update, $tableName, $uid, [
                         $deleteField => [
                             'value' => 1,
                             'type' => Connection::PARAM_INT,
@@ -116,18 +100,19 @@ final readonly class WorkspacesT3verStateNotZeroInLive extends AbstractHealthChe
                             'value' => 0,
                             'type' => Connection::PARAM_INT,
                         ],
-                    ];
-                    $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$tableRow['uid'], $updateFields);
-                    $updateCount++;
+                    ]);
                 } else {
                     // t3ver_state > 0 are never shown in FE and may lead to exceptions in the BE page module.
                     // The table is not soft-delete aware, we remove the record.
-                    $this->deleteSingleTcaRecord($run, $simulate, $tableName, (int)$tableRow['uid']);
-                    $deleteCount++;
+                    $change = new RecordChange(RecordChangeType::Delete, $tableName, $uid);
                 }
+                $findings[] = new Finding(
+                    new RecordKey($tableName, $uid),
+                    (int)$tableRow['pid'],
+                    [$change],
+                );
             }
-
-            $this->outputTableHandleAfter($run, $simulate, $tableName, $updateCount, $deleteCount);
         }
+        return $findings;
     }
 }

@@ -16,6 +16,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -44,7 +49,7 @@ final readonly class PagesTranslatedLanguageParentDuplicates extends AbstractHea
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
         // Find combinations of l10n_parent and sys_language_uid having more than one live translation
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
@@ -61,7 +66,7 @@ final readonly class PagesTranslatedLanguageParentDuplicates extends AbstractHea
             ->orderBy('l10n_parent')
             ->addOrderBy('sys_language_uid')
             ->executeQuery();
-        $affectedRecords = [];
+        $findings = [];
         while ($duplicate = $result->fetchAssociative()) {
             /** @var array<string, int|string> $duplicate */
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
@@ -86,28 +91,31 @@ final readonly class PagesTranslatedLanguageParentDuplicates extends AbstractHea
                     break;
                 }
             }
+            $keepUid = (int)$translations[$keepIndex]['uid'];
             unset($translations[$keepIndex]);
             foreach ($translations as $translation) {
                 /** @var array<string, int|string> $translation */
-                $affectedRecords['pages'][] = $translation;
+                $findings[] = new Finding(
+                    new RecordKey('pages', (int)$translation['uid']),
+                    (int)$translation['pid'],
+                    [
+                        new RecordChange(RecordChangeType::SoftDelete, 'pages', (int)$translation['uid'], [
+                            'deleted' => [
+                                'value' => 1,
+                                'type' => Connection::PARAM_INT,
+                            ],
+                        ]),
+                    ],
+                    new Reason('duplicate', 'Duplicate of kept record "' . $keepUid . '"', ['kept' => $keepUid]),
+                    ['kept' => $keepUid],
+                );
             }
         }
-        return $affectedRecords;
+        return $findings;
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    protected function getDetailCtrlFields(string $tableName): array
     {
-        $updateFields = [
-            'deleted' => [
-                'value' => 1,
-                'type' => Connection::PARAM_INT,
-            ],
-        ];
-        $this->updateTcaRecordsOfTable($run, $simulate, 'pages', $affectedRecords['pages'] ?? [], $updateFields);
-    }
-
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        $this->outputRecordDetails($run, $affectedRecords, '', ['transOrigPointerField']);
+        return ['transOrigPointerField'];
     }
 }

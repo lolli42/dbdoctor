@@ -17,6 +17,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -42,9 +47,12 @@ final readonly class InlineForeignFieldChildrenParentLanguageDifferent extends A
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRows = [];
+        // Per table: Updates of children with language -1 first, then soft or hard deletes of the others.
+        $updateFindings = [];
+        $deleteFindings = [];
+        $tableNames = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
             $childTableName = $inlineChild['tableName'];
             $childTableLanguageField = $this->tcaHelper->getLanguageField($childTableName);
@@ -106,13 +114,30 @@ final readonly class InlineForeignFieldChildrenParentLanguageDifferent extends A
                         // If parent row is sys_language_uid = 0, and child row is -1, that's fine.
                         && !($parentRowLanguage === 0 && $childRowLanguage === -1)
                     ) {
-                        $inlineChildRow['_reasonBroken'] = $childRowLanguage === -1
-                            ? 'Language -1 with parent record language ' . $parentRowLanguage
-                            : 'Parent record language ' . $parentRowLanguage;
-                        $inlineChildRow['_fieldNameOfParentTableName'] = $fieldNameOfParentTableName;
-                        $inlineChildRow['_fieldNameOfParentTableUid'] = $fieldNameOfParentTableUid;
-                        $inlineChildRow['_parentRowLanguage'] = $parentRowLanguage;
-                        $affectedRows[$childTableName][] = $inlineChildRow;
+                        $childUid = (int)$inlineChildRow['uid'];
+                        $tableNames[$childTableName] = true;
+                        if ($childRowLanguage === -1) {
+                            $updateFindings[$childTableName][] = new Finding(
+                                new RecordKey($childTableName, $childUid),
+                                (int)$inlineChildRow['pid'],
+                                [
+                                    new RecordChange(RecordChangeType::Update, $childTableName, $childUid, [
+                                        $childTableLanguageField => [
+                                            'value' => $parentRowLanguage,
+                                            'type' => Connection::PARAM_INT,
+                                        ],
+                                    ]),
+                                ],
+                                new Reason('all-languages-parent-language', 'Language -1 with parent record language ' . $parentRowLanguage, ['parentLanguage' => $parentRowLanguage]),
+                            );
+                        } else {
+                            $deleteFindings[$childTableName][] = new Finding(
+                                new RecordKey($childTableName, $childUid),
+                                (int)$inlineChildRow['pid'],
+                                [$this->softOrHardDeleteChange($childTableName, $inlineChildRow)],
+                                new Reason('parent-language-different', 'Parent record language ' . $parentRowLanguage, ['parentLanguage' => $parentRowLanguage]),
+                            );
+                        }
                     }
                 } catch (NoSuchRecordException $e) {
                     // Record existence has been checked by InlineForeignFieldChildrenParentMissing already.
@@ -121,43 +146,37 @@ final readonly class InlineForeignFieldChildrenParentLanguageDifferent extends A
                 }
             }
         }
-        return $affectedRows;
+        return $this->mergeFindings($tableNames, $updateFindings, $deleteFindings);
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    protected function getDetailDbFields(string $tableName): array
     {
-        foreach ($affectedRecords as $tableName => $rows) {
-            /** @var string $languageField */
-            $languageField = $this->tcaHelper->getLanguageField($tableName);
-            $allLanguagesRows = array_filter($rows, static fn(array $row): bool => (int)$row[$languageField] === -1);
-            $otherRows = array_filter($rows, static fn(array $row): bool => (int)$row[$languageField] !== -1);
-            if ($allLanguagesRows !== []) {
-                $this->outputTableUpdateBefore($run, $simulate, $tableName);
-                foreach ($allLanguagesRows as $row) {
-                    $fields = [
-                        $languageField => [
-                            'value' => (int)$row['_parentRowLanguage'],
-                            'type' => Connection::PARAM_INT,
-                        ],
-                    ];
-                    $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid'], $fields);
-                }
-                $this->outputTableUpdateAfter($run, $simulate, $tableName, count($allLanguagesRows));
-            }
-            if ($otherRows !== []) {
-                $this->softOrHardDeleteRecordsOfTable($run, $simulate, $tableName, array_values($otherRows));
+        foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
+            if ($inlineChild['tableName'] === $tableName) {
+                return [
+                    $inlineChild['fieldNameOfParentTableName'],
+                    $inlineChild['fieldNameOfParentTableUid'],
+                ];
             }
         }
+        return [];
     }
 
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
+    /**
+     * Findings of all tables, table by table in the order they were found first: All
+     * updates of a table before its deletes.
+     *
+     * @param array<string, true> $tableNames
+     * @param array<string, array<int, Finding>> $updateFindings
+     * @param array<string, array<int, Finding>> $deleteFindings
+     * @return list<Finding>
+     */
+    private function mergeFindings(array $tableNames, array $updateFindings, array $deleteFindings): array
     {
-        foreach ($affectedRecords as $tableName => $rows) {
-            $extraDbFields = [
-                (string)$rows[0]['_fieldNameOfParentTableName'],
-                (string)$rows[0]['_fieldNameOfParentTableUid'],
-            ];
-            $this->outputRecordDetails($run, [$tableName => $rows], '_reasonBroken', [], $extraDbFields);
+        $findings = [];
+        foreach (array_keys($tableNames) as $tableName) {
+            array_push($findings, ...array_values($updateFindings[$tableName] ?? []), ...array_values($deleteFindings[$tableName] ?? []));
         }
+        return $findings;
     }
 }

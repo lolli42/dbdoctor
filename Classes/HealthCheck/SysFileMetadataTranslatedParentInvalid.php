@@ -16,6 +16,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -50,7 +55,7 @@ final readonly class SysFileMetadataTranslatedParentInvalid extends AbstractHeal
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_metadata');
         $queryBuilder->getRestrictions()->removeAll();
@@ -80,35 +85,36 @@ final readonly class SysFileMetadataTranslatedParentInvalid extends AbstractHeal
             ->groupBy('translation.uid', 'translation.pid', 'translation.file', 'translation.sys_language_uid', 'translation.l10n_parent')
             ->orderBy('translation.uid')
             ->executeQuery();
-        $affectedRecords = [];
+        $findings = [];
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
-            if ((int)$row['l10n_parent'] !== (int)$row['default_uid']) {
-                $row['_reasonBroken'] = 'l10n_parent should be ' . (int)$row['default_uid'];
-                $affectedRecords['sys_file_metadata'][] = $row;
+            $defaultUid = (int)$row['default_uid'];
+            if ((int)$row['l10n_parent'] !== $defaultUid) {
+                $findings[] = new Finding(
+                    new RecordKey('sys_file_metadata', (int)$row['uid']),
+                    (int)$row['pid'],
+                    [
+                        new RecordChange(RecordChangeType::Update, 'sys_file_metadata', (int)$row['uid'], [
+                            'l10n_parent' => [
+                                'value' => $defaultUid,
+                                'type' => Connection::PARAM_INT,
+                            ],
+                        ]),
+                    ],
+                    new Reason('parent-not-default', 'l10n_parent should be ' . $defaultUid, ['defaultUid' => $defaultUid]),
+                );
             }
         }
-        return $affectedRecords;
+        return $findings;
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    protected function getDetailCtrlFields(string $tableName): array
     {
-        $rows = $affectedRecords['sys_file_metadata'] ?? [];
-        $this->outputTableUpdateBefore($run, $simulate, 'sys_file_metadata');
-        foreach ($rows as $row) {
-            $fields = [
-                'l10n_parent' => [
-                    'value' => (int)$row['default_uid'],
-                    'type' => Connection::PARAM_INT,
-                ],
-            ];
-            $this->updateSingleTcaRecord($run, $simulate, 'sys_file_metadata', (int)$row['uid'], $fields);
-        }
-        $this->outputTableUpdateAfter($run, $simulate, 'sys_file_metadata', count($rows));
+        return ['languageField', 'transOrigPointerField'];
     }
 
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
+    protected function getDetailDbFields(string $tableName): array
     {
-        $this->outputRecordDetails($run, $affectedRecords, '_reasonBroken', ['languageField', 'transOrigPointerField'], ['file']);
+        return ['file'];
     }
 }
