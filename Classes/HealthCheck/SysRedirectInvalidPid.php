@@ -16,6 +16,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -51,7 +56,7 @@ final readonly class SysRedirectInvalidPid extends AbstractHealthCheck implement
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
         if (!$this->tableHelper->tableExistsInDatabase('sys_redirect')) {
             return [];
@@ -65,7 +70,7 @@ final readonly class SysRedirectInvalidPid extends AbstractHealthCheck implement
         }
         $allowedPids = array_unique($allowedPids);
 
-        $tableRows = [];
+        $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_redirect');
         // We for now don't take care of deleted=1 records in this case to reduce the number of affected records
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
@@ -77,37 +82,42 @@ final readonly class SysRedirectInvalidPid extends AbstractHealthCheck implement
             ->executeQuery();
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
-            $tableRows['sys_redirect'][] = $row;
+            $rootPageId = $this->getRootPageId((int)$row['pid']);
+            $findings[] = new Finding(
+                new RecordKey('sys_redirect', (int)$row['uid']),
+                (int)$row['pid'],
+                [
+                    new RecordChange(RecordChangeType::Update, 'sys_redirect', (int)$row['uid'], [
+                        'pid' => [
+                            'value' => $rootPageId,
+                            'type' => Connection::PARAM_INT,
+                        ],
+                    ]),
+                ],
+                new Reason(
+                    'no-site-root',
+                    'Page "' . $row['pid'] . '" is no site root, target "' . $rootPageId . '"',
+                    ['target' => $rootPageId]
+                ),
+            );
         }
-        return $tableRows;
+        return $findings;
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    /**
+     * First page up in rootline that has a site config, or 0.
+     */
+    private function getRootPageId(int $pid): int
     {
-        foreach ($affectedRecords as $tableName => $tableRows) {
-            $this->outputTableUpdateBefore($run, $simulate, $tableName);
-            $count = 0;
-            foreach ($tableRows as $tableRow) {
-                try {
-                    // Note this "pollutes" rootline caches
-                    $rootPageId = $this->siteFinder->getSiteByPageId((int)$tableRow['pid'])->getRootPageId();
-                } catch (SiteNotFoundException $e) {
-                    // Move redirects without proper site config root page to pid 0.
-                    $rootPageId = 0;
-                } catch (CircularRootLineException $e) {
-                    // A pid loop has no site root either, PagesBrokenTree removes these pages later.
-                    $rootPageId = 0;
-                }
-                $updateFields = [
-                    'pid' => [
-                        'value' => $rootPageId,
-                        'type' => Connection::PARAM_INT,
-                    ],
-                ];
-                $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$tableRow['uid'], $updateFields);
-                $count++;
-            }
-            $this->outputTableUpdateAfter($run, $simulate, $tableName, $count);
+        try {
+            // Note this "pollutes" rootline caches
+            return $this->siteFinder->getSiteByPageId($pid)->getRootPageId();
+        } catch (SiteNotFoundException $e) {
+            // Move redirects without proper site config root page to pid 0.
+            return 0;
+        } catch (CircularRootLineException $e) {
+            // A pid loop has no site root either, PagesBrokenTree removes these pages later.
+            return 0;
         }
     }
 }
