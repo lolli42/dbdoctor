@@ -1,0 +1,6 @@
+"tx_dbdoctortestssync_item"
+,"uid","pid","sys_language_uid","l10n_parent","l10n_state","title","relation_select","relation_group","relation_category","static_select"
+,1,0,0,0,"","Default","0","0","0","0"
+,2,0,1,1,"","Default","","\NULL","","0"
+,3,0,2,1,"{""static_select"":""custom""}","Default","\NULL","","\NULL",""
+,4,0,3,1,"{""relation_select"":""custom""}","Default","1","0","0","0"

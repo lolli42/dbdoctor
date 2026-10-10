@@ -1,4 +1,4 @@
-"tx_dbdoctortestsjson_item"
+"tx_dbdoctortestssync_item"
 ,"uid","pid","sys_language_uid","l10n_parent","l10n_state","title","settings"
 ,1,0,0,0,"","Default","{""a"":1}"
 # Kept: The json field "settings" differs, json fields are not compared

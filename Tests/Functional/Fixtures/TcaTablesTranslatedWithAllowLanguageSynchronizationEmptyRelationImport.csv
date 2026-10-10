@@ -1,0 +1,10 @@
+"tx_dbdoctortestssync_item"
+,"uid","pid","sys_language_uid","l10n_parent","l10n_state","title","relation_select","relation_group","relation_category","static_select"
+# "0" in relation fields, written without DataHandler
+,1,0,0,0,"","Default","0","0","0","0"
+# Kept: Empty string and NULL in relation fields mean "no relation" as well
+,2,0,1,1,"","Default","","\NULL","","0"
+# Should get l10n_state {"static_select":"custom"}: Empty string is a different static item than "0"
+,3,0,2,1,"","Default","\NULL","","\NULL",""
+# Should get l10n_state {"relation_select":"custom"}: A relation differs from no relation
+,4,0,3,1,"","Default","1","0","0","0"

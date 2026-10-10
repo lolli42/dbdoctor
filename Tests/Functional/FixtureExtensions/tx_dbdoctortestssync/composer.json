@@ -1,5 +1,5 @@
 {
-	"name": "dbdoctortests/test-json",
+	"name": "dbdoctortests/test-sync",
 	"type": "typo3-cms-extension",
 	"description": "A test extension for dbdoctor",
 	"license": "GPL-2.0-or-later",
@@ -8,7 +8,7 @@
 	},
 	"extra": {
 		"typo3/cms": {
-			"extension-key": "tx_dbdoctortestsjson",
+			"extension-key": "tx_dbdoctortestssync",
 			"version": "1.0.0",
 			"Package": {
 				"providesPackages": {}
