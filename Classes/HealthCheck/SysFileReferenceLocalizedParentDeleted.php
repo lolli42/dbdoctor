@@ -18,6 +18,9 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -49,9 +52,9 @@ final readonly class SysFileReferenceLocalizedParentDeleted extends AbstractHeal
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $tableRows = [];
+        $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
         $result = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'l10n_parent', 't3ver_wsid')->from('sys_file_reference')
@@ -71,20 +74,20 @@ final readonly class SysFileReferenceLocalizedParentDeleted extends AbstractHeal
                 continue;
             }
             if ((int)$languageParentRecord['deleted'] === 1) {
-                $tableRows['sys_file_reference'][] = $row;
+                // @todo: Risky. Similar possible strategies to mitigate this as in SysFileReferenceLocalizedParentExists.
+                $findings[] = new Finding(
+                    new RecordKey('sys_file_reference', (int)$row['uid']),
+                    (int)$row['pid'],
+                    [$this->softOrHardDeleteChange('sys_file_reference', $row)],
+                    new Reason('parent-deleted', 'Language parent "' . $row['l10n_parent'] . '" is soft-deleted', ['l10n_parent' => (int)$row['l10n_parent']]),
+                );
             }
         }
-        return $tableRows;
+        return $findings;
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    protected function getDetailDbFields(string $tableName): array
     {
-        // @todo: Risky. Similar possible strategies to mitigate this as in SysFileReferenceLocalizedParentExists.
-        $this->softOrHardDeleteRecordsOfTable($run, $simulate, 'sys_file_reference', $affectedRecords['sys_file_reference'] ?? []);
-    }
-
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        $this->outputRecordDetails($run, $affectedRecords, '', [], ['sys_language_uid', 'l10n_parent', 'deleted', 'tablenames', 'uid_foreign', 'fieldname', 'uid_local']);
+        return ['sys_language_uid', 'l10n_parent', 'deleted', 'tablenames', 'uid_foreign', 'fieldname', 'uid_local'];
     }
 }

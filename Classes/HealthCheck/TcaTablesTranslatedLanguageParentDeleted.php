@@ -18,6 +18,9 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -44,9 +47,9 @@ final readonly class TcaTablesTranslatedLanguageParentDeleted extends AbstractHe
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRows = [];
+        $findings = [];
         foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {
             $deletedField = $this->tcaHelper->getDeletedField($tableName);
             if (!$deletedField) {
@@ -94,7 +97,16 @@ final readonly class TcaTablesTranslatedLanguageParentDeleted extends AbstractHe
                 try {
                     $parentRow = $this->recordsHelper->getRecord($run->statements, $tableName, $parentRowFields, (int)$localizedRow[$translationParentField]);
                     if ((int)$parentRow[$deletedField] === 1) {
-                        $affectedRows[$tableName][] = $localizedRow;
+                        $findings[] = new Finding(
+                            new RecordKey($tableName, (int)$localizedRow['uid']),
+                            (int)$localizedRow['pid'],
+                            [$this->softOrHardDeleteChange($tableName, $localizedRow)],
+                            new Reason(
+                                'parent-deleted',
+                                'Language parent "' . $localizedRow[$translationParentField] . '" is soft-deleted',
+                                [$translationParentField => (int)$localizedRow[$translationParentField]]
+                            ),
+                        );
                     }
                 } catch (NoSuchRecordException $e) {
                     // Earlier test should have fixed this.
@@ -107,16 +119,11 @@ final readonly class TcaTablesTranslatedLanguageParentDeleted extends AbstractHe
                 }
             }
         }
-        return $affectedRows;
+        return $findings;
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    protected function getDetailCtrlFields(string $tableName): array
     {
-        $this->softOrHardDeleteRecords($run, $simulate, $affectedRecords);
-    }
-
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        $this->outputRecordDetails($run, $affectedRecords, '', ['transOrigPointerField']);
+        return ['transOrigPointerField'];
     }
 }

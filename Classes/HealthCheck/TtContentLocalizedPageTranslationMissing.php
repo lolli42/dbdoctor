@@ -18,6 +18,8 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -52,7 +54,7 @@ final readonly class TtContentLocalizedPageTranslationMissing extends AbstractHe
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
         // Records are sorted by pid: Only the page of the current pid is kept.
         $currentPid = null;
@@ -71,7 +73,7 @@ final readonly class TtContentLocalizedPageTranslationMissing extends AbstractHe
             ->orderBy('pid')
             ->addOrderBy('uid')
             ->executeQuery();
-        $affectedRecords = [];
+        $findings = [];
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             $pid = (int)$row['pid'];
@@ -107,20 +109,19 @@ final readonly class TtContentLocalizedPageTranslationMissing extends AbstractHe
             // A live record needs a live page translation, a workspace record needs a
             // page translation in live or in its own workspace.
             if (!isset($pageTranslationWorkspaces[0]) && !isset($pageTranslationWorkspaces[$workspaceId])) {
-                $affectedRecords['tt_content'][] = $row;
+                $findings[] = new Finding(
+                    new RecordKey('tt_content', (int)$row['uid']),
+                    $pid,
+                    [$this->softOrHardDeleteChange('tt_content', $row)],
+                );
             }
         }
-        return $affectedRecords;
+        return $findings;
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    protected function getDetailCtrlFields(string $tableName): array
     {
-        $this->softOrHardDeleteRecordsOfTable($run, $simulate, 'tt_content', $affectedRecords['tt_content'] ?? []);
-    }
-
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        $this->outputRecordDetails($run, $affectedRecords, '', ['languageField', 'transOrigPointerField']);
+        return ['languageField', 'transOrigPointerField'];
     }
 
     /**

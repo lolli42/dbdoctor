@@ -16,6 +16,9 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Lolli\Dbdoctor\Helper\PagesTreeHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
@@ -57,7 +60,7 @@ final readonly class TcaTablesTranslatedLanguageNotInSiteConfiguration extends A
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
         // Resolve sites with PagesTreeHelper instead of SiteFinder->getSiteByPageId(). This is deliberate:
         // SiteFinder uses RootlineUtility, which is unsuitable for bulk lookups, see PagesTreeHelper.
@@ -81,7 +84,7 @@ final readonly class TcaTablesTranslatedLanguageNotInSiteConfiguration extends A
         );
         $sysFolderUids = $this->getLiveSysFolderUids();
 
-        $affectedRows = [];
+        $findings = [];
         foreach ($this->tcaHelper->getNextLanguageAwareTcaTable() as $tableName) {
             if (!$this->tableHelper->tableExistsInDatabase($tableName)) {
                 // TCA may define tables not yet present in database schema.
@@ -139,22 +142,21 @@ final readonly class TcaTablesTranslatedLanguageNotInSiteConfiguration extends A
                     continue;
                 }
                 if (!isset($siteLanguageIds[$siteIdentifier][$langId])) {
-                    $row['_reasonBroken'] = 'Language not in site "' . $siteIdentifier . '"';
-                    $affectedRows[$tableName][(int)$row['uid']] = $row;
+                    $findings[] = new Finding(
+                        new RecordKey($tableName, (int)$row['uid']),
+                        (int)$row['pid'],
+                        [$this->softOrHardDeleteChange($tableName, $row)],
+                        new Reason('language-not-in-site', 'Language not in site "' . $siteIdentifier . '"', ['site' => $siteIdentifier, 'language' => $langId]),
+                    );
                 }
             }
         }
-        return $affectedRows;
+        return $findings;
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    protected function getDetailCtrlFields(string $tableName): array
     {
-        $this->softOrHardDeleteRecords($run, $simulate, $affectedRecords);
-    }
-
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        $this->outputRecordDetails($run, $affectedRecords, '_reasonBroken', ['languageField', 'transOrigPointerField']);
+        return ['languageField', 'transOrigPointerField'];
     }
 
     /**

@@ -20,6 +20,9 @@ namespace Lolli\Dbdoctor\HealthCheck;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -44,9 +47,9 @@ final readonly class TtContentLocalizedParentSoftDeleted extends AbstractHealthC
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRecords = [];
+        $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
         $result = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'l18n_parent', 't3ver_wsid')->from('tt_content')
@@ -61,7 +64,12 @@ final readonly class TtContentLocalizedParentSoftDeleted extends AbstractHealthC
             try {
                 $languageParent = $this->recordsHelper->getRecord($run->statements, 'tt_content', ['uid', 'deleted'], (int)$row['l18n_parent']);
                 if ((int)$languageParent['deleted'] === 1) {
-                    $affectedRecords['tt_content'][] = $row;
+                    $findings[] = new Finding(
+                        new RecordKey('tt_content', (int)$row['uid']),
+                        (int)$row['pid'],
+                        [$this->softOrHardDeleteChange('tt_content', $row)],
+                        new Reason('parent-deleted', 'Language parent "' . $row['l18n_parent'] . '" is soft-deleted', ['l18n_parent' => (int)$row['l18n_parent']]),
+                    );
                 }
             } catch (NoSuchRecordException|NoSuchTableException $e) {
                 throw new EarlierCheckNotFixedException(
@@ -71,11 +79,6 @@ final readonly class TtContentLocalizedParentSoftDeleted extends AbstractHealthC
                 );
             }
         }
-        return $affectedRecords;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        $this->softOrHardDeleteRecords($run, $simulate, $affectedRecords);
+        return $findings;
     }
 }
