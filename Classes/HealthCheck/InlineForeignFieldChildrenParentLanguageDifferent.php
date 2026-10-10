@@ -131,7 +131,7 @@ final class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHe
         return $affectedRows;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
@@ -141,7 +141,7 @@ final class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHe
             $allLanguagesRows = array_filter($rows, static fn(array $row): bool => (int)$row[$languageField] === -1);
             $otherRows = array_filter($rows, static fn(array $row): bool => (int)$row[$languageField] !== -1);
             if ($allLanguagesRows !== []) {
-                $this->outputTableUpdateBefore($io, $simulate, $tableName);
+                $this->outputTableUpdateBefore($run, $simulate, $tableName);
                 foreach ($allLanguagesRows as $row) {
                     $fields = [
                         $languageField => [
@@ -149,12 +149,12 @@ final class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHe
                             'type' => Connection::PARAM_INT,
                         ],
                     ];
-                    $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
+                    $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
                 }
-                $this->outputTableUpdateAfter($io, $simulate, $tableName, count($allLanguagesRows));
+                $this->outputTableUpdateAfter($run, $simulate, $tableName, count($allLanguagesRows));
             }
             if ($otherRows !== []) {
-                $this->softOrHardDeleteRecordsOfTable($io, $simulate, $tableName, array_values($otherRows));
+                $this->softOrHardDeleteRecordsOfTable($run, $simulate, $tableName, array_values($otherRows));
             }
         }
     }

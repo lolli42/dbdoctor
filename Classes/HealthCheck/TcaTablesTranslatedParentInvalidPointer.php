@@ -126,7 +126,7 @@ final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck 
         return $affectedRows;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
@@ -139,7 +139,7 @@ final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck 
                 static fn(array $row): bool => (int)$row['_parentRowLanguage'] < 0 && (int)$row['_childOfTranslatedRecord'] === 0
             );
             if ($allLanguagesParentRows !== []) {
-                $this->softOrHardDeleteRecordsOfTable($io, $simulate, $tableName, array_values($allLanguagesParentRows));
+                $this->softOrHardDeleteRecordsOfTable($run, $simulate, $tableName, array_values($allLanguagesParentRows));
             }
             $otherRows = array_filter(
                 $affectedTableRecords,
@@ -155,7 +155,7 @@ final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck 
                         'type' => Connection::PARAM_INT,
                     ],
                 ];
-                $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$affectedTableRecord['uid'], $fields);
+                $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$affectedTableRecord['uid'], $fields);
             }
         }
     }

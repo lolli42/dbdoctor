@@ -145,7 +145,7 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
         return $affectedRows;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
@@ -156,7 +156,7 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
             }
         }
         foreach ($rowsByMmTable as $mmTableName => $rows) {
-            $this->outputTableDeleteBefore($io, $simulate, $mmTableName);
+            $this->outputTableDeleteBefore($run, $simulate, $mmTableName);
             $count = 0;
             foreach ($rows as $row) {
                 /** @var array<string, int|string> $matchFields */
@@ -174,7 +174,7 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
                             'type' => Connection::PARAM_STR,
                         ];
                     }
-                    $this->deleteMmRows($io, $simulate, $recordsHelper, $mmTableName, $whereFields);
+                    $this->deleteMmRows($run, $simulate, $recordsHelper, $mmTableName, $whereFields);
                     $count++;
                     continue;
                 }
@@ -203,11 +203,11 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
                             'type' => Connection::PARAM_STR,
                         ];
                     }
-                    $this->deleteMmRows($io, $simulate, $recordsHelper, $mmTableName, $whereFields);
+                    $this->deleteMmRows($run, $simulate, $recordsHelper, $mmTableName, $whereFields);
                     $count++;
                 }
             }
-            $this->outputTableDeleteAfter($io, $simulate, $mmTableName, $count);
+            $this->outputTableDeleteAfter($run, $simulate, $mmTableName, $count);
         }
     }
 

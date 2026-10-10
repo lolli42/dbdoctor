@@ -82,8 +82,8 @@ final class PagesPidDeleted extends AbstractHealthCheck implements HealthCheckIn
         return ['pages' => $affectedPageRows];
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
-        $this->softOrHardDeleteRecordsOfTable($io, $simulate, 'pages', $affectedRecords['pages'] ?? []);
+        $this->softOrHardDeleteRecordsOfTable($run, $simulate, 'pages', $affectedRecords['pages'] ?? []);
     }
 }

@@ -86,12 +86,12 @@ final class SysRedirectInvalidPid extends AbstractHealthCheck implements HealthC
         return $tableRows;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         foreach ($affectedRecords as $tableName => $tableRows) {
-            $this->outputTableUpdateBefore($io, $simulate, $tableName);
+            $this->outputTableUpdateBefore($run, $simulate, $tableName);
             $count = 0;
             foreach ($tableRows as $tableRow) {
                 try {
@@ -107,10 +107,10 @@ final class SysRedirectInvalidPid extends AbstractHealthCheck implements HealthC
                         'type' => Connection::PARAM_INT,
                     ],
                 ];
-                $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid'], $updateFields);
+                $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$tableRow['uid'], $updateFields);
                 $count++;
             }
-            $this->outputTableUpdateAfter($io, $simulate, $tableName, $count);
+            $this->outputTableUpdateAfter($run, $simulate, $tableName, $count);
         }
     }
 }

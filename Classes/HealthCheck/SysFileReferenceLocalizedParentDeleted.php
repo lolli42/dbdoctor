@@ -80,10 +80,10 @@ final class SysFileReferenceLocalizedParentDeleted extends AbstractHealthCheck i
         return $tableRows;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         // @todo: Risky. Similar possible strategies to mitigate this as in SysFileReferenceLocalizedParentExists.
-        $this->softOrHardDeleteRecordsOfTable($io, $simulate, 'sys_file_reference', $affectedRecords['sys_file_reference'] ?? []);
+        $this->softOrHardDeleteRecordsOfTable($run, $simulate, 'sys_file_reference', $affectedRecords['sys_file_reference'] ?? []);
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void

@@ -67,8 +67,8 @@ final class TtContentDeletedLocalizedParentExists extends AbstractHealthCheck im
         return $affectedRecords;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
-        $this->deleteTcaRecordsOfTable($io, $simulate, 'tt_content', $affectedRecords['tt_content'] ?? []);
+        $this->deleteTcaRecordsOfTable($run, $simulate, 'tt_content', $affectedRecords['tt_content'] ?? []);
     }
 }

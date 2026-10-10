@@ -84,11 +84,11 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
         return $affectedRows;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
-        $this->outputTableHandleBefore($io, $simulate, 'tt_content');
+        $this->outputTableHandleBefore($run, $simulate, 'tt_content');
         $updateCount = 0;
         $removeCount = 0;
         foreach (($affectedRecords['tt_content'] ?? []) as $row) {
@@ -102,7 +102,7 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
                         'type' => Connection::PARAM_INT,
                     ],
                 ];
-                $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, 'tt_content', (int)$row['uid'], $fields);
+                $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, 'tt_content', (int)$row['uid'], $fields);
                 $updateCount++;
             } else {
                 if ((int)$row['t3ver_state'] === 0) {
@@ -119,7 +119,7 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
                             'type' => Connection::PARAM_INT,
                         ],
                     ];
-                    $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, 'tt_content', (int)$row['uid'], $fields);
+                    $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, 'tt_content', (int)$row['uid'], $fields);
                     $updateCount++;
                 } elseif ((int)$row['t3ver_state'] === 1) {
                     // We have a "workspace new" record that is not on the same pid as the default
@@ -132,7 +132,7 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
                     // lang live record, with localized "workspace new" l18n_parent pointing to it, but being
                     // on a different pid.
                     // @todo: Fine-tune this case when core bugs with "first add, then move" have been fixed.
-                    $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, 'tt_content', (int)$row['uid']);
+                    $this->deleteSingleTcaRecord($run, $simulate, $recordsHelper, 'tt_content', (int)$row['uid']);
                     $removeCount++;
                 } elseif ((int)$row['t3ver_state'] === 2) {
                     // We have "delete placeholder" record that is not on the same pid as the default
@@ -166,10 +166,10 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
                                 'type' => Connection::PARAM_INT,
                             ],
                         ];
-                        $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, 'tt_content', (int)$row['uid'], $fields);
+                        $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, 'tt_content', (int)$row['uid'], $fields);
                         $updateCount++;
                     } else {
-                        $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, 'tt_content', (int)$row['uid']);
+                        $this->deleteSingleTcaRecord($run, $simulate, $recordsHelper, 'tt_content', (int)$row['uid']);
                         $removeCount++;
                     }
                 } elseif ((int)$row['t3ver_state'] === 4) {
@@ -180,7 +180,7 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
                     // and localized "move placeholder" are identical and not found here.
                     // As such, having a "move placeholder" of a localized content element alone indicates a bug,
                     // so we remove the record.
-                    $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, 'tt_content', (int)$row['uid']);
+                    $this->deleteSingleTcaRecord($run, $simulate, $recordsHelper, 'tt_content', (int)$row['uid']);
                     $removeCount++;
                 } else {
                     throw new \RuntimeException(
@@ -190,6 +190,6 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
                 }
             }
         }
-        $this->outputTableHandleAfter($io, $simulate, 'tt_content', $updateCount, $removeCount);
+        $this->outputTableHandleAfter($run, $simulate, 'tt_content', $updateCount, $removeCount);
     }
 }

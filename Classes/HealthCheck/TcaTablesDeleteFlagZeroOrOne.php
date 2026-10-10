@@ -64,7 +64,7 @@ final class TcaTablesDeleteFlagZeroOrOne extends AbstractHealthCheck implements 
         return $affectedRows;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         foreach ($affectedRecords as $tableName => $tableRows) {
             // Force "deleted=1" for affected rows.
@@ -81,7 +81,7 @@ final class TcaTablesDeleteFlagZeroOrOne extends AbstractHealthCheck implements 
                     'type' => Connection::PARAM_INT,
                 ],
             ];
-            $this->updateTcaRecordsOfTable($io, $simulate, $tableName, $tableRows, $updateFields);
+            $this->updateTcaRecordsOfTable($run, $simulate, $tableName, $tableRows, $updateFields);
         }
     }
 }

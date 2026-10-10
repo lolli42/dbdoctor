@@ -79,9 +79,9 @@ final class TcaTablesTranslatedLanguageParentMissing extends AbstractHealthCheck
         return $affectedRows;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
-        $this->deleteTcaRecords($io, $simulate, $affectedRecords);
+        $this->deleteTcaRecords($run, $simulate, $affectedRecords);
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void

@@ -76,13 +76,13 @@ final class SysFileReferenceInvalidPid extends AbstractHealthCheck implements He
         return $tableRows;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         $tableName = 'sys_file_reference';
         $rows = $affectedRecords['sys_file_reference'] ?? [];
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
-        $this->outputTableUpdateBefore($io, $simulate, $tableName);
+        $this->outputTableUpdateBefore($run, $simulate, $tableName);
         $count = 0;
         foreach ($rows as $row) {
             if ($row['tablenames'] === 'pages') {
@@ -92,7 +92,7 @@ final class SysFileReferenceInvalidPid extends AbstractHealthCheck implements He
                         'type' => Connection::PARAM_INT,
                     ],
                 ];
-                $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
+                $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
             } else {
                 $referencingRecord = $recordsHelper->getRecord((string)$row['tablenames'], ['pid'], (int)$row['uid_foreign']);
                 $fields = [
@@ -101,11 +101,11 @@ final class SysFileReferenceInvalidPid extends AbstractHealthCheck implements He
                         'type' => Connection::PARAM_INT,
                     ],
                 ];
-                $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
+                $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
             }
             $count++;
         }
-        $this->outputTableUpdateAfter($io, $simulate, $tableName, $count);
+        $this->outputTableUpdateAfter($run, $simulate, $tableName, $count);
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void

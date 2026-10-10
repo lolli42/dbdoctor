@@ -95,7 +95,7 @@ final class PagesTranslatedLanguageParentDuplicates extends AbstractHealthCheck 
         return $affectedRecords;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         $updateFields = [
             'deleted' => [
@@ -103,7 +103,7 @@ final class PagesTranslatedLanguageParentDuplicates extends AbstractHealthCheck 
                 'type' => Connection::PARAM_INT,
             ],
         ];
-        $this->updateTcaRecordsOfTable($io, $simulate, 'pages', $affectedRecords['pages'] ?? [], $updateFields);
+        $this->updateTcaRecordsOfTable($run, $simulate, 'pages', $affectedRecords['pages'] ?? [], $updateFields);
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void

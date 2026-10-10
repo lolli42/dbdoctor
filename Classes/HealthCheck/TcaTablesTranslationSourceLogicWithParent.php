@@ -85,13 +85,13 @@ final class TcaTablesTranslationSourceLogicWithParent extends AbstractHealthChec
         return $affectedRecords;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
         foreach ($affectedRecords as $tableName => $rows) {
             [, $translationParentField, $translationSourceField] = $this->getFields($tableName);
-            $this->outputTableUpdateBefore($io, $simulate, $tableName);
+            $this->outputTableUpdateBefore($run, $simulate, $tableName);
             foreach ($rows as $row) {
                 $updateFields = [
                     $translationSourceField => [
@@ -99,9 +99,9 @@ final class TcaTablesTranslationSourceLogicWithParent extends AbstractHealthChec
                         'type' => Connection::PARAM_INT,
                     ],
                 ];
-                $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $updateFields);
+                $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $updateFields);
             }
-            $this->outputTableUpdateAfter($io, $simulate, $tableName, count($rows));
+            $this->outputTableUpdateAfter($run, $simulate, $tableName, count($rows));
         }
     }
 

@@ -59,8 +59,8 @@ final class PagesBrokenTree extends AbstractHealthCheck implements HealthCheckIn
         return ['pages' => array_values($danglingPages['pages'])];
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
-        $this->deleteTcaRecordsOfTable($io, $simulate, 'pages', $affectedRecords['pages'] ?? []);
+        $this->deleteTcaRecordsOfTable($run, $simulate, 'pages', $affectedRecords['pages'] ?? []);
     }
 }

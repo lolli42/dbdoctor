@@ -62,9 +62,9 @@ final class PagesTranslatedLanguageParentMissing extends AbstractHealthCheck imp
         return $affectedRecords;
     }
 
-    protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
-        $this->deleteTcaRecordsOfTable($io, $simulate, 'pages', $affectedRecords['pages'] ?? []);
+        $this->deleteTcaRecordsOfTable($run, $simulate, 'pages', $affectedRecords['pages'] ?? []);
     }
 
     protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void

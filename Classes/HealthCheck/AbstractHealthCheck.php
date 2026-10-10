@@ -48,11 +48,6 @@ abstract class AbstractHealthCheck
     // Used in IO when a check may INSERT missing records
     protected const TAG_INSERT = 'insert';
 
-    /**
-     * Set to an absolute, not-empty file path string when sql command should be logged.
-     */
-    private string $sqlDumpFile;
-
     protected ContainerInterface $container;
     protected ConnectionPool $connectionPool;
     protected TcaHelper $tcaHelper;
@@ -74,7 +69,6 @@ abstract class AbstractHealthCheck
 
     final public function handle(SymfonyStyle $io, int $mode, string $file): int
     {
-        $this->sqlDumpFile = $file;
         try {
             $affectedRecords = $this->getAffectedRecords();
         } catch (EarlierCheckNotFixedException $e) {
@@ -101,10 +95,11 @@ abstract class AbstractHealthCheck
         if ($mode === HealthCheckInterface::MODE_CHECK) {
             return $this->check($io, $affectedRecords);
         }
+        $run = new HealthCheckRun($io, $file);
         if ($mode === HealthCheckInterface::MODE_EXECUTE) {
-            return $this->execute($io, $affectedRecords);
+            return $this->execute($run, $affectedRecords);
         }
-        return $this->interactive($io, $affectedRecords);
+        return $this->interactive($run, $affectedRecords);
     }
 
     /**
@@ -122,22 +117,23 @@ abstract class AbstractHealthCheck
     /**
      * @param array<string, array<int, array<string, int|string>>> $affectedRecords
      */
-    private function execute(SymfonyStyle $io, array $affectedRecords): int
+    private function execute(HealthCheckRun $run, array $affectedRecords): int
     {
-        $this->outputMainSummary($io, $affectedRecords);
+        $this->outputMainSummary($run->io, $affectedRecords);
         if (empty($affectedRecords)) {
             return HealthCheckInterface::RESULT_OK;
         }
-        $this->writeSqlDumpFileHeader();
-        $this->processRecords($io, false, $affectedRecords);
+        $this->writeSqlDumpFileHeader($run);
+        $this->processRecords($run, false, $affectedRecords);
         return HealthCheckInterface::RESULT_BROKEN;
     }
 
     /**
      * @param array<string, array<int, array<string, int|string>>> $affectedRecords
      */
-    private function interactive(SymfonyStyle $io, array $affectedRecords): int
+    private function interactive(HealthCheckRun $run, array $affectedRecords): int
     {
+        $io = $run->io;
         $this->outputMainSummary($io, $affectedRecords);
         if (empty($affectedRecords)) {
             return HealthCheckInterface::RESULT_OK;
@@ -147,8 +143,8 @@ abstract class AbstractHealthCheck
             switch ($io->ask('<info>Handle records [e,s,a,r,p,d,?]?</info> ', '?')) {
                 case 'e':
                     $affectedRecords = $this->getAffectedRecords();
-                    $this->writeSqlDumpFileHeader();
-                    $this->processRecords($io, false, $affectedRecords);
+                    $this->writeSqlDumpFileHeader($run);
+                    $this->processRecords($run, false, $affectedRecords);
                     $affectedRecords = $this->getAffectedRecords();
                     $this->outputMainSummary($io, $affectedRecords);
                     if (empty($affectedRecords)) {
@@ -157,7 +153,7 @@ abstract class AbstractHealthCheck
                     break;
                 case 's':
                     $affectedRecords = $this->getAffectedRecords();
-                    $this->processRecords($io, true, $affectedRecords);
+                    $this->processRecords($run, true, $affectedRecords);
                     $affectedRecords = $this->getAffectedRecords();
                     $this->outputMainSummary($io, $affectedRecords);
                     if (empty($affectedRecords)) {
@@ -199,7 +195,7 @@ abstract class AbstractHealthCheck
     /**
      * @param array<string, array<int, array<string, int|string>>> $affectedRecords
      */
-    abstract protected function processRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void;
+    abstract protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void;
 
     /**
      * Default implementation. Overridden by subclasses sometimes to provide more specific details.
@@ -280,10 +276,10 @@ abstract class AbstractHealthCheck
      *
      * @param array<string, array<int, array<string, int|string>>> $affectedRecords
      */
-    final protected function deleteTcaRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    final protected function deleteTcaRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         foreach ($affectedRecords as $tableName => $tableRows) {
-            $this->deleteTcaRecordsOfTable($io, $simulate, $tableName, $tableRows);
+            $this->deleteTcaRecordsOfTable($run, $simulate, $tableName, $tableRows);
         }
     }
 
@@ -293,17 +289,17 @@ abstract class AbstractHealthCheck
      *
      * @param array<int, array<string, int|string>> $rows
      */
-    final protected function deleteTcaRecordsOfTable(SymfonyStyle $io, bool $simulate, string $tableName, array $rows): void
+    final protected function deleteTcaRecordsOfTable(HealthCheckRun $run, bool $simulate, string $tableName, array $rows): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
-        $this->outputTableDeleteBefore($io, $simulate, $tableName);
+        $this->outputTableDeleteBefore($run, $simulate, $tableName);
         $count = 0;
         foreach ($rows as $row) {
-            $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid']);
+            $this->deleteSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid']);
             $count++;
         }
-        $this->outputTableDeleteAfter($io, $simulate, $tableName, $count);
+        $this->outputTableDeleteAfter($run, $simulate, $tableName, $count);
     }
 
     /**
@@ -311,10 +307,10 @@ abstract class AbstractHealthCheck
      * This needs an instance of RecordsHelper to make use of prepared statements, which
      * should be created by the calling method.
      */
-    final protected function deleteSingleTcaRecord(SymfonyStyle $io, bool $simulate, RecordsHelper $recordsHelper, string $tableName, int $uid): void
+    final protected function deleteSingleTcaRecord(HealthCheckRun $run, bool $simulate, RecordsHelper $recordsHelper, string $tableName, int $uid): void
     {
         $sql = $recordsHelper->deleteTcaRecord($simulate, $tableName, $uid);
-        $this->logAndOutputSql($io, $simulate, $sql);
+        $this->logAndOutputSql($run, $simulate, $sql);
     }
 
     /**
@@ -324,17 +320,17 @@ abstract class AbstractHealthCheck
      * @param array<int, array<string, int|string>> $rows
      * @param array<string, array{value: int|string, type: ParameterType}> $fields
      */
-    final protected function updateTcaRecordsOfTable(SymfonyStyle $io, bool $simulate, string $tableName, array $rows, array $fields): void
+    final protected function updateTcaRecordsOfTable(HealthCheckRun $run, bool $simulate, string $tableName, array $rows, array $fields): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
-        $this->outputTableUpdateBefore($io, $simulate, $tableName);
+        $this->outputTableUpdateBefore($run, $simulate, $tableName);
         $count = 0;
         foreach ($rows as $row) {
-            $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
+            $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
             $count++;
         }
-        $this->outputTableUpdateAfter($io, $simulate, $tableName, $count);
+        $this->outputTableUpdateAfter($run, $simulate, $tableName, $count);
     }
 
     /**
@@ -344,10 +340,10 @@ abstract class AbstractHealthCheck
      *
      * @param array<string, array{value: int|string, type: ParameterType}> $fields
      */
-    final protected function insertSingleTcaRecord(SymfonyStyle $io, bool $simulate, RecordsHelper $recordsHelper, string $tableName, array $fields): void
+    final protected function insertSingleTcaRecord(HealthCheckRun $run, bool $simulate, RecordsHelper $recordsHelper, string $tableName, array $fields): void
     {
         $sql = $recordsHelper->insertTcaRecord($simulate, $tableName, $fields);
-        $this->logAndOutputSql($io, $simulate, $sql);
+        $this->logAndOutputSql($run, $simulate, $sql);
     }
 
     /**
@@ -357,10 +353,10 @@ abstract class AbstractHealthCheck
      *
      * @param array<string, array{value: int|string, type: ParameterType}> $fields
      */
-    final protected function updateSingleTcaRecord(SymfonyStyle $io, bool $simulate, RecordsHelper $recordsHelper, string $tableName, int $uid, array $fields): void
+    final protected function updateSingleTcaRecord(HealthCheckRun $run, bool $simulate, RecordsHelper $recordsHelper, string $tableName, int $uid, array $fields): void
     {
         $sql = $recordsHelper->updateTcaRecord($simulate, $tableName, $uid, $fields);
-        $this->logAndOutputSql($io, $simulate, $sql);
+        $this->logAndOutputSql($run, $simulate, $sql);
     }
 
     /**
@@ -370,10 +366,10 @@ abstract class AbstractHealthCheck
      *
      * @param array<string, array{value: int|string, type: ParameterType}> $whereFields
      */
-    final protected function deleteMmRows(SymfonyStyle $io, bool $simulate, RecordsHelper $recordsHelper, string $mmTableName, array $whereFields): void
+    final protected function deleteMmRows(HealthCheckRun $run, bool $simulate, RecordsHelper $recordsHelper, string $mmTableName, array $whereFields): void
     {
         $sql = $recordsHelper->deleteMmRows($simulate, $mmTableName, $whereFields);
-        $this->logAndOutputSql($io, $simulate, $sql);
+        $this->logAndOutputSql($run, $simulate, $sql);
     }
 
     /**
@@ -383,10 +379,10 @@ abstract class AbstractHealthCheck
      *
      * @param array<string, array<int, array<string, int|string>>> $affectedRecords
      */
-    final protected function softOrHardDeleteRecords(SymfonyStyle $io, bool $simulate, array $affectedRecords): void
+    final protected function softOrHardDeleteRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         foreach ($affectedRecords as $tableName => $tableRows) {
-            $this->softOrHardDeleteRecordsOfTable($io, $simulate, $tableName, $tableRows);
+            $this->softOrHardDeleteRecordsOfTable($run, $simulate, $tableName, $tableRows);
         }
     }
 
@@ -401,11 +397,11 @@ abstract class AbstractHealthCheck
      *
      * @param array<int, array<string, int|string>> $rows
      */
-    final protected function softOrHardDeleteRecordsOfTable(SymfonyStyle $io, bool $simulate, string $tableName, array $rows): void
+    final protected function softOrHardDeleteRecordsOfTable(HealthCheckRun $run, bool $simulate, string $tableName, array $rows): void
     {
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->container->get(RecordsHelper::class);
-        $this->outputTableHandleBefore($io, $simulate, $tableName);
+        $this->outputTableHandleBefore($run, $simulate, $tableName);
 
         $deleteField = $this->tcaHelper->getDeletedField($tableName);
         $isTableSoftDeleteAware = !empty($deleteField);
@@ -434,16 +430,16 @@ abstract class AbstractHealthCheck
                 || ($isTableWorkspaceAware && ((int)$row[$workspaceIdField] > 0))
             ) {
                 // DELETE record if table is not workspace aware, or if record is a workspace record
-                $this->deleteSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid']);
+                $this->deleteSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid']);
                 $deleteCount++;
             } else {
                 // UPDATE record, set "deleted=1" if table is soft-delete aware and record is not a workspace record
-                $this->updateSingleTcaRecord($io, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $updateFields);
+                $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $updateFields);
                 $updateCount++;
             }
         }
 
-        $this->outputTableHandleAfter($io, $simulate, $tableName, $updateCount, $deleteCount);
+        $this->outputTableHandleAfter($run, $simulate, $tableName, $updateCount, $deleteCount);
     }
 
     /**
@@ -470,84 +466,84 @@ abstract class AbstractHealthCheck
         $io->text(('Class: <comment>' . (new \ReflectionClass($this))->getShortName()) . '</comment>');
     }
 
-    final protected function outputTableDeleteBefore(SymfonyStyle $io, bool $simulate, string $tableName): void
+    final protected function outputTableDeleteBefore(HealthCheckRun $run, bool $simulate, string $tableName): void
     {
         if ($simulate) {
-            $io->note('[SIMULATE] Delete records on table: ' . $tableName);
+            $run->io->note('[SIMULATE] Delete records on table: ' . $tableName);
         } else {
-            $io->note('Delete records on table: ' . $tableName);
+            $run->io->note('Delete records on table: ' . $tableName);
         }
     }
 
-    final protected function outputTableDeleteAfter(SymfonyStyle $io, bool $simulate, string $tableName, int $count): void
+    final protected function outputTableDeleteAfter(HealthCheckRun $run, bool $simulate, string $tableName, int $count): void
     {
         if ($simulate) {
-            $io->note('[SIMULATE] Deleted "' . $count . '" records from "' . $tableName . '" table');
+            $run->io->note('[SIMULATE] Deleted "' . $count . '" records from "' . $tableName . '" table');
         } else {
-            $io->warning('Deleted "' . $count . '" records from "' . $tableName . '" table');
+            $run->io->warning('Deleted "' . $count . '" records from "' . $tableName . '" table');
         }
     }
 
-    final protected function outputTableUpdateBefore(SymfonyStyle $io, bool $simulate, string $tableName): void
+    final protected function outputTableUpdateBefore(HealthCheckRun $run, bool $simulate, string $tableName): void
     {
         if ($simulate) {
-            $io->note('[SIMULATE] Update records on table: ' . $tableName);
+            $run->io->note('[SIMULATE] Update records on table: ' . $tableName);
         } else {
-            $io->note('Update records on table: ' . $tableName);
+            $run->io->note('Update records on table: ' . $tableName);
         }
     }
 
-    final protected function outputTableUpdateAfter(SymfonyStyle $io, bool $simulate, string $tableName, int $count): void
+    final protected function outputTableUpdateAfter(HealthCheckRun $run, bool $simulate, string $tableName, int $count): void
     {
         if ($simulate) {
-            $io->note('[SIMULATE] Updated "' . $count . '" records from "' . $tableName . '" table');
+            $run->io->note('[SIMULATE] Updated "' . $count . '" records from "' . $tableName . '" table');
         } else {
-            $io->warning('Updated "' . $count . '" records from "' . $tableName . '" table');
+            $run->io->warning('Updated "' . $count . '" records from "' . $tableName . '" table');
         }
     }
 
-    final protected function outputTableInsertBefore(SymfonyStyle $io, bool $simulate, string $tableName): void
+    final protected function outputTableInsertBefore(HealthCheckRun $run, bool $simulate, string $tableName): void
     {
         if ($simulate) {
-            $io->note('[SIMULATE] Insert records into table: ' . $tableName);
+            $run->io->note('[SIMULATE] Insert records into table: ' . $tableName);
         } else {
-            $io->note('Insert records into table: ' . $tableName);
+            $run->io->note('Insert records into table: ' . $tableName);
         }
     }
 
-    final protected function outputTableInsertAfter(SymfonyStyle $io, bool $simulate, string $tableName, int $count): void
+    final protected function outputTableInsertAfter(HealthCheckRun $run, bool $simulate, string $tableName, int $count): void
     {
         if ($simulate) {
-            $io->note('[SIMULATE] Inserted "' . $count . '" records into "' . $tableName . '" table');
+            $run->io->note('[SIMULATE] Inserted "' . $count . '" records into "' . $tableName . '" table');
         } else {
-            $io->warning('Inserted "' . $count . '" records into "' . $tableName . '" table');
+            $run->io->warning('Inserted "' . $count . '" records into "' . $tableName . '" table');
         }
     }
 
-    final protected function outputTableHandleBefore(SymfonyStyle $io, bool $simulate, string $tableName): void
+    final protected function outputTableHandleBefore(HealthCheckRun $run, bool $simulate, string $tableName): void
     {
         if ($simulate) {
-            $io->note('[SIMULATE] Handle records on table: ' . $tableName);
+            $run->io->note('[SIMULATE] Handle records on table: ' . $tableName);
         } else {
-            $io->note('Handle records on table: ' . $tableName);
+            $run->io->note('Handle records on table: ' . $tableName);
         }
     }
 
-    final protected function outputTableHandleAfter(SymfonyStyle $io, bool $simulate, string $tableName, int $updateCount, int $deleteCount): void
+    final protected function outputTableHandleAfter(HealthCheckRun $run, bool $simulate, string $tableName, int $updateCount, int $deleteCount): void
     {
         if ($simulate) {
             if ($updateCount > 0) {
-                $io->note('[SIMULATE] Updated "' . $updateCount . '" records from "' . $tableName . '" table');
+                $run->io->note('[SIMULATE] Updated "' . $updateCount . '" records from "' . $tableName . '" table');
             }
             if ($deleteCount > 0) {
-                $io->note('[SIMULATE] Deleted "' . $deleteCount . '" records from "' . $tableName . '" table');
+                $run->io->note('[SIMULATE] Deleted "' . $deleteCount . '" records from "' . $tableName . '" table');
             }
         } else {
             if ($updateCount > 0) {
-                $io->warning('Updated "' . $updateCount . '" records from "' . $tableName . '" table');
+                $run->io->warning('Updated "' . $updateCount . '" records from "' . $tableName . '" table');
             }
             if ($deleteCount > 0) {
-                $io->warning('Deleted "' . $deleteCount . '" records from "' . $tableName . '" table');
+                $run->io->warning('Deleted "' . $deleteCount . '" records from "' . $tableName . '" table');
             }
         }
     }
@@ -558,19 +554,19 @@ abstract class AbstractHealthCheck
      * dump file. A service with multiple tags runs at multiple chain positions, each pass
      * gets its own header.
      */
-    private function writeSqlDumpFileHeader(): void
+    private function writeSqlDumpFileHeader(HealthCheckRun $run): void
     {
-        if ($this->sqlDumpFile) {
-            file_put_contents($this->sqlDumpFile, '# Triggered by ' . static::class . "\n", \FILE_APPEND);
+        if ($run->sqlDumpFile) {
+            file_put_contents($run->sqlDumpFile, '# Triggered by ' . static::class . "\n", \FILE_APPEND);
         }
     }
 
-    private function logAndOutputSql(SymfonyStyle $io, bool $simulate, string $sql): void
+    private function logAndOutputSql(HealthCheckRun $run, bool $simulate, string $sql): void
     {
-        if ($this->sqlDumpFile && !$simulate) {
-            file_put_contents($this->sqlDumpFile, $sql . "\n", \FILE_APPEND);
+        if ($run->sqlDumpFile && !$simulate) {
+            file_put_contents($run->sqlDumpFile, $sql . "\n", \FILE_APPEND);
         }
-        $io->text($sql);
+        $run->io->text($sql);
     }
 
     /**
