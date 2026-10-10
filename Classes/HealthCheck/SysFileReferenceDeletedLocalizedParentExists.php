@@ -19,6 +19,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -39,9 +44,9 @@ final readonly class SysFileReferenceDeletedLocalizedParentExists extends Abstra
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $tableRows = [];
+        $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
         $queryBuilder->getRestrictions()->removeAll();
         $result = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'l10n_parent')->from('sys_file_reference')
@@ -58,19 +63,19 @@ final readonly class SysFileReferenceDeletedLocalizedParentExists extends Abstra
                 $this->recordsHelper->getRecord($run->statements, 'sys_file_reference', ['uid'], (int)$row['l10n_parent']);
             } catch (NoSuchRecordException|NoSuchTableException $e) {
                 // Match if parent does not exist at all
-                $tableRows['sys_file_reference'][] = $row;
+                $findings[] = new Finding(
+                    new RecordKey('sys_file_reference', (int)$row['uid']),
+                    (int)$row['pid'],
+                    [new RecordChange(RecordChangeType::Delete, 'sys_file_reference', (int)$row['uid'])],
+                    new Reason('parent-missing', 'Language parent "' . $row['l10n_parent'] . '" does not exist', ['parent' => (int)$row['l10n_parent']]),
+                );
             }
         }
-        return $tableRows;
+        return $findings;
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    protected function getDetailDbFields(string $tableName): array
     {
-        $this->deleteTcaRecordsOfTable($run, $simulate, 'sys_file_reference', $affectedRecords['sys_file_reference'] ?? []);
-    }
-
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        $this->outputRecordDetails($run, $affectedRecords, '', [], ['sys_language_uid', 'l10n_parent', 'deleted', 'tablenames', 'uid_foreign', 'fieldname', 'uid_local']);
+        return ['sys_language_uid', 'l10n_parent', 'deleted', 'tablenames', 'uid_foreign', 'fieldname', 'uid_local'];
     }
 }

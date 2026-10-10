@@ -19,6 +19,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -39,9 +44,9 @@ final readonly class TtContentDeletedLocalizedParentExists extends AbstractHealt
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRecords = [];
+        $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
         $queryBuilder->getRestrictions()->removeAll();
         $result = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'l18n_parent')->from('tt_content')
@@ -58,14 +63,14 @@ final readonly class TtContentDeletedLocalizedParentExists extends AbstractHealt
                 $this->recordsHelper->getRecord($run->statements, 'tt_content', ['uid'], (int)$row['l18n_parent']);
             } catch (NoSuchRecordException|NoSuchTableException $e) {
                 // Match if parent does not exist at all
-                $affectedRecords['tt_content'][] = $row;
+                $findings[] = new Finding(
+                    new RecordKey('tt_content', (int)$row['uid']),
+                    (int)$row['pid'],
+                    [new RecordChange(RecordChangeType::Delete, 'tt_content', (int)$row['uid'])],
+                    new Reason('parent-missing', 'Language parent "' . $row['l18n_parent'] . '" does not exist', ['parent' => (int)$row['l18n_parent']]),
+                );
             }
         }
-        return $affectedRecords;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        $this->deleteTcaRecordsOfTable($run, $simulate, 'tt_content', $affectedRecords['tt_content'] ?? []);
+        return $findings;
     }
 }

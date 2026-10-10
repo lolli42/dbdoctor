@@ -17,6 +17,10 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 
@@ -43,13 +47,13 @@ final readonly class WorkspacesNotLoadedRecordsDangling extends AbstractHealthCh
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
         if (ExtensionManagementUtility::isLoaded('workspaces')) {
             // Nothing to do when ext:workspaces is loaded
             return [];
         }
-        $affectedRows = [];
+        $findings = [];
         foreach ($this->tcaHelper->getNextWorkspaceEnabledTcaTable() as $tableName) {
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             // Delete "deleted=1" records as well, when they have t3ver_wsid != 0
@@ -62,14 +66,13 @@ final readonly class WorkspacesNotLoadedRecordsDangling extends AbstractHealthCh
                 ->executeQuery();
             while ($row = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $row */
-                $affectedRows[$tableName][(int)$row['uid']] = $row;
+                $findings[] = new Finding(
+                    new RecordKey($tableName, (int)$row['uid']),
+                    (int)$row['pid'],
+                    [new RecordChange(RecordChangeType::Delete, $tableName, (int)$row['uid'])],
+                );
             }
         }
-        return $affectedRows;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        $this->deleteTcaRecords($run, $simulate, $affectedRecords);
+        return $findings;
     }
 }

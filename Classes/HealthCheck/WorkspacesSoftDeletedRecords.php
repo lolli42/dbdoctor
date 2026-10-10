@@ -17,6 +17,10 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 
@@ -38,7 +42,7 @@ final readonly class WorkspacesSoftDeletedRecords extends AbstractHealthCheck im
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
         if (!ExtensionManagementUtility::isLoaded('workspaces')) {
             // Check WorkspacesNotLoadedRecordsDangling that is executed before this check
@@ -46,7 +50,7 @@ final readonly class WorkspacesSoftDeletedRecords extends AbstractHealthCheck im
             // loaded. We can thus skip this one early if ext:workspaces is not loaded.
             return [];
         }
-        $affectedRows = [];
+        $findings = [];
         foreach ($this->tcaHelper->getNextWorkspaceEnabledTcaTable() as $tableName) {
             $tableDeleteField = $this->tcaHelper->getDeletedField($tableName);
             if (empty($tableDeleteField)) {
@@ -65,14 +69,13 @@ final readonly class WorkspacesSoftDeletedRecords extends AbstractHealthCheck im
                 ->executeQuery();
             while ($row = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $row */
-                $affectedRows[$tableName][(int)$row['uid']] = $row;
+                $findings[] = new Finding(
+                    new RecordKey($tableName, (int)$row['uid']),
+                    (int)$row['pid'],
+                    [new RecordChange(RecordChangeType::Delete, $tableName, (int)$row['uid'])],
+                );
             }
         }
-        return $affectedRows;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        $this->deleteTcaRecords($run, $simulate, $affectedRecords);
+        return $findings;
     }
 }

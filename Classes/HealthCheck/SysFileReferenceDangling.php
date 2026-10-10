@@ -19,6 +19,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -37,9 +42,9 @@ final readonly class SysFileReferenceDangling extends AbstractHealthCheck implem
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $danglingRows = [];
+        $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
         // We fetch deleted=1 records here, too. If it's relation is broken, they should vanish, too.
         $queryBuilder->getRestrictions()->removeAll();
@@ -49,23 +54,41 @@ final readonly class SysFileReferenceDangling extends AbstractHealthCheck implem
             ->executeQuery();
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
+            $reason = null;
             try {
                 $this->recordsHelper->getRecord($run->statements, 'sys_file', ['uid'], (int)$row['uid_local']);
-                $this->recordsHelper->getRecord($run->statements, (string)$row['tablenames'], ['uid'], (int)$row['uid_foreign']);
             } catch (NoSuchRecordException|NoSuchTableException $e) {
-                $danglingRows['sys_file_reference'][] = $row;
+                $reason = new Reason('file-missing', 'File "' . $row['uid_local'] . '" does not exist', ['uidLocal' => (int)$row['uid_local']]);
+            }
+            if ($reason === null) {
+                try {
+                    $this->recordsHelper->getRecord($run->statements, (string)$row['tablenames'], ['uid'], (int)$row['uid_foreign']);
+                } catch (NoSuchTableException $e) {
+                    $reason = (string)$row['tablenames'] === ''
+                        ? new Reason('table-missing', 'Field "tablenames" is empty', ['tablenames' => ''])
+                        : new Reason('table-missing', 'Table "' . $row['tablenames'] . '" does not exist', ['tablenames' => (string)$row['tablenames']]);
+                } catch (NoSuchRecordException $e) {
+                    $reason = new Reason(
+                        'foreign-record-missing',
+                        'Record "' . $row['uid_foreign'] . '" in table "' . $row['tablenames'] . '" does not exist',
+                        ['tablenames' => (string)$row['tablenames'], 'uidForeign' => (int)$row['uid_foreign']]
+                    );
+                }
+            }
+            if ($reason !== null) {
+                $findings[] = new Finding(
+                    new RecordKey('sys_file_reference', (int)$row['uid']),
+                    (int)$row['pid'],
+                    [new RecordChange(RecordChangeType::Delete, 'sys_file_reference', (int)$row['uid'])],
+                    $reason,
+                );
             }
         }
-        return $danglingRows;
+        return $findings;
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    protected function getDetailDbFields(string $tableName): array
     {
-        $this->deleteTcaRecordsOfTable($run, $simulate, 'sys_file_reference', $affectedRecords['sys_file_reference'] ?? []);
-    }
-
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        $this->outputRecordDetails($run, $affectedRecords, '', [], ['uid_local', 'tablenames', 'uid_foreign', 'fieldname']);
+        return ['uid_local', 'tablenames', 'uid_foreign', 'fieldname'];
     }
 }

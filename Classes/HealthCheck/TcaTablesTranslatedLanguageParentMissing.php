@@ -17,6 +17,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -41,9 +46,9 @@ final readonly class TcaTablesTranslatedLanguageParentMissing extends AbstractHe
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRows = [];
+        $findings = [];
         foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {
             /** @var string $languageField */
             $languageField = $this->tcaHelper->getLanguageField($tableName);
@@ -68,20 +73,20 @@ final readonly class TcaTablesTranslatedLanguageParentMissing extends AbstractHe
                 try {
                     $this->recordsHelper->getRecord($run->statements, $tableName, ['uid'], (int)$localizedRow[$translationParentField]);
                 } catch (NoSuchRecordException $e) {
-                    $affectedRows[$tableName][(int)$localizedRow['uid']] = $localizedRow;
+                    $findings[] = new Finding(
+                        new RecordKey($tableName, (int)$localizedRow['uid']),
+                        (int)$localizedRow['pid'],
+                        [new RecordChange(RecordChangeType::Delete, $tableName, (int)$localizedRow['uid'])],
+                        new Reason('parent-missing', 'Language parent "' . $localizedRow[$translationParentField] . '" does not exist', ['parent' => (int)$localizedRow[$translationParentField]]),
+                    );
                 }
             }
         }
-        return $affectedRows;
+        return $findings;
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    protected function getDetailCtrlFields(string $tableName): array
     {
-        $this->deleteTcaRecords($run, $simulate, $affectedRecords);
-    }
-
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        $this->outputRecordDetails($run, $affectedRecords, '', ['transOrigPointerField']);
+        return ['transOrigPointerField'];
     }
 }
