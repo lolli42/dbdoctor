@@ -85,9 +85,9 @@ final class TcaTablesPidTranslatedPage extends AbstractHealthCheck implements He
         }
     }
 
-    protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
+    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
     {
-        $this->outputRecordDetails($io, $affectedRecords, '_reasonBroken');
+        $this->outputRecordDetails($run, $affectedRecords, '_reasonBroken');
     }
 
     /**

@@ -35,18 +35,11 @@ final class RecordsRenderer
      */
     private array $workspaceCache = [];
 
-    /**
-     * Interim: Own prepared statements until the caller hands over the ones of its run.
-     */
-    private readonly PreparedStatements $statements;
-
     public function __construct(
         private readonly RecordsHelper $recordsHelper,
         private readonly TcaHelper $tcaHelper,
         private readonly TableHelper $tableHelper,
-    ) {
-        $this->statements = new PreparedStatements();
-    }
+    ) {}
 
     /**
      * @param array<int, string> $extraCtrlFields
@@ -73,6 +66,7 @@ final class RecordsRenderer
      * @return array<int, array<string, int|string>>
      */
     public function getRows(
+        PreparedStatements $statements,
         string $tableName,
         array $incomingRows,
         string $reasonField = '',
@@ -82,7 +76,7 @@ final class RecordsRenderer
         $fields = $this->getRelevantFieldNames($tableName, $extraCtrlFields, $extraDbFields);
         $rows = [];
         foreach ($incomingRows as $incomingRow) {
-            $row = $this->recordsHelper->getRecord($this->statements, $tableName, $fields, (int)$incomingRow['uid']);
+            $row = $this->recordsHelper->getRecord($statements, $tableName, $fields, (int)$incomingRow['uid']);
             if ($reasonField) {
                 $reason = ['reason' => $incomingRow['_reasonBroken']];
                 $row = array_merge($reason, $row);
@@ -92,18 +86,18 @@ final class RecordsRenderer
                 && isset($row['uid_foreign']) && isset($row['tablenames'])
             ) {
                 // Maybe make this more generic, we 'll see.
-                $row['uid_local'] = $this->resolveRelation('sys_file', (int)($row['uid_local']));
+                $row['uid_local'] = $this->resolveRelation($statements, 'sys_file', (int)($row['uid_local']));
                 $row['tablenames'] = $this->resolveRelationTable((string)$row['tablenames']);
                 if ($this->tableHelper->tableExistsInDatabase((string)$row['tablenames'])) {
-                    $row['uid_foreign'] = $this->resolveRelation((string)$row['tablenames'], (int)($row['uid_foreign']));
+                    $row['uid_foreign'] = $this->resolveRelation($statements, (string)$row['tablenames'], (int)($row['uid_foreign']));
                 }
             }
             $row = $this->humanReadableTimestamp($tableName, $row);
-            $row = $this->resolveCrUser($tableName, $row);
-            $row = $this->resolveWorkspace($tableName, $row);
-            $row = $this->resolvePid($row);
-            $row = $this->resolveTranslationParentField($tableName, $row);
-            $row = $this->resolveTranslationSourceField($tableName, $row);
+            $row = $this->resolveCrUser($statements, $tableName, $row);
+            $row = $this->resolveWorkspace($statements, $tableName, $row);
+            $row = $this->resolvePid($statements, $row);
+            $row = $this->resolveTranslationParentField($statements, $tableName, $row);
+            $row = $this->resolveTranslationSourceField($statements, $tableName, $row);
             $rows[] = $row;
         }
         return $rows;
@@ -183,7 +177,7 @@ final class RecordsRenderer
      * @param array<string, int|string> $row
      * @return array<string, int|string>
      */
-    private function resolveCrUser(string $tableName, array $row): array
+    private function resolveCrUser(PreparedStatements $statements, string $tableName, array $row): array
     {
         $crUserField = $this->tcaHelper->getCreateUserIdField($tableName);
         if ($crUserField) {
@@ -193,7 +187,7 @@ final class RecordsRenderer
                     try {
                         // Not checking TCA ctrl for be_users soft-delete-awareness here:
                         // Hopefully nobody unsets this, and it is likely core would stumble on this, too.
-                        $user = $this->recordsHelper->getRecord($this->statements, 'be_users', ['username', 'deleted'], $crUserUid);
+                        $user = $this->recordsHelper->getRecord($statements, 'be_users', ['username', 'deleted'], $crUserUid);
                         $deletedString = $user['deleted'] ? '|<info>deleted</info>' : '';
                         $crUserString = '[' . $crUserUid . $deletedString . ']' . $user['username'];
                     } catch (NoSuchRecordException) {
@@ -213,7 +207,7 @@ final class RecordsRenderer
      * @param array<string, int|string> $row
      * @return array<string, int|string>
      */
-    private function resolveWorkspace(string $tableName, array $row): array
+    private function resolveWorkspace(PreparedStatements $statements, string $tableName, array $row): array
     {
         $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
         if ($workspaceIdField) {
@@ -223,7 +217,7 @@ final class RecordsRenderer
                     try {
                         // Not checking TCA ctrl for sys_workspace soft-delete-awareness here:
                         // Hopefully nobody unsets this, and it is likely core would stumble on this, too.
-                        $workspace = $this->recordsHelper->getRecord($this->statements, 'sys_workspace', ['title', 'deleted'], $workspaceUid);
+                        $workspace = $this->recordsHelper->getRecord($statements, 'sys_workspace', ['title', 'deleted'], $workspaceUid);
                         $deletedString = $workspace['deleted'] ? '|<info>deleted</info>' : '';
                         $workspaceString = '[' . $workspaceUid . $deletedString . ']' . $workspace['title'];
                     } catch (NoSuchRecordException) {
@@ -245,7 +239,7 @@ final class RecordsRenderer
      * @param array<string, int|string> $row
      * @return array<string, int|string>
      */
-    private function resolveTranslationParentField(string $tableName, array $row): array
+    private function resolveTranslationParentField(PreparedStatements $statements, string $tableName, array $row): array
     {
         $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
         if ($translationParentField && array_key_exists($translationParentField, $row)) {
@@ -258,7 +252,7 @@ final class RecordsRenderer
                     $row[$translationParentField] = '[' . $parentUid . '|<comment>missing</comment>]';
                 } else {
                     try {
-                        $parentRecord = $this->recordsHelper->getRecord($this->statements, $tableName, [$deletedField], $parentUid);
+                        $parentRecord = $this->recordsHelper->getRecord($statements, $tableName, [$deletedField], $parentUid);
                         if ($parentRecord[$deletedField]) {
                             $row[$translationParentField] = '[' . $parentUid . '|<info>deleted</info>]';
                         }
@@ -275,7 +269,7 @@ final class RecordsRenderer
      * @param array<string, int|string> $row
      * @return array<string, int|string>
      */
-    private function resolveTranslationSourceField(string $tableName, array $row): array
+    private function resolveTranslationSourceField(PreparedStatements $statements, string $tableName, array $row): array
     {
         $translationSourceField = $this->tcaHelper->getTranslationSourceField($tableName);
         if ($translationSourceField && array_key_exists($translationSourceField, $row)) {
@@ -288,7 +282,7 @@ final class RecordsRenderer
                     $row[$translationSourceField] = '[' . $parentUid . '|<comment>missing</comment>]';
                 } else {
                     try {
-                        $parentRecord = $this->recordsHelper->getRecord($this->statements, $tableName, [$deletedField], $parentUid);
+                        $parentRecord = $this->recordsHelper->getRecord($statements, $tableName, [$deletedField], $parentUid);
                         if ($parentRecord[$deletedField]) {
                             $row[$translationSourceField] = '[' . $parentUid . '|<info>deleted</info>]';
                         }
@@ -305,7 +299,7 @@ final class RecordsRenderer
      * @param array<string, int|string> $row
      * @return array<string, int|string>
      */
-    private function resolvePid(array $row): array
+    private function resolvePid(PreparedStatements $statements, array $row): array
     {
         if (array_key_exists('pid', $row) && (int)$row['pid'] !== 0
         ) {
@@ -313,7 +307,7 @@ final class RecordsRenderer
             try {
                 // Not checking TCA ctrl for pages soft-delete-awareness here:
                 // Hopefully nobody unsets this, and it is likely core would stumble on this, too.
-                $pagesRecord = $this->recordsHelper->getRecord($this->statements, 'pages', ['uid', 'deleted'], $pagesUid);
+                $pagesRecord = $this->recordsHelper->getRecord($statements, 'pages', ['uid', 'deleted'], $pagesUid);
                 if ($pagesRecord['deleted']) {
                     $row['pid'] = '[' . $pagesUid . '|<info>deleted</info>]';
                 }
@@ -324,10 +318,10 @@ final class RecordsRenderer
         return $row;
     }
 
-    private function resolveRelation(string $tableName, int $uid): string
+    private function resolveRelation(PreparedStatements $statements, string $tableName, int $uid): string
     {
         try {
-            $this->recordsHelper->getRecord($this->statements, $tableName, ['uid'], $uid);
+            $this->recordsHelper->getRecord($statements, $tableName, ['uid'], $uid);
         } catch (NoSuchRecordException) {
             return '[<comment>missing</comment>]' . $uid;
         }

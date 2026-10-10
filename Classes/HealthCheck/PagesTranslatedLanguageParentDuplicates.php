@@ -106,8 +106,8 @@ final class PagesTranslatedLanguageParentDuplicates extends AbstractHealthCheck 
         $this->updateTcaRecordsOfTable($run, $simulate, 'pages', $affectedRecords['pages'] ?? [], $updateFields);
     }
 
-    protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
+    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
     {
-        $this->outputRecordDetails($io, $affectedRecords, '', ['transOrigPointerField']);
+        $this->outputRecordDetails($run, $affectedRecords, '', ['transOrigPointerField']);
     }
 }

@@ -80,8 +80,8 @@ final class TcaTablesTranslatedParentSelf extends AbstractHealthCheck implements
         $this->softOrHardDeleteRecords($run, $simulate, $affectedRecords);
     }
 
-    protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
+    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
     {
-        $this->outputRecordDetails($io, $affectedRecords, '', ['languageField', 'transOrigPointerField']);
+        $this->outputRecordDetails($run, $affectedRecords, '', ['languageField', 'transOrigPointerField']);
     }
 }

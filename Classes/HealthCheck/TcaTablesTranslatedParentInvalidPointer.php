@@ -154,9 +154,9 @@ final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck 
         }
     }
 
-    protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
+    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
     {
-        $this->outputRecordDetails($io, $affectedRecords, '_reasonBroken', ['languageField', 'transOrigPointerField']);
+        $this->outputRecordDetails($run, $affectedRecords, '_reasonBroken', ['languageField', 'transOrigPointerField']);
     }
 
     /**

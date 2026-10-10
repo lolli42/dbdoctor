@@ -103,8 +103,8 @@ final class SysFileReferenceInvalidPid extends AbstractHealthCheck implements He
         $this->outputTableUpdateAfter($run, $simulate, $tableName, $count);
     }
 
-    protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
+    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
     {
-        $this->outputRecordDetails($io, $affectedRecords, '', [], ['tablenames', 'uid_foreign', 'fieldname', 'uid_local']);
+        $this->outputRecordDetails($run, $affectedRecords, '', [], ['tablenames', 'uid_foreign', 'fieldname', 'uid_local']);
     }
 }

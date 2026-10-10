@@ -107,8 +107,8 @@ final class SysFileMetadataTranslatedParentInvalid extends AbstractHealthCheck i
         $this->outputTableUpdateAfter($run, $simulate, 'sys_file_metadata', count($rows));
     }
 
-    protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
+    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
     {
-        $this->outputRecordDetails($io, $affectedRecords, '_reasonBroken', ['languageField', 'transOrigPointerField'], ['file']);
+        $this->outputRecordDetails($run, $affectedRecords, '_reasonBroken', ['languageField', 'transOrigPointerField'], ['file']);
     }
 }

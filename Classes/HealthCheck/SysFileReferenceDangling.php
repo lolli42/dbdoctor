@@ -64,8 +64,8 @@ final class SysFileReferenceDangling extends AbstractHealthCheck implements Heal
         $this->deleteTcaRecordsOfTable($run, $simulate, 'sys_file_reference', $affectedRecords['sys_file_reference'] ?? []);
     }
 
-    protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
+    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
     {
-        $this->outputRecordDetails($io, $affectedRecords, '', [], ['uid_local', 'tablenames', 'uid_foreign', 'fieldname']);
+        $this->outputRecordDetails($run, $affectedRecords, '', [], ['uid_local', 'tablenames', 'uid_foreign', 'fieldname']);
     }
 }

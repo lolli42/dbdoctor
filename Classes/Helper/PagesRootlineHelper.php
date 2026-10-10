@@ -28,22 +28,15 @@ final class PagesRootlineHelper
      */
     private array $rootlineCache = [];
 
-    /**
-     * Interim: Own prepared statements until the caller hands over the ones of its run.
-     */
-    private readonly PreparedStatements $statements;
-
     public function __construct(
         private readonly RecordsHelper $recordsHelper,
-    ) {
-        $this->statements = new PreparedStatements();
-    }
+    ) {}
 
     /**
      * @param array<int, array<string, int|string|bool>> $rootline
      * @return array<int, array<string, int|string|bool>>
      */
-    public function getRootline(int $uid, array $rootline = []): array
+    public function getRootline(PreparedStatements $statements, int $uid, array $rootline = []): array
     {
         if ($uid === 0) {
             array_unshift($rootline, [
@@ -57,7 +50,7 @@ final class PagesRootlineHelper
             return $rootline;
         }
         try {
-            $currentPage = $this->getPage($uid);
+            $currentPage = $this->getPage($statements, $uid);
             $upperPid = (int)$currentPage['pid'];
             if (in_array($upperPid, array_column($rootline, 'pid'))) {
                 // Page loops (page uid 1 having pid 2, uid 2 having 1) are found and
@@ -66,7 +59,7 @@ final class PagesRootlineHelper
                 return $rootline;
             }
             array_unshift($rootline, $currentPage);
-            return $this->getRootline($upperPid, $rootline);
+            return $this->getRootline($statements, $upperPid, $rootline);
         } catch (NoSuchPageException $e) {
             array_unshift(
                 $rootline,
@@ -86,13 +79,13 @@ final class PagesRootlineHelper
     /**
      * @return array<string, bool|int|string>
      */
-    private function getPage(int $uid): array
+    private function getPage(PreparedStatements $statements, int $uid): array
     {
         if (isset($this->rootlineCache[$uid])) {
             return $this->rootlineCache[$uid];
         }
         try {
-            $currentPage = $this->recordsHelper->getRecord($this->statements, 'pages', ['uid', 'pid', 'deleted', 't3ver_wsid', 'title'], $uid);
+            $currentPage = $this->recordsHelper->getRecord($statements, 'pages', ['uid', 'pid', 'deleted', 't3ver_wsid', 'title'], $uid);
         } catch (NoSuchRecordException) {
             throw new NoSuchPageException('record with uid "' . $uid . '" in table "pages" not found', 1646121409);
         }

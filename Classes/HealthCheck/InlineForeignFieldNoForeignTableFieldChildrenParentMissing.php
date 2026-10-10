@@ -82,13 +82,13 @@ final class InlineForeignFieldNoForeignTableFieldChildrenParentMissing extends A
         $this->deleteTcaRecords($run, $simulate, $affectedRecords);
     }
 
-    protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
+    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
     {
         foreach ($affectedRecords as $tableName => $rows) {
             $extraDbFields = [
                 (string)$rows[0]['_fieldNameOfParentTableUid'],
             ];
-            $this->outputRecordDetails($io, [$tableName => $rows], '_reasonBroken', [], $extraDbFields);
+            $this->outputRecordDetails($run, [$tableName => $rows], '_reasonBroken', [], $extraDbFields);
         }
     }
 }

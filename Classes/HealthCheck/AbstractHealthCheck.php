@@ -188,11 +188,11 @@ abstract class AbstractHealthCheck
                     break;
                 case 'p':
                     $this->outputMainSummary($io, $affectedRecords);
-                    $this->affectedPages($io, $affectedRecords);
+                    $this->affectedPages($run, $affectedRecords);
                     break;
                 case 'd':
                     $this->outputMainSummary($io, $affectedRecords);
-                    $this->recordDetails($io, $affectedRecords);
+                    $this->recordDetails($run, $affectedRecords);
                     break;
                 case 'h':
                 default:
@@ -219,9 +219,9 @@ abstract class AbstractHealthCheck
      *
      * @param array<string, array<int, array<string, int|string>>> $affectedRecords
      */
-    protected function affectedPages(SymfonyStyle $io, array $affectedRecords): void
+    protected function affectedPages(HealthCheckRun $run, array $affectedRecords): void
     {
-        $this->outputAffectedPages($io, $affectedRecords);
+        $this->outputAffectedPages($run, $affectedRecords);
     }
 
     /**
@@ -229,9 +229,9 @@ abstract class AbstractHealthCheck
      *
      * @param array<string, array<int, array<string, int|string>>> $affectedRecords
      */
-    protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
+    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
     {
-        $this->outputRecordDetails($io, $affectedRecords);
+        $this->outputRecordDetails($run, $affectedRecords);
     }
 
     /**
@@ -260,12 +260,12 @@ abstract class AbstractHealthCheck
     /**
      * @param array<string, array<int, array<string, int|string>>> $danglingRows
      */
-    final protected function outputAffectedPages(SymfonyStyle $io, array $danglingRows): void
+    final protected function outputAffectedPages(HealthCheckRun $run, array $danglingRows): void
     {
-        $io->note('Found records per page:');
+        $run->io->note('Found records per page:');
         /** @var AffectedPagesRenderer $affectedPagesHelper */
         $affectedPagesHelper = $this->container->get(AffectedPagesRenderer::class);
-        $io->table($affectedPagesHelper->getHeader($danglingRows), $affectedPagesHelper->getRows($danglingRows));
+        $run->io->table($affectedPagesHelper->getHeader($run->statements, $danglingRows), $affectedPagesHelper->getRows($run->statements, $danglingRows));
     }
 
     /**
@@ -273,15 +273,15 @@ abstract class AbstractHealthCheck
      * @param array<int, string> $extraCtrlFields
      * @param array<int, string> $extraDbFields
      */
-    final protected function outputRecordDetails(SymfonyStyle $io, array $danglingRows, string $reasonField = '', array $extraCtrlFields = [], array $extraDbFields = []): void
+    final protected function outputRecordDetails(HealthCheckRun $run, array $danglingRows, string $reasonField = '', array $extraCtrlFields = [], array $extraDbFields = []): void
     {
         /** @var RecordsRenderer $recordsRenderer */
         $recordsRenderer = $this->container->get(RecordsRenderer::class);
         foreach ($danglingRows as $tableName => $rows) {
-            $io->note('Table "' . $tableName . '":');
-            $io->table(
+            $run->io->note('Table "' . $tableName . '":');
+            $run->io->table(
                 $recordsRenderer->getHeader($tableName, $reasonField, $extraCtrlFields, $extraDbFields),
-                $recordsRenderer->getRows($tableName, $rows, $reasonField, $extraCtrlFields, $extraDbFields)
+                $recordsRenderer->getRows($run->statements, $tableName, $rows, $reasonField, $extraCtrlFields, $extraDbFields)
             );
         }
     }

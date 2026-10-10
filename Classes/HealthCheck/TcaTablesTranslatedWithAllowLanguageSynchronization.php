@@ -187,9 +187,9 @@ final class TcaTablesTranslatedWithAllowLanguageSynchronization extends Abstract
         }
     }
 
-    protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
+    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
     {
-        $this->outputRecordDetails($io, $affectedRecords, '_reasonBroken', ['languageField', 'transOrigPointerField'], ['l10n_state']);
+        $this->outputRecordDetails($run, $affectedRecords, '_reasonBroken', ['languageField', 'transOrigPointerField'], ['l10n_state']);
     }
 
     /**

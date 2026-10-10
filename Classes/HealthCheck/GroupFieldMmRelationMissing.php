@@ -206,22 +206,22 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
         }
     }
 
-    protected function affectedPages(SymfonyStyle $io, array $affectedRecords): void
+    protected function affectedPages(HealthCheckRun $run, array $affectedRecords): void
     {
         // MM rows of missing local records are on no page.
-        $this->outputAffectedPages($io, array_filter(
+        $this->outputAffectedPages($run, array_filter(
             $affectedRecords,
             static fn(array $rows): bool => !(bool)($rows[0]['_localRecordMissing'] ?? false)
         ));
     }
 
-    protected function recordDetails(SymfonyStyle $io, array $affectedRecords): void
+    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
     {
         foreach ($affectedRecords as $tableName => $rows) {
             if ((bool)($rows[0]['_localRecordMissing'] ?? false)) {
                 // Rows of MM table $tableName, their local record does not exist.
-                $io->note('MM table "' . $tableName . '":');
-                $io->table(
+                $run->io->note('MM table "' . $tableName . '":');
+                $run->io->table(
                     ['uid_local', 'local table', 'field', 'MM rows'],
                     array_map(
                         static fn(array $row): array => [$row['uid'], $row['_localTableName'], $row['_fieldName'], $row['_mmRowCount']],
@@ -231,7 +231,7 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
                 continue;
             }
             $fieldNames = array_values(array_unique(array_map(static fn(array $row): string => (string)$row['_fieldName'], $rows)));
-            $this->outputRecordDetails($io, [$tableName => $rows], '_reasonBroken', [], $fieldNames);
+            $this->outputRecordDetails($run, [$tableName => $rows], '_reasonBroken', [], $fieldNames);
         }
     }
 

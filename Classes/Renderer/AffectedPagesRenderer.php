@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\Renderer;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Helper\PagesRootlineHelper;
 
 final readonly class AffectedPagesRenderer
@@ -29,12 +30,12 @@ final readonly class AffectedPagesRenderer
      * @param array<string, array<int, array<string, int|string>>> $tableRecordRows
      * @return string[]
      */
-    public function getHeader(array $tableRecordRows): array
+    public function getHeader(PreparedStatements $statements, array $tableRecordRows): array
     {
         $affectedPids = $this->getAffectedPids($tableRecordRows);
         $maxRootlineCount = 0;
         foreach ($affectedPids as $pid => $count) {
-            $thisRootline = $this->pagesRootlineHelper->getRootline($pid);
+            $thisRootline = $this->pagesRootlineHelper->getRootline($statements, $pid);
             $rootlineCount = count($thisRootline);
             if ($rootlineCount > $maxRootlineCount) {
                 $maxRootlineCount = $rootlineCount;
@@ -51,12 +52,12 @@ final readonly class AffectedPagesRenderer
      * @param array<string, array<int, array<string, int|string>>> $tableRecordRows
      * @return array<int, array<int, int<1, max>|string>>
      */
-    public function getRows(array $tableRecordRows): array
+    public function getRows(PreparedStatements $statements, array $tableRecordRows): array
     {
         $affectedPids = $this->getAffectedPids($tableRecordRows);
         $rows = [];
         foreach ($affectedPids as $pid => $count) {
-            $thisRootline = $this->pagesRootlineHelper->getRootline($pid);
+            $thisRootline = $this->pagesRootlineHelper->getRootline($statements, $pid);
             $row = [$count];
             foreach ($thisRootline as $rootlineItem) {
                 $rowParams = [$rootlineItem['uid']];
