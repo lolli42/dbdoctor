@@ -474,8 +474,6 @@ Each tag gets a GitHub release, too: Create it in the GitHub web interface from 
 Example:
 
 ```
-Build/Scripts/runTests.sh -s clean
-Build/Scripts/runTests.sh -s composerUpdate
 composer config extra.typo3/cms.version 0.3.2
 git commit -am "[RELEASE] 0.3.2 Added some basic inline foreign field related checks"
 git tag 0.3.2
