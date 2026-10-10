@@ -17,6 +17,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
@@ -44,7 +49,7 @@ final readonly class WorkspacesRecordsOfDeletedWorkspaces extends AbstractHealth
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
         if (!ExtensionManagementUtility::isLoaded('workspaces')) {
             // Check WorkspacesNotLoadedRecordsDangling that is executed before this check
@@ -53,7 +58,7 @@ final readonly class WorkspacesRecordsOfDeletedWorkspaces extends AbstractHealth
             return [];
         }
         $allowedWorkspacesUids = $this->getAllowedWorkspaces();
-        $affectedRows = [];
+        $findings = [];
         foreach ($this->tcaHelper->getNextWorkspaceEnabledTcaTable() as $tableName) {
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             // Since workspace records have no deleted=1, we remove all restrictions here: If a sys_workspace
@@ -67,10 +72,15 @@ final readonly class WorkspacesRecordsOfDeletedWorkspaces extends AbstractHealth
                 ->executeQuery();
             while ($row = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $row */
-                $affectedRows[$tableName][(int)$row['uid']] = $row;
+                $findings[] = new Finding(
+                    new RecordKey($tableName, (int)$row['uid']),
+                    (int)$row['pid'],
+                    [new RecordChange(RecordChangeType::Delete, $tableName, (int)$row['uid'])],
+                    new Reason('workspace-missing', 'Workspace "' . $row['t3ver_wsid'] . '" does not exist or is deleted', ['workspace' => (int)$row['t3ver_wsid']]),
+                );
             }
         }
-        return $affectedRows;
+        return $findings;
     }
 
     /**
@@ -93,10 +103,5 @@ final readonly class WorkspacesRecordsOfDeletedWorkspaces extends AbstractHealth
         }
         // t3ver_wsid=0 are *always* allowed, of course.
         return array_merge([0], array_keys($allowedWorkspaces));
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        $this->deleteTcaRecords($run, $simulate, $affectedRecords);
     }
 }

@@ -17,6 +17,10 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -38,9 +42,9 @@ final readonly class WorkspacesPidNegative extends AbstractHealthCheck implement
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRows = [];
+        $findings = [];
         foreach ($this->tcaHelper->getNextTcaTable() as $tableName) {
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             // We want to find "deleted=1" records, so obviously especially the "delete" restriction is removed.
@@ -53,14 +57,13 @@ final readonly class WorkspacesPidNegative extends AbstractHealthCheck implement
                 ->executeQuery();
             while ($row = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $row */
-                $affectedRows[$tableName][(int)$row['uid']] = $row;
+                $findings[] = new Finding(
+                    new RecordKey($tableName, (int)$row['uid']),
+                    (int)$row['pid'],
+                    [new RecordChange(RecordChangeType::Delete, $tableName, (int)$row['uid'])],
+                );
             }
         }
-        return $affectedRows;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        $this->deleteTcaRecords($run, $simulate, $affectedRecords);
+        return $findings;
     }
 }

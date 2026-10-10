@@ -18,6 +18,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -38,7 +43,7 @@ final readonly class PagesTranslatedLanguageParentDifferentPid extends AbstractH
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         // Deleted pages are considered as well, we remove all restrictions.
@@ -48,7 +53,7 @@ final readonly class PagesTranslatedLanguageParentDifferentPid extends AbstractH
             ->where($queryBuilder->expr()->gt('sys_language_uid', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)))
             ->orderBy('uid')
             ->executeQuery();
-        $affectedRecords = [];
+        $findings = [];
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
@@ -60,7 +65,12 @@ final readonly class PagesTranslatedLanguageParentDifferentPid extends AbstractH
                     // @todo: This could be optimized when the underlying core question has been decided.
                     && !((int)$row['t3ver_wsid'] > 0 && (int)$row['t3ver_state'] === 4)
                 ) {
-                    $affectedRecords['pages'][] = $row;
+                    $findings[] = new Finding(
+                        new RecordKey('pages', (int)$row['uid']),
+                        (int)$row['pid'],
+                        [new RecordChange(RecordChangeType::Delete, 'pages', (int)$row['uid'])],
+                        new Reason('parent-different-pid', 'Language parent "' . $row['l10n_parent'] . '" is on pid "' . $languageParentRow['pid'] . '"', ['parent' => (int)$row['l10n_parent'], 'parentPid' => (int)$languageParentRow['pid']]),
+                    );
                 }
             } catch (NoSuchRecordException $e) {
                 // Earlier test should have fixed this.
@@ -72,16 +82,11 @@ final readonly class PagesTranslatedLanguageParentDifferentPid extends AbstractH
                 );
             }
         }
-        return $affectedRecords;
+        return $findings;
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    protected function getDetailCtrlFields(string $tableName): array
     {
-        $this->deleteTcaRecordsOfTable($run, $simulate, 'pages', $affectedRecords['pages'] ?? []);
-    }
-
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        $this->outputRecordDetails($run, $affectedRecords, '', ['transOrigPointerField']);
+        return ['transOrigPointerField'];
     }
 }

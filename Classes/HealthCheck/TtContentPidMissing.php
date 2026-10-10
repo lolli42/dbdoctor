@@ -18,6 +18,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -47,9 +52,9 @@ final readonly class TtContentPidMissing extends AbstractHealthCheck implements 
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRows = [];
+        $findings = [];
         // Iterate all TCA tables, but ignore pages table
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
         // Consider deleted records: If the pid does not exist, they should be deleted, too.
@@ -57,21 +62,22 @@ final readonly class TtContentPidMissing extends AbstractHealthCheck implements 
         $result = $queryBuilder->select('uid', 'pid')->from('tt_content')->orderBy('uid')->executeQuery();
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
-            if ((int)$row['pid'] === 0) {
+            $pid = (int)$row['pid'];
+            if ($pid === 0) {
                 // Records pointing to pid 0 are ok.
                 continue;
             }
             try {
-                $this->recordsHelper->getRecord($run->statements, 'pages', ['uid'], (int)$row['pid']);
+                $this->recordsHelper->getRecord($run->statements, 'pages', ['uid'], $pid);
             } catch (NoSuchRecordException) {
-                $affectedRows['tt_content'][] = $row;
+                $findings[] = new Finding(
+                    new RecordKey('tt_content', (int)$row['uid']),
+                    $pid,
+                    [new RecordChange(RecordChangeType::Delete, 'tt_content', (int)$row['uid'])],
+                    new Reason('page-missing', 'Page "' . $pid . '" does not exist', ['pid' => $pid]),
+                );
             }
         }
-        return $affectedRows;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        $this->deleteTcaRecords($run, $simulate, $affectedRecords);
+        return $findings;
     }
 }

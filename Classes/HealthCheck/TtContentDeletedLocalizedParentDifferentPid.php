@@ -20,6 +20,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -41,9 +46,9 @@ final readonly class TtContentDeletedLocalizedParentDifferentPid extends Abstrac
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRows = [];
+        $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
         $queryBuilder->getRestrictions()->removeAll();
         $result = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'l18n_parent')->from('tt_content')
@@ -61,7 +66,12 @@ final readonly class TtContentDeletedLocalizedParentDifferentPid extends Abstrac
                 // Note workspace moved records are not an issue here since we're dealing with
                 // deleted=1 records here, which don't exist in workspaces.
                 if ((int)$row['pid'] !== (int)$languageParent['pid']) {
-                    $affectedRows['tt_content'][] = $row;
+                    $findings[] = new Finding(
+                        new RecordKey('tt_content', (int)$row['uid']),
+                        (int)$row['pid'],
+                        [new RecordChange(RecordChangeType::Delete, 'tt_content', (int)$row['uid'])],
+                        new Reason('parent-different-pid', 'Language parent "' . $row['l18n_parent'] . '" is on pid "' . $languageParent['pid'] . '"', ['parent' => (int)$row['l18n_parent'], 'parentPid' => (int)$languageParent['pid']]),
+                    );
                 }
             } catch (NoSuchRecordException|NoSuchTableException $e) {
                 throw new EarlierCheckNotFixedException(
@@ -71,11 +81,6 @@ final readonly class TtContentDeletedLocalizedParentDifferentPid extends Abstrac
                 );
             }
         }
-        return $affectedRows;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        $this->deleteTcaRecordsOfTable($run, $simulate, 'tt_content', $affectedRecords['tt_content'] ?? []);
+        return $findings;
     }
 }

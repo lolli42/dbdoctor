@@ -18,6 +18,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -46,9 +51,9 @@ final readonly class SysFileReferenceLocalizedParentExists extends AbstractHealt
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $tableRows = [];
+        $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
         $queryBuilder->getRestrictions()->removeAll();
         $result = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'l10n_parent')->from('sys_file_reference')
@@ -63,33 +68,33 @@ final readonly class SysFileReferenceLocalizedParentExists extends AbstractHealt
             try {
                 $this->recordsHelper->getRecord($run->statements, 'sys_file_reference', ['uid'], (int)$row['l10n_parent']);
             } catch (NoSuchRecordException|NoSuchTableException $e) {
+                // @todo: Possible improvement. We could try to look at the uid_foreign/tablesnames inline parent record,
+                //        see if is "connected mode", has a sys_language_uid=0 l10n_parent on the same pid, look up the
+                //        sys_file_reference children attached to the same fieldname (which must not be a flexform field),
+                //        then see if one of them has the same uid_local "image" attached, and see if there is no other
+                //        existing localized record of this one. Then set l10n_parent to the uid of that sys_file_reference record.
+                //        This would allow us to "reconnect" at least some affected records to the "most likely" correct l10n_parent
+                //        instead of removing the relation. Also, workspaces has to be considered for all this as well.
+                //        A second strategy to mitigate this is to set l10n_parent=0, which will make that relation
+                //        "free mode". This however may lead to funny behavior in BE, when the inline parent is
+                //        "connected mode". Needs further investigation if considered.
+                //        Note there is also a scenario where inline parent and inline parent of default language are
+                //        located on different pid's, which indicates the l10n_parent uid is even more borked. Also,
+                //        l10n_parent record should be on the same pid, see https://github.com/lolli42/dbdoctor/issues/30
                 // Match if parent does not exist at all
-                $tableRows['sys_file_reference'][] = $row;
+                $findings[] = new Finding(
+                    new RecordKey('sys_file_reference', (int)$row['uid']),
+                    (int)$row['pid'],
+                    [new RecordChange(RecordChangeType::Delete, 'sys_file_reference', (int)$row['uid'])],
+                    new Reason('parent-missing', 'Language parent "' . $row['l10n_parent'] . '" does not exist', ['parent' => (int)$row['l10n_parent']]),
+                );
             }
         }
-        return $tableRows;
+        return $findings;
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    protected function getDetailDbFields(string $tableName): array
     {
-        // @todo: Possible improvement. We could try to look at the uid_foreign/tablesnames inline parent record,
-        //        see if is "connected mode", has a sys_language_uid=0 l10n_parent on the same pid, look up the
-        //        sys_file_reference children attached to the same fieldname (which must not be a flexform field),
-        //        then see if one of them has the same uid_local "image" attached, and see if there is no other
-        //        existing localized record of this one. Then set l10n_parent to the uid of that sys_file_reference record.
-        //        This would allow us to "reconnect" at least some affected records to the "most likely" correct l10n_parent
-        //        instead of removing the relation. Also, workspaces has to be considered for all this as well.
-        //        A second strategy to mitigate this is to set l10n_parent=0, which will make that relation
-        //        "free mode". This however may lead to funny behavior in BE, when the inline parent is
-        //        "connected mode". Needs further investigation if considered.
-        //        Note there is also a scenario where inline parent and inline parent of default language are
-        //        located on different pid's, which indicates the l10n_parent uid is even more borked. Also,
-        //        l10n_parent record should be on the same pid, see https://github.com/lolli42/dbdoctor/issues/30
-        $this->deleteTcaRecordsOfTable($run, $simulate, 'sys_file_reference', $affectedRecords['sys_file_reference'] ?? []);
-    }
-
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        $this->outputRecordDetails($run, $affectedRecords, '', [], ['sys_language_uid', 'l10n_parent', 'deleted', 'tablenames', 'uid_foreign', 'fieldname', 'uid_local']);
+        return ['sys_language_uid', 'l10n_parent', 'deleted', 'tablenames', 'uid_foreign', 'fieldname', 'uid_local'];
     }
 }

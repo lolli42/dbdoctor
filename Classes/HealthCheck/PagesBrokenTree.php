@@ -17,6 +17,10 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Lolli\Dbdoctor\Helper\PagesTreeHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -41,26 +45,22 @@ final readonly class PagesBrokenTree extends AbstractHealthCheck implements Heal
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
         // All pages rows count as connected, including deleted and workspace rows.
         $uidToPid = $this->pagesTreeHelper->getAllPageUidToPid();
         $connected = $this->pagesTreeHelper->resolveClosestSeed($uidToPid, [0 => true]);
-        $danglingPages = [];
+        $findings = [];
         foreach ($uidToPid as $uid => $pid) {
             if ($connected[$uid] === null) {
-                $danglingPages['pages'][$uid] = ['uid' => $uid, 'pid' => $pid];
+                $findings[$uid] = new Finding(
+                    new RecordKey('pages', $uid),
+                    $pid,
+                    [new RecordChange(RecordChangeType::Delete, 'pages', $uid)],
+                );
             }
         }
-        if ($danglingPages === []) {
-            return [];
-        }
-        ksort($danglingPages['pages']);
-        return ['pages' => array_values($danglingPages['pages'])];
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        $this->deleteTcaRecordsOfTable($run, $simulate, 'pages', $affectedRecords['pages'] ?? []);
+        ksort($findings);
+        return array_values($findings);
     }
 }

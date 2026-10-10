@@ -17,6 +17,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -37,9 +42,9 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentMissing 
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRows = [];
+        $findingsByTable = [];
 
         foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldParent() as $inlineChild) {
             $childTableName = $inlineChild['tableName'];
@@ -70,33 +75,34 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentMissing 
                 try {
                     $this->recordsHelper->getRecord($run->statements, $parentTableName, ['uid'], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
                 } catch (NoSuchRecordException $e) {
-                    $inlineChildRow['_reasonBroken'] = 'Missing parent';
-                    $inlineChildRow['_parentTableName'] = $parentTableName;
-                    $inlineChildRow['_fieldNameOfParentTableUid'] = $fieldNameOfParentTableUid;
                     // Keyed by uid: Two parent fields of the same parent table may select the same row.
-                    $affectedRows[$childTableName][(int)$inlineChildRow['uid']] = $inlineChildRow;
+                    $findingsByTable[$childTableName][(int)$inlineChildRow['uid']] = new Finding(
+                        new RecordKey($childTableName, (int)$inlineChildRow['uid']),
+                        (int)$inlineChildRow['pid'],
+                        [new RecordChange(RecordChangeType::Delete, $childTableName, (int)$inlineChildRow['uid'])],
+                        new Reason('parent-missing', 'Missing parent'),
+                    );
                 }
             }
         }
-        foreach ($affectedRows as $childTableName => $rows) {
-            ksort($rows);
-            $affectedRows[$childTableName] = array_values($rows);
+        $findings = [];
+        foreach ($findingsByTable as $tableFindings) {
+            ksort($tableFindings);
+            $findings = array_merge($findings, array_values($tableFindings));
         }
-        return $affectedRows;
+        return $findings;
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    protected function getDetailDbFields(string $tableName): array
     {
-        $this->deleteTcaRecords($run, $simulate, $affectedRecords);
-    }
-
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        foreach ($affectedRecords as $tableName => $rows) {
-            $extraDbFields = [
-                (string)$rows[0]['_fieldNameOfParentTableUid'],
-            ];
-            $this->outputRecordDetails($run, [$tableName => $rows], '_reasonBroken', [], $extraDbFields);
+        $fields = [];
+        foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldParent() as $inlineChild) {
+            if ($inlineChild['tableName'] === $tableName
+                && !in_array($inlineChild['fieldNameOfParentTableUid'], $fields, true)
+            ) {
+                $fields[] = $inlineChild['fieldNameOfParentTableUid'];
+            }
         }
+        return $fields;
     }
 }

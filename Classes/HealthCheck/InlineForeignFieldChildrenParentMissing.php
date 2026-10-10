@@ -18,6 +18,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -37,9 +42,9 @@ final readonly class InlineForeignFieldChildrenParentMissing extends AbstractHea
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRows = [];
+        $findings = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
             $childTableName = $inlineChild['tableName'];
             $fieldNameOfParentTableName = $inlineChild['fieldNameOfParentTableName'];
@@ -63,38 +68,39 @@ final readonly class InlineForeignFieldChildrenParentMissing extends AbstractHea
                     || !is_array($GLOBALS['TCA'][$inlineChildRow[$fieldNameOfParentTableName]] ?? false)
                     || !$this->tableHelper->tableExistsInDatabase((string)$inlineChildRow[$fieldNameOfParentTableName])
                 ) {
-                    $inlineChildRow['_reasonBroken'] = 'Invalid parent';
-                    $inlineChildRow['_fieldNameOfParentTableName'] = $fieldNameOfParentTableName;
-                    $inlineChildRow['_fieldNameOfParentTableUid'] = $fieldNameOfParentTableUid;
-                    $affectedRows[$childTableName][] = $inlineChildRow;
+                    $findings[] = new Finding(
+                        new RecordKey($childTableName, (int)$inlineChildRow['uid']),
+                        (int)$inlineChildRow['pid'],
+                        [new RecordChange(RecordChangeType::Delete, $childTableName, (int)$inlineChildRow['uid'])],
+                        new Reason('parent-invalid', 'Invalid parent'),
+                    );
                     continue;
                 }
                 try {
                     $this->recordsHelper->getRecord($run->statements, (string)$inlineChildRow[$fieldNameOfParentTableName], ['uid'], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
                 } catch (NoSuchRecordException $e) {
-                    $inlineChildRow['_reasonBroken'] = 'Missing parent';
-                    $inlineChildRow['_fieldNameOfParentTableName'] = $fieldNameOfParentTableName;
-                    $inlineChildRow['_fieldNameOfParentTableUid'] = $fieldNameOfParentTableUid;
-                    $affectedRows[$childTableName][] = $inlineChildRow;
+                    $findings[] = new Finding(
+                        new RecordKey($childTableName, (int)$inlineChildRow['uid']),
+                        (int)$inlineChildRow['pid'],
+                        [new RecordChange(RecordChangeType::Delete, $childTableName, (int)$inlineChildRow['uid'])],
+                        new Reason('parent-missing', 'Missing parent'),
+                    );
                 }
             }
         }
-        return $affectedRows;
+        return $findings;
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    protected function getDetailDbFields(string $tableName): array
     {
-        $this->deleteTcaRecords($run, $simulate, $affectedRecords);
-    }
-
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        foreach ($affectedRecords as $tableName => $rows) {
-            $extraDbFields = [
-                (string)$rows[0]['_fieldNameOfParentTableName'],
-                (string)$rows[0]['_fieldNameOfParentTableUid'],
-            ];
-            $this->outputRecordDetails($run, [$tableName => $rows], '_reasonBroken', [], $extraDbFields);
+        foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
+            if ($inlineChild['tableName'] === $tableName) {
+                return [
+                    $inlineChild['fieldNameOfParentTableName'],
+                    $inlineChild['fieldNameOfParentTableUid'],
+                ];
+            }
         }
+        return [];
     }
 }
