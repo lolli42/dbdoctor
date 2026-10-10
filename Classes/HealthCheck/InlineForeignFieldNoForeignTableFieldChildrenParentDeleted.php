@@ -45,7 +45,7 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentDeleted 
     protected function getAffectedRecords(HealthCheckRun $run): array
     {
         $affectedRows = [];
-        foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldChildTcaTable() as $inlineChild) {
+        foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldParent() as $inlineChild) {
             $childTableName = $inlineChild['tableName'];
             if (!$this->tcaHelper->getDeletedField($childTableName)) {
                 // Skip child table if it is not soft-delete aware
@@ -76,13 +76,20 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentDeleted 
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($childTableName);
             // Do not consider deleted records: We want to find children deleted=0 with parents deleted=1.
             $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-            $result = $queryBuilder->select(...$selectFields)
+            $queryBuilder->select(...$selectFields)
                 ->from($childTableName)
                 ->where(
                     $queryBuilder->expr()->gt($fieldNameOfParentTableUid, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
                 )
-                ->orderBy('uid')
-                ->executeQuery();
+                ->orderBy('uid');
+            foreach ($inlineChild['matchFields'] as $matchFieldName => $matchFieldValue) {
+                // Child table may have multiple parent tables, consider only rows of this parent.
+                $parameter = $this->tableHelper->fieldIsInteger($childTableName, $matchFieldName)
+                    ? $queryBuilder->createNamedParameter((int)$matchFieldValue, Connection::PARAM_INT)
+                    : $queryBuilder->createNamedParameter((string)$matchFieldValue);
+                $queryBuilder->andWhere($queryBuilder->expr()->eq($matchFieldName, $parameter));
+            }
+            $result = $queryBuilder->executeQuery();
             while ($inlineChildRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $inlineChildRow */
                 try {
@@ -91,7 +98,8 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentDeleted 
                         $inlineChildRow['_reasonBroken'] = 'Deleted parent';
                         $inlineChildRow['_parentTableName'] = $parentTableName;
                         $inlineChildRow['_fieldNameOfParentTableUid'] = $fieldNameOfParentTableUid;
-                        $affectedRows[$childTableName][] = $inlineChildRow;
+                        // Keyed by uid: Two parent fields of the same parent table may select the same row.
+                        $affectedRows[$childTableName][(int)$inlineChildRow['uid']] = $inlineChildRow;
                     }
                 } catch (NoSuchRecordException $e) {
                     // Record existence has been checked by InlineForeignFieldChildrenParentMissing already.
@@ -99,6 +107,10 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentDeleted 
                     continue;
                 }
             }
+        }
+        foreach ($affectedRows as $childTableName => $rows) {
+            ksort($rows);
+            $affectedRows[$childTableName] = array_values($rows);
         }
         return $affectedRows;
     }

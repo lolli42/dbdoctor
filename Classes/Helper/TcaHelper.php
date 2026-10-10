@@ -211,6 +211,107 @@ final readonly class TcaHelper
     }
 
     /**
+     * Inline parent fields without foreign_table_field: One entry per parent table, child
+     * table, foreign_field and foreign_match_fields combination.
+     *
+     *  'config' => [
+     *       'type' => 'inline',
+     *       'foreign_table' => 'tx_sometable_name',
+     *       'foreign_field' => 'parent_uid',
+     *       'foreign_match_fields' => [
+     *           'parent_table' => 'pages',
+     *       ],
+     *  ],
+     *
+     * The child rows of an entry are the rows having all "matchFields" set to their values.
+     * A child table can be child of multiple parent tables. The rows of different parent
+     * tables are only told apart if their foreign_match_fields (or foreign_table_field)
+     * have at least one field in common with different values. Entries that can not be
+     * told apart from another parent table are skipped: It is unclear which parent table
+     * their rows belong to.
+     *
+     * @return iterable<array{tableName: string, parentTableName: string, fieldNameOfParentTableUid: string, matchFields: array<string, int|string>}>
+     */
+    public function getNextInlineForeignFieldNoForeignTableFieldParent(): iterable
+    {
+        $this->verifyTcaIsArray();
+        // All inline parent fields with foreign_field, by child table
+        $parentsByChildTable = [];
+        foreach ($GLOBALS['TCA'] as $tableName => $config) {
+            foreach (($config['columns'] ?? []) as $columnConfig) {
+                if (!is_array($columnConfig['config'] ?? false)
+                    || !in_array(($columnConfig['config']['type'] ?? ''), ['inline', 'file'], true)
+                    || empty($columnConfig['config']['foreign_table'] ?? '')
+                    || empty($columnConfig['config']['foreign_field'] ?? '')
+                ) {
+                    continue;
+                }
+                $matchFields = is_array($columnConfig['config']['foreign_match_fields'] ?? false) ? $columnConfig['config']['foreign_match_fields'] : [];
+                $foreignTableField = $columnConfig['config']['foreign_table_field'] ?? '';
+                if (is_string($foreignTableField) && $foreignTableField !== '') {
+                    // The child rows of a parent with foreign_table_field have the parent table name in this field
+                    $matchFields[$foreignTableField] = $tableName;
+                }
+                $parentsByChildTable[$columnConfig['config']['foreign_table']][] = [
+                    'parentTableName' => $tableName,
+                    'fieldNameOfParentTableUid' => $columnConfig['config']['foreign_field'],
+                    'matchFields' => $matchFields,
+                    'hasForeignTableField' => is_string($foreignTableField) && $foreignTableField !== '',
+                ];
+            }
+        }
+        $entries = [];
+        foreach ($parentsByChildTable as $childTableName => $parents) {
+            foreach ($parents as $parent) {
+                if ($parent['hasForeignTableField']
+                    || empty($GLOBALS['TCA'][$childTableName]['columns'][$parent['fieldNameOfParentTableUid']])
+                ) {
+                    continue;
+                }
+                foreach (array_keys($parent['matchFields']) as $matchFieldName) {
+                    if (empty($GLOBALS['TCA'][$childTableName]['columns'][$matchFieldName])) {
+                        // A match field without TCA column is not guaranteed to exist in the database.
+                        continue 2;
+                    }
+                }
+                foreach ($parents as $otherParent) {
+                    if ($otherParent['parentTableName'] !== $parent['parentTableName']
+                        && !$this->matchFieldsAreDisjoint($parent['matchFields'], $otherParent['matchFields'])
+                    ) {
+                        continue 2;
+                    }
+                }
+                $entry = [
+                    'tableName' => (string)$childTableName,
+                    'parentTableName' => $parent['parentTableName'],
+                    'fieldNameOfParentTableUid' => $parent['fieldNameOfParentTableUid'],
+                    'matchFields' => $parent['matchFields'],
+                ];
+                $entries[serialize($entry)] = $entry;
+            }
+        }
+        foreach ($entries as $entry) {
+            yield $entry;
+        }
+    }
+
+    /**
+     * True if no row can match both: There is a field in both sets having different values.
+     *
+     * @param array<string, int|string> $matchFields
+     * @param array<string, int|string> $otherMatchFields
+     */
+    private function matchFieldsAreDisjoint(array $matchFields, array $otherMatchFields): bool
+    {
+        foreach ($matchFields as $fieldName => $value) {
+            if (array_key_exists($fieldName, $otherMatchFields) && (string)$otherMatchFields[$fieldName] !== (string)$value) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Fields of type 'group' that store their relations as comma separated
      * list in the field itself, without MM table:
      *

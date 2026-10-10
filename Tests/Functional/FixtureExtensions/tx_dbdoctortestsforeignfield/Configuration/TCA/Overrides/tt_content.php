@@ -17,6 +17,32 @@ ExtensionManagementUtility::addTCAcolumns(
                 'foreign_field' => 'parentid',
             ],
         ],
+        // Child table is shared with pages, no foreign_table_field
+        'tx_dbdoctortestsforeignfield_items' => [
+            'label' => 'Items',
+            'config' => [
+                'type' => 'inline',
+                'foreign_table' => 'tx_dbdoctortestsforeignfield_items',
+                'foreign_field' => 'parentid',
+                'foreign_match_fields' => [
+                    'parenttable' => 'tt_content',
+                    'parentfield' => 'tx_dbdoctortestsforeignfield_items',
+                ],
+            ],
+        ],
+        // Child table is shared with pages, no foreign_table_field
+        'tx_dbdoctortestsforeignfield_items2' => [
+            'label' => 'Items 2',
+            'config' => [
+                'type' => 'inline',
+                'foreign_table' => 'tx_dbdoctortestsforeignfield_items',
+                'foreign_field' => 'parentid',
+                'foreign_match_fields' => [
+                    'parenttable' => 'tt_content',
+                    'parentfield' => 'tx_dbdoctortestsforeignfield_items2',
+                ],
+            ],
+        ],
     ]
 );
 
