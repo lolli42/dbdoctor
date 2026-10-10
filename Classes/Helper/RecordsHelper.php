@@ -196,9 +196,9 @@ final readonly class RecordsHelper
     }
 
     /**
-     * DELETE rows of an MM table. MM tables are no TCA tables and have no uid
-     * column: Rows are identified by all given fields. There may be duplicate
-     * rows, so at least one affected row is expected.
+     * DELETE rows of an MM table. MM tables are no TCA tables, they have a uid
+     * column only for fields with "multiple": Rows are identified by all given
+     * fields. There may be duplicate rows, so at least one affected row is expected.
      *
      * @param array<string, array{value: int|string, type: ParameterType}> $whereFields
      */

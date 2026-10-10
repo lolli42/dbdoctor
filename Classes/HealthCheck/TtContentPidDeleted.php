@@ -19,6 +19,9 @@ namespace Lolli\Dbdoctor\HealthCheck;
 
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -47,7 +50,7 @@ final readonly class TtContentPidDeleted extends AbstractHealthCheck implements 
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
         // Do not consider deleted records, soft-deleted records on soft-deleted page are ok.
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
@@ -56,13 +59,18 @@ final readonly class TtContentPidDeleted extends AbstractHealthCheck implements 
         $queryBuilder->where($queryBuilder->expr()->gt('pid', 0));
         $result = $queryBuilder->executeQuery();
 
-        $affectedRows = [];
+        $findings = [];
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
                 $pageRow = $this->recordsHelper->getRecord($run->statements, 'pages', ['uid', 'deleted'], (int)$row['pid']);
                 if ((int)$pageRow['deleted'] === 1) {
-                    $affectedRows['tt_content'][] = $row;
+                    $findings[] = new Finding(
+                        new RecordKey('tt_content', (int)$row['uid']),
+                        (int)$row['pid'],
+                        [$this->softOrHardDeletePlan('tt_content', $row)],
+                        new Reason('page-deleted', 'Page "' . $row['pid'] . '" is soft-deleted', ['pid' => (int)$row['pid']]),
+                    );
                 }
             } catch (NoSuchRecordException $e) {
                 // Earlier test should have fixed this.
@@ -74,11 +82,6 @@ final readonly class TtContentPidDeleted extends AbstractHealthCheck implements 
                 );
             }
         }
-        return $affectedRows;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        $this->softOrHardDeleteRecords($run, $simulate, $affectedRecords);
+        return $findings;
     }
 }
