@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -31,5 +32,6 @@ final readonly class HealthCheckRun
     public function __construct(
         public SymfonyStyle $io,
         public string $sqlDumpFile,
+        public PreparedStatements $statements,
     ) {}
 }

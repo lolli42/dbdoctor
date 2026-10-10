@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -39,10 +38,8 @@ final class PagesTranslatedLanguageParentDifferentPid extends AbstractHealthChec
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         // Deleted pages are considered as well, we remove all restrictions.
         $queryBuilder->getRestrictions()->removeAll();
@@ -56,7 +53,7 @@ final class PagesTranslatedLanguageParentDifferentPid extends AbstractHealthChec
             /** @var array<string, int|string> $row */
             try {
                 /** @var array<string, int|string> $languageParentRow */
-                $languageParentRow = $recordsHelper->getRecord('pages', ['uid', 'pid'], (int)$row['l10n_parent']);
+                $languageParentRow = $this->recordsHelper->getRecord($run->statements, 'pages', ['uid', 'pid'], (int)$row['l10n_parent']);
                 if ((int)$row['pid'] !== (int)$languageParentRow['pid']
                     // Ignore "workspace moved" translations due to the odd l10n_parent behavior, as
                     // shown with the tests from https://review.typo3.org/c/Packages/TYPO3.CMS/+/89803

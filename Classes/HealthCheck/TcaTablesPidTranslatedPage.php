@@ -16,7 +16,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -41,7 +40,7 @@ final class TcaTablesPidTranslatedPage extends AbstractHealthCheck implements He
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
         $translatedPages = $this->getTranslatedPages();
         if ($translatedPages === []) {
@@ -69,8 +68,6 @@ final class TcaTablesPidTranslatedPage extends AbstractHealthCheck implements He
     protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
         $translatedPages = $this->getTranslatedPages();
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         foreach ($affectedRecords as $tableName => $rows) {
             $this->outputTableUpdateBefore($run, $simulate, $tableName);
             $count = 0;
@@ -81,7 +78,7 @@ final class TcaTablesPidTranslatedPage extends AbstractHealthCheck implements He
                         'type' => Connection::PARAM_INT,
                     ],
                 ];
-                $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
+                $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid'], $fields);
                 $count++;
             }
             $this->outputTableUpdateAfter($run, $simulate, $tableName, $count);

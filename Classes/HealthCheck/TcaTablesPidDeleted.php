@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -41,11 +40,8 @@ final class TcaTablesPidDeleted extends AbstractHealthCheck implements HealthChe
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
-
         $affectedRows = [];
         // Iterate all TCA tables, but ignore pages table
         foreach ($this->tcaHelper->getNextTcaTable(['pages', 'tt_content']) as $tableName) {
@@ -74,7 +70,7 @@ final class TcaTablesPidDeleted extends AbstractHealthCheck implements HealthChe
                 /** @var array<string, int|string> $row */
                 // Records pointing to pid 0 are ok, check all others.
                 try {
-                    $pageRow = $recordsHelper->getRecord('pages', ['uid', 'deleted'], (int)$row['pid']);
+                    $pageRow = $this->recordsHelper->getRecord($run->statements, 'pages', ['uid', 'deleted'], (int)$row['pid']);
                     if ((int)$pageRow['deleted'] === 1) {
                         $affectedRows[$tableName][] = $row;
                     }

@@ -20,7 +20,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -45,10 +44,8 @@ final class TtContentLocalizedParentSoftDeleted extends AbstractHealthCheck impl
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         $affectedRecords = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
@@ -62,7 +59,7 @@ final class TtContentLocalizedParentSoftDeleted extends AbstractHealthCheck impl
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
-                $languageParent = $recordsHelper->getRecord('tt_content', ['uid', 'deleted'], (int)$row['l18n_parent']);
+                $languageParent = $this->recordsHelper->getRecord($run->statements, 'tt_content', ['uid', 'deleted'], (int)$row['l18n_parent']);
                 if ((int)$languageParent['deleted'] === 1) {
                     $affectedRecords['tt_content'][] = $row;
                 }

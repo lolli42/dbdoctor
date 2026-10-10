@@ -37,7 +37,7 @@ final class TcaTablesDeleteFlagZeroOrOne extends AbstractHealthCheck implements 
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
         $affectedRows = [];
         foreach ($this->tcaHelper->getNextSoftDeleteAwareTable() as $tableName) {

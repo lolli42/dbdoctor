@@ -19,7 +19,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -38,10 +37,8 @@ final class SysFileReferenceDangling extends AbstractHealthCheck implements Heal
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         $danglingRows = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
         // We fetch deleted=1 records here, too. If it's relation is broken, they should vanish, too.
@@ -53,8 +50,8 @@ final class SysFileReferenceDangling extends AbstractHealthCheck implements Heal
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
-                $recordsHelper->getRecord('sys_file', ['uid'], (int)$row['uid_local']);
-                $recordsHelper->getRecord((string)$row['tablenames'], ['uid'], (int)$row['uid_foreign']);
+                $this->recordsHelper->getRecord($run->statements, 'sys_file', ['uid'], (int)$row['uid_local']);
+                $this->recordsHelper->getRecord($run->statements, (string)$row['tablenames'], ['uid'], (int)$row['uid_foreign']);
             } catch (NoSuchRecordException|NoSuchTableException $e) {
                 $danglingRows['sys_file_reference'][] = $row;
             }

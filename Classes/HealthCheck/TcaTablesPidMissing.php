@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -37,11 +36,8 @@ final class TcaTablesPidMissing extends AbstractHealthCheck implements HealthChe
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
-
         $affectedRows = [];
         foreach ($this->tcaHelper->getNextTcaTable(['pages', 'sys_workspace', 'tt_content']) as $tableName) {
             // Iterate all TCA tables, but ignore some tables: pages of course,
@@ -60,7 +56,7 @@ final class TcaTablesPidMissing extends AbstractHealthCheck implements HealthChe
                     continue;
                 }
                 try {
-                    $recordsHelper->getRecord('pages', ['uid'], (int)$row['pid']);
+                    $this->recordsHelper->getRecord($run->statements, 'pages', ['uid'], (int)$row['pid']);
                 } catch (NoSuchRecordException $e) {
                     $affectedRows[$tableName][] = $row;
                 }

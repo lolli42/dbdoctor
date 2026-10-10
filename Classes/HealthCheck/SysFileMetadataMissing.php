@@ -16,7 +16,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -50,7 +49,7 @@ final class SysFileMetadataMissing extends AbstractHealthCheck implements Health
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file');
         $queryBuilder->getRestrictions()->removeAll();
@@ -81,8 +80,6 @@ final class SysFileMetadataMissing extends AbstractHealthCheck implements Health
 
     protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         $this->outputTableInsertBefore($run, $simulate, 'sys_file_metadata');
         $localStorageUids = $this->getLocalStorageUids();
         $count = 0;
@@ -120,7 +117,7 @@ final class SysFileMetadataMissing extends AbstractHealthCheck implements Health
                     'type' => Connection::PARAM_INT,
                 ];
             }
-            $this->insertSingleTcaRecord($run, $simulate, $recordsHelper, 'sys_file_metadata', $fields);
+            $this->insertSingleTcaRecord($run, $simulate, 'sys_file_metadata', $fields);
             $count++;
         }
         $this->outputTableInsertAfter($run, $simulate, 'sys_file_metadata', $count);

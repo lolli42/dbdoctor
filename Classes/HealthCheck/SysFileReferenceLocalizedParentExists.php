@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -47,10 +46,8 @@ final class SysFileReferenceLocalizedParentExists extends AbstractHealthCheck im
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         $tableRows = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
         $queryBuilder->getRestrictions()->removeAll();
@@ -64,7 +61,7 @@ final class SysFileReferenceLocalizedParentExists extends AbstractHealthCheck im
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
-                $recordsHelper->getRecord('sys_file_reference', ['uid'], (int)$row['l10n_parent']);
+                $this->recordsHelper->getRecord($run->statements, 'sys_file_reference', ['uid'], (int)$row['l10n_parent']);
             } catch (NoSuchRecordException|NoSuchTableException $e) {
                 // Match if parent does not exist at all
                 $tableRows['sys_file_reference'][] = $row;

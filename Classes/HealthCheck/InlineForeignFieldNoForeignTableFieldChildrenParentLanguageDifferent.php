@@ -17,7 +17,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
@@ -46,10 +45,8 @@ final class InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         /** @var TableHelper $tableHelper */
         $tableHelper = $this->container->get(TableHelper::class);
 
@@ -97,7 +94,7 @@ final class InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent
             while ($inlineChildRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $inlineChildRow */
                 try {
-                    $parentRow = $recordsHelper->getRecord($parentTableName, ['uid', $parentTableLanguageField], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
+                    $parentRow = $this->recordsHelper->getRecord($run->statements, $parentTableName, ['uid', $parentTableLanguageField], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
                     $parentRowLanguage = (int)$parentRow[$parentTableLanguageField];
                     $childRowLanguage = (int)$inlineChildRow[$childTableLanguageField];
                     // @todo: We may need to think about l10n_parent field here as well?
@@ -125,8 +122,6 @@ final class InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent
 
     protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         foreach ($affectedRecords as $tableName => $rows) {
             /** @var string $languageField */
             $languageField = $this->tcaHelper->getLanguageField($tableName);
@@ -141,7 +136,7 @@ final class InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent
                             'type' => Connection::PARAM_INT,
                         ],
                     ];
-                    $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
+                    $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid'], $fields);
                 }
                 $this->outputTableUpdateAfter($run, $simulate, $tableName, count($allLanguagesRows));
             }

@@ -43,7 +43,7 @@ final class WorkspacesNotLoadedRecordsDangling extends AbstractHealthCheck imple
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
         if (ExtensionManagementUtility::isLoaded('workspaces')) {
             // Nothing to do when ext:workspaces is loaded

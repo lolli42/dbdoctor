@@ -36,7 +36,7 @@ final class TcaTablesLanguageLessThanOneHasZeroLanguageSource extends AbstractHe
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
         $affectedRows = [];
         foreach ($this->tcaHelper->getNextLanguageSourceAwareTcaTable() as $tableName) {

@@ -20,7 +20,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -42,10 +41,8 @@ final class TtContentDeletedLocalizedParentDifferentPid extends AbstractHealthCh
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         $affectedRows = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
         $queryBuilder->getRestrictions()->removeAll();
@@ -60,7 +57,7 @@ final class TtContentDeletedLocalizedParentDifferentPid extends AbstractHealthCh
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
-                $languageParent = $recordsHelper->getRecord('tt_content', ['uid', 'pid'], (int)$row['l18n_parent']);
+                $languageParent = $this->recordsHelper->getRecord($run->statements, 'tt_content', ['uid', 'pid'], (int)$row['l18n_parent']);
                 // Note workspace moved records are not an issue here since we're dealing with
                 // deleted=1 records here, which don't exist in workspaces.
                 if ((int)$row['pid'] !== (int)$languageParent['pid']) {

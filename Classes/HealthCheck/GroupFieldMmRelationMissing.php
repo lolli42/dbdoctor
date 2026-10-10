@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
@@ -45,10 +44,8 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         /** @var TableHelper $tableHelper */
         $tableHelper = $this->container->get(TableHelper::class);
         $affectedRows = [];
@@ -100,14 +97,14 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
                     if ($currentUidLocal !== null && $isLocalRecordMissing) {
                         $affectedRows[$mmTableName][] = $this->getMissingLocalRecordRow($groupField, $currentUidLocal, $mmRowCount);
                     } elseif ($currentUidLocal !== null && !empty($missingRelations)) {
-                        $affectedRow = $this->getAffectedRow($recordsHelper, $groupField, $currentUidLocal, $missingRelations);
+                        $affectedRow = $this->getAffectedRow($run, $groupField, $currentUidLocal, $missingRelations);
                         if ($affectedRow !== null) {
                             $affectedRows[$tableName][] = $affectedRow;
                         }
                     }
                     $currentUidLocal = (int)$mmRow['uid_local'];
                     $isLocalRecordMissing = $canHandleMissingLocalRecords
-                        && $this->isRecordMissing($recordsHelper, $tableHelper, $tableName, $currentUidLocal);
+                        && $this->isRecordMissing($run, $tableHelper, $tableName, $currentUidLocal);
                     $mmRowCount = 0;
                     $missingRelations = [];
                 }
@@ -123,7 +120,7 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
                     // Not a relation of this field, as in core RelationHandler->readMM().
                     continue;
                 }
-                if ($uidForeign > 0 && $this->isRecordMissing($recordsHelper, $tableHelper, $targetTableName, $uidForeign)) {
+                if ($uidForeign > 0 && $this->isRecordMissing($run, $tableHelper, $targetTableName, $uidForeign)) {
                     // Once per DELETE condition: Fields without match fields, like sys_category "items", read
                     // rows of all fields of the opposite side, one DELETE removes all of them.
                     $missingRelations[($tablenames ?? '') . ':' . $uidForeign] = [
@@ -136,7 +133,7 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
             if ($currentUidLocal !== null && $isLocalRecordMissing) {
                 $affectedRows[$mmTableName][] = $this->getMissingLocalRecordRow($groupField, $currentUidLocal, $mmRowCount);
             } elseif ($currentUidLocal !== null && !empty($missingRelations)) {
-                $affectedRow = $this->getAffectedRow($recordsHelper, $groupField, $currentUidLocal, $missingRelations);
+                $affectedRow = $this->getAffectedRow($run, $groupField, $currentUidLocal, $missingRelations);
                 if ($affectedRow !== null) {
                     $affectedRows[$tableName][] = $affectedRow;
                 }
@@ -147,8 +144,6 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
 
     protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         $rowsByMmTable = [];
         foreach ($affectedRecords as $rows) {
             foreach ($rows as $row) {
@@ -174,7 +169,7 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
                             'type' => Connection::PARAM_STR,
                         ];
                     }
-                    $this->deleteMmRows($run, $simulate, $recordsHelper, $mmTableName, $whereFields);
+                    $this->deleteMmRows($run, $simulate, $mmTableName, $whereFields);
                     $count++;
                     continue;
                 }
@@ -203,7 +198,7 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
                             'type' => Connection::PARAM_STR,
                         ];
                     }
-                    $this->deleteMmRows($run, $simulate, $recordsHelper, $mmTableName, $whereFields);
+                    $this->deleteMmRows($run, $simulate, $mmTableName, $whereFields);
                     $count++;
                 }
             }
@@ -302,10 +297,10 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
      * @param array<string, array{tableName: string, uid_foreign: int, tablenames: string|null}> $missingRelations
      * @return array<string, int|string>|null
      */
-    private function getAffectedRow(RecordsHelper $recordsHelper, array $groupField, int $uidLocal, array $missingRelations): ?array
+    private function getAffectedRow(HealthCheckRun $run, array $groupField, int $uidLocal, array $missingRelations): ?array
     {
         try {
-            $localRecord = $recordsHelper->getRecord($groupField['tableName'], ['uid', 'pid'], $uidLocal);
+            $localRecord = $this->recordsHelper->getRecord($run->statements, $groupField['tableName'], ['uid', 'pid'], $uidLocal);
         } catch (NoSuchRecordException $e) {
             // Only if the local side of the MM table is ambiguous, see canHandleMissingLocalRecords():
             // The MM rows are no relation of an existing record of this table, they are kept.
@@ -355,14 +350,14 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
         return $targetTableName;
     }
 
-    private function isRecordMissing(RecordsHelper $recordsHelper, TableHelper $tableHelper, string $tableName, int $uid): bool
+    private function isRecordMissing(HealthCheckRun $run, TableHelper $tableHelper, string $tableName, int $uid): bool
     {
         if (!$tableHelper->tableExistsInDatabase($tableName)) {
             // Not our business, the relation can not be checked.
             return false;
         }
         try {
-            $recordsHelper->getRecord($tableName, ['uid'], $uid);
+            $this->recordsHelper->getRecord($run->statements, $tableName, ['uid'], $uid);
         } catch (NoSuchRecordException $e) {
             return true;
         }

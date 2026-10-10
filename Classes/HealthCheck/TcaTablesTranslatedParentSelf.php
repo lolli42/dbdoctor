@@ -42,7 +42,7 @@ final class TcaTablesTranslatedParentSelf extends AbstractHealthCheck implements
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
         $affectedRows = [];
         foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {
