@@ -16,7 +16,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-use Lolli\Dbdoctor\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -53,10 +52,7 @@ final class SysRedirectInvalidPid extends AbstractHealthCheck implements HealthC
 
     protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var TableHelper $tableHelper */
-        $tableHelper = $this->container->get(TableHelper::class);
-
-        if (!$tableHelper->tableExistsInDatabase('sys_redirect')) {
+        if (!$this->tableHelper->tableExistsInDatabase('sys_redirect')) {
             return [];
         }
 

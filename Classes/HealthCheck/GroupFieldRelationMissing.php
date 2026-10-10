@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -46,8 +45,6 @@ final class GroupFieldRelationMissing extends AbstractHealthCheck implements Hea
 
     protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var TableHelper $tableHelper */
-        $tableHelper = $this->container->get(TableHelper::class);
         $affectedRows = [];
         foreach ($this->tcaHelper->getNextGroupFieldWithoutMm() as $groupField) {
             $tableName = $groupField['tableName'];
@@ -58,14 +55,14 @@ final class GroupFieldRelationMissing extends AbstractHealthCheck implements Hea
                 // would leave a broken reference. If SysFileReferenceDangling is disabled, they are kept.
                 continue;
             }
-            if (!$tableHelper->fieldExistsInTable($tableName, $fieldName)) {
+            if (!$this->tableHelper->fieldExistsInTable($tableName, $fieldName)) {
                 continue;
             }
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             // Handle deleted=1 records, too.
             $queryBuilder->getRestrictions()->removeAll();
             $queryBuilder->select('uid', 'pid', $fieldName)->from($tableName);
-            if ($tableHelper->fieldIsInteger($tableName, $fieldName)) {
+            if ($this->tableHelper->fieldIsInteger($tableName, $fieldName)) {
                 $queryBuilder->where(
                     $queryBuilder->expr()->neq($fieldName, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT))
                 );
@@ -78,7 +75,7 @@ final class GroupFieldRelationMissing extends AbstractHealthCheck implements Hea
             $result = $queryBuilder->orderBy('uid')->executeQuery();
             while ($row = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $row */
-                $missingRelations = $this->getMissingRelations($run, $tableHelper, (string)$row[$fieldName], $groupField['allowedTables']);
+                $missingRelations = $this->getMissingRelations($run, (string)$row[$fieldName], $groupField['allowedTables']);
                 if (!empty($missingRelations)) {
                     $affectedRows[$tableName][] = [
                         'uid' => (int)$row['uid'],
@@ -96,22 +93,20 @@ final class GroupFieldRelationMissing extends AbstractHealthCheck implements Hea
 
     protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
-        /** @var TableHelper $tableHelper */
-        $tableHelper = $this->container->get(TableHelper::class);
         foreach ($affectedRecords as $tableName => $rows) {
             $this->outputTableUpdateBefore($run, $simulate, $tableName);
             $count = 0;
             foreach ($rows as $row) {
                 $fieldName = (string)$row['_fieldName'];
                 $allowedTables = GeneralUtility::trimExplode(',', (string)$row['_allowedTables'], true);
-                $missingRelations = $this->getMissingRelations($run, $tableHelper, (string)$row['_fieldValue'], $allowedTables);
+                $missingRelations = $this->getMissingRelations($run, (string)$row['_fieldValue'], $allowedTables);
                 $remainingItems = [];
                 foreach (GeneralUtility::trimExplode(',', (string)$row['_fieldValue'], true) as $item) {
                     if (!in_array($item, $missingRelations, true)) {
                         $remainingItems[] = $item;
                     }
                 }
-                if (empty($remainingItems) && $tableHelper->fieldIsInteger($tableName, $fieldName)) {
+                if (empty($remainingItems) && $this->tableHelper->fieldIsInteger($tableName, $fieldName)) {
                     $updateFields = [
                         $fieldName => [
                             'value' => 0,
@@ -151,7 +146,7 @@ final class GroupFieldRelationMissing extends AbstractHealthCheck implements Hea
      * @param array<int, string> $allowedTables
      * @return array<string, string> Key is "tableName:uid", value is the item as stored in the list
      */
-    private function getMissingRelations(HealthCheckRun $run, TableHelper $tableHelper, string $fieldValue, array $allowedTables): array
+    private function getMissingRelations(HealthCheckRun $run, string $fieldValue, array $allowedTables): array
     {
         $isAnyTableAllowed = in_array('*', $allowedTables, true);
         $firstTable = $isAnyTableAllowed ? '' : ($allowedTables[0] ?? '');
@@ -167,7 +162,7 @@ final class GroupFieldRelationMissing extends AbstractHealthCheck implements Hea
             if ($targetTableName === ''
                 || (!$isAnyTableAllowed && !in_array($targetTableName, $allowedTables, true))
                 || !is_array($GLOBALS['TCA'][$targetTableName] ?? false)
-                || !$tableHelper->tableExistsInDatabase($targetTableName)
+                || !$this->tableHelper->tableExistsInDatabase($targetTableName)
             ) {
                 continue;
             }

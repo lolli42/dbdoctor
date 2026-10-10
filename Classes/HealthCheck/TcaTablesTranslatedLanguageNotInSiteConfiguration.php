@@ -17,7 +17,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Helper\PagesTreeHelper;
-use Lolli\Dbdoctor\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -60,9 +59,6 @@ final class TcaTablesTranslatedLanguageNotInSiteConfiguration extends AbstractHe
 
     protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var TableHelper $tableHelper */
-        $tableHelper = $this->container->get(TableHelper::class);
-
         // Resolve sites with PagesTreeHelper instead of SiteFinder->getSiteByPageId(). This is deliberate:
         // SiteFinder uses RootlineUtility, which is unsuitable for bulk lookups, see PagesTreeHelper.
         $rootPageIdToSiteIdentifier = [];
@@ -87,7 +83,7 @@ final class TcaTablesTranslatedLanguageNotInSiteConfiguration extends AbstractHe
 
         $affectedRows = [];
         foreach ($this->tcaHelper->getNextLanguageAwareTcaTable() as $tableName) {
-            if (!$tableHelper->tableExistsInDatabase($tableName)) {
+            if (!$this->tableHelper->tableExistsInDatabase($tableName)) {
                 // TCA may define tables not yet present in database schema.
                 continue;
             }

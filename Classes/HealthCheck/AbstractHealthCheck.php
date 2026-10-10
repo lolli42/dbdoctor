@@ -20,10 +20,10 @@ use Doctrine\DBAL\ParameterType;
 use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
+use Lolli\Dbdoctor\Helper\TableHelper;
 use Lolli\Dbdoctor\Helper\TcaHelper;
 use Lolli\Dbdoctor\Renderer\AffectedPagesRenderer;
 use Lolli\Dbdoctor\Renderer\RecordsRenderer;
-use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
@@ -49,17 +49,12 @@ abstract class AbstractHealthCheck
     // Used in IO when a check may INSERT missing records
     protected const TAG_INSERT = 'insert';
 
-    protected ContainerInterface $container;
     protected ConnectionPool $connectionPool;
     protected TcaHelper $tcaHelper;
     protected RecordsHelper $recordsHelper;
+    protected TableHelper $tableHelper;
     private AffectedPagesRenderer $affectedPagesRenderer;
     private RecordsRenderer $recordsRenderer;
-
-    final public function injectContainer(ContainerInterface $container): void
-    {
-        $this->container = $container;
-    }
 
     final public function injectConnectionPool(ConnectionPool $connectionPool): void
     {
@@ -74,6 +69,11 @@ abstract class AbstractHealthCheck
     final public function injectRecordsHelper(RecordsHelper $recordsHelper): void
     {
         $this->recordsHelper = $recordsHelper;
+    }
+
+    final public function injectTableHelper(TableHelper $tableHelper): void
+    {
+        $this->tableHelper = $tableHelper;
     }
 
     final public function injectAffectedPagesRenderer(AffectedPagesRenderer $affectedPagesRenderer): void

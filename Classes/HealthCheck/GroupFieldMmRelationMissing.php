@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -46,21 +45,19 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
 
     protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var TableHelper $tableHelper */
-        $tableHelper = $this->container->get(TableHelper::class);
         $affectedRows = [];
         foreach ($this->tcaHelper->getNextGroupFieldWithMm() as $groupField) {
             $tableName = $groupField['tableName'];
             $fieldName = $groupField['fieldName'];
             $mmTableName = $groupField['mmTableName'];
-            if (!$tableHelper->fieldExistsInTable($tableName, $fieldName)
-                || !$tableHelper->fieldExistsInTable($mmTableName, 'uid_local')
-                || !$tableHelper->fieldExistsInTable($mmTableName, 'uid_foreign')
+            if (!$this->tableHelper->fieldExistsInTable($tableName, $fieldName)
+                || !$this->tableHelper->fieldExistsInTable($mmTableName, 'uid_local')
+                || !$this->tableHelper->fieldExistsInTable($mmTableName, 'uid_foreign')
             ) {
                 continue;
             }
             foreach (array_keys($groupField['matchFields']) as $matchFieldName) {
-                if (!$tableHelper->fieldExistsInTable($mmTableName, $matchFieldName)) {
+                if (!$this->tableHelper->fieldExistsInTable($mmTableName, $matchFieldName)) {
                     continue 2;
                 }
             }
@@ -72,7 +69,7 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
                 // multiple fields would be removed more than once.
                 continue;
             }
-            $hasTablenamesField = $tableHelper->fieldExistsInTable($mmTableName, 'tablenames');
+            $hasTablenamesField = $this->tableHelper->fieldExistsInTable($mmTableName, 'tablenames');
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($mmTableName);
             $queryBuilder->select('uid_local', 'uid_foreign')->from($mmTableName);
             if ($hasTablenamesField) {
@@ -104,7 +101,7 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
                     }
                     $currentUidLocal = (int)$mmRow['uid_local'];
                     $isLocalRecordMissing = $canHandleMissingLocalRecords
-                        && $this->isRecordMissing($run, $tableHelper, $tableName, $currentUidLocal);
+                        && $this->isRecordMissing($run, $tableName, $currentUidLocal);
                     $mmRowCount = 0;
                     $missingRelations = [];
                 }
@@ -120,7 +117,7 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
                     // Not a relation of this field, as in core RelationHandler->readMM().
                     continue;
                 }
-                if ($uidForeign > 0 && $this->isRecordMissing($run, $tableHelper, $targetTableName, $uidForeign)) {
+                if ($uidForeign > 0 && $this->isRecordMissing($run, $targetTableName, $uidForeign)) {
                     // Once per DELETE condition: Fields without match fields, like sys_category "items", read
                     // rows of all fields of the opposite side, one DELETE removes all of them.
                     $missingRelations[($tablenames ?? '') . ':' . $uidForeign] = [
@@ -350,9 +347,9 @@ final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements H
         return $targetTableName;
     }
 
-    private function isRecordMissing(HealthCheckRun $run, TableHelper $tableHelper, string $tableName, int $uid): bool
+    private function isRecordMissing(HealthCheckRun $run, string $tableName, int $uid): bool
     {
-        if (!$tableHelper->tableExistsInDatabase($tableName)) {
+        if (!$this->tableHelper->tableExistsInDatabase($tableName)) {
             // Not our business, the relation can not be checked.
             return false;
         }
