@@ -25,7 +25,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * Deleted localized sys_file_reference records must point to a sys_language_uid=0 parent that exists.
  * This is the "safe" variant of SysFileReferenceLocalizedParentExists since it handles deleted=1 records only.
  */
-final class SysFileReferenceDeletedLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class SysFileReferenceDeletedLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

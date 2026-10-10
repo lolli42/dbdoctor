@@ -28,7 +28,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * There must be no not soft-deleted localized tt_content records that have a
  * soft-deleted l18n_parent.
  */
-final class TtContentLocalizedParentSoftDeleted extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TtContentLocalizedParentSoftDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

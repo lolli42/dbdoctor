@@ -33,7 +33,7 @@ use TYPO3\CMS\Core\Database\Connection;
  * record (sys_language_uid -1), as in MetaDataRepository->findByFileUid(). The frontend never overlays
  * it, so TcaTablesTranslatedParentInvalidPointer removes its translations later.
  */
-final class SysFileMetadataTranslatedParentInvalid extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class SysFileMetadataTranslatedParentInvalid extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

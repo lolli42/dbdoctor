@@ -25,7 +25,7 @@ use TYPO3\CMS\Core\Database\Connection;
  * Localized sys_file_reference records must point to a sys_language_uid=0 parent that exists.
  * This check is risky since it may remove images from FE. See comments.
  */
-final class SysFileReferenceLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class SysFileReferenceLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

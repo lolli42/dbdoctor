@@ -23,7 +23,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * All TCA records must point to existing pages
  */
-final class TcaTablesPidMissing extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TcaTablesPidMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

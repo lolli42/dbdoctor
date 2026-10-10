@@ -25,7 +25,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * Deleted localized tt_content records must point to a sys_language_uid=0 parent that exists.
  * This is a "safe" variant since it handles deleted=1 records only.
  */
-final class TtContentDeletedLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TtContentDeletedLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

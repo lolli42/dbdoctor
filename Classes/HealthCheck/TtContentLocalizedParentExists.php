@@ -27,7 +27,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * Localized tt_content records must point to a sys_language_uid=0 parent that exists.
  * Similar to TtContentDeletedLocalizedParentExists, but handles deleted=0 records only.
  */
-final class TtContentLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TtContentLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

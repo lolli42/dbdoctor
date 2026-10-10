@@ -27,7 +27,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * @todo: This ignores workspaces for now, which needs more mind boggling things with further checks.
  *        Also, we may want to have something similar for non-tt_content tables.
  */
-final class TtContentLocalizedDuplicates extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TtContentLocalizedDuplicates extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

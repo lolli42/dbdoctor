@@ -23,7 +23,7 @@ use TYPO3\CMS\Core\Database\Connection;
  * TCA ctrl translationSource (typically l10n_source) must be set if transOrigPointerField
  * (typically l10n_parent) is not zero.
  */
-final class TcaTablesTranslationSourceSetWithParent extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TcaTablesTranslationSourceSetWithParent extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

@@ -26,7 +26,7 @@ use TYPO3\CMS\Core\Utility\MathUtility;
 /**
  * Relations in TCA type 'group' fields without MM table must point to existing records.
  */
-final class GroupFieldRelationMissing extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class GroupFieldRelationMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

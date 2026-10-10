@@ -26,7 +26,7 @@ use TYPO3\CMS\Core\Database\Connection;
  * The table specific variants for tt_content and sys_file_reference run earlier in the chain,
  * this check is the fallback for them. pages has its own checks and is excluded.
  */
-final class TcaTablesTranslatedLanguageParentMissing extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TcaTablesTranslatedLanguageParentMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

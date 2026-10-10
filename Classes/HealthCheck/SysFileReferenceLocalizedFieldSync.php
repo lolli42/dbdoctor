@@ -28,7 +28,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * Marked risky for now, but it's hard to grasp all possible scenarios. Manual interaction may be needed, at least
  * to check affected records.
  */
-final class SysFileReferenceLocalizedFieldSync extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class SysFileReferenceLocalizedFieldSync extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

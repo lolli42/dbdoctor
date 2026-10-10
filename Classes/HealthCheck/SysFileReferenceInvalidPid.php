@@ -24,7 +24,7 @@ use TYPO3\CMS\Core\Database\Connection;
 /**
  * All records in sys_file_reference must be on same pid as the parent record.
  */
-final class SysFileReferenceInvalidPid extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class SysFileReferenceInvalidPid extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

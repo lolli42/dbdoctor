@@ -26,7 +26,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * Handle inline foreign field without TCA foreign_table_field children
  * that are set to a different sys_language_uid than their parent.
  */
-final class InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

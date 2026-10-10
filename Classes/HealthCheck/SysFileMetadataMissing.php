@@ -30,10 +30,10 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * it when indexing a file, but does not re-create it when it is missing: Image dimensions,
  * alternative text and similar are then empty, and images can not be cropped in backend.
  */
-final class SysFileMetadataMissing extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class SysFileMetadataMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function __construct(
-        private readonly ResourceFactory $resourceFactory,
+        private ResourceFactory $resourceFactory,
     ) {}
 
     public function header(SymfonyStyle $io): void

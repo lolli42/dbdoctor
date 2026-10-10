@@ -28,7 +28,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * This is related to SysFileReferenceLocalizedParentExists, and risky as well. See SysFileReferenceLocalizedParentExists
  * for more comments on this.
  */
-final class SysFileReferenceLocalizedParentDeleted extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class SysFileReferenceLocalizedParentDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

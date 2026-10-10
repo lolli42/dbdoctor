@@ -24,7 +24,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Localized records must not point to their own uid in their transOrigPointerField.
  */
-final class TcaTablesTranslatedParentSelf extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TcaTablesTranslatedParentSelf extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

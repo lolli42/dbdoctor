@@ -24,7 +24,7 @@ use TYPO3\CMS\Core\Database\Connection;
 /**
  * Find translated pages that are on a different pid than their no sys_language_uid=0 parent.
  */
-final class PagesTranslatedLanguageParentDifferentPid extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class PagesTranslatedLanguageParentDifferentPid extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

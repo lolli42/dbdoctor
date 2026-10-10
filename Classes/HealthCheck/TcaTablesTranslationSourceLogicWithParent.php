@@ -26,7 +26,7 @@ use TYPO3\CMS\Core\Database\Connection;
  * a different translation, not from the default language record. That translation must have the
  * same transOrigPointerField value as the handled record.
  */
-final class TcaTablesTranslationSourceLogicWithParent extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TcaTablesTranslationSourceLogicWithParent extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

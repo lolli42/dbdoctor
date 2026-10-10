@@ -23,7 +23,7 @@ use TYPO3\CMS\Core\Database\Connection;
 /**
  * TCA ctrl translationSource (typically l10n_source) must point to an existing record.
  */
-final class TcaTablesTranslationSourceExists extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TcaTablesTranslationSourceExists extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

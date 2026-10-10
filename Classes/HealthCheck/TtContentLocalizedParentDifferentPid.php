@@ -28,7 +28,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * Localized tt_content records must point to a sys_language_uid=0 parent that
  * exists on the same pid.
  */
-final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

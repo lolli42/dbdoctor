@@ -28,7 +28,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * There is no table specific variant for tt_content or sys_file_reference: This check runs
  * before their checks and covers them. pages has its own checks and is excluded.
  */
-final class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TcaTablesTranslatedParentInvalidPointer extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

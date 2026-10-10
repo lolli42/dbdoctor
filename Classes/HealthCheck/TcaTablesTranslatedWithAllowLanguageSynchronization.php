@@ -26,7 +26,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * Handle translated records where the field has allowLanguageSynchronization=1, the l10n_state has "Value of default
  * language" but the value differs from record of default language.
  */
-final class TcaTablesTranslatedWithAllowLanguageSynchronization extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TcaTablesTranslatedWithAllowLanguageSynchronization extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {
