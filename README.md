@@ -404,6 +404,23 @@ regarding SQL dumps must not be forgotten when doing this:
   > changes removes MM rows without touching counts. dbdoctor ignores these count fields: It
   > does not check them, and checks that remove child records or MM rows do not update them.
 
+* This project is heavily driven by agentic coding. Can I trust it?
+  > No. But probably more than before. That "No" holds for any tool that changes your data,
+  > and it is why this README elaborates on backups, replay and recovery so much: If dbdoctor
+  > destroyed something and you have neither a backup nor an audit trail of the executed
+  > queries, there is no mercy. See "Preparation" above.
+  > And yes, large parts of the code are written with the help of agents nowadays. When I
+  > picked up this project again in 2026, there were many loose ends, missing features and
+  > various architectural flaws. I was able to fix a lot of them within a few days, and I am
+  > confident the result is far better than what I could have achieved without agents.
+  > This works because of the harness around it: Every check has a functional test with
+  > fixtures of the broken and the fixed state, CI runs all of them on all supported PHP
+  > versions with mysql, mariadb, postgres and sqlite, and changes are tested against
+  > several real-life instances. I look at the details and discuss options at length.
+  > And most importantly: I know the problem domain. I worked on the database details of
+  > the TYPO3 core for years and refactored major parts of it. Simply put: You can trust
+  > dbdoctor more than anyone who starts an agent with "Rewrite DataHandler" in 2026.
+
 
 # Tagging and releasing
 
