@@ -1,0 +1,14 @@
+"pages"
+,"uid","pid","title"
+,1,0,"page 1"
+,7,1,"page 7"
+"tt_content"
+,"uid","pid"
+,1,1
+"tx_dbdoctortestsforeignfield_items"
+,"uid","pid","parentid","parenttable","parentfield","title"
+,1,1,1,"tt_content","tx_dbdoctortestsforeignfield_items","Ok tt_content 1"
+# parentid is a group field to tt_content, but the inline parent of this row is page 7
+,2,1,7,"pages","tx_dbdoctortestsforeignfield_items","Ok page 7, no tt_content 7"
+# Missing inline parent: Handled by inline checks
+,3,1,8,"pages","tx_dbdoctortestsforeignfield_items","Ok page 8 missing, not handled here"
