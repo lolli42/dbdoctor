@@ -16,6 +16,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Doctrine\DBAL\ParameterType;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -49,7 +54,7 @@ final readonly class SysFileMetadataMissing extends AbstractHealthCheck implemen
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file');
         $queryBuilder->getRestrictions()->removeAll();
@@ -70,62 +75,67 @@ final readonly class SysFileMetadataMissing extends AbstractHealthCheck implemen
             ->where($expr->isNull('metadata.uid'))
             ->orderBy('file.uid')
             ->executeQuery();
-        $affectedRecords = [];
-        while ($row = $result->fetchAssociative()) {
-            /** @var array<string, int|string> $row */
-            $affectedRecords['sys_file'][] = $row;
-        }
-        return $affectedRecords;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        $this->outputTableInsertBefore($run, $simulate, 'sys_file_metadata');
         $localStorageUids = $this->getLocalStorageUids();
-        $count = 0;
-        foreach ($affectedRecords['sys_file'] ?? [] as $fileRow) {
-            $fields = [
-                'pid' => [
-                    'value' => 0,
-                    'type' => Connection::PARAM_INT,
-                ],
-                'file' => [
-                    'value' => (int)$fileRow['uid'],
-                    'type' => Connection::PARAM_INT,
-                ],
-                'crdate' => [
-                    'value' => (int)$GLOBALS['EXEC_TIME'],
-                    'type' => Connection::PARAM_INT,
-                ],
-                'tstamp' => [
-                    'value' => (int)$GLOBALS['EXEC_TIME'],
-                    'type' => Connection::PARAM_INT,
-                ],
-                'l10n_diffsource' => [
-                    'value' => '',
-                    'type' => Connection::PARAM_LOB,
-                ],
-            ];
-            [$width, $height] = $this->getImageDimensions($fileRow, $localStorageUids);
-            if ($width > 0 && $height > 0) {
-                $fields['width'] = [
-                    'value' => $width,
-                    'type' => Connection::PARAM_INT,
-                ];
-                $fields['height'] = [
-                    'value' => $height,
-                    'type' => Connection::PARAM_INT,
-                ];
-            }
-            $this->insertSingleTcaRecord($run, $simulate, 'sys_file_metadata', $fields);
-            $count++;
+        $findings = [];
+        while ($fileRow = $result->fetchAssociative()) {
+            /** @var array<string, int|string> $fileRow */
+            $findings[] = new Finding(
+                new RecordKey('sys_file', (int)$fileRow['uid']),
+                (int)$fileRow['pid'],
+                [new RecordChange(RecordChangeType::Insert, 'sys_file_metadata', null, $this->getMetadataFields($fileRow, $localStorageUids))],
+            );
         }
-        $this->outputTableInsertAfter($run, $simulate, 'sys_file_metadata', $count);
+        return $findings;
     }
 
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
+    protected function getDetailDbFields(string $tableName): array
     {
-        $this->outputRecordDetails($run, $affectedRecords, '', [], ['storage', 'identifier', 'missing']);
+        return ['storage', 'identifier', 'missing'];
+    }
+
+    /**
+     * Fields of the default language metadata record of a file.
+     *
+     * @param array<string, int|string> $fileRow
+     * @param array<int, true> $localStorageUids
+     * @return array<string, array{value: int|string, type: ParameterType}>
+     */
+    private function getMetadataFields(array $fileRow, array $localStorageUids): array
+    {
+        $fields = [
+            'pid' => [
+                'value' => 0,
+                'type' => Connection::PARAM_INT,
+            ],
+            'file' => [
+                'value' => (int)$fileRow['uid'],
+                'type' => Connection::PARAM_INT,
+            ],
+            'crdate' => [
+                'value' => (int)$GLOBALS['EXEC_TIME'],
+                'type' => Connection::PARAM_INT,
+            ],
+            'tstamp' => [
+                'value' => (int)$GLOBALS['EXEC_TIME'],
+                'type' => Connection::PARAM_INT,
+            ],
+            'l10n_diffsource' => [
+                'value' => '',
+                'type' => Connection::PARAM_LOB,
+            ],
+        ];
+        [$width, $height] = $this->getImageDimensions($fileRow, $localStorageUids);
+        if ($width > 0 && $height > 0) {
+            $fields['width'] = [
+                'value' => $width,
+                'type' => Connection::PARAM_INT,
+            ];
+            $fields['height'] = [
+                'value' => $height,
+                'type' => Connection::PARAM_INT,
+            ];
+        }
+        return $fields;
     }
 
     /**
