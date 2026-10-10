@@ -24,6 +24,7 @@ TYPO3 DB doctor
   * [Can I add my own health checks?](#can-i-add-my-own-health-checks)
   * [Can I replace a health check of dbdoctor?](#can-i-replace-a-health-check-of-dbdoctor)
   * [Does dbdoctor fix the number of relations stored in inline and MM fields?](#does-dbdoctor-fix-the-number-of-relations-stored-in-inline-and-mm-fields)
+  * [Why does dbdoctor not use the TcaSchema API of the core?](#why-does-dbdoctor-not-use-the-tcaschema-api-of-the-core)
   * [This project is heavily driven by agentic coding. Can I trust it?](#this-project-is-heavily-driven-by-agentic-coding-can-i-trust-it)
 * [Tagging and releasing](#tagging-and-releasing)
 
@@ -432,6 +433,18 @@ core reads them from there, not from this count. The count is not reliable: For 
 of the relation, like the categories field of a content element, and discarding workspace
 changes removes MM rows without touching counts. dbdoctor ignores these count fields: It
 does not check them, and checks that remove child records or MM rows do not update them.
+
+## Why does dbdoctor not use the TcaSchema API of the core?
+
+On purpose. TcaHelper and a few checks mimic parts of TcaSchema, which exists since
+TYPO3 v13. But dbdoctor changes and deletes records, and which tables and fields a
+check touches must follow rules dbdoctor defines and tests itself. TcaSchema is an
+interpretation layer of the core on top of the TCA array, and it may change its
+semantics in any core release, including bugfix releases, without dbdoctor noticing.
+The TCA array is the more stable contract: Extensions write it, the core migrates
+outdated syntax before dbdoctor reads it. Also, the relation related checks depend on
+details like `foreign_table_field`, `MM_opposite_field` or `MM_match_fields` that
+TcaSchema does not model, so dbdoctor would read the TCA array anyway.
 
 ## This project is heavily driven by agentic coding. Can I trust it?
 
