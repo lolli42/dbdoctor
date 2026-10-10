@@ -22,7 +22,7 @@ use TYPO3\CMS\Core\Database\Connection;
 /**
  * Records with sys_language_uid = 0 (or -1) must have l10n_parent=0
  */
-final class TcaTablesLanguageLessThanOneHasZeroLanguageParent extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TcaTablesLanguageLessThanOneHasZeroLanguageParent extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

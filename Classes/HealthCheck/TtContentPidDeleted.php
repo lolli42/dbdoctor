@@ -33,7 +33,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * This one is an "early" version of TcaTablesPidDeleted, since tt_content plays
  * a more important role and needs earlier streamlining.
  */
-final class TtContentPidDeleted extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TtContentPidDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

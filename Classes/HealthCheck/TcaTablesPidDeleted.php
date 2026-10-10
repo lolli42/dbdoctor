@@ -26,7 +26,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Not-deleted TCA records must point to not-deleted pages
  */
-final class TcaTablesPidDeleted extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TcaTablesPidDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

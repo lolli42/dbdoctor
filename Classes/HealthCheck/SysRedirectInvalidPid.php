@@ -31,10 +31,10 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * away, first.
  * This check is similar to the core upgrade wizard SysRedirectRootPageMoveMigration.
  */
-final class SysRedirectInvalidPid extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class SysRedirectInvalidPid extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function __construct(
-        private readonly SiteFinder $siteFinder,
+        private SiteFinder $siteFinder,
     ) {}
 
     public function header(SymfonyStyle $io): void

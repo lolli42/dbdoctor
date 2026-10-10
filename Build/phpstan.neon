@@ -15,3 +15,12 @@ parameters:
 
   excludePaths:
     - ../Tests/Acceptance/*
+
+  # inject*() methods of AbstractHealthCheck initialize its readonly properties, called once by DI.
+  additionalConstructors:
+    - Lolli\Dbdoctor\HealthCheck\AbstractHealthCheck::injectConnectionPool
+    - Lolli\Dbdoctor\HealthCheck\AbstractHealthCheck::injectTcaHelper
+    - Lolli\Dbdoctor\HealthCheck\AbstractHealthCheck::injectRecordsHelper
+    - Lolli\Dbdoctor\HealthCheck\AbstractHealthCheck::injectTableHelper
+    - Lolli\Dbdoctor\HealthCheck\AbstractHealthCheck::injectAffectedPagesRenderer
+    - Lolli\Dbdoctor\HealthCheck\AbstractHealthCheck::injectRecordsRenderer

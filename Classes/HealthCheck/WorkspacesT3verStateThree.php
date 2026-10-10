@@ -24,7 +24,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * t3ver_state=4 records and removed them.
  * This check finds leftovers and removes them from the database.
  */
-final class WorkspacesT3verStateThree extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class WorkspacesT3verStateThree extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

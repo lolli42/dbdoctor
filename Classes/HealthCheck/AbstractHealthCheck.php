@@ -31,8 +31,12 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 /**
  * Abstract implement by all single health check classes.
  * Has the main scaffolding of health checks and various convenient methods to handle details.
+ *
+ * Health checks are stateless: State of a single handle() call is in HealthCheckRun. Services
+ * are set by inject*() methods instead of a constructor, to keep constructors of checks free
+ * for their own services. Checks extending this class must be readonly classes, too.
  */
-abstract class AbstractHealthCheck
+abstract readonly class AbstractHealthCheck
 {
     // Used in IO when a check is fully disabled, for instance due to TYPO3 version
     protected const TAG_DISABLED = 'disabled';

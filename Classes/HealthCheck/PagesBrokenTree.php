@@ -23,10 +23,10 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * An important early check: Find pages that have no proper connection to the tree root.
  */
-final class PagesBrokenTree extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class PagesBrokenTree extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function __construct(
-        private readonly PagesTreeHelper $pagesTreeHelper,
+        private PagesTreeHelper $pagesTreeHelper,
     ) {}
 
     public function header(SymfonyStyle $io): void

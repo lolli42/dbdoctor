@@ -23,7 +23,7 @@ use TYPO3\CMS\Core\Database\Connection;
 /**
  * Inline foreign field without TCA foreign_table_field children must have existing parent record.
  */
-final class InlineForeignFieldNoForeignTableFieldChildrenParentMissing extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

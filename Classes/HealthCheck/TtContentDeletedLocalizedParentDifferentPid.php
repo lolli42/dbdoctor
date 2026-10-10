@@ -27,7 +27,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * exists on the same pid.
  * This is a "safe" variant since it handles deleted=1 records only. Also see TtContentLocalizedParentDifferentPid.
  */
-final class TtContentDeletedLocalizedParentDifferentPid extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TtContentDeletedLocalizedParentDifferentPid extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

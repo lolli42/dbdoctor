@@ -35,11 +35,11 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * for records rendered by other pages, possibly of other sites with more languages,
  * for instance a news storage shared by multiple sites.
  */
-final class TcaTablesTranslatedLanguageNotInSiteConfiguration extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TcaTablesTranslatedLanguageNotInSiteConfiguration extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function __construct(
-        private readonly SiteFinder $siteFinder,
-        private readonly PagesTreeHelper $pagesTreeHelper,
+        private SiteFinder $siteFinder,
+        private PagesTreeHelper $pagesTreeHelper,
     ) {}
 
     public function header(SymfonyStyle $io): void

@@ -24,7 +24,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Find not-deleted pages with sys_language_uid < 0.
  */
-final class PagesLanguageNegative extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class PagesLanguageNegative extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

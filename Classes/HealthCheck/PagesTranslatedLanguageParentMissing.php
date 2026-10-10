@@ -23,7 +23,7 @@ use TYPO3\CMS\Core\Database\Connection;
 /**
  * Find translated pages that have no sys_language_uid=0 parent.
  */
-final class PagesTranslatedLanguageParentMissing extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class PagesTranslatedLanguageParentMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

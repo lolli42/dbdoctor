@@ -29,7 +29,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  *
  * This class looks for workspace records in all tables which may have been missed.
  */
-final class WorkspacesRecordsOfDeletedWorkspaces extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class WorkspacesRecordsOfDeletedWorkspaces extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

@@ -25,7 +25,7 @@ use TYPO3\CMS\Core\Database\Connection;
  * DataHandler set the translated page as pid of relations like page media and inline
  * children when copying a translated page in workspaces, see core issue #110892.
  */
-final class TcaTablesPidTranslatedPage extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TcaTablesPidTranslatedPage extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

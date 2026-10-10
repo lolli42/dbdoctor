@@ -23,7 +23,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * TYPO3 v10 migrated workspace related records away from pid=-1.
  * This check finds leftovers and removes them from the database.
  */
-final class WorkspacesPidNegative extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class WorkspacesPidNegative extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

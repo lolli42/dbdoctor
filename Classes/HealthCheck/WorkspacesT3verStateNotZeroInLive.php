@@ -23,7 +23,7 @@ use TYPO3\CMS\Core\Database\Connection;
  * Live records should never have t3ver_state!=0. Find and change those,
  * handling depends on current FE behavior.
  */
-final class WorkspacesT3verStateNotZeroInLive extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class WorkspacesT3verStateNotZeroInLive extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

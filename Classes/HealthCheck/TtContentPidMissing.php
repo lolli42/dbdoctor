@@ -30,7 +30,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * This one is an "early" version of TcaTablesPidMissing, since tt_content plays
  * a more important role and needs earlier streamlining.
  */
-final class TtContentPidMissing extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TtContentPidMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

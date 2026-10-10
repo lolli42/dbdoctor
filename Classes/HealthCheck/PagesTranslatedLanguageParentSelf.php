@@ -24,7 +24,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Find localized pages that point to itself in l10n_parent.
  */
-final class PagesTranslatedLanguageParentSelf extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class PagesTranslatedLanguageParentSelf extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

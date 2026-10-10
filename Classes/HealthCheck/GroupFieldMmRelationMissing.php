@@ -24,7 +24,7 @@ use TYPO3\CMS\Core\Database\Connection;
 /**
  * Relations in TCA type 'group' fields with MM table must point to existing records.
  */
-final class GroupFieldMmRelationMissing extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

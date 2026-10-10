@@ -28,7 +28,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  *
  * @todo: This ignores workspace records for now, similar to TtContentLocalizedDuplicates.
  */
-final class PagesTranslatedLanguageParentDuplicates extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class PagesTranslatedLanguageParentDuplicates extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {

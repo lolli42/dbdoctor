@@ -22,10 +22,10 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * Find not-deleted pages that are located within a deleted page, directly or further down the tree.
  */
-final class PagesPidDeleted extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class PagesPidDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function __construct(
-        private readonly PagesTreeHelper $pagesTreeHelper,
+        private PagesTreeHelper $pagesTreeHelper,
     ) {}
 
     public function header(SymfonyStyle $io): void

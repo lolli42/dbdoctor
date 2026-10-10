@@ -33,7 +33,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * folder, are usually rendered without a page translation of their page, and the backend
  * allows translating records on pages without any page translation.
  */
-final class TtContentLocalizedPageTranslationMissing extends AbstractHealthCheck implements HealthCheckInterface
+final readonly class TtContentLocalizedPageTranslationMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function header(SymfonyStyle $io): void
     {
