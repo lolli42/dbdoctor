@@ -4,6 +4,30 @@
 TYPO3 DB doctor
 ===============
 
+* [Mission](#mission)
+* [Alternatives](#alternatives)
+* [Strategy](#strategy)
+* [Impact on Frontend rendering](#impact-on-frontend-rendering)
+* [Limits](#limits)
+* [Versions](#versions)
+* [Installation](#installation)
+* [Preparation](#preparation)
+* [Postprocessing](#postprocessing)
+* [Usage](#usage)
+* [Interactive mode](#interactive-mode)
+* [Exit values](#exit-values)
+* [Options](#options)
+* [Further hints](#further-hints)
+* [FAQ](#faq)
+  * [Will the functionality be made available in a backend GUI?](#will-the-functionality-be-made-available-in-a-backend-gui)
+  * [Can I manipulate health checks?](#can-i-manipulate-health-checks)
+  * [Can I add my own health checks?](#can-i-add-my-own-health-checks)
+  * [Can I replace a health check of dbdoctor?](#can-i-replace-a-health-check-of-dbdoctor)
+  * [Does dbdoctor fix the number of relations stored in inline and MM fields?](#does-dbdoctor-fix-the-number-of-relations-stored-in-inline-and-mm-fields)
+  * [This project is heavily driven by agentic coding. Can I trust it?](#this-project-is-heavily-driven-by-agentic-coding-can-i-trust-it)
+* [Tagging and releasing](#tagging-and-releasing)
+
+
 # Mission
 
 The mission of this extension is to find database inconsistencies that may
@@ -353,73 +377,79 @@ regarding SQL dumps must not be forgotten when doing this:
 
 # FAQ
 
-* Will the functionality be made available in a backend GUI?
-  > No. CLI is the only sane way for this kind of thing.
+## Will the functionality be made available in a backend GUI?
 
-* Can I manipulate health checks?
-  > Not via the CLI: It has no options to skip or configure checks, every check always fixes
-  > things the same way. Options would multiply the possible system states and render
-  > maintenance of this already complex project impossible.
-  > Programmatically, ModifyHealthClassListEvent can remove or reorder checks, for instance
-  > to skip checks tagged as risky, and `disables` replaces a check, see below. Both work,
-  > but you are on your own: Read the event class comment first.
+No. CLI is the only sane way for this kind of thing.
 
-* Can I add my own health checks?
-  > Technically yes, but you are on your own. Health checks are collected via dependency
-  > injection: Every autoconfigured service implementing HealthCheckInterface is tagged
-  > `lolli.dbdoctor.health` automatically and becomes part of the chain, also when it lives
-  > in a different extension.
-  > Its position is determined by the `before` and `after` tag attributes in Services.yaml,
-  > referencing identifiers of other checks. Neither the identifiers, nor the order, nor
-  > HealthCheckInterface are API: dbdoctor adds, renames, reorders or removes checks at any
-  > time. A check without `before` and `after` ends up at some position nobody chose. If
-  > `before` and `after` contradict each other, for instance after dbdoctor reordered checks,
-  > building the dependency injection container fails with an exception naming the cycle. Do
-  > not additionally add such a check using ModifyHealthClassListEvent, it would run twice.
+## Can I manipulate health checks?
 
-* Can I replace a health check of dbdoctor?
-  > Same as above: Yes, but you are on your own. Tag your check with `disables`, the
-  > identifier of the check it replaces:
-  > ```yaml
-  >   Vendor\MyExtension\HealthCheck\MyTtContentPidMissing:
-  >     tags:
-  >       - name: 'lolli.dbdoctor.health'
-  >         identifier: 'vendor-tt-content-pid-missing'
-  >         disables: 'dbdoctor-tt-content-pid-missing'
-  > ```
-  > The replaced check is not executed, and your check runs at its position in the chain,
-  > no `before` or `after` needed. A tag replaces exactly one check. To replace multiple
-  > checks, add one tag with its own identifier per replaced check. Identifiers in
-  > `disables` that do not exist are ignored silently: When dbdoctor renames or removes a
-  > check you replaced, the dbdoctor check may run again, and yours ends up at some
-  > position nobody chose. Verify your replacements after each dbdoctor update.
+Not via the CLI: It has no options to skip or configure checks, every check always fixes
+things the same way. Options would multiply the possible system states and render
+maintenance of this already complex project impossible.
+Programmatically, ModifyHealthClassListEvent can remove or reorder checks, for instance
+to skip checks tagged as risky, and `disables` replaces a check, see below. Both work,
+but you are on your own: Read the event class comment first.
 
-* Does dbdoctor fix the number of relations stored in inline and MM fields?
-  > No. The field of a record with inline children (TCA `foreign_field`) or MM relations
-  > (TCA `MM`) stores the number of relations, for instance `tt_content.image` or
-  > `sys_category.items`. The relations themselves live in the child or MM table, and the
-  > core reads them from there, not from this count. The count is not reliable: For instance,
-  > `sys_category.items` is not updated when categories are assigned from the other side
-  > of the relation, like the categories field of a content element, and discarding workspace
-  > changes removes MM rows without touching counts. dbdoctor ignores these count fields: It
-  > does not check them, and checks that remove child records or MM rows do not update them.
+## Can I add my own health checks?
 
-* This project is heavily driven by agentic coding. Can I trust it?
-  > No. But probably more than before. That "No" holds for any tool that changes your data,
-  > and it is why this README elaborates on backups, replay and recovery so much: If dbdoctor
-  > destroyed something and you have neither a backup nor an audit trail of the executed
-  > queries, there is no mercy. See "Preparation" above.
-  > And yes, large parts of the code are written with the help of agents nowadays. When I
-  > picked up this project again in 2026, there were many loose ends, missing features and
-  > various architectural flaws. I was able to fix a lot of them within a few days, and I am
-  > confident the result is far better than what I could have achieved without agents.
-  > This works because of the harness around it: Every check has a functional test with
-  > fixtures of the broken and the fixed state, CI runs all of them on all supported PHP
-  > versions with mysql, mariadb, postgres and sqlite, and changes are tested against
-  > several real-life instances. I look at the details and discuss options at length.
-  > And most importantly: I know the problem domain. I worked on the database details of
-  > the TYPO3 core for years and refactored major parts of it. Simply put: You can trust
-  > dbdoctor more than anyone who starts an agent with "Rewrite DataHandler" in 2026.
+Technically yes, but you are on your own. Health checks are collected via dependency
+injection: Every autoconfigured service implementing HealthCheckInterface is tagged
+`lolli.dbdoctor.health` automatically and becomes part of the chain, also when it lives
+in a different extension.
+Its position is determined by the `before` and `after` tag attributes in Services.yaml,
+referencing identifiers of other checks. Neither the identifiers, nor the order, nor
+HealthCheckInterface are API: dbdoctor adds, renames, reorders or removes checks at any
+time. A check without `before` and `after` ends up at some position nobody chose. If
+`before` and `after` contradict each other, for instance after dbdoctor reordered checks,
+building the dependency injection container fails with an exception naming the cycle. Do
+not additionally add such a check using ModifyHealthClassListEvent, it would run twice.
+
+## Can I replace a health check of dbdoctor?
+
+Same as above: Yes, but you are on your own. Tag your check with `disables`, the
+identifier of the check it replaces:
+```yaml
+  Vendor\MyExtension\HealthCheck\MyTtContentPidMissing:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'vendor-tt-content-pid-missing'
+        disables: 'dbdoctor-tt-content-pid-missing'
+```
+The replaced check is not executed, and your check runs at its position in the chain,
+no `before` or `after` needed. A tag replaces exactly one check. To replace multiple
+checks, add one tag with its own identifier per replaced check. Identifiers in
+`disables` that do not exist are ignored silently: When dbdoctor renames or removes a
+check you replaced, the dbdoctor check may run again, and yours ends up at some
+position nobody chose. Verify your replacements after each dbdoctor update.
+
+## Does dbdoctor fix the number of relations stored in inline and MM fields?
+
+No. The field of a record with inline children (TCA `foreign_field`) or MM relations
+(TCA `MM`) stores the number of relations, for instance `tt_content.image` or
+`sys_category.items`. The relations themselves live in the child or MM table, and the
+core reads them from there, not from this count. The count is not reliable: For instance,
+`sys_category.items` is not updated when categories are assigned from the other side
+of the relation, like the categories field of a content element, and discarding workspace
+changes removes MM rows without touching counts. dbdoctor ignores these count fields: It
+does not check them, and checks that remove child records or MM rows do not update them.
+
+## This project is heavily driven by agentic coding. Can I trust it?
+
+No. But probably more than before. That "No" holds for any tool that changes your data,
+and it is why this README elaborates on backups, replay and recovery so much: If dbdoctor
+destroyed something and you have neither a backup nor an audit trail of the executed
+queries, there is no mercy. See "Preparation" above.
+And yes, large parts of the code are written with the help of agents nowadays. When I
+picked up this project again in 2026, there were many loose ends, missing features and
+various architectural flaws. I was able to fix a lot of them within a few days, and I am
+confident the result is far better than what I could have achieved without agents.
+This works because of the harness around it: Every check has a functional test with
+fixtures of the broken and the fixed state, CI runs all of them on all supported PHP
+versions with mysql, mariadb, postgres and sqlite, and changes are tested against
+several real-life instances. I look at the details and discuss options at length.
+And most importantly: I know the problem domain. I worked on the database details of
+the TYPO3 core for years and refactored major parts of it. Simply put: You can trust
+dbdoctor more than anyone who starts an agent with "Rewrite DataHandler" in 2026.
 
 
 # Tagging and releasing
