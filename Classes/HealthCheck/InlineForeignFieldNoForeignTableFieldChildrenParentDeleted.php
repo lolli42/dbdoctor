@@ -17,6 +17,9 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -42,9 +45,9 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentDeleted 
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRows = [];
+        $findingsByTable = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldParent() as $inlineChild) {
             $childTableName = $inlineChild['tableName'];
             if (!$this->tcaHelper->getDeletedField($childTableName)) {
@@ -95,11 +98,18 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentDeleted 
                 try {
                     $parentRow = $this->recordsHelper->getRecord($run->statements, $parentTableName, ['uid', $parentTableDeleteField], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
                     if ((bool)$parentRow[$parentTableDeleteField]) {
-                        $inlineChildRow['_reasonBroken'] = 'Deleted parent';
-                        $inlineChildRow['_parentTableName'] = $parentTableName;
-                        $inlineChildRow['_fieldNameOfParentTableUid'] = $fieldNameOfParentTableUid;
+                        $parentUid = (int)$inlineChildRow[$fieldNameOfParentTableUid];
                         // Keyed by uid: Two parent fields of the same parent table may select the same row.
-                        $affectedRows[$childTableName][(int)$inlineChildRow['uid']] = $inlineChildRow;
+                        $findingsByTable[$childTableName][(int)$inlineChildRow['uid']] = new Finding(
+                            new RecordKey($childTableName, (int)$inlineChildRow['uid']),
+                            (int)$inlineChildRow['pid'],
+                            [$this->softOrHardDeleteChange($childTableName, $inlineChildRow)],
+                            new Reason(
+                                'parent-deleted',
+                                'Deleted parent "' . $parentTableName . ':' . $parentUid . '"',
+                                ['parentTable' => $parentTableName, 'parentUid' => $parentUid]
+                            ),
+                        );
                     }
                 } catch (NoSuchRecordException $e) {
                     // Record existence has been checked by InlineForeignFieldChildrenParentMissing already.
@@ -108,25 +118,24 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentDeleted 
                 }
             }
         }
-        foreach ($affectedRows as $childTableName => $rows) {
-            ksort($rows);
-            $affectedRows[$childTableName] = array_values($rows);
+        $findings = [];
+        foreach ($findingsByTable as $tableFindings) {
+            ksort($tableFindings);
+            array_push($findings, ...array_values($tableFindings));
         }
-        return $affectedRows;
+        return $findings;
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    protected function getDetailDbFields(string $tableName): array
     {
-        $this->softOrHardDeleteRecords($run, $simulate, $affectedRecords);
-    }
-
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        foreach ($affectedRecords as $tableName => $rows) {
-            $extraDbFields = [
-                (string)$rows[0]['_fieldNameOfParentTableUid'],
-            ];
-            $this->outputRecordDetails($run, [$tableName => $rows], '_reasonBroken', [], $extraDbFields);
+        $fields = [];
+        foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldParent() as $inlineChild) {
+            if ($inlineChild['tableName'] === $tableName
+                && !in_array($inlineChild['fieldNameOfParentTableUid'], $fields, true)
+            ) {
+                $fields[] = $inlineChild['fieldNameOfParentTableUid'];
+            }
         }
+        return $fields;
     }
 }

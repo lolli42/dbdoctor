@@ -18,6 +18,9 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -48,9 +51,9 @@ final readonly class SysFileReferenceLocalizedFieldSync extends AbstractHealthCh
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $tableRows = [];
+        $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
         $result = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'l10n_parent', 'uid_foreign', 'tablenames', 'fieldname', 't3ver_wsid')->from('sys_file_reference')
@@ -72,19 +75,28 @@ final readonly class SysFileReferenceLocalizedFieldSync extends AbstractHealthCh
             if ($row['tablenames'] !== $languageParentRecord['tablenames']
                 || $row['fieldname'] !== $languageParentRecord['fieldname']
             ) {
-                $tableRows['sys_file_reference'][] = $row;
+                $findings[] = new Finding(
+                    new RecordKey('sys_file_reference', (int)$row['uid']),
+                    (int)$row['pid'],
+                    [$this->softOrHardDeleteChange('sys_file_reference', $row)],
+                    new Reason(
+                        'parent-not-in-sync',
+                        'Language parent "' . $row['l10n_parent'] . '" has tablenames "' . $languageParentRecord['tablenames'] . '"'
+                        . ' and fieldname "' . $languageParentRecord['fieldname'] . '"',
+                        [
+                            'l10n_parent' => (int)$row['l10n_parent'],
+                            'parentTablenames' => (string)$languageParentRecord['tablenames'],
+                            'parentFieldname' => (string)$languageParentRecord['fieldname'],
+                        ]
+                    ),
+                );
             }
         }
-        return $tableRows;
+        return $findings;
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    protected function getDetailDbFields(string $tableName): array
     {
-        $this->softOrHardDeleteRecordsOfTable($run, $simulate, 'sys_file_reference', $affectedRecords['sys_file_reference'] ?? []);
-    }
-
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        $this->outputRecordDetails($run, $affectedRecords, '', [], ['sys_language_uid', 'l10n_parent', 'deleted', 'tablenames', 'fieldname', 'uid_foreign', 'uid_local']);
+        return ['sys_language_uid', 'l10n_parent', 'deleted', 'tablenames', 'fieldname', 'uid_foreign', 'uid_local'];
     }
 }

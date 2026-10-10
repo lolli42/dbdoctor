@@ -16,6 +16,8 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -42,9 +44,9 @@ final readonly class TcaTablesTranslatedParentSelf extends AbstractHealthCheck i
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRows = [];
+        $findings = [];
         foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {
             /** @var string $languageField */
             $languageField = $this->tcaHelper->getLanguageField($tableName);
@@ -69,19 +71,18 @@ final readonly class TcaTablesTranslatedParentSelf extends AbstractHealthCheck i
                 ->executeQuery();
             while ($localizedRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $localizedRow */
-                $affectedRows[$tableName][] = $localizedRow;
+                $findings[] = new Finding(
+                    new RecordKey($tableName, (int)$localizedRow['uid']),
+                    (int)$localizedRow['pid'],
+                    [$this->softOrHardDeleteChange($tableName, $localizedRow)],
+                );
             }
         }
-        return $affectedRows;
+        return $findings;
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    protected function getDetailCtrlFields(string $tableName): array
     {
-        $this->softOrHardDeleteRecords($run, $simulate, $affectedRecords);
-    }
-
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        $this->outputRecordDetails($run, $affectedRecords, '', ['languageField', 'transOrigPointerField']);
+        return ['languageField', 'transOrigPointerField'];
     }
 }

@@ -16,6 +16,9 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -50,7 +53,7 @@ final readonly class TcaTablesTranslatedLanguageParentDuplicates extends Abstrac
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
         // Fields pointing to the inline parent of inline child tables
         $inlineParentFields = [];
@@ -61,7 +64,7 @@ final readonly class TcaTablesTranslatedLanguageParentDuplicates extends Abstrac
             $inlineParentFields[$inlineChildTable['tableName']] ??= [$inlineChildTable['fieldNameOfParentTableUid']];
         }
 
-        $affectedRecords = [];
+        $findings = [];
         foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages', 'tt_content']) as $tableName) {
             /** @var string $languageField */
             $languageField = $this->tcaHelper->getLanguageField($tableName);
@@ -126,23 +129,25 @@ final readonly class TcaTablesTranslatedLanguageParentDuplicates extends Abstrac
                         break;
                     }
                 }
+                $keptUid = (int)$translations[$keepIndex]['uid'];
                 unset($translations[$keepIndex]);
                 foreach ($translations as $translation) {
                     /** @var array<string, int|string> $translation */
-                    $affectedRecords[$tableName][] = $translation;
+                    $findings[] = new Finding(
+                        new RecordKey($tableName, (int)$translation['uid']),
+                        (int)$translation['pid'],
+                        [$this->softOrHardDeleteChange($tableName, $translation)],
+                        new Reason('duplicate', 'Duplicate of kept record "' . $keptUid . '"', ['kept' => $keptUid]),
+                        ['kept' => $keptUid],
+                    );
                 }
             }
         }
-        return $affectedRecords;
+        return $findings;
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    protected function getDetailCtrlFields(string $tableName): array
     {
-        $this->softOrHardDeleteRecords($run, $simulate, $affectedRecords);
-    }
-
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        $this->outputRecordDetails($run, $affectedRecords, '', ['transOrigPointerField']);
+        return ['transOrigPointerField'];
     }
 }

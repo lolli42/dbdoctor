@@ -16,6 +16,8 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Lolli\Dbdoctor\Helper\PagesTreeHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -41,7 +43,7 @@ final readonly class PagesPidDeleted extends AbstractHealthCheck implements Heal
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         $queryBuilder->getRestrictions()->removeAll();
@@ -65,25 +67,16 @@ final readonly class PagesPidDeleted extends AbstractHealthCheck implements Heal
         }
         // A not deleted page is affected if a deleted page is found up the tree.
         $withinDeletedPage = $this->pagesTreeHelper->resolveClosestSeed($uidToPid, $deletedPageUids);
-        $affectedPageRows = [];
+        $findings = [];
         foreach ($notDeletedPageWorkspaceIds as $uid => $workspaceId) {
             if ($withinDeletedPage[$uid] === true) {
-                $affectedPageRows[] = [
-                    'uid' => $uid,
-                    'pid' => $uidToPid[$uid],
-                    'deleted' => 0,
-                    't3ver_wsid' => $workspaceId,
-                ];
+                $findings[] = new Finding(
+                    new RecordKey('pages', $uid),
+                    $uidToPid[$uid],
+                    [$this->softOrHardDeleteChange('pages', ['uid' => $uid, 't3ver_wsid' => $workspaceId])],
+                );
             }
         }
-        if ($affectedPageRows === []) {
-            return [];
-        }
-        return ['pages' => $affectedPageRows];
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        $this->softOrHardDeleteRecordsOfTable($run, $simulate, 'pages', $affectedRecords['pages'] ?? []);
+        return $findings;
     }
 }

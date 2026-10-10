@@ -18,6 +18,9 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -40,9 +43,9 @@ final readonly class TcaTablesPidDeleted extends AbstractHealthCheck implements 
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRows = [];
+        $findings = [];
         // Iterate all TCA tables, but ignore pages table
         foreach ($this->tcaHelper->getNextTcaTable(['pages', 'tt_content']) as $tableName) {
             $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
@@ -72,7 +75,12 @@ final readonly class TcaTablesPidDeleted extends AbstractHealthCheck implements 
                 try {
                     $pageRow = $this->recordsHelper->getRecord($run->statements, 'pages', ['uid', 'deleted'], (int)$row['pid']);
                     if ((int)$pageRow['deleted'] === 1) {
-                        $affectedRows[$tableName][] = $row;
+                        $findings[] = new Finding(
+                            new RecordKey($tableName, (int)$row['uid']),
+                            (int)$row['pid'],
+                            [$this->softOrHardDeleteChange($tableName, $row)],
+                            new Reason('page-deleted', 'Page "' . $row['pid'] . '" is soft-deleted', ['pid' => (int)$row['pid']]),
+                        );
                     }
                 } catch (NoSuchRecordException $e) {
                     // Earlier test should have fixed this.
@@ -85,11 +93,6 @@ final readonly class TcaTablesPidDeleted extends AbstractHealthCheck implements 
                 }
             }
         }
-        return $affectedRows;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        $this->softOrHardDeleteRecords($run, $simulate, $affectedRecords);
+        return $findings;
     }
 }
