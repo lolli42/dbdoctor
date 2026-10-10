@@ -18,6 +18,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -38,9 +43,9 @@ final readonly class SysFileReferenceInvalidPid extends AbstractHealthCheck impl
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $tableRows = [];
+        $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
         $queryBuilder->getRestrictions()->removeAll();
         $result = $queryBuilder->select('uid', 'pid', 'sys_language_uid', 'uid_foreign', 'tablenames')->from('sys_file_reference')
@@ -49,13 +54,14 @@ final readonly class SysFileReferenceInvalidPid extends AbstractHealthCheck impl
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             if ((string)$row['tablenames'] === 'pages') {
-                if ((int)$row['uid_foreign'] !== (int)$row['pid']
-                    && (int)$row['sys_language_uid'] <= 0
+                if ((int)$row['uid_foreign'] === (int)$row['pid']
+                    || (int)$row['sys_language_uid'] > 0
                 ) {
-                    // For sys_file_reference's attached to pages records, it's simple: "pid"
-                    // and "uid_foreign" must be the same, if we're dealing with sys_language_uid=0 records
-                    $tableRows['sys_file_reference'][] = $row;
+                    continue;
                 }
+                // For sys_file_reference's attached to pages records, it's simple: "pid"
+                // and "uid_foreign" must be the same, if we're dealing with sys_language_uid=0 records
+                $parentPid = (int)$row['uid_foreign'];
             } else {
                 try {
                     $referencingRecord = $this->recordsHelper->getRecord($run->statements, (string)$row['tablenames'], ['pid'], (int)$row['uid_foreign']);
@@ -64,47 +70,37 @@ final readonly class SysFileReferenceInvalidPid extends AbstractHealthCheck impl
                     // This can only happen if such a broken record has been added meanwhile, ignore it now.
                     continue;
                 }
-                if ((int)$row['pid'] !== (int)$referencingRecord['pid']) {
-                    /** @var array<string, int|string> $row */
-                    $tableRows['sys_file_reference'][] = $row;
+                // The pid of the parent as it is now: A parent that is a sys_file_reference
+                // itself and moved by this pass gets its new pid after this record was moved.
+                // Such TCA is not meaningful and not considered, the next run would fix this record.
+                $parentPid = (int)$referencingRecord['pid'];
+                if ((int)$row['pid'] === $parentPid) {
+                    continue;
                 }
             }
+            $findings[] = new Finding(
+                new RecordKey('sys_file_reference', (int)$row['uid']),
+                (int)$row['pid'],
+                [
+                    new RecordChange(RecordChangeType::Update, 'sys_file_reference', (int)$row['uid'], [
+                        'pid' => [
+                            'value' => $parentPid,
+                            'type' => Connection::PARAM_INT,
+                        ],
+                    ]),
+                ],
+                new Reason(
+                    'parent-different-pid',
+                    'Parent "' . $row['tablenames'] . ':' . $row['uid_foreign'] . '" is on pid "' . $parentPid . '"',
+                    ['parent' => $row['tablenames'] . ':' . $row['uid_foreign'], 'parentPid' => $parentPid]
+                ),
+            );
         }
-        return $tableRows;
+        return $findings;
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    protected function getDetailDbFields(string $tableName): array
     {
-        $tableName = 'sys_file_reference';
-        $rows = $affectedRecords['sys_file_reference'] ?? [];
-        $this->outputTableUpdateBefore($run, $simulate, $tableName);
-        $count = 0;
-        foreach ($rows as $row) {
-            if ($row['tablenames'] === 'pages') {
-                $fields = [
-                    'pid' => [
-                        'value' => (int)$row['uid_foreign'],
-                        'type' => Connection::PARAM_INT,
-                    ],
-                ];
-                $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid'], $fields);
-            } else {
-                $referencingRecord = $this->recordsHelper->getRecord($run->statements, (string)$row['tablenames'], ['pid'], (int)$row['uid_foreign']);
-                $fields = [
-                    'pid' => [
-                        'value' => (int)$referencingRecord['pid'],
-                        'type' => Connection::PARAM_INT,
-                    ],
-                ];
-                $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid'], $fields);
-            }
-            $count++;
-        }
-        $this->outputTableUpdateAfter($run, $simulate, $tableName, $count);
-    }
-
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
-    {
-        $this->outputRecordDetails($run, $affectedRecords, '', [], ['tablenames', 'uid_foreign', 'fieldname', 'uid_local']);
+        return ['tablenames', 'uid_foreign', 'fieldname', 'uid_local'];
     }
 }
