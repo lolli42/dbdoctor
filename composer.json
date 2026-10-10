@@ -54,7 +54,7 @@
     "typo3/cms": {
       "web-dir": ".Build/Web",
       "extension-key": "dbdoctor",
-      "version": "2.2.0",
+      "version": "2.3.0",
       "Package": {
         "providesPackages": []
       }
