@@ -47,7 +47,7 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentLanguage
     protected function getAffectedRecords(HealthCheckRun $run): array
     {
         $affectedRows = [];
-        foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldChildTcaTable() as $inlineChild) {
+        foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldParent() as $inlineChild) {
             $childTableName = $inlineChild['tableName'];
             $childTableLanguageField = $this->tcaHelper->getLanguageField($childTableName);
             if (!$childTableLanguageField) {
@@ -80,13 +80,20 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentLanguage
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($childTableName);
             // Do not consider deleted child records.
             $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-            $result = $queryBuilder->select(...$selectFields)
+            $queryBuilder->select(...$selectFields)
                 ->from($childTableName)
                 ->where(
                     $queryBuilder->expr()->gt($fieldNameOfParentTableUid, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
                 )
-                ->orderBy('uid')
-                ->executeQuery();
+                ->orderBy('uid');
+            foreach ($inlineChild['matchFields'] as $matchFieldName => $matchFieldValue) {
+                // Child table may have multiple parent tables, consider only rows of this parent.
+                $parameter = $this->tableHelper->fieldIsInteger($childTableName, $matchFieldName)
+                    ? $queryBuilder->createNamedParameter((int)$matchFieldValue, Connection::PARAM_INT)
+                    : $queryBuilder->createNamedParameter((string)$matchFieldValue);
+                $queryBuilder->andWhere($queryBuilder->expr()->eq($matchFieldName, $parameter));
+            }
+            $result = $queryBuilder->executeQuery();
             while ($inlineChildRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $inlineChildRow */
                 try {
@@ -104,7 +111,8 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentLanguage
                         $inlineChildRow['_parentTableName'] = $parentTableName;
                         $inlineChildRow['_fieldNameOfParentTableUid'] = $fieldNameOfParentTableUid;
                         $inlineChildRow['_parentRowLanguage'] = $parentRowLanguage;
-                        $affectedRows[$childTableName][] = $inlineChildRow;
+                        // Keyed by uid: Two parent fields of the same parent table may select the same row.
+                        $affectedRows[$childTableName][(int)$inlineChildRow['uid']] = $inlineChildRow;
                     }
                 } catch (NoSuchRecordException $e) {
                     // Record existence has been checked by InlineForeignFieldChildrenParentMissing already.
@@ -112,6 +120,10 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentLanguage
                     continue;
                 }
             }
+        }
+        foreach ($affectedRows as $childTableName => $rows) {
+            ksort($rows);
+            $affectedRows[$childTableName] = array_values($rows);
         }
         return $affectedRows;
     }

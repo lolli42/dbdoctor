@@ -1012,6 +1012,240 @@ class TcaHelperTest extends UnitTestCase
     }
 
     #[Test]
+    public function getNextInlineForeignFieldNoForeignTableFieldParentThrowsExceptionIfTcaIsNotAnArray(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionCode(1688203176);
+        $GLOBALS['TCA'] = null;
+        iterator_to_array((new TcaHelper())->getNextInlineForeignFieldNoForeignTableFieldParent(), false);
+    }
+
+    #[Test]
+    public function getNextInlineForeignFieldNoForeignTableFieldParentReturnsParentWithoutMatchFields(): void
+    {
+        $GLOBALS['TCA'] = [
+            'parent_table' => [
+                'columns' => [
+                    'children' => self::getInlineColumn([]),
+                ],
+            ],
+            'child_table' => self::getInlineChildTca(),
+        ];
+        $expected = [
+            [
+                'tableName' => 'child_table',
+                'parentTableName' => 'parent_table',
+                'fieldNameOfParentTableUid' => 'parent_uid',
+                'matchFields' => [],
+            ],
+        ];
+        self::assertSame($expected, iterator_to_array((new TcaHelper())->getNextInlineForeignFieldNoForeignTableFieldParent(), false));
+    }
+
+    #[Test]
+    public function getNextInlineForeignFieldNoForeignTableFieldParentReturnsParentFieldsOfSameTableOnce(): void
+    {
+        $GLOBALS['TCA'] = [
+            'parent_table' => [
+                'columns' => [
+                    'children_1' => self::getInlineColumn([]),
+                    'children_2' => self::getInlineColumn([]),
+                ],
+            ],
+            'child_table' => self::getInlineChildTca(),
+        ];
+        $expected = [
+            [
+                'tableName' => 'child_table',
+                'parentTableName' => 'parent_table',
+                'fieldNameOfParentTableUid' => 'parent_uid',
+                'matchFields' => [],
+            ],
+        ];
+        self::assertSame($expected, iterator_to_array((new TcaHelper())->getNextInlineForeignFieldNoForeignTableFieldParent(), false));
+    }
+
+    #[Test]
+    public function getNextInlineForeignFieldNoForeignTableFieldParentSkipsParentTablesWithoutMatchFields(): void
+    {
+        $GLOBALS['TCA'] = [
+            'parent_table_1' => [
+                'columns' => [
+                    'children' => self::getInlineColumn([]),
+                ],
+            ],
+            'parent_table_2' => [
+                'columns' => [
+                    'children' => self::getInlineColumn([]),
+                ],
+            ],
+            'child_table' => self::getInlineChildTca(),
+        ];
+        self::assertSame([], iterator_to_array((new TcaHelper())->getNextInlineForeignFieldNoForeignTableFieldParent(), false));
+    }
+
+    #[Test]
+    public function getNextInlineForeignFieldNoForeignTableFieldParentSkipsParentTablesWithOverlappingMatchFields(): void
+    {
+        $GLOBALS['TCA'] = [
+            'parent_table_1' => [
+                'columns' => [
+                    'children' => self::getInlineColumn(['parent_field' => 'children']),
+                ],
+            ],
+            'parent_table_2' => [
+                'columns' => [
+                    'children' => self::getInlineColumn(['parent_table' => 'parent_table_2']),
+                ],
+            ],
+            'child_table' => self::getInlineChildTca(),
+        ];
+        self::assertSame([], iterator_to_array((new TcaHelper())->getNextInlineForeignFieldNoForeignTableFieldParent(), false));
+    }
+
+    #[Test]
+    public function getNextInlineForeignFieldNoForeignTableFieldParentReturnsParentTablesWithDisjointMatchFields(): void
+    {
+        $GLOBALS['TCA'] = [
+            'parent_table_1' => [
+                'columns' => [
+                    'children' => self::getInlineColumn(['parent_table' => 'parent_table_1', 'parent_field' => 'children']),
+                ],
+            ],
+            'parent_table_2' => [
+                'columns' => [
+                    'children' => self::getInlineColumn(['parent_table' => 'parent_table_2']),
+                ],
+            ],
+            'child_table' => self::getInlineChildTca(),
+        ];
+        $expected = [
+            [
+                'tableName' => 'child_table',
+                'parentTableName' => 'parent_table_1',
+                'fieldNameOfParentTableUid' => 'parent_uid',
+                'matchFields' => ['parent_table' => 'parent_table_1', 'parent_field' => 'children'],
+            ],
+            [
+                'tableName' => 'child_table',
+                'parentTableName' => 'parent_table_2',
+                'fieldNameOfParentTableUid' => 'parent_uid',
+                'matchFields' => ['parent_table' => 'parent_table_2'],
+            ],
+        ];
+        self::assertSame($expected, iterator_to_array((new TcaHelper())->getNextInlineForeignFieldNoForeignTableFieldParent(), false));
+    }
+
+    #[Test]
+    public function getNextInlineForeignFieldNoForeignTableFieldParentReturnsParentDisjointFromParentWithForeignTableField(): void
+    {
+        $parentWithForeignTableField = self::getInlineColumn(['parent_field' => 'children']);
+        $parentWithForeignTableField['config']['foreign_table_field'] = 'parent_table';
+        $GLOBALS['TCA'] = [
+            'parent_table_1' => [
+                'columns' => [
+                    'children' => $parentWithForeignTableField,
+                ],
+            ],
+            'parent_table_2' => [
+                'columns' => [
+                    'children' => self::getInlineColumn(['parent_table' => 'parent_table_2']),
+                ],
+            ],
+            'child_table' => self::getInlineChildTca(),
+        ];
+        $expected = [
+            [
+                'tableName' => 'child_table',
+                'parentTableName' => 'parent_table_2',
+                'fieldNameOfParentTableUid' => 'parent_uid',
+                'matchFields' => ['parent_table' => 'parent_table_2'],
+            ],
+        ];
+        self::assertSame($expected, iterator_to_array((new TcaHelper())->getNextInlineForeignFieldNoForeignTableFieldParent(), false));
+    }
+
+    #[Test]
+    public function getNextInlineForeignFieldNoForeignTableFieldParentSkipsParentOverlappingParentWithForeignTableField(): void
+    {
+        $parentWithForeignTableField = self::getInlineColumn([]);
+        $parentWithForeignTableField['config']['foreign_table_field'] = 'parent_table';
+        $GLOBALS['TCA'] = [
+            'parent_table_1' => [
+                'columns' => [
+                    'children' => $parentWithForeignTableField,
+                ],
+            ],
+            'parent_table_2' => [
+                'columns' => [
+                    'children' => self::getInlineColumn([]),
+                ],
+            ],
+            'child_table' => self::getInlineChildTca(),
+        ];
+        self::assertSame([], iterator_to_array((new TcaHelper())->getNextInlineForeignFieldNoForeignTableFieldParent(), false));
+    }
+
+    #[Test]
+    public function getNextInlineForeignFieldNoForeignTableFieldParentSkipsMatchFieldWithoutTca(): void
+    {
+        $GLOBALS['TCA'] = [
+            'parent_table' => [
+                'columns' => [
+                    'children' => self::getInlineColumn(['not_in_tca' => 'parent_table']),
+                ],
+            ],
+            'child_table' => self::getInlineChildTca(),
+        ];
+        self::assertSame([], iterator_to_array((new TcaHelper())->getNextInlineForeignFieldNoForeignTableFieldParent(), false));
+    }
+
+    /**
+     * @param array<string, string> $matchFields
+     * @return array<string, mixed>
+     */
+    private static function getInlineColumn(array $matchFields): array
+    {
+        $column = [
+            'config' => [
+                'type' => 'inline',
+                'foreign_table' => 'child_table',
+                'foreign_field' => 'parent_uid',
+            ],
+        ];
+        if ($matchFields !== []) {
+            $column['config']['foreign_match_fields'] = $matchFields;
+        }
+        return $column;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function getInlineChildTca(): array
+    {
+        return [
+            'columns' => [
+                'parent_uid' => [
+                    'config' => [
+                        'type' => 'passthrough',
+                    ],
+                ],
+                'parent_table' => [
+                    'config' => [
+                        'type' => 'passthrough',
+                    ],
+                ],
+                'parent_field' => [
+                    'config' => [
+                        'type' => 'passthrough',
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    #[Test]
     public function getNextGroupFieldWithoutMmThrowsExceptionIfTcaIsNotAnArray(): void
     {
         $this->expectException(\RuntimeException::class);

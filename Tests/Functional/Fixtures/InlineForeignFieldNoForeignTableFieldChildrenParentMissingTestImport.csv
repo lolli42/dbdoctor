@@ -4,6 +4,7 @@
 "tt_content"
 ,"uid","pid"
 ,1,1
+,5,1
 "tx_dbdoctortestsforeignfield_hotels"
 ,"uid","pid","deleted","hidden","sorting","sys_language_uid","l18n_parent","parentid","title"
 ,1,1,0,0,0,0,0,1,"Ok tt_content 1"
@@ -13,6 +14,14 @@
 # parent=0 may occur when a child can also be an aggregate root - eg standalone tt_content or as news child - we do NOT touch this
 ,5,1,0,0,0,0,0,0,"Ok - tt_content 0 missing"
 ,6,1,1,0,0,0,0,0,"Ok - tt_content 0 missing"
+"tx_dbdoctortestsforeignfield_items"
+,"uid","pid","deleted","hidden","sorting","sys_language_uid","l18n_parent","parentid","parenttable","parentfield","title"
+,1,1,0,0,0,0,0,1,"pages","tx_dbdoctortestsforeignfield_items","Ok page 1"
+,2,1,0,0,0,0,0,2,"pages","tx_dbdoctortestsforeignfield_items","Not Ok - page 2 missing"
+,3,1,0,0,0,0,0,5,"tt_content","tx_dbdoctortestsforeignfield_items2","Ok tt_content 5, no page 5"
+,4,1,0,0,0,0,0,6,"tt_content","tx_dbdoctortestsforeignfield_items2","Not Ok - tt_content 6 missing"
+# match fields of no parent field: Unknown parent, kept
+,5,1,0,0,0,0,0,6,"tt_content","unknown","Ok - unknown parent field"
 "sys_file"
 ,"uid","pid","identifier"
 ,1,1,"a-file.txt"

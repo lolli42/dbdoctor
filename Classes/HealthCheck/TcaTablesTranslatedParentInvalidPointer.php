@@ -51,11 +51,13 @@ final readonly class TcaTablesTranslatedParentInvalidPointer extends AbstractHea
     {
         $inlineChildTables = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChildTable) {
-            $inlineChildTables[$inlineChildTable['tableName']] = $inlineChildTable;
+            $inlineChildTables[$inlineChildTable['tableName']] = [$inlineChildTable];
         }
-        foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldChildTcaTable() as $inlineChildTable) {
-            $inlineChildTables[$inlineChildTable['tableName']] ??= $inlineChildTable;
+        $inlineChildTablesWithoutForeignTableField = [];
+        foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldParent() as $inlineParent) {
+            $inlineChildTablesWithoutForeignTableField[$inlineParent['tableName']][] = $inlineParent;
         }
+        $inlineChildTables += $inlineChildTablesWithoutForeignTableField;
 
         $affectedRows = [];
         foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {
@@ -106,7 +108,7 @@ final readonly class TcaTablesTranslatedParentInvalidPointer extends AbstractHea
                         $localizedRow['_childOfTranslatedRecord'] = 0;
                         if ((int)$parentRow[$languageField] < 0
                             && isset($inlineChildTables[$tableName])
-                            && $this->isChildOfTranslatedRecord($run, $inlineChildTables[$tableName], (int)$localizedRow['uid'])
+                            && $this->isChildOfTranslatedRecord($run, $tableName, $inlineChildTables[$tableName], (int)$localizedRow['uid'])
                         ) {
                             $localizedRow['_childOfTranslatedRecord'] = 1;
                             $localizedRow['_reasonBroken'] .= ', inline child of a translated record';
@@ -162,28 +164,49 @@ final readonly class TcaTablesTranslatedParentInvalidPointer extends AbstractHea
     /**
      * True if the inline parent record of a child is a translated record (TCA "languageField" > 0).
      *
-     * @param array<string, string> $inlineChildTable
+     * Child tables with foreign_table_field have one entry, the parent table is in the child row.
+     * Child tables without foreign_table_field have one entry per parent, the one with matching
+     * foreign_match_fields is the parent of the child row.
+     *
+     * @param array<int, array<string, mixed>> $inlineParents
      */
-    private function isChildOfTranslatedRecord(HealthCheckRun $run, array $inlineChildTable, int $uid): bool
+    private function isChildOfTranslatedRecord(HealthCheckRun $run, string $childTableName, array $inlineParents, int $uid): bool
     {
-        $fields = [$inlineChildTable['fieldNameOfParentTableUid']];
-        if (isset($inlineChildTable['fieldNameOfParentTableName'])) {
-            $fields[] = $inlineChildTable['fieldNameOfParentTableName'];
+        $fields = [];
+        foreach ($inlineParents as $inlineParent) {
+            $fields[] = (string)$inlineParent['fieldNameOfParentTableUid'];
+            if (isset($inlineParent['fieldNameOfParentTableName'])) {
+                $fields[] = (string)$inlineParent['fieldNameOfParentTableName'];
+            }
+            foreach (array_keys($inlineParent['matchFields'] ?? []) as $matchFieldName) {
+                $fields[] = (string)$matchFieldName;
+            }
         }
-        $childRow = $this->recordsHelper->getRecord($run->statements, $inlineChildTable['tableName'], $fields, $uid);
-        $parentTableName = isset($inlineChildTable['fieldNameOfParentTableName'])
-            ? (string)$childRow[$inlineChildTable['fieldNameOfParentTableName']]
-            : $inlineChildTable['parentTableName'];
-        $parentLanguageField = $this->tcaHelper->getLanguageField($parentTableName);
-        if ($parentLanguageField === null) {
-            return false;
+        $childRow = $this->recordsHelper->getRecord($run->statements, $childTableName, array_values(array_unique($fields)), $uid);
+        foreach ($inlineParents as $inlineParent) {
+            if (isset($inlineParent['fieldNameOfParentTableName'])) {
+                $parentTableName = (string)$childRow[$inlineParent['fieldNameOfParentTableName']];
+            } else {
+                foreach ($inlineParent['matchFields'] as $matchFieldName => $matchFieldValue) {
+                    if ((string)$childRow[$matchFieldName] !== (string)$matchFieldValue) {
+                        continue 2;
+                    }
+                }
+                $parentTableName = (string)$inlineParent['parentTableName'];
+            }
+            $parentLanguageField = $this->tcaHelper->getLanguageField($parentTableName);
+            if ($parentLanguageField === null) {
+                return false;
+            }
+            try {
+                $parentRow = $this->recordsHelper->getRecord($run->statements, $parentTableName, [$parentLanguageField], (int)$childRow[$inlineParent['fieldNameOfParentTableUid']]);
+            } catch (NoSuchRecordException $e) {
+                // Missing inline parent: Handled by later inline checks.
+                return false;
+            }
+            return (int)$parentRow[$parentLanguageField] > 0;
         }
-        try {
-            $parentRow = $this->recordsHelper->getRecord($run->statements, $parentTableName, [$parentLanguageField], (int)$childRow[$inlineChildTable['fieldNameOfParentTableUid']]);
-        } catch (NoSuchRecordException $e) {
-            // Missing inline parent: Handled by later inline checks.
-            return false;
-        }
-        return (int)$parentRow[$parentLanguageField] > 0;
+        // No parent matches the child row: Handled by later inline checks.
+        return false;
     }
 }

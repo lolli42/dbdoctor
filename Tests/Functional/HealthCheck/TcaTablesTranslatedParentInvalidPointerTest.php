@@ -26,6 +26,7 @@ class TcaTablesTranslatedParentInvalidPointerTest extends AbstractFunctionalTest
 {
     protected array $testExtensionsToLoad = [
         'lolli/dbdoctor',
+        __DIR__ . '/../FixtureExtensions/tx_dbdoctortestsforeignfield',
     ];
 
     #[Test]
@@ -48,5 +49,15 @@ class TcaTablesTranslatedParentInvalidPointerTest extends AbstractFunctionalTest
         $subject = $this->get(TcaTablesTranslatedParentInvalidPointer::class);
         $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedParentInvalidPointerFixed.csv');
+    }
+
+    #[Test]
+    public function fixBrokenRecordsOfInlineChildWithMultipleParentTables(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedParentInvalidPointerMultipleInlineParentsImport.csv');
+        /** @var TcaTablesTranslatedParentInvalidPointer $subject */
+        $subject = $this->get(TcaTablesTranslatedParentInvalidPointer::class);
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedParentInvalidPointerMultipleInlineParentsFixed.csv');
     }
 }
