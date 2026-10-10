@@ -16,6 +16,10 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -36,9 +40,9 @@ final readonly class TcaTablesLanguageLessThanOneHasZeroLanguageParent extends A
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRows = [];
+        $findings = [];
         foreach ($this->tcaHelper->getNextLanguageAwareTcaTable() as $tableName) {
             $sysLanguageField = $this->tcaHelper->getLanguageField($tableName);
             $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
@@ -61,29 +65,20 @@ final readonly class TcaTablesLanguageLessThanOneHasZeroLanguageParent extends A
             $result = $queryBuilder->executeQuery();
             while ($row = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $row */
-                $affectedRows[$tableName][] = $row;
-            }
-        }
-        return $affectedRows;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        foreach ($affectedRecords as $tableName => $tableRows) {
-            $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
-            if ($translationParentField === null) {
-                throw new \RuntimeException(
-                    'TCA ctrl transOrigPointerField null, indicates bug in getNextLanguageAwareTcaTable()',
-                    1761914821
+                $findings[] = new Finding(
+                    new RecordKey($tableName, (int)$row['uid']),
+                    (int)$row['pid'],
+                    [
+                        new RecordChange(RecordChangeType::Update, $tableName, (int)$row['uid'], [
+                            $translationParentField => [
+                                'value' => 0,
+                                'type' => Connection::PARAM_INT,
+                            ],
+                        ]),
+                    ],
                 );
             }
-            $updateFields = [
-                $translationParentField => [
-                    'value' => 0,
-                    'type' => Connection::PARAM_INT,
-                ],
-            ];
-            $this->updateTcaRecordsOfTable($run, $simulate, $tableName, $tableRows, $updateFields);
         }
+        return $findings;
     }
 }

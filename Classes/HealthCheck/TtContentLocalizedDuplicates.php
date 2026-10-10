@@ -16,6 +16,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -43,7 +48,7 @@ final readonly class TtContentLocalizedDuplicates extends AbstractHealthCheck im
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
         // Ignore deleted=1 records
@@ -83,7 +88,7 @@ final readonly class TtContentLocalizedDuplicates extends AbstractHealthCheck im
                 $notVisibleUids[$uid] = true;
             }
         }
-        $affectedRecords = [];
+        $findings = [];
         foreach ($candidates as $l18nParents) {
             foreach ($l18nParents as $localizations) {
                 if (count($localizations) > 1) {
@@ -102,22 +107,24 @@ final readonly class TtContentLocalizedDuplicates extends AbstractHealthCheck im
                     unset($localizations[$keepUid]);
                     foreach ($localizations as $localization) {
                         // The others are target of soft-deletion.
-                        $affectedRecords['tt_content'][] = $localization;
+                        $findings[] = new Finding(
+                            new RecordKey('tt_content', $localization['uid']),
+                            $localization['pid'],
+                            [
+                                new RecordChange(RecordChangeType::SoftDelete, 'tt_content', $localization['uid'], [
+                                    'deleted' => [
+                                        'value' => 1,
+                                        'type' => Connection::PARAM_INT,
+                                    ],
+                                ]),
+                            ],
+                            new Reason('duplicate', 'Duplicate of kept record "' . $keepUid . '"', ['kept' => $keepUid]),
+                            ['kept' => $keepUid],
+                        );
                     }
                 }
             }
         }
-        return $affectedRecords;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        $updateFields = [
-            'deleted' => [
-                'value' => 1,
-                'type' => Connection::PARAM_INT,
-            ],
-        ];
-        $this->updateTcaRecordsOfTable($run, $simulate, 'tt_content', $affectedRecords['tt_content'] ?? [], $updateFields);
+        return $findings;
     }
 }

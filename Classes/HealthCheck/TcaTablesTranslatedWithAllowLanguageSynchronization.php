@@ -16,6 +16,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -45,9 +50,9 @@ final readonly class TcaTablesTranslatedWithAllowLanguageSynchronization extends
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRows = [];
+        $findings = [];
         foreach ($this->tcaHelper->getNextLanguageAwareTcaTable() as $tableName) {
             $fieldNames = State::getFieldNames($tableName);
             if ($fieldNames === []
@@ -147,45 +152,42 @@ final readonly class TcaTablesTranslatedWithAllowLanguageSynchronization extends
                 if ($affectedFieldNames === []) {
                     continue;
                 }
-                $affectedRows[$tableName][] = [
-                    'uid' => (int)$row['uid'],
-                    'pid' => (int)$row['pid'],
-                    'l10n_state' => (string)$row['l10n_state'],
-                    '_fieldNames' => implode(',', $affectedFieldNames),
-                    '_reasonBroken' => 'Value differs from default language: ' . implode(', ', $affectedFieldNames),
-                ];
-            }
-        }
-        return $affectedRows;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        foreach ($affectedRecords as $tableName => $rows) {
-            $this->outputTableUpdateBefore($run, $simulate, $tableName);
-            foreach ($rows as $row) {
                 // Change only the affected fields and keep the rest of l10n_state as is: Fields
                 // without state are "parent" by default, see State->enrich().
-                $states = json_decode((string)$row['l10n_state'], true);
-                $states = is_array($states) ? $states : [];
-                foreach (explode(',', (string)$row['_fieldNames']) as $fieldName) {
+                $states = is_array($l10nState) ? $l10nState : [];
+                foreach ($affectedFieldNames as $fieldName) {
                     $states[$fieldName] = State::STATE_CUSTOM;
                 }
-                $fields = [
-                    'l10n_state' => [
-                        'value' => (string)json_encode($states),
-                        'type' => Connection::PARAM_STR,
+                $findings[] = new Finding(
+                    new RecordKey($tableName, (int)$row['uid']),
+                    (int)$row['pid'],
+                    [
+                        new RecordChange(RecordChangeType::Update, $tableName, (int)$row['uid'], [
+                            'l10n_state' => [
+                                'value' => (string)json_encode($states),
+                                'type' => Connection::PARAM_STR,
+                            ],
+                        ]),
                     ],
-                ];
-                $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid'], $fields);
+                    new Reason(
+                        'value-differs',
+                        'Value differs from default language: ' . implode(', ', $affectedFieldNames),
+                        ['fieldNames' => $affectedFieldNames]
+                    ),
+                );
             }
-            $this->outputTableUpdateAfter($run, $simulate, $tableName, count($rows));
         }
+        return $findings;
     }
 
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
+    protected function getDetailCtrlFields(string $tableName): array
     {
-        $this->outputRecordDetails($run, $affectedRecords, '_reasonBroken', ['languageField', 'transOrigPointerField'], ['l10n_state']);
+        return ['languageField', 'transOrigPointerField'];
+    }
+
+    protected function getDetailDbFields(string $tableName): array
+    {
+        return ['l10n_state'];
     }
 
     /**
