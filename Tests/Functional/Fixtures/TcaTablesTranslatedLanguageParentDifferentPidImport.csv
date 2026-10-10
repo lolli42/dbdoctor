@@ -42,3 +42,19 @@
 ,25,2,0,0,1,24,0,0,0,"Content 6 localized for sub page 1"
 ,26,1,0,0,1,24,1,4,25,"Content 6 localized changed then moved for sub page 1"
 ,27,1,0,0,0,0,1,4,24,"Content 6 changed then moved for sub page 1"
+# Set 9 two localizations of one parent on wrong pid - 29 should be set to pid=2 and hidden=1, 30 then finds 29 and should be set to pid=2 and deleted=1
+,28,2,0,0,0,0,0,0,0,"Content 9 for sub page 1"
+,29,1,0,0,1,28,0,0,0,"Content 9 localized for sub page 1 but different pid"
+,30,1,0,0,1,28,0,0,0,"Content 9 localized again for sub page 1 but different pid"
+# Set 10 live and ws-1 localization of one parent on wrong pid - 32 should be set to pid=2 and hidden=1, 33 then finds 32 and should be removed
+,31,2,0,0,0,0,0,0,0,"Content 10 for sub page 1"
+,32,1,0,0,1,31,0,0,0,"Content 10 localized for sub page 1 but different pid"
+,33,1,0,0,1,31,1,1,0,"Content 10 localized for sub page 1 but different pid ws-1"
+# Set 11 ws-1 and ws-2 localization of one parent on wrong pid - 35 and 36 should be set to pid=2 and hidden=1, workspaces do not see each other
+,34,2,0,0,0,0,0,0,0,"Content 11 for sub page 1"
+,35,1,0,0,1,34,1,1,0,"Content 11 localized for sub page 1 but different pid ws-1"
+,36,1,0,0,1,34,2,1,0,"Content 11 localized for sub page 1 but different pid ws-2"
+# Set 12 ws-1 and live localization of one parent on wrong pid - 38 and 39 should be set to pid=2 and hidden=1, live does not see ws-1
+,37,2,0,0,0,0,0,0,0,"Content 12 for sub page 1"
+,38,1,0,0,1,37,1,1,0,"Content 12 localized for sub page 1 but different pid ws-1"
+,39,1,0,0,1,37,0,0,0,"Content 12 localized for sub page 1 but different pid"

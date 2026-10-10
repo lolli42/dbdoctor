@@ -18,6 +18,11 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -46,9 +51,9 @@ final readonly class TcaTablesTranslatedLanguageParentDifferentPid extends Abstr
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRows = [];
+        $findings = [];
         // @todo: sys_file_reference is excluded due to https://github.com/lolli42/dbdoctor/issues/30, see comment below, too.
         foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages', 'sys_file_reference']) as $tableName) {
             /** @var string $languageField */
@@ -57,6 +62,7 @@ final readonly class TcaTablesTranslatedLanguageParentDifferentPid extends Abstr
             $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
             $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
             $isTableWorkspaceAware = !empty($workspaceIdField);
+            $hiddenField = $this->tcaHelper->getHiddenField($tableName);
 
             $selectFields = [
                 'uid',
@@ -82,18 +88,14 @@ final readonly class TcaTablesTranslatedLanguageParentDifferentPid extends Abstr
                 ->orderBy('uid')
                 ->executeQuery();
 
+            // Translations this check moves to a target pid without deleting them, as
+            // [targetPid][language][parent] => list of workspace ids. A later translation of the
+            // same parent and language finds them as existing translation on the target pid.
+            $movedTranslations = [];
             while ($localizedRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $localizedRow */
                 try {
                     $parentRow = $this->recordsHelper->getRecord($run->statements, $tableName, ['uid', 'pid'], (int)$localizedRow[$translationParentField]);
-                    if ((int)$parentRow['pid'] !== (int)$localizedRow['pid']
-                        // Ignore "workspace moved" translations due to the odd l10n_parent behavior, as
-                        // shown with the tests from https://review.typo3.org/c/Packages/TYPO3.CMS/+/89803
-                        // @todo: This could be optimized when the underlying core question has been decided.
-                        && (!$isTableWorkspaceAware || !((int)$localizedRow[$workspaceIdField] > 0 && (int)$localizedRow['t3ver_state'] === 4))
-                    ) {
-                        $affectedRows[$tableName][] = $localizedRow;
-                    }
                 } catch (NoSuchRecordException $e) {
                     // Earlier test should have fixed this.
                     throw new EarlierCheckNotFixedException(
@@ -103,150 +105,142 @@ final readonly class TcaTablesTranslatedLanguageParentDifferentPid extends Abstr
                         1648031986
                     );
                 }
+                $parentPid = (int)$parentRow['pid'];
+                if ($parentPid === (int)$localizedRow['pid']
+                    // Ignore "workspace moved" translations due to the odd l10n_parent behavior, as
+                    // shown with the tests from https://review.typo3.org/c/Packages/TYPO3.CMS/+/89803
+                    // @todo: This could be optimized when the underlying core question has been decided.
+                    || ($isTableWorkspaceAware && (int)$localizedRow[$workspaceIdField] > 0 && (int)$localizedRow['t3ver_state'] === 4)
+                ) {
+                    continue;
+                }
+                $change = $this->getChange($tableName, $localizedRow, $parentPid, $movedTranslations);
+                if ($hiddenField !== null && isset($change->values[$hiddenField])) {
+                    // Moved and hidden, it is a not deleted translation on the target pid now.
+                    $workspaceId = $isTableWorkspaceAware ? (int)$localizedRow[$workspaceIdField] : 0;
+                    $movedTranslations[$parentPid][(int)$localizedRow[$languageField]][(int)$localizedRow[$translationParentField]][] = $workspaceId;
+                }
+                $findings[] = new Finding(
+                    new RecordKey($tableName, (int)$localizedRow['uid']),
+                    (int)$localizedRow['pid'],
+                    [$change],
+                    new Reason(
+                        'parent-different-pid',
+                        'Language parent "' . $localizedRow[$translationParentField] . '" is on page "' . $parentPid . '"',
+                        ['parent' => (int)$localizedRow[$translationParentField], 'parentPid' => $parentPid]
+                    ),
+                );
             }
         }
-        return $affectedRows;
+        return $findings;
     }
 
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    protected function getDetailCtrlFields(string $tableName): array
     {
-        foreach ($affectedRecords as $tableName => $tableRows) {
-            $this->outputTableHandleBefore($run, $simulate, $tableName);
+        return ['transOrigPointerField'];
+    }
 
-            $updateCount = 0;
-            $deleteCount = 0;
+    /**
+     * Move the translation to the pid of its language parent. Moving may show it in frontend, it is
+     * hidden then. If a translation exists on the target pid already, the moved one is deleted.
+     *
+     * @param array<string, int|string> $localizedRow
+     * @param array<int, array<int, array<int, list<int>>>> $movedTranslations
+     */
+    private function getChange(string $tableName, array $localizedRow, int $parentPid, array $movedTranslations): RecordChange
+    {
+        $deleteField = $this->tcaHelper->getDeletedField($tableName);
+        $isTableSoftDeleteAware = !empty($deleteField);
+        $hiddenField = $this->tcaHelper->getHiddenField($tableName);
+        /** @var string $languageField */
+        $languageField = $this->tcaHelper->getLanguageField($tableName);
+        /** @var string $translationParentField */
+        $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
+        $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
+        $isTableWorkspaceAware = !empty($workspaceIdField);
+        $isWorkspaceRecord = $isTableWorkspaceAware && (int)$localizedRow[$workspaceIdField] > 0;
+        $uid = (int)$localizedRow['uid'];
+        $pidValue = [
+            'value' => $parentPid,
+            'type' => Connection::PARAM_INT,
+        ];
+        $flagValue = [
+            'value' => 1,
+            'type' => Connection::PARAM_INT,
+        ];
 
-            $deleteField = $this->tcaHelper->getDeletedField($tableName);
-            $isTableSoftDeleteAware = !empty($deleteField);
-            $hiddenField = $this->tcaHelper->getHiddenField($tableName);
-            $isTableHiddenAware = !empty($hiddenField);
-            /** @var string $languageField */
-            $languageField = $this->tcaHelper->getLanguageField($tableName);
-            /** @var string $translationParentField */
-            $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
-            $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
-            $isTableWorkspaceAware = !empty($workspaceIdField);
-
-            foreach ($tableRows as $localizedRow) {
-                if ($isTableWorkspaceAware && !array_key_exists($workspaceIdField, $localizedRow)) {
-                    throw new \RuntimeException(
-                        'When soft or hard deleting records from a workspace aware table, t3ver_wsid field must be hand over.',
-                        1688290136
-                    );
-                }
-
-                $defaultLanguageRow = $this->recordsHelper->getRecord($run->statements, $tableName, ['uid', 'pid'], (int)$localizedRow[$translationParentField]);
-
-                // See if there is already a localized row on the correct pid
-                $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
-                $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
-                $queryBuilder
-                    ->select('uid')
-                    ->from($tableName)
-                    ->where(
-                        $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter($defaultLanguageRow['pid'], Connection::PARAM_INT)),
-                        $queryBuilder->expr()->eq($languageField, $queryBuilder->createNamedParameter($localizedRow[$languageField], Connection::PARAM_INT)),
-                        $queryBuilder->expr()->eq($translationParentField, $queryBuilder->createNamedParameter($localizedRow[$translationParentField], Connection::PARAM_INT))
-                    );
-                if ($isTableWorkspaceAware && $localizedRow[$workspaceIdField] > 0) {
-                    // If the localized record that is on the wrong pid is a workspace record, check if there is
-                    // a localized live OR this-workspace record on the target pid.
-                    $queryBuilder->andWhere(
-                        $queryBuilder->expr()->or(
-                            $queryBuilder->expr()->eq($workspaceIdField, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
-                            $queryBuilder->expr()->eq($workspaceIdField, $queryBuilder->createNamedParameter((int)$localizedRow[$workspaceIdField], Connection::PARAM_INT)),
-                        )
-                    );
-                } elseif ($isTableWorkspaceAware) {
-                    // If the localized record that is on the wrong pid is a live record in a workspace aware table,
-                    // check for existing localized records in live on the target pid.
-                    $queryBuilder->andWhere($queryBuilder->expr()->eq($workspaceIdField, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)));
-                }
-
-                $existingLocalizedRow = $queryBuilder->executeQuery()->fetchAllAssociative();
-
-                if (count($existingLocalizedRow) > 0) {
-                    // If there is a localized row already, we set the wrong-pid row to correct pid and set deleted=1 for delete-aware tables, or remove it
-                    if (!$isTableSoftDeleteAware
-                        || ($isTableWorkspaceAware && ((int)$localizedRow[$workspaceIdField] > 0))
-                    ) {
-                        $this->deleteSingleTcaRecord($run, $simulate, $tableName, (int)$localizedRow['uid']);
-                        $deleteCount++;
-                    } else {
-                        $updateFields = [
-                            'pid' => [
-                                'value' => (int)$defaultLanguageRow['pid'],
-                                'type' => Connection::PARAM_INT,
-                            ],
-                            $deleteField => [
-                                'value' => 1,
-                                'type' => Connection::PARAM_INT,
-                            ],
-                        ];
-                        $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$localizedRow['uid'], $updateFields);
-                        $updateCount++;
-                    }
-                } else {
-                    // @todo: sys_file_reference is excluded due to https://github.com/lolli42/dbdoctor/issues/30, see comment above, too.
-                    /*
-                    if ($tableName === 'sys_file_reference') {
-                        // @todo: Maybe split this special handling to an own check, maybe merge with PagesTranslatedLanguageParentDifferentPid?
-                        // pid for sys_file_reference is not *that* important: If it's not correct, the
-                        // record translation will still be shown. We simply move those to the correct pid.
-                        $updateFields = [
-                            'pid' => [
-                                'value' => (int)$defaultLanguageRow['pid'],
-                                'type' => \PDO::PARAM_INT,
-                            ],
-                        ];
-                        $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$localizedRow['uid'], $updateFields);
-                        $updateCount ++;
-                    } else {
-                    */
-                    // For all other tables: Moving this record means it may show up in the FE now. To avoid this,
-                    // if the table is 'hidden'-aware, we set the record to hidden and move it. If the table is not
-                    // hidden aware but delete-aware, we set the record to deleted=1. Else, we remove the record.
-                    if ($isTableHiddenAware) {
-                        $updateFields = [
-                            'pid' => [
-                                'value' => (int)$defaultLanguageRow['pid'],
-                                'type' => Connection::PARAM_INT,
-                            ],
-                            $hiddenField => [
-                                'value' => 1,
-                                'type' => Connection::PARAM_INT,
-                            ],
-                        ];
-                        $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$localizedRow['uid'], $updateFields);
-                        $updateCount++;
-                    } elseif (!$isTableSoftDeleteAware
-                        || ($isTableWorkspaceAware && ((int)$localizedRow[$workspaceIdField] > 0))
-                    ) {
-                        $this->deleteSingleTcaRecord($run, $simulate, $tableName, (int)$localizedRow['uid']);
-                        $deleteCount++;
-                    } else {
-                        $updateFields = [
-                            'pid' => [
-                                'value' => (int)$defaultLanguageRow['pid'],
-                                'type' => Connection::PARAM_INT,
-                            ],
-                            $deleteField => [
-                                'value' => 1,
-                                'type' => Connection::PARAM_INT,
-                            ],
-                        ];
-                        $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$localizedRow['uid'], $updateFields);
-                        $updateCount++;
-                    }
-                }
+        if ($this->hasTranslationOnTargetPid($tableName, $localizedRow, $parentPid, $movedTranslations)) {
+            // If there is a localized row already, we set the wrong-pid row to correct pid and set deleted=1 for delete-aware tables, or remove it
+            if (!$isTableSoftDeleteAware || $isWorkspaceRecord) {
+                return new RecordChange(RecordChangeType::Delete, $tableName, $uid);
             }
-
-            $this->outputTableHandleAfter($run, $simulate, $tableName, $updateCount, $deleteCount);
+            return new RecordChange(RecordChangeType::Update, $tableName, $uid, ['pid' => $pidValue, $deleteField => $flagValue]);
         }
+        // @todo: sys_file_reference is excluded due to https://github.com/lolli42/dbdoctor/issues/30, see comment above, too.
+        // pid for sys_file_reference is not *that* important: If it's not correct, the record translation will
+        // still be shown, those could simply be moved to the correct pid. Maybe split this special handling to
+        // an own check, maybe merge with PagesTranslatedLanguageParentDifferentPid?
+        // For all other tables: Moving this record means it may show up in the FE now. To avoid this,
+        // if the table is 'hidden'-aware, we set the record to hidden and move it. If the table is not
+        // hidden aware but delete-aware, we set the record to deleted=1. Else, we remove the record.
+        if (!empty($hiddenField)) {
+            return new RecordChange(RecordChangeType::Update, $tableName, $uid, ['pid' => $pidValue, $hiddenField => $flagValue]);
+        }
+        if (!$isTableSoftDeleteAware || $isWorkspaceRecord) {
+            return new RecordChange(RecordChangeType::Delete, $tableName, $uid);
+        }
+        return new RecordChange(RecordChangeType::Update, $tableName, $uid, ['pid' => $pidValue, $deleteField => $flagValue]);
     }
 
-    protected function recordDetails(HealthCheckRun $run, array $affectedRecords): void
+    /**
+     * A not deleted translation of the same parent and language on the target pid: In the database,
+     * or moved there by this check before. A workspace record sees live records and records of its
+     * workspace, a live record sees live records.
+     *
+     * @param array<string, int|string> $localizedRow
+     * @param array<int, array<int, array<int, list<int>>>> $movedTranslations
+     */
+    private function hasTranslationOnTargetPid(string $tableName, array $localizedRow, int $parentPid, array $movedTranslations): bool
     {
-        $this->outputRecordDetails($run, $affectedRecords, '', ['transOrigPointerField']);
+        /** @var string $languageField */
+        $languageField = $this->tcaHelper->getLanguageField($tableName);
+        /** @var string $translationParentField */
+        $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
+        $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
+        $isTableWorkspaceAware = !empty($workspaceIdField);
+        $workspaceId = $isTableWorkspaceAware ? (int)$localizedRow[$workspaceIdField] : 0;
+
+        $movedWorkspaceIds = $movedTranslations[$parentPid][(int)$localizedRow[$languageField]][(int)$localizedRow[$translationParentField]] ?? [];
+        foreach ($movedWorkspaceIds as $movedWorkspaceId) {
+            if (!$isTableWorkspaceAware || $movedWorkspaceId === 0 || $movedWorkspaceId === $workspaceId) {
+                return true;
+            }
+        }
+
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
+        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
+        $queryBuilder
+            ->select('uid')
+            ->from($tableName)
+            ->where(
+                $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter($parentPid, Connection::PARAM_INT)),
+                $queryBuilder->expr()->eq($languageField, $queryBuilder->createNamedParameter($localizedRow[$languageField], Connection::PARAM_INT)),
+                $queryBuilder->expr()->eq($translationParentField, $queryBuilder->createNamedParameter($localizedRow[$translationParentField], Connection::PARAM_INT))
+            );
+        if ($isTableWorkspaceAware && $workspaceId > 0) {
+            // If the localized record that is on the wrong pid is a workspace record, check if there is
+            // a localized live OR this-workspace record on the target pid.
+            $queryBuilder->andWhere(
+                $queryBuilder->expr()->or(
+                    $queryBuilder->expr()->eq($workspaceIdField, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
+                    $queryBuilder->expr()->eq($workspaceIdField, $queryBuilder->createNamedParameter($workspaceId, Connection::PARAM_INT)),
+                )
+            );
+        } elseif ($isTableWorkspaceAware) {
+            // If the localized record that is on the wrong pid is a live record in a workspace aware table,
+            // check for existing localized records in live on the target pid.
+            $queryBuilder->andWhere($queryBuilder->expr()->eq($workspaceIdField, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)));
+        }
+        return count($queryBuilder->executeQuery()->fetchAllAssociative()) > 0;
     }
 }
