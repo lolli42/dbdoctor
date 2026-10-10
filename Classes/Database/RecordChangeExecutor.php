@@ -62,7 +62,7 @@ final readonly class RecordChangeExecutor
         }
     }
 
-    public function executeChange(HealthCheckRun $run, bool $simulate, RecordChange $change): void
+    private function executeChange(HealthCheckRun $run, bool $simulate, RecordChange $change): void
     {
         $sql = match ($change->type) {
             RecordChangeType::Update, RecordChangeType::SoftDelete => $this->recordsHelper->updateTcaRecord($run->statements, $simulate, $change->tableName, $this->getUid($change), $change->values),
