@@ -6,5 +6,9 @@
 ,1,1,"Ok content"
 "sys_file_reference"
 ,"uid","pid","uid_local","uid_foreign","tablenames","fieldname"
-# SysFileReferenceDangling removes this, the check can not run before
+# Missing file: Not touched, uid_local is left to SysFileReferenceDangling
 ,1,1,42,1,"tt_content","image"
+"tx_dbdoctortestsgroup_item"
+,"uid","pid","title","relations_csv"
+# Other group fields are still checked
+,1,1,"Not Ok - relation to missing record","tt_content_1,tt_content_99"
