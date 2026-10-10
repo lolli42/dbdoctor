@@ -1,0 +1,7 @@
+"tx_dbdoctortestsgroup_item"
+,"uid","pid","deleted","title","relations_mm","relations_mm_without_match_fields"
+,1,1,0,"Not Ok - relation to missing record",2,1
+"tx_dbdoctortestsgroup_item_mm"
+,"uid_local","uid_foreign","tablenames","fieldname"
+,1,1,"tt_content","relations_mm"
+,1,98,"tt_content",""
