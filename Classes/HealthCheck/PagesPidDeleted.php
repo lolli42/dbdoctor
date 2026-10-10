@@ -48,14 +48,16 @@ final class PagesPidDeleted extends AbstractHealthCheck implements HealthCheckIn
         $result = $queryBuilder->select('uid', 'pid', 'deleted', 't3ver_wsid')->from('pages')->orderBy('uid')->executeQuery();
         $uidToPid = [];
         $deletedPageUids = [];
-        $notDeletedPageRows = [];
+        // Only the workspace id of not deleted pages: Full rows of all pages need much more memory
+        // on big instances, rows are built for affected pages only.
+        $notDeletedPageWorkspaceIds = [];
         while ($pageRow = $result->fetchAssociative()) {
             /** @var array<string, int|string> $pageRow */
             $uidToPid[(int)$pageRow['uid']] = (int)$pageRow['pid'];
             if ((int)$pageRow['deleted'] === 1) {
                 $deletedPageUids[(int)$pageRow['uid']] = true;
             } else {
-                $notDeletedPageRows[(int)$pageRow['uid']] = $pageRow;
+                $notDeletedPageWorkspaceIds[(int)$pageRow['uid']] = (int)$pageRow['t3ver_wsid'];
             }
         }
         if ($deletedPageUids === []) {
@@ -64,9 +66,14 @@ final class PagesPidDeleted extends AbstractHealthCheck implements HealthCheckIn
         // A not deleted page is affected if a deleted page is found up the tree.
         $withinDeletedPage = $this->pagesTreeHelper->resolveClosestSeed($uidToPid, $deletedPageUids);
         $affectedPageRows = [];
-        foreach ($notDeletedPageRows as $uid => $pageRow) {
+        foreach ($notDeletedPageWorkspaceIds as $uid => $workspaceId) {
             if ($withinDeletedPage[$uid] === true) {
-                $affectedPageRows[] = $pageRow;
+                $affectedPageRows[] = [
+                    'uid' => $uid,
+                    'pid' => $uidToPid[$uid],
+                    'deleted' => 0,
+                    't3ver_wsid' => $workspaceId,
+                ];
             }
         }
         if ($affectedPageRows === []) {
