@@ -321,13 +321,32 @@ final readonly class TcaHelper
      * ],
      *
      * Language pointer fields (TCA ctrl "transOrigPointerField" and "translationSource")
-     * are skipped, they are handled by language related checks.
+     * are skipped, they are handled by language related checks. Fields that are the
+     * foreign_field or foreign_table_field of an inline relation are skipped as well:
+     * They point to the inline parent, which may be a record of a table not listed in
+     * "allowed". They are handled by inline related checks.
      *
      * @return iterable<array{tableName: string, fieldName: string, allowedTables: array<int, string>}>
      */
     public function getNextGroupFieldWithoutMm(): iterable
     {
         $this->verifyTcaIsArray();
+        // Fields of inline children pointing to their parent, by child table
+        $inlineParentPointerFields = [];
+        foreach ($GLOBALS['TCA'] as $config) {
+            foreach (($config['columns'] ?? []) as $columnConfig) {
+                if (is_array($columnConfig['config'] ?? false)
+                    && in_array(($columnConfig['config']['type'] ?? ''), ['inline', 'file'], true)
+                    && is_string($columnConfig['config']['foreign_table'] ?? false)
+                ) {
+                    foreach (['foreign_field', 'foreign_table_field'] as $pointerConfigName) {
+                        if (is_string($columnConfig['config'][$pointerConfigName] ?? false)) {
+                            $inlineParentPointerFields[$columnConfig['config']['foreign_table']][$columnConfig['config'][$pointerConfigName]] = true;
+                        }
+                    }
+                }
+            }
+        }
         foreach ($GLOBALS['TCA'] as $tableName => $config) {
             foreach (($config['columns'] ?? []) as $fieldName => $columnConfig) {
                 if (is_array($columnConfig['config'] ?? false)
@@ -336,6 +355,7 @@ final readonly class TcaHelper
                     && !empty($columnConfig['config']['allowed'])
                     && $fieldName !== $this->getTranslationParentField($tableName)
                     && $fieldName !== $this->getTranslationSourceField($tableName)
+                    && !isset($inlineParentPointerFields[$tableName][$fieldName])
                 ) {
                     yield [
                         'tableName' => $tableName,

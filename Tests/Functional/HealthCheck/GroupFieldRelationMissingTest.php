@@ -27,6 +27,7 @@ class GroupFieldRelationMissingTest extends AbstractFunctionalTestCase
     protected array $testExtensionsToLoad = [
         'lolli/dbdoctor',
         __DIR__ . '/../FixtureExtensions/tx_dbdoctortestsgroup',
+        __DIR__ . '/../FixtureExtensions/tx_dbdoctortestsforeignfield',
     ];
 
     #[Test]
@@ -59,5 +60,15 @@ class GroupFieldRelationMissingTest extends AbstractFunctionalTestCase
         $subject = $this->get(GroupFieldRelationMissing::class);
         $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldRelationMissingFileReferenceFixed.csv');
+    }
+
+    #[Test]
+    public function groupFieldPointingToInlineParentIsNotTouched(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldRelationMissingInlineParentImport.csv');
+        /** @var GroupFieldRelationMissing $subject */
+        $subject = $this->get(GroupFieldRelationMissing::class);
+        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldRelationMissingInlineParentFixed.csv');
     }
 }

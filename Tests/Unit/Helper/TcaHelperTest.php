@@ -1276,6 +1276,55 @@ class TcaHelperTest extends UnitTestCase
     }
 
     #[Test]
+    public function getNextGroupFieldWithoutMmSkipsFieldsPointingToInlineParent(): void
+    {
+        $GLOBALS['TCA'] = [
+            'parent_table' => [
+                'columns' => [
+                    'children' => [
+                        'config' => [
+                            'type' => 'inline',
+                            'foreign_table' => 'child_table',
+                            'foreign_field' => 'parent_uid',
+                            'foreign_table_field' => 'parent_table',
+                        ],
+                    ],
+                ],
+            ],
+            'child_table' => [
+                'columns' => [
+                    'parent_uid' => [
+                        'config' => [
+                            'type' => 'group',
+                            'allowed' => 'tt_content',
+                        ],
+                    ],
+                    'parent_table' => [
+                        'config' => [
+                            'type' => 'group',
+                            'allowed' => 'tt_content',
+                        ],
+                    ],
+                    'related' => [
+                        'config' => [
+                            'type' => 'group',
+                            'allowed' => 'tt_content',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        $expected = [
+            [
+                'tableName' => 'child_table',
+                'fieldName' => 'related',
+                'allowedTables' => ['tt_content'],
+            ],
+        ];
+        self::assertSame($expected, iterator_to_array((new TcaHelper())->getNextGroupFieldWithoutMm(), false));
+    }
+
+    #[Test]
     public function getNextGroupFieldWithMmThrowsExceptionIfTcaIsNotAnArray(): void
     {
         $this->expectException(\RuntimeException::class);
