@@ -53,6 +53,7 @@ abstract class AbstractHealthCheck
     protected ConnectionPool $connectionPool;
     protected TcaHelper $tcaHelper;
     protected RecordsHelper $recordsHelper;
+    private AffectedPagesRenderer $affectedPagesRenderer;
 
     final public function injectContainer(ContainerInterface $container): void
     {
@@ -72,6 +73,11 @@ abstract class AbstractHealthCheck
     final public function injectRecordsHelper(RecordsHelper $recordsHelper): void
     {
         $this->recordsHelper = $recordsHelper;
+    }
+
+    final public function injectAffectedPagesRenderer(AffectedPagesRenderer $affectedPagesRenderer): void
+    {
+        $this->affectedPagesRenderer = $affectedPagesRenderer;
     }
 
     final public function handle(SymfonyStyle $io, int $mode, string $file): int
@@ -263,9 +269,8 @@ abstract class AbstractHealthCheck
     final protected function outputAffectedPages(HealthCheckRun $run, array $danglingRows): void
     {
         $run->io->note('Found records per page:');
-        /** @var AffectedPagesRenderer $affectedPagesHelper */
-        $affectedPagesHelper = $this->container->get(AffectedPagesRenderer::class);
-        $run->io->table($affectedPagesHelper->getHeader($run->statements, $danglingRows), $affectedPagesHelper->getRows($run->statements, $danglingRows));
+        $affectedPages = $this->affectedPagesRenderer->render($run->statements, $danglingRows);
+        $run->io->table($affectedPages['header'], $affectedPages['rows']);
     }
 
     /**

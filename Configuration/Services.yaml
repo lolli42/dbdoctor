@@ -374,15 +374,7 @@ services:
         identifier: 'dbdoctor-tca-tables-translated-with-allow-language-synchronization'
         after: 'dbdoctor-tca-tables-translated-language-parent-duplicates'
 
-  Lolli\Dbdoctor\Helper\PagesRootlineHelper:
-    public: true
-    shared: false
-
   Lolli\Dbdoctor\Helper\TableHelper:
-    public: true
-    shared: false
-
-  Lolli\Dbdoctor\Renderer\AffectedPagesRenderer:
     public: true
     shared: false
 
