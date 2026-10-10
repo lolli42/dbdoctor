@@ -17,7 +17,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -38,10 +37,8 @@ final class PagesTranslatedLanguageParentMissing extends AbstractHealthCheck imp
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         // Deleted pages are considered as well, we remove all restrictions.
         $queryBuilder->getRestrictions()->removeAll();
@@ -54,7 +51,7 @@ final class PagesTranslatedLanguageParentMissing extends AbstractHealthCheck imp
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
-                $recordsHelper->getRecord('pages', ['uid'], (int)$row['l10n_parent']);
+                $this->recordsHelper->getRecord($run->statements, 'pages', ['uid'], (int)$row['l10n_parent']);
             } catch (NoSuchRecordException $e) {
                 $affectedRecords['pages'][] = $row;
             }

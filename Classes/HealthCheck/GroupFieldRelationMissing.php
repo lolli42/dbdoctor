@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
@@ -45,10 +44,8 @@ final class GroupFieldRelationMissing extends AbstractHealthCheck implements Hea
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         /** @var TableHelper $tableHelper */
         $tableHelper = $this->container->get(TableHelper::class);
         $affectedRows = [];
@@ -81,7 +78,7 @@ final class GroupFieldRelationMissing extends AbstractHealthCheck implements Hea
             $result = $queryBuilder->orderBy('uid')->executeQuery();
             while ($row = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $row */
-                $missingRelations = $this->getMissingRelations($recordsHelper, $tableHelper, (string)$row[$fieldName], $groupField['allowedTables']);
+                $missingRelations = $this->getMissingRelations($run, $tableHelper, (string)$row[$fieldName], $groupField['allowedTables']);
                 if (!empty($missingRelations)) {
                     $affectedRows[$tableName][] = [
                         'uid' => (int)$row['uid'],
@@ -99,8 +96,6 @@ final class GroupFieldRelationMissing extends AbstractHealthCheck implements Hea
 
     protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         /** @var TableHelper $tableHelper */
         $tableHelper = $this->container->get(TableHelper::class);
         foreach ($affectedRecords as $tableName => $rows) {
@@ -109,7 +104,7 @@ final class GroupFieldRelationMissing extends AbstractHealthCheck implements Hea
             foreach ($rows as $row) {
                 $fieldName = (string)$row['_fieldName'];
                 $allowedTables = GeneralUtility::trimExplode(',', (string)$row['_allowedTables'], true);
-                $missingRelations = $this->getMissingRelations($recordsHelper, $tableHelper, (string)$row['_fieldValue'], $allowedTables);
+                $missingRelations = $this->getMissingRelations($run, $tableHelper, (string)$row['_fieldValue'], $allowedTables);
                 $remainingItems = [];
                 foreach (GeneralUtility::trimExplode(',', (string)$row['_fieldValue'], true) as $item) {
                     if (!in_array($item, $missingRelations, true)) {
@@ -131,7 +126,7 @@ final class GroupFieldRelationMissing extends AbstractHealthCheck implements Hea
                         ],
                     ];
                 }
-                $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $updateFields);
+                $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid'], $updateFields);
                 $count++;
             }
             $this->outputTableUpdateAfter($run, $simulate, $tableName, $count);
@@ -156,7 +151,7 @@ final class GroupFieldRelationMissing extends AbstractHealthCheck implements Hea
      * @param array<int, string> $allowedTables
      * @return array<string, string> Key is "tableName:uid", value is the item as stored in the list
      */
-    private function getMissingRelations(RecordsHelper $recordsHelper, TableHelper $tableHelper, string $fieldValue, array $allowedTables): array
+    private function getMissingRelations(HealthCheckRun $run, TableHelper $tableHelper, string $fieldValue, array $allowedTables): array
     {
         $isAnyTableAllowed = in_array('*', $allowedTables, true);
         $firstTable = $isAnyTableAllowed ? '' : ($allowedTables[0] ?? '');
@@ -177,7 +172,7 @@ final class GroupFieldRelationMissing extends AbstractHealthCheck implements Hea
                 continue;
             }
             try {
-                $recordsHelper->getRecord($targetTableName, ['uid'], (int)$uid);
+                $this->recordsHelper->getRecord($run->statements, $targetTableName, ['uid'], (int)$uid);
             } catch (NoSuchRecordException $e) {
                 $missingRelations[$targetTableName . ':' . (int)$uid] = $item;
             }

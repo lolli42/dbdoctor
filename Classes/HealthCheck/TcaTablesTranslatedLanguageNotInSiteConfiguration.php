@@ -58,7 +58,7 @@ final class TcaTablesTranslatedLanguageNotInSiteConfiguration extends AbstractHe
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
         /** @var TableHelper $tableHelper */
         $tableHelper = $this->container->get(TableHelper::class);

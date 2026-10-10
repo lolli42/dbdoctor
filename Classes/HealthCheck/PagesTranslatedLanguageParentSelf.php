@@ -40,7 +40,7 @@ final class PagesTranslatedLanguageParentSelf extends AbstractHealthCheck implem
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         // Do not consider page translation records that have been set to deleted already.

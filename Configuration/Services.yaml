@@ -380,7 +380,6 @@ services:
 
   Lolli\Dbdoctor\Helper\RecordsHelper:
     public: true
-    shared: false
 
   Lolli\Dbdoctor\Helper\TableHelper:
     public: true

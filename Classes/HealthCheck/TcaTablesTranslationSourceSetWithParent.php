@@ -16,7 +16,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -42,7 +41,7 @@ final class TcaTablesTranslationSourceSetWithParent extends AbstractHealthCheck 
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
         $affectedRecords = [];
         foreach ($this->tcaHelper->getNextLanguageSourceAwareTcaTable() as $tableName) {
@@ -73,8 +72,6 @@ final class TcaTablesTranslationSourceSetWithParent extends AbstractHealthCheck 
 
     protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         foreach ($affectedRecords as $tableName => $rows) {
             [, $translationParentField, $translationSourceField] = $this->getFields($tableName);
             $this->outputTableUpdateBefore($run, $simulate, $tableName);
@@ -85,7 +82,7 @@ final class TcaTablesTranslationSourceSetWithParent extends AbstractHealthCheck 
                         'type' => Connection::PARAM_INT,
                     ],
                 ];
-                $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $updateFields);
+                $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid'], $updateFields);
             }
             $this->outputTableUpdateAfter($run, $simulate, $tableName, count($rows));
         }

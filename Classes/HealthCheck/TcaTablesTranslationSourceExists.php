@@ -17,7 +17,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -39,10 +38,8 @@ final class TcaTablesTranslationSourceExists extends AbstractHealthCheck impleme
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         $affectedRecords = [];
         foreach ($this->tcaHelper->getNextLanguageSourceAwareTcaTable() as $tableName) {
             [$languageField, $translationParentField, $translationSourceField] = $this->getFields($tableName);
@@ -61,7 +58,7 @@ final class TcaTablesTranslationSourceExists extends AbstractHealthCheck impleme
             while ($row = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $row */
                 try {
-                    $recordsHelper->getRecord($tableName, ['uid'], (int)$row[$translationSourceField]);
+                    $this->recordsHelper->getRecord($run->statements, $tableName, ['uid'], (int)$row[$translationSourceField]);
                 } catch (NoSuchRecordException) {
                     $affectedRecords[$tableName][] = $row;
                 }
@@ -72,8 +69,6 @@ final class TcaTablesTranslationSourceExists extends AbstractHealthCheck impleme
 
     protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         foreach ($affectedRecords as $tableName => $rows) {
             [, $translationParentField, $translationSourceField] = $this->getFields($tableName);
             $this->outputTableUpdateBefore($run, $simulate, $tableName);
@@ -84,7 +79,7 @@ final class TcaTablesTranslationSourceExists extends AbstractHealthCheck impleme
                         'type' => Connection::PARAM_INT,
                     ],
                 ];
-                $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $updateFields);
+                $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid'], $updateFields);
             }
             $this->outputTableUpdateAfter($run, $simulate, $tableName, count($rows));
         }

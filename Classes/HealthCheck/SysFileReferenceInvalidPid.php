@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -39,10 +38,8 @@ final class SysFileReferenceInvalidPid extends AbstractHealthCheck implements He
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         $tableRows = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
         $queryBuilder->getRestrictions()->removeAll();
@@ -61,7 +58,7 @@ final class SysFileReferenceInvalidPid extends AbstractHealthCheck implements He
                 }
             } else {
                 try {
-                    $referencingRecord = $recordsHelper->getRecord((string)$row['tablenames'], ['pid'], (int)$row['uid_foreign']);
+                    $referencingRecord = $this->recordsHelper->getRecord($run->statements, (string)$row['tablenames'], ['pid'], (int)$row['uid_foreign']);
                 } catch (NoSuchRecordException|NoSuchTableException $e) {
                     // Table and record existence has been checked by SysFileReferenceDangling already.
                     // This can only happen if such a broken record has been added meanwhile, ignore it now.
@@ -80,8 +77,6 @@ final class SysFileReferenceInvalidPid extends AbstractHealthCheck implements He
     {
         $tableName = 'sys_file_reference';
         $rows = $affectedRecords['sys_file_reference'] ?? [];
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         $this->outputTableUpdateBefore($run, $simulate, $tableName);
         $count = 0;
         foreach ($rows as $row) {
@@ -92,16 +87,16 @@ final class SysFileReferenceInvalidPid extends AbstractHealthCheck implements He
                         'type' => Connection::PARAM_INT,
                     ],
                 ];
-                $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
+                $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid'], $fields);
             } else {
-                $referencingRecord = $recordsHelper->getRecord((string)$row['tablenames'], ['pid'], (int)$row['uid_foreign']);
+                $referencingRecord = $this->recordsHelper->getRecord($run->statements, (string)$row['tablenames'], ['pid'], (int)$row['uid_foreign']);
                 $fields = [
                     'pid' => [
                         'value' => (int)$referencingRecord['pid'],
                         'type' => Connection::PARAM_INT,
                     ],
                 ];
-                $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
+                $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid'], $fields);
             }
             $count++;
         }

@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Doctrine\DBAL\ParameterType;
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Helper\TcaHelper;
@@ -51,6 +52,7 @@ abstract class AbstractHealthCheck
     protected ContainerInterface $container;
     protected ConnectionPool $connectionPool;
     protected TcaHelper $tcaHelper;
+    protected RecordsHelper $recordsHelper;
 
     final public function injectContainer(ContainerInterface $container): void
     {
@@ -67,10 +69,26 @@ abstract class AbstractHealthCheck
         $this->tcaHelper = $tcaHelper;
     }
 
+    final public function injectRecordsHelper(RecordsHelper $recordsHelper): void
+    {
+        $this->recordsHelper = $recordsHelper;
+    }
+
     final public function handle(SymfonyStyle $io, int $mode, string $file): int
     {
+        $run = new HealthCheckRun($io, $file, new PreparedStatements());
         try {
-            $affectedRecords = $this->getAffectedRecords();
+            return $this->handleRun($run, $mode);
+        } finally {
+            $run->statements->release();
+        }
+    }
+
+    private function handleRun(HealthCheckRun $run, int $mode): int
+    {
+        $io = $run->io;
+        try {
+            $affectedRecords = $this->getAffectedRecords($run);
         } catch (EarlierCheckNotFixedException $e) {
             if ($mode !== HealthCheckInterface::MODE_CHECK) {
                 throw $e;
@@ -95,7 +113,6 @@ abstract class AbstractHealthCheck
         if ($mode === HealthCheckInterface::MODE_CHECK) {
             return $this->check($io, $affectedRecords);
         }
-        $run = new HealthCheckRun($io, $file);
         if ($mode === HealthCheckInterface::MODE_EXECUTE) {
             return $this->execute($run, $affectedRecords);
         }
@@ -142,19 +159,19 @@ abstract class AbstractHealthCheck
         while (true) {
             switch ($io->ask('<info>Handle records [e,s,a,r,p,d,?]?</info> ', '?')) {
                 case 'e':
-                    $affectedRecords = $this->getAffectedRecords();
+                    $affectedRecords = $this->getAffectedRecords($run);
                     $this->writeSqlDumpFileHeader($run);
                     $this->processRecords($run, false, $affectedRecords);
-                    $affectedRecords = $this->getAffectedRecords();
+                    $affectedRecords = $this->getAffectedRecords($run);
                     $this->outputMainSummary($io, $affectedRecords);
                     if (empty($affectedRecords)) {
                         return HealthCheckInterface::RESULT_BROKEN;
                     }
                     break;
                 case 's':
-                    $affectedRecords = $this->getAffectedRecords();
+                    $affectedRecords = $this->getAffectedRecords($run);
                     $this->processRecords($run, true, $affectedRecords);
-                    $affectedRecords = $this->getAffectedRecords();
+                    $affectedRecords = $this->getAffectedRecords($run);
                     $this->outputMainSummary($io, $affectedRecords);
                     if (empty($affectedRecords)) {
                         return HealthCheckInterface::RESULT_OK;
@@ -163,7 +180,7 @@ abstract class AbstractHealthCheck
                 case 'a':
                     return HealthCheckInterface::RESULT_ABORT;
                 case 'r':
-                    $affectedRecords = $this->getAffectedRecords();
+                    $affectedRecords = $this->getAffectedRecords($run);
                     $this->outputMainSummary($io, $affectedRecords);
                     if (empty($affectedRecords)) {
                         return HealthCheckInterface::RESULT_OK;
@@ -190,7 +207,7 @@ abstract class AbstractHealthCheck
     /**
      * @return array<string, array<int, array<string, int|string>>>
      */
-    abstract protected function getAffectedRecords(): array;
+    abstract protected function getAffectedRecords(HealthCheckRun $run): array;
 
     /**
      * @param array<string, array<int, array<string, int|string>>> $affectedRecords
@@ -291,12 +308,10 @@ abstract class AbstractHealthCheck
      */
     final protected function deleteTcaRecordsOfTable(HealthCheckRun $run, bool $simulate, string $tableName, array $rows): void
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         $this->outputTableDeleteBefore($run, $simulate, $tableName);
         $count = 0;
         foreach ($rows as $row) {
-            $this->deleteSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid']);
+            $this->deleteSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid']);
             $count++;
         }
         $this->outputTableDeleteAfter($run, $simulate, $tableName, $count);
@@ -304,12 +319,10 @@ abstract class AbstractHealthCheck
 
     /**
      * DELETE and log a single row.
-     * This needs an instance of RecordsHelper to make use of prepared statements, which
-     * should be created by the calling method.
      */
-    final protected function deleteSingleTcaRecord(HealthCheckRun $run, bool $simulate, RecordsHelper $recordsHelper, string $tableName, int $uid): void
+    final protected function deleteSingleTcaRecord(HealthCheckRun $run, bool $simulate, string $tableName, int $uid): void
     {
-        $sql = $recordsHelper->deleteTcaRecord($simulate, $tableName, $uid);
+        $sql = $this->recordsHelper->deleteTcaRecord($run->statements, $simulate, $tableName, $uid);
         $this->logAndOutputSql($run, $simulate, $sql);
     }
 
@@ -322,12 +335,10 @@ abstract class AbstractHealthCheck
      */
     final protected function updateTcaRecordsOfTable(HealthCheckRun $run, bool $simulate, string $tableName, array $rows, array $fields): void
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         $this->outputTableUpdateBefore($run, $simulate, $tableName);
         $count = 0;
         foreach ($rows as $row) {
-            $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $fields);
+            $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid'], $fields);
             $count++;
         }
         $this->outputTableUpdateAfter($run, $simulate, $tableName, $count);
@@ -335,40 +346,34 @@ abstract class AbstractHealthCheck
 
     /**
      * INSERT and log a single row.
-     * This needs an instance of RecordsHelper to make use of prepared statements, which
-     * should be created by the calling method.
      *
      * @param array<string, array{value: int|string, type: ParameterType}> $fields
      */
-    final protected function insertSingleTcaRecord(HealthCheckRun $run, bool $simulate, RecordsHelper $recordsHelper, string $tableName, array $fields): void
+    final protected function insertSingleTcaRecord(HealthCheckRun $run, bool $simulate, string $tableName, array $fields): void
     {
-        $sql = $recordsHelper->insertTcaRecord($simulate, $tableName, $fields);
+        $sql = $this->recordsHelper->insertTcaRecord($run->statements, $simulate, $tableName, $fields);
         $this->logAndOutputSql($run, $simulate, $sql);
     }
 
     /**
      * UPDATE and log a single row.
-     * This needs an instance of RecordsHelper to make use of prepared statements, which
-     * should be created by the calling method.
      *
      * @param array<string, array{value: int|string, type: ParameterType}> $fields
      */
-    final protected function updateSingleTcaRecord(HealthCheckRun $run, bool $simulate, RecordsHelper $recordsHelper, string $tableName, int $uid, array $fields): void
+    final protected function updateSingleTcaRecord(HealthCheckRun $run, bool $simulate, string $tableName, int $uid, array $fields): void
     {
-        $sql = $recordsHelper->updateTcaRecord($simulate, $tableName, $uid, $fields);
+        $sql = $this->recordsHelper->updateTcaRecord($run->statements, $simulate, $tableName, $uid, $fields);
         $this->logAndOutputSql($run, $simulate, $sql);
     }
 
     /**
      * DELETE and log rows of an MM table.
-     * This needs an instance of RecordsHelper to make use of prepared statements, which
-     * should be created by the calling method.
      *
      * @param array<string, array{value: int|string, type: ParameterType}> $whereFields
      */
-    final protected function deleteMmRows(HealthCheckRun $run, bool $simulate, RecordsHelper $recordsHelper, string $mmTableName, array $whereFields): void
+    final protected function deleteMmRows(HealthCheckRun $run, bool $simulate, string $mmTableName, array $whereFields): void
     {
-        $sql = $recordsHelper->deleteMmRows($simulate, $mmTableName, $whereFields);
+        $sql = $this->recordsHelper->deleteMmRows($run->statements, $simulate, $mmTableName, $whereFields);
         $this->logAndOutputSql($run, $simulate, $sql);
     }
 
@@ -399,8 +404,6 @@ abstract class AbstractHealthCheck
      */
     final protected function softOrHardDeleteRecordsOfTable(HealthCheckRun $run, bool $simulate, string $tableName, array $rows): void
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         $this->outputTableHandleBefore($run, $simulate, $tableName);
 
         $deleteField = $this->tcaHelper->getDeletedField($tableName);
@@ -430,11 +433,11 @@ abstract class AbstractHealthCheck
                 || ($isTableWorkspaceAware && ((int)$row[$workspaceIdField] > 0))
             ) {
                 // DELETE record if table is not workspace aware, or if record is a workspace record
-                $this->deleteSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid']);
+                $this->deleteSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid']);
                 $deleteCount++;
             } else {
                 // UPDATE record, set "deleted=1" if table is soft-delete aware and record is not a workspace record
-                $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $updateFields);
+                $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid'], $updateFields);
                 $updateCount++;
             }
         }

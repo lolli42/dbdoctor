@@ -17,7 +17,8 @@ namespace Lolli\Dbdoctor\Helper;
  * The TYPO3 project - inspiring people to share!
  */
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\Statement;
+use Lolli\Dbdoctor\Database\PreparedStatement;
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
 use Lolli\Dbdoctor\Exception\UnexpectedNumberOfAffectedRowsException;
@@ -25,16 +26,14 @@ use Psr\Container\ContainerInterface;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
-final class RecordsHelper
+/**
+ * Stateless: Prepared statements are kept in PreparedStatements of the calling run.
+ */
+final readonly class RecordsHelper
 {
-    /**
-     * @var array<string, array{0?: string, sqlString: string, statement: Statement}>
-     */
-    private array $preparedStatements = [];
-
     public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly ConnectionPool $connectionPool,
+        private ContainerInterface $container,
+        private ConnectionPool $connectionPool,
     ) {}
 
     /**
@@ -43,13 +42,14 @@ final class RecordsHelper
      * @throws NoSuchRecordException
      * @throws NoSuchTableException
      */
-    public function getRecord(string $tableName, array $fields, int $uid): array
+    public function getRecord(PreparedStatements $statements, string $tableName, array $fields, int $uid): array
     {
         if (empty($fields)) {
             throw new \RuntimeException('Must select at least one field. Maybe uid?', 1647791187);
         }
-        $statementHash = md5('select' . $tableName . implode($fields));
-        if (!isset($this->preparedStatements[$statementHash])) {
+        $statementKey = 'select-' . $tableName . '-' . implode(',', $fields);
+        $preparedStatement = $statements->get($statementKey);
+        if ($preparedStatement === null) {
             /** @var TableHelper $tableHelper */
             $tableHelper = $this->container->get(TableHelper::class);
             if (!$tableHelper->tableExistsInDatabase($tableName)) {
@@ -63,9 +63,9 @@ final class RecordsHelper
                 ->where(
                     $queryBuilder->expr()->eq('uid', $queryBuilder->createPositionalParameter(0, Connection::PARAM_INT))
                 );
-            $this->preparedStatements[$statementHash]['statement'] = $queryBuilder->prepare();
+            $preparedStatement = $statements->add($statementKey, new PreparedStatement($queryBuilder->prepare()));
         }
-        $statement = $this->preparedStatements[$statementHash]['statement'];
+        $statement = $preparedStatement->statement;
         $statement->bindValue(1, $uid, Connection::PARAM_INT);
         $result = $statement->executeQuery();
         $record = $result->fetchAllAssociative();
@@ -77,21 +77,21 @@ final class RecordsHelper
         return $record;
     }
 
-    public function deleteTcaRecord(bool $simulate, string $tableName, int $uid): string
+    public function deleteTcaRecord(PreparedStatements $statements, bool $simulate, string $tableName, int $uid): string
     {
-        $statementHash = md5('delete' . $tableName);
-        if (!isset($this->preparedStatements[$statementHash])) {
+        $statementKey = 'delete-' . $tableName;
+        $preparedStatement = $statements->get($statementKey);
+        if ($preparedStatement === null) {
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             $queryBuilder
                 ->delete($tableName)
                 ->where(
                     $queryBuilder->expr()->eq('uid', $queryBuilder->createPositionalParameter(0, Connection::PARAM_INT))
                 );
-            $this->preparedStatements[$statementHash]['sqlString'] = $queryBuilder->getSQL();
-            $this->preparedStatements[$statementHash]['statement'] = $queryBuilder->prepare();
+            $preparedStatement = $statements->add($statementKey, new PreparedStatement($queryBuilder->prepare(), $queryBuilder->getSQL()));
         }
-        $statement = $this->preparedStatements[$statementHash]['statement'];
-        $sqlString = $this->preparedStatements[$statementHash]['sqlString'];
+        $statement = $preparedStatement->statement;
+        $sqlString = $preparedStatement->sqlString;
         $sqlString = str_replace('= ?', '= ' . $uid, $sqlString);
         $sqlString .= ';';
         if (!$simulate) {
@@ -110,10 +110,11 @@ final class RecordsHelper
     /**
      * @param array<string, array{value: int|string, type: ParameterType}> $fields
      */
-    public function updateTcaRecord(bool $simulate, string $tableName, int $uid, array $fields): string
+    public function updateTcaRecord(PreparedStatements $statements, bool $simulate, string $tableName, int $uid, array $fields): string
     {
-        $statementHash = md5('update' . $tableName . implode('', array_keys($fields)));
-        if (!isset($this->preparedStatements[$statementHash])) {
+        $statementKey = 'update-' . $tableName . '-' . implode(',', array_keys($fields));
+        $preparedStatement = $statements->get($statementKey);
+        if ($preparedStatement === null) {
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             $queryBuilder->update($tableName);
             foreach ($fields as $fieldName => $valueAndType) {
@@ -122,12 +123,10 @@ final class RecordsHelper
             $queryBuilder->where(
                 $queryBuilder->expr()->eq('uid', $queryBuilder->createPositionalParameter(0, Connection::PARAM_INT))
             );
-            $this->preparedStatements[$statementHash]['sqlString'] = $queryBuilder->getSQL();
-            $this->preparedStatements[$statementHash]['statement'] = $queryBuilder->prepare();
+            $preparedStatement = $statements->add($statementKey, new PreparedStatement($queryBuilder->prepare(), $queryBuilder->getSQL()));
         }
-        /** @var Statement $statement */
-        $statement = $this->preparedStatements[$statementHash]['statement'];
-        $sqlString = $this->preparedStatements[$statementHash]['sqlString'];
+        $statement = $preparedStatement->statement;
+        $sqlString = $preparedStatement->sqlString;
         $currentParam = 1;
         foreach ($fields as $valueAndType) {
             if ($valueAndType['type'] === Connection::PARAM_STR) {
@@ -159,21 +158,20 @@ final class RecordsHelper
     /**
      * @param array<string, array{value: int|string, type: ParameterType}> $fields
      */
-    public function insertTcaRecord(bool $simulate, string $tableName, array $fields): string
+    public function insertTcaRecord(PreparedStatements $statements, bool $simulate, string $tableName, array $fields): string
     {
-        $statementHash = md5('insert' . $tableName . implode('', array_keys($fields)));
-        if (!isset($this->preparedStatements[$statementHash])) {
+        $statementKey = 'insert-' . $tableName . '-' . implode(',', array_keys($fields));
+        $preparedStatement = $statements->get($statementKey);
+        if ($preparedStatement === null) {
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             $queryBuilder->insert($tableName);
             foreach ($fields as $fieldName => $valueAndType) {
                 $queryBuilder->setValue($fieldName, '?', false);
             }
-            $this->preparedStatements[$statementHash]['sqlString'] = $queryBuilder->getSQL();
-            $this->preparedStatements[$statementHash]['statement'] = $queryBuilder->prepare();
+            $preparedStatement = $statements->add($statementKey, new PreparedStatement($queryBuilder->prepare(), $queryBuilder->getSQL()));
         }
-        /** @var Statement $statement */
-        $statement = $this->preparedStatements[$statementHash]['statement'];
-        $sqlString = $this->preparedStatements[$statementHash]['sqlString'];
+        $statement = $preparedStatement->statement;
+        $sqlString = $preparedStatement->sqlString;
         $currentParam = 1;
         foreach ($fields as $valueAndType) {
             if ($valueAndType['type'] === Connection::PARAM_STR || $valueAndType['type'] === Connection::PARAM_LOB) {
@@ -207,24 +205,23 @@ final class RecordsHelper
      *
      * @param array<string, array{value: int|string, type: ParameterType}> $whereFields
      */
-    public function deleteMmRows(bool $simulate, string $mmTableName, array $whereFields): string
+    public function deleteMmRows(PreparedStatements $statements, bool $simulate, string $mmTableName, array $whereFields): string
     {
         if (empty($whereFields)) {
             throw new \RuntimeException('Must restrict MM rows to delete by at least one field.', 1791484210);
         }
-        $statementHash = md5('deleteMm' . $mmTableName . implode('', array_keys($whereFields)));
-        if (!isset($this->preparedStatements[$statementHash])) {
+        $statementKey = 'deleteMm-' . $mmTableName . '-' . implode(',', array_keys($whereFields));
+        $preparedStatement = $statements->get($statementKey);
+        if ($preparedStatement === null) {
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($mmTableName);
             $queryBuilder->delete($mmTableName);
             foreach ($whereFields as $fieldName => $valueAndType) {
                 $queryBuilder->andWhere($queryBuilder->expr()->eq($fieldName, '?'));
             }
-            $this->preparedStatements[$statementHash]['sqlString'] = $queryBuilder->getSQL();
-            $this->preparedStatements[$statementHash]['statement'] = $queryBuilder->prepare();
+            $preparedStatement = $statements->add($statementKey, new PreparedStatement($queryBuilder->prepare(), $queryBuilder->getSQL()));
         }
-        /** @var Statement $statement */
-        $statement = $this->preparedStatements[$statementHash]['statement'];
-        $sqlString = $this->preparedStatements[$statementHash]['sqlString'];
+        $statement = $preparedStatement->statement;
+        $sqlString = $preparedStatement->sqlString;
         $currentParam = 1;
         foreach ($whereFields as $valueAndType) {
             if ($valueAndType['type'] === Connection::PARAM_STR) {

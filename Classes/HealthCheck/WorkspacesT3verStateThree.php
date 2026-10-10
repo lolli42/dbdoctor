@@ -40,7 +40,7 @@ final class WorkspacesT3verStateThree extends AbstractHealthCheck implements Hea
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
         $affectedRows = [];
         foreach ($this->tcaHelper->getNextWorkspaceEnabledTcaTable() as $tableName) {

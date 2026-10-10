@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -53,11 +52,8 @@ final class TtContentLocalizedPageTranslationMissing extends AbstractHealthCheck
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
-
         // Records are sorted by pid: Only the page of the current pid is kept.
         $currentPid = null;
         /** @var array{doktype: int, language: int, translations: array<int, array<int, true>>} $currentPage */
@@ -81,7 +77,7 @@ final class TtContentLocalizedPageTranslationMissing extends AbstractHealthCheck
             $pid = (int)$row['pid'];
             if ($currentPid !== $pid) {
                 try {
-                    $pageRow = $recordsHelper->getRecord('pages', ['uid', 'doktype', 'sys_language_uid'], $pid);
+                    $pageRow = $this->recordsHelper->getRecord($run->statements, 'pages', ['uid', 'doktype', 'sys_language_uid'], $pid);
                 } catch (NoSuchRecordException $e) {
                     // Earlier test should have fixed this.
                     throw new EarlierCheckNotFixedException(

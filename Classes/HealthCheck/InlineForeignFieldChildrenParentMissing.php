@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Helper\TableHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -39,10 +38,8 @@ final class InlineForeignFieldChildrenParentMissing extends AbstractHealthCheck 
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         /** @var TableHelper $tableHelper */
         $tableHelper = $this->container->get(TableHelper::class);
 
@@ -77,7 +74,7 @@ final class InlineForeignFieldChildrenParentMissing extends AbstractHealthCheck 
                     continue;
                 }
                 try {
-                    $recordsHelper->getRecord((string)$inlineChildRow[$fieldNameOfParentTableName], ['uid'], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
+                    $this->recordsHelper->getRecord($run->statements, (string)$inlineChildRow[$fieldNameOfParentTableName], ['uid'], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
                 } catch (NoSuchRecordException $e) {
                     $inlineChildRow['_reasonBroken'] = 'Missing parent';
                     $inlineChildRow['_fieldNameOfParentTableName'] = $fieldNameOfParentTableName;

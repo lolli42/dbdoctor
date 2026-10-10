@@ -38,7 +38,7 @@ final class WorkspacesSoftDeletedRecords extends AbstractHealthCheck implements 
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
         if (!ExtensionManagementUtility::isLoaded('workspaces')) {
             // Check WorkspacesNotLoadedRecordsDangling that is executed before this check

@@ -41,7 +41,7 @@ final class PagesBrokenTree extends AbstractHealthCheck implements HealthCheckIn
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
         // All pages rows count as connected, including deleted and workspace rows.
         $uidToPid = $this->pagesTreeHelper->getAllPageUidToPid();

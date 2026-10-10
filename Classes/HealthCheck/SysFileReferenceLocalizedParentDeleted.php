@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -50,10 +49,8 @@ final class SysFileReferenceLocalizedParentDeleted extends AbstractHealthCheck i
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         $tableRows = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
@@ -67,7 +64,7 @@ final class SysFileReferenceLocalizedParentDeleted extends AbstractHealthCheck i
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
-                $languageParentRecord = $recordsHelper->getRecord('sys_file_reference', ['uid', 'deleted'], (int)$row['l10n_parent']);
+                $languageParentRecord = $this->recordsHelper->getRecord($run->statements, 'sys_file_reference', ['uid', 'deleted'], (int)$row['l10n_parent']);
             } catch (NoSuchRecordException|NoSuchTableException $e) {
                 // Record existence has been checked by SysFileReferenceLocalizedParentExists already.
                 // This can only happen if such a broken record has been added meanwhile, ignore it now.

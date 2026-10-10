@@ -39,7 +39,7 @@ final class PagesLanguageNegative extends AbstractHealthCheck implements HealthC
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         // Do not consider page records that have been set to deleted already.

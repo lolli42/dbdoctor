@@ -44,7 +44,7 @@ final class PagesTranslatedLanguageParentDuplicates extends AbstractHealthCheck 
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
         // Find combinations of l10n_parent and sys_language_uid having more than one live translation
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');

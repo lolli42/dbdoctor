@@ -50,7 +50,7 @@ final class TcaTablesTranslatedLanguageParentDuplicates extends AbstractHealthCh
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
         // Fields pointing to the inline parent of inline child tables
         $inlineParentFields = [];

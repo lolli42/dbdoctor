@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\Helper;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\UnexpectedNumberOfAffectedRowsException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
@@ -35,7 +36,7 @@ class RecordsHelperTest extends AbstractFunctionalTestCase
         $this->expectExceptionCode(1647791187);
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->get(RecordsHelper::class);
-        $recordsHelper->getRecord('pages', [], 0);
+        $recordsHelper->getRecord(new PreparedStatements(), 'pages', [], 0);
     }
 
     #[Test]
@@ -45,7 +46,7 @@ class RecordsHelperTest extends AbstractFunctionalTestCase
         $this->expectExceptionCode(1791484210);
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->get(RecordsHelper::class);
-        $recordsHelper->deleteMmRows(false, 'sys_category_record_mm', []);
+        $recordsHelper->deleteMmRows(new PreparedStatements(), false, 'sys_category_record_mm', []);
     }
 
     #[Test]
@@ -55,7 +56,7 @@ class RecordsHelperTest extends AbstractFunctionalTestCase
         $this->expectExceptionCode(1791484211);
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->get(RecordsHelper::class);
-        $recordsHelper->deleteMmRows(false, 'sys_category_record_mm', ['uid_local' => ['value' => 42, 'type' => Connection::PARAM_INT]]);
+        $recordsHelper->deleteMmRows(new PreparedStatements(), false, 'sys_category_record_mm', ['uid_local' => ['value' => 42, 'type' => Connection::PARAM_INT]]);
     }
 
     #[Test]
@@ -64,6 +65,7 @@ class RecordsHelperTest extends AbstractFunctionalTestCase
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->get(RecordsHelper::class);
         $sql = $recordsHelper->deleteMmRows(
+            new PreparedStatements(),
             true,
             'sys_category_record_mm',
             [

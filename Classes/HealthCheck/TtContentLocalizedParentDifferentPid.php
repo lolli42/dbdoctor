@@ -19,7 +19,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -46,10 +45,8 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         $affectedRows = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
         // Soft-deleted records have been handled with TtContentDeletedLocalizedParentDifferentPid already.
@@ -64,7 +61,7 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
-                $languageParent = $recordsHelper->getRecord('tt_content', ['uid', 'pid'], (int)$row['l18n_parent']);
+                $languageParent = $this->recordsHelper->getRecord($run->statements, 'tt_content', ['uid', 'pid'], (int)$row['l18n_parent']);
                 if ((int)$row['pid'] !== (int)$languageParent['pid']
                     // Ignore "workspace moved" translations due to the odd l10n_parent behavior, as
                     // shown with the tests from https://review.typo3.org/c/Packages/TYPO3.CMS/+/89803
@@ -86,15 +83,13 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
 
     protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         $this->outputTableHandleBefore($run, $simulate, 'tt_content');
         $updateCount = 0;
         $removeCount = 0;
         foreach (($affectedRecords['tt_content'] ?? []) as $row) {
             if ((int)$row['t3ver_wsid'] === 0) {
                 // Live record: Move localized element to correct pid
-                $languageParent = $recordsHelper->getRecord('tt_content', ['uid', 'pid', 't3ver_wsid', 't3ver_state'], (int)$row['l18n_parent']);
+                $languageParent = $this->recordsHelper->getRecord($run->statements, 'tt_content', ['uid', 'pid', 't3ver_wsid', 't3ver_state'], (int)$row['l18n_parent']);
                 $correctPid = (int)$languageParent['pid'];
                 $fields = [
                     'pid' => [
@@ -102,7 +97,7 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
                         'type' => Connection::PARAM_INT,
                     ],
                 ];
-                $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, 'tt_content', (int)$row['uid'], $fields);
+                $this->updateSingleTcaRecord($run, $simulate, 'tt_content', (int)$row['uid'], $fields);
                 $updateCount++;
             } else {
                 if ((int)$row['t3ver_state'] === 0) {
@@ -111,7 +106,7 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
                     // even if on wrong pid. Note if default lang record is *moved*, the "changed"
                     // localized tt_content is turned into a "moved" record, so we don't need to deal
                     // with this scenario here.
-                    $languageParent = $recordsHelper->getRecord('tt_content', ['uid', 'pid', 't3ver_wsid', 't3ver_state'], (int)$row['l18n_parent']);
+                    $languageParent = $this->recordsHelper->getRecord($run->statements, 'tt_content', ['uid', 'pid', 't3ver_wsid', 't3ver_state'], (int)$row['l18n_parent']);
                     $correctPid = (int)$languageParent['pid'];
                     $fields = [
                         'pid' => [
@@ -119,7 +114,7 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
                             'type' => Connection::PARAM_INT,
                         ],
                     ];
-                    $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, 'tt_content', (int)$row['uid'], $fields);
+                    $this->updateSingleTcaRecord($run, $simulate, 'tt_content', (int)$row['uid'], $fields);
                     $updateCount++;
                 } elseif ((int)$row['t3ver_state'] === 1) {
                     // We have a "workspace new" record that is not on the same pid as the default
@@ -132,7 +127,7 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
                     // lang live record, with localized "workspace new" l18n_parent pointing to it, but being
                     // on a different pid.
                     // @todo: Fine-tune this case when core bugs with "first add, then move" have been fixed.
-                    $this->deleteSingleTcaRecord($run, $simulate, $recordsHelper, 'tt_content', (int)$row['uid']);
+                    $this->deleteSingleTcaRecord($run, $simulate, 'tt_content', (int)$row['uid']);
                     $removeCount++;
                 } elseif ((int)$row['t3ver_state'] === 2) {
                     // We have "delete placeholder" record that is not on the same pid as the default
@@ -147,7 +142,7 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
                     // creating an overlay of a default language record, that then existing localized children
                     // get their l18n_parent set to the uid of the new overlay record.
                     // @todo: Fine-tune this case when above described scenario is decided and fixed in core.
-                    $languageParent = $recordsHelper->getRecord('tt_content', ['uid', 'pid', 't3ver_wsid', 't3ver_state'], (int)$row['l18n_parent']);
+                    $languageParent = $this->recordsHelper->getRecord($run->statements, 'tt_content', ['uid', 'pid', 't3ver_wsid', 't3ver_state'], (int)$row['l18n_parent']);
                     $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
                     $queryBuilder->getRestrictions()->removeAll();
                     $queryBuilder->select('uid', 'pid', 't3ver_wsid', 't3ver_state', 't3ver_oid')->from('tt_content')->orderBy('uid');
@@ -166,10 +161,10 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
                                 'type' => Connection::PARAM_INT,
                             ],
                         ];
-                        $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, 'tt_content', (int)$row['uid'], $fields);
+                        $this->updateSingleTcaRecord($run, $simulate, 'tt_content', (int)$row['uid'], $fields);
                         $updateCount++;
                     } else {
-                        $this->deleteSingleTcaRecord($run, $simulate, $recordsHelper, 'tt_content', (int)$row['uid']);
+                        $this->deleteSingleTcaRecord($run, $simulate, 'tt_content', (int)$row['uid']);
                         $removeCount++;
                     }
                 } elseif ((int)$row['t3ver_state'] === 4) {
@@ -180,7 +175,7 @@ final class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck imp
                     // and localized "move placeholder" are identical and not found here.
                     // As such, having a "move placeholder" of a localized content element alone indicates a bug,
                     // so we remove the record.
-                    $this->deleteSingleTcaRecord($run, $simulate, $recordsHelper, 'tt_content', (int)$row['uid']);
+                    $this->deleteSingleTcaRecord($run, $simulate, 'tt_content', (int)$row['uid']);
                     $removeCount++;
                 } else {
                     throw new \RuntimeException(

@@ -41,7 +41,7 @@ final class PagesPidDeleted extends AbstractHealthCheck implements HealthCheckIn
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         $queryBuilder->getRestrictions()->removeAll();

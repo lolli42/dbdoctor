@@ -43,7 +43,7 @@ final class TtContentLocalizedDuplicates extends AbstractHealthCheck implements 
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
         // Ignore deleted=1 records

@@ -38,7 +38,7 @@ final class WorkspacesPidNegative extends AbstractHealthCheck implements HealthC
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
         $affectedRows = [];
         foreach ($this->tcaHelper->getNextTcaTable() as $tableName) {

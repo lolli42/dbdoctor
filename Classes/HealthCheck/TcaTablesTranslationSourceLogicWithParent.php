@@ -17,7 +17,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -44,10 +43,8 @@ final class TcaTablesTranslationSourceLogicWithParent extends AbstractHealthChec
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         $affectedRecords = [];
         foreach ($this->tcaHelper->getNextLanguageSourceAwareTcaTable() as $tableName) {
             [$languageField, $translationParentField, $translationSourceField] = $this->getFields($tableName);
@@ -70,7 +67,7 @@ final class TcaTablesTranslationSourceLogicWithParent extends AbstractHealthChec
             while ($row = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $row */
                 try {
-                    $translationSourceRecord = $recordsHelper->getRecord($tableName, ['uid', $translationParentField], (int)$row[$translationSourceField]);
+                    $translationSourceRecord = $this->recordsHelper->getRecord($run->statements, $tableName, ['uid', $translationParentField], (int)$row[$translationSourceField]);
                 } catch (NoSuchRecordException) {
                     // Not existing translation source is handled by TcaTablesTranslationSourceExists,
                     // the record is found in the next run if that check only simulated.
@@ -87,8 +84,6 @@ final class TcaTablesTranslationSourceLogicWithParent extends AbstractHealthChec
 
     protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         foreach ($affectedRecords as $tableName => $rows) {
             [, $translationParentField, $translationSourceField] = $this->getFields($tableName);
             $this->outputTableUpdateBefore($run, $simulate, $tableName);
@@ -99,7 +94,7 @@ final class TcaTablesTranslationSourceLogicWithParent extends AbstractHealthChec
                         'type' => Connection::PARAM_INT,
                     ],
                 ];
-                $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, $tableName, (int)$row['uid'], $updateFields);
+                $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid'], $updateFields);
             }
             $this->outputTableUpdateAfter($run, $simulate, $tableName, count($rows));
         }

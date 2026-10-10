@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\Helper;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchPageException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 
@@ -27,9 +28,16 @@ final class PagesRootlineHelper
      */
     private array $rootlineCache = [];
 
+    /**
+     * Interim: Own prepared statements until the caller hands over the ones of its run.
+     */
+    private readonly PreparedStatements $statements;
+
     public function __construct(
         private readonly RecordsHelper $recordsHelper,
-    ) {}
+    ) {
+        $this->statements = new PreparedStatements();
+    }
 
     /**
      * @param array<int, array<string, int|string|bool>> $rootline
@@ -84,7 +92,7 @@ final class PagesRootlineHelper
             return $this->rootlineCache[$uid];
         }
         try {
-            $currentPage = $this->recordsHelper->getRecord('pages', ['uid', 'pid', 'deleted', 't3ver_wsid', 'title'], $uid);
+            $currentPage = $this->recordsHelper->getRecord($this->statements, 'pages', ['uid', 'pid', 'deleted', 't3ver_wsid', 'title'], $uid);
         } catch (NoSuchRecordException) {
             throw new NoSuchPageException('record with uid "' . $uid . '" in table "pages" not found', 1646121409);
         }

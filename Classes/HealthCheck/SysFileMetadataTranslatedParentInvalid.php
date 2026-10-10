@@ -16,7 +16,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -51,7 +50,7 @@ final class SysFileMetadataTranslatedParentInvalid extends AbstractHealthCheck i
         ]);
     }
 
-    protected function getAffectedRecords(): array
+    protected function getAffectedRecords(HealthCheckRun $run): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_metadata');
         $queryBuilder->getRestrictions()->removeAll();
@@ -94,8 +93,6 @@ final class SysFileMetadataTranslatedParentInvalid extends AbstractHealthCheck i
 
     protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
     {
-        /** @var RecordsHelper $recordsHelper */
-        $recordsHelper = $this->container->get(RecordsHelper::class);
         $rows = $affectedRecords['sys_file_metadata'] ?? [];
         $this->outputTableUpdateBefore($run, $simulate, 'sys_file_metadata');
         foreach ($rows as $row) {
@@ -105,7 +102,7 @@ final class SysFileMetadataTranslatedParentInvalid extends AbstractHealthCheck i
                     'type' => Connection::PARAM_INT,
                 ],
             ];
-            $this->updateSingleTcaRecord($run, $simulate, $recordsHelper, 'sys_file_metadata', (int)$row['uid'], $fields);
+            $this->updateSingleTcaRecord($run, $simulate, 'sys_file_metadata', (int)$row['uid'], $fields);
         }
         $this->outputTableUpdateAfter($run, $simulate, 'sys_file_metadata', count($rows));
     }
