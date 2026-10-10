@@ -1,0 +1,6 @@
+"sys_file_reference"
+,"uid","pid","uid_local","uid_foreign","tablenames","fieldname"
+,1,1,42,1,"tt_content","image"
+"tx_dbdoctortestsgroup_item"
+,"uid","pid","title","relations_csv"
+,1,1,"Not Ok - relation to missing record","tt_content_1"
