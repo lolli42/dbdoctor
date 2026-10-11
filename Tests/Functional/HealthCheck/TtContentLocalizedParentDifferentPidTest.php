@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
+use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\HealthCheck\TtContentLocalizedParentDifferentPid;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -41,7 +42,7 @@ class TtContentLocalizedParentDifferentPidTest extends AbstractFunctionalTestCas
         $subject = $this->get(TtContentLocalizedParentDifferentPid::class);
         $io->expects(self::atLeastOnce())->method('warning');
         $io->expects(self::atLeastOnce())->method('ask')->willReturn('p', 'd', 'a');
-        $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckInterface::MODE_INTERACTIVE, '');
     }
 
     #[Test]
@@ -50,7 +51,7 @@ class TtContentLocalizedParentDifferentPidTest extends AbstractFunctionalTestCas
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizedParentDifferentPidImport.csv');
         /** @var TtContentLocalizedParentDifferentPid $subject */
         $subject = $this->get(TtContentLocalizedParentDifferentPid::class);
-        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizedParentDifferentPidFixed.csv');
     }
 
@@ -62,7 +63,7 @@ class TtContentLocalizedParentDifferentPidTest extends AbstractFunctionalTestCas
         $io->expects(self::once())->method('warning');
         /** @var TtContentLocalizedParentDifferentPid $subject */
         $subject = $this->get(TtContentLocalizedParentDifferentPid::class);
-        $result = $subject->handle($io, HealthCheckInterface::MODE_CHECK, '');
+        $result = $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckInterface::MODE_CHECK, '');
         self::assertSame(HealthCheckInterface::RESULT_BROKEN, $result);
     }
 }

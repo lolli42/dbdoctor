@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
+use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedLanguageParentDifferentPid;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -41,7 +42,7 @@ class TcaTablesTranslatedLanguageParentDifferentPidTest extends AbstractFunction
         $subject = $this->get(TcaTablesTranslatedLanguageParentDifferentPid::class);
         $io->expects(self::atLeastOnce())->method('warning');
         $io->expects(self::atLeastOnce())->method('ask')->willReturn('p', 'd', 'a');
-        $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckInterface::MODE_INTERACTIVE, '');
     }
 
     #[Test]
@@ -50,7 +51,7 @@ class TcaTablesTranslatedLanguageParentDifferentPidTest extends AbstractFunction
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidImport.csv');
         /** @var TcaTablesTranslatedLanguageParentDifferentPid $subject */
         $subject = $this->get(TcaTablesTranslatedLanguageParentDifferentPid::class);
-        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidFixed.csv');
     }
 
@@ -61,7 +62,7 @@ class TcaTablesTranslatedLanguageParentDifferentPidTest extends AbstractFunction
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidTtContentNotHiddenAwareImport.csv');
         /** @var TcaTablesTranslatedLanguageParentDifferentPid $subject */
         $subject = $this->get(TcaTablesTranslatedLanguageParentDifferentPid::class);
-        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidTtContentNotHiddenAwareFixed.csv');
     }
 
@@ -73,7 +74,7 @@ class TcaTablesTranslatedLanguageParentDifferentPidTest extends AbstractFunction
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidTtContentNotHiddenNotDeleteAwareImport.csv');
         /** @var TcaTablesTranslatedLanguageParentDifferentPid $subject */
         $subject = $this->get(TcaTablesTranslatedLanguageParentDifferentPid::class);
-        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidTtContentNotHiddenNotDeleteAwareFixed.csv');
     }
 }

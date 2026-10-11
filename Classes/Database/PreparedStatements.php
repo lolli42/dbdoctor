@@ -19,7 +19,7 @@ namespace Lolli\Dbdoctor\Database;
 
 /**
  * Prepared statements of one health check run. A resource like a connection, neither data
- * object nor service: Created per run by AbstractHealthCheck->handle(), which releases it
+ * object nor service: Created per run by HealthCheckRunner->handle(), which releases it
  * when the run ends. Services preparing statements, like RecordsHelper, receive it as argument
  * and stay stateless.
  */
