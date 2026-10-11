@@ -23,23 +23,23 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * Inline foreign field children must have existing parent record.
  */
 final readonly class InlineForeignFieldChildrenParentMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for inline foreign field records with missing parent');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_REMOVE);
-        $io->text([
-            'TCA inline foreign field records point to a parent record. This parent must exist.',
-            'This check is for inline children defined *with* foreign_table_field in TCA.',
-            'Inline children with missing parent are deleted.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for inline foreign field records with missing parent',
+            [self::TAG_REMOVE],
+            [
+                'TCA inline foreign field records point to a parent record. This parent must exist.',
+                'This check is for inline children defined *with* foreign_table_field in TCA.',
+                'Inline children with missing parent are deleted.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

@@ -21,7 +21,6 @@ use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -31,17 +30,18 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class PagesTranslatedLanguageParentDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Check pages with deleted language parent');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE);
-        $io->text([
-            'This health check finds not deleted but translated (sys_language_uid > 0) "pages" records,',
-            'with their default language record (l10n_parent field) being soft-deleted.',
-            'Those translated pages are never shown in backend and frontend. They are soft-deleted in',
-            'live and removed if they are workspace overlay records.',
-        ]);
+        return new HealthCheckDescription(
+            'Check pages with deleted language parent',
+            [self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE],
+            [
+                'This health check finds not deleted but translated (sys_language_uid > 0) "pages" records,',
+                'with their default language record (l10n_parent field) being soft-deleted.',
+                'Those translated pages are never shown in backend and frontend. They are soft-deleted in',
+                'live and removed if they are workspace overlay records.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

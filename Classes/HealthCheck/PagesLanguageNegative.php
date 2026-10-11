@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -28,17 +27,18 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class PagesLanguageNegative extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Check pages with negative language');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE);
-        $io->text([
-            'This health check finds not deleted "pages" records with sys_language_uid < 0. The backend',
-            'never offers this language for pages, and does not show such pages in the page tree, together',
-            'with their whole sub tree. They are soft-deleted in live and removed if they are workspace',
-            'records. Later checks remove their sub pages and records as well.',
-        ]);
+        return new HealthCheckDescription(
+            'Check pages with negative language',
+            [self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE],
+            [
+                'This health check finds not deleted "pages" records with sys_language_uid < 0. The backend',
+                'never offers this language for pages, and does not show such pages in the page tree, together',
+                'with their whole sub tree. They are soft-deleted in live and removed if they are workspace',
+                'records. Later checks remove their sub pages and records as well.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

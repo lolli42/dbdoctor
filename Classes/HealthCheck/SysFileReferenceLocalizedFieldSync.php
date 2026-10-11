@@ -21,7 +21,6 @@ use Lolli\Dbdoctor\Exception\NoSuchTableException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -33,22 +32,23 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class SysFileReferenceLocalizedFieldSync extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for localized sys_file_reference records with parent not in sync');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_RISKY, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE);
-        $io->text([
-            'Localized records in "sys_file_reference" (sys_language_uid > 0) must have fields "tablenames"',
-            'and "fieldname" set to the same values as its language parent record.',
-            'Records violating this indicate something is wrong with this localized record.',
-            'This may happen for instance, when the tt_content ctype of a default language record is changed and',
-            'relations are adapted after the record has been localized.',
-            'This check is <error>risky</error>: It sets affected localized records to deleted=1 in live and removes',
-            'them if they are workspace overlay records. Depending on what is wrong, this may change FE output.',
-            'Look at "tablenames" and "uid_foreign" to see which inline parent record this relation is connected to,',
-            'and eventually take care of affected records yourself by creating new localizations if needed.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for localized sys_file_reference records with parent not in sync',
+            [self::TAG_RISKY, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE],
+            [
+                'Localized records in "sys_file_reference" (sys_language_uid > 0) must have fields "tablenames"',
+                'and "fieldname" set to the same values as its language parent record.',
+                'Records violating this indicate something is wrong with this localized record.',
+                'This may happen for instance, when the tt_content ctype of a default language record is changed and',
+                'relations are adapted after the record has been localized.',
+                'This check is <error>risky</error>: It sets affected localized records to deleted=1 in live and removes',
+                'them if they are workspace overlay records. Depending on what is wrong, this may change FE output.',
+                'Look at "tablenames" and "uid_foreign" to see which inline parent record this relation is connected to,',
+                'and eventually take care of affected records yourself by creating new localizations if needed.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

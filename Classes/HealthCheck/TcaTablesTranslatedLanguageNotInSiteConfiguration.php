@@ -20,7 +20,6 @@ use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordKey;
 use Lolli\Dbdoctor\Helper\PagesTreeHelper;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Domain\Repository\PageRepository;
@@ -45,19 +44,20 @@ final readonly class TcaTablesTranslatedLanguageNotInSiteConfiguration extends A
         private PagesTreeHelper $pagesTreeHelper,
     ) {}
 
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for translated records with language not in site configuration');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE, self::TAG_RISKY);
-        $io->text([
-            'Translated records reference a sys_language_uid. This language must be configured',
-            'in the site configuration of the page they are located on. This check finds records',
-            'with a sys_language_uid that does not exist in the site configuration. They are soft',
-            'deleted if possible, or removed. Records outside of a site are not checked, records in',
-            'sys folders neither: They may be rendered by other sites, for instance as shared storage.',
-            'Records on other pages may be rendered by other sites as well, check them carefully.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for translated records with language not in site configuration',
+            [self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE, self::TAG_RISKY],
+            [
+                'Translated records reference a sys_language_uid. This language must be configured',
+                'in the site configuration of the page they are located on. This check finds records',
+                'with a sys_language_uid that does not exist in the site configuration. They are soft',
+                'deleted if possible, or removed. Records outside of a site are not checked, records in',
+                'sys folders neither: They may be rendered by other sites, for instance as shared storage.',
+                'Records on other pages may be rendered by other sites as well, check them carefully.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

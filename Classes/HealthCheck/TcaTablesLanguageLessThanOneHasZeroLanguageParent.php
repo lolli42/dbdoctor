@@ -20,7 +20,6 @@ use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
 /**
@@ -28,16 +27,17 @@ use TYPO3\CMS\Core\Database\Connection;
  */
 final readonly class TcaTablesLanguageLessThanOneHasZeroLanguageParent extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for records in default language not having language parent zero');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_UPDATE);
-        $io->text([
-            'TCA records in default or "all" language (typically sys_language_uid field having 0 or -1)',
-            'must have their "transOrigPointerField" (typically l10n_parent or l18n_parent) field',
-            'set to zero (0). This checks finds and updates violating records.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for records in default language not having language parent zero',
+            [self::TAG_UPDATE],
+            [
+                'TCA records in default or "all" language (typically sys_language_uid field having 0 or -1)',
+                'must have their "transOrigPointerField" (typically l10n_parent or l18n_parent) field',
+                'set to zero (0). This checks finds and updates violating records.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

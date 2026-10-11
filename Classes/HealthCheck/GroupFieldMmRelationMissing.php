@@ -25,7 +25,6 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordFieldKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
 /**
@@ -33,21 +32,22 @@ use TYPO3\CMS\Core\Database\Connection;
  */
 final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for group fields with MM relations to missing records');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_REMOVE);
-        $io->text([
-            'Fields of TCA type "group" with MM table store their relations as rows in',
-            'the MM table, for instance the sys_category field "items". This check finds',
-            'MM rows pointing to records that do not exist, and MM rows of local records that',
-            'do not exist, and removes them. Relations of and to soft-deleted records are',
-            'kept: The backend does not remove them when a record is deleted, and they are',
-            'needed when a record is restored using the recycler. The number of relations in',
-            'the field of the local record is not updated: dbdoctor ignores these count',
-            'fields, see README.md.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for group fields with MM relations to missing records',
+            [self::TAG_REMOVE],
+            [
+                'Fields of TCA type "group" with MM table store their relations as rows in',
+                'the MM table, for instance the sys_category field "items". This check finds',
+                'MM rows pointing to records that do not exist, and MM rows of local records that',
+                'do not exist, and removes them. Relations of and to soft-deleted records are',
+                'kept: The backend does not remove them when a record is deleted, and they are',
+                'needed when a record is restored using the recycler. The number of relations in',
+                'the field of the local record is not updated: dbdoctor ignores these count',
+                'fields, see README.md.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

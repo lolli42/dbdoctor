@@ -24,22 +24,22 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * sys_file_reference rows where either uid_local or uid_foreign does not exist.
  */
 final readonly class SysFileReferenceDangling extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for orphan sys_file_reference records');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_REMOVE);
-        $io->text([
-            'Basic check of sys_file_reference: Records referenced in uid_local and uid_foreign',
-            'must exist, otherwise that sys_file_reference row is obsolete and removed.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for orphan sys_file_reference records',
+            [self::TAG_REMOVE],
+            [
+                'Basic check of sys_file_reference: Records referenced in uid_local and uid_foreign',
+                'must exist, otherwise that sys_file_reference row is obsolete and removed.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

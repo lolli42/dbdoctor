@@ -21,7 +21,6 @@ use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 
 /**
@@ -30,16 +29,17 @@ use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
  */
 final readonly class WorkspacesSoftDeletedRecords extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for soft-deleted workspaces records');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_WORKSPACE_REMOVE);
-        $io->text([
-            'Records in workspaces (t3ver_wsid != 0) are not soft-delete aware since TYPO3 v11:',
-            'When "discarding" workspace changes, affected records are fully removed from the database.',
-            'This check looks for workspace overlays being soft-deleted and removes them.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for soft-deleted workspaces records',
+            [self::TAG_WORKSPACE_REMOVE],
+            [
+                'Records in workspaces (t3ver_wsid != 0) are not soft-delete aware since TYPO3 v11:',
+                'When "discarding" workspace changes, affected records are fully removed from the database.',
+                'This check looks for workspace overlays being soft-deleted and removes them.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

@@ -23,7 +23,6 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
 /**
@@ -31,16 +30,17 @@ use TYPO3\CMS\Core\Database\Connection;
  */
 final readonly class PagesTranslatedLanguageParentDifferentPid extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Check pages with different pid than their language parent');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_REMOVE);
-        $io->text([
-            'This health check finds translated "pages" records (sys_language_uid > 0) with',
-            'their default language record (l10n_parent field) on a different pid.',
-            'Those translated pages are shown in backend at a wrong place. They are removed.',
-        ]);
+        return new HealthCheckDescription(
+            'Check pages with different pid than their language parent',
+            [self::TAG_REMOVE],
+            [
+                'This health check finds translated "pages" records (sys_language_uid > 0) with',
+                'their default language record (l10n_parent field) on a different pid.',
+                'Those translated pages are shown in backend at a wrong place. They are removed.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

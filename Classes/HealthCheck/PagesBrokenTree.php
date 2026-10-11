@@ -22,7 +22,6 @@ use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
 use Lolli\Dbdoctor\Helper\PagesTreeHelper;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * An important early check: Find pages that have no proper connection to the tree root.
@@ -33,16 +32,17 @@ final readonly class PagesBrokenTree extends AbstractHealthCheck implements Heal
         private PagesTreeHelper $pagesTreeHelper,
     ) {}
 
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Check page tree integrity');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_REMOVE);
-        $io->text([
-            'This health check finds "pages" records with their "pid" set to pages that do',
-            'not exist in the database. Pages without proper connection to the tree root are never',
-            'shown in the backend. They are removed.',
-        ]);
+        return new HealthCheckDescription(
+            'Check page tree integrity',
+            [self::TAG_REMOVE],
+            [
+                'This health check finds "pages" records with their "pid" set to pages that do',
+                'not exist in the database. Pages without proper connection to the tree root are never',
+                'shown in the backend. They are removed.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

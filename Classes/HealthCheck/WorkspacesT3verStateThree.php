@@ -21,7 +21,6 @@ use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * TYPO3 v11 migrated workspace related record content having t3ver_state=3 into
@@ -30,18 +29,19 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  */
 final readonly class WorkspacesT3verStateThree extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for records with t3ver_state=3');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_WORKSPACE_REMOVE);
-        $io->text([
-            'The workspace related field state t3ver_state=3 has been removed with TYPO3 v11.',
-            'Until TYPO3 v11, they were paired with a t3ver_state=4 record. A core upgrade',
-            'wizard migrates affected records. This check removes left over records having t3ver_state=3.',
-            'If this check finds records, it may indicate the upgrade wizard "WorkspaceMovePlaceholderRemovalMigration"',
-            'has not been run. ABORT NOW and run the wizard if it is still available in your TYPO3 version.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for records with t3ver_state=3',
+            [self::TAG_WORKSPACE_REMOVE],
+            [
+                'The workspace related field state t3ver_state=3 has been removed with TYPO3 v11.',
+                'Until TYPO3 v11, they were paired with a t3ver_state=4 record. A core upgrade',
+                'wizard migrates affected records. This check removes left over records having t3ver_state=3.',
+                'If this check finds records, it may indicate the upgrade wizard "WorkspaceMovePlaceholderRemovalMigration"',
+                'has not been run. ABORT NOW and run the wizard if it is still available in your TYPO3 version.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

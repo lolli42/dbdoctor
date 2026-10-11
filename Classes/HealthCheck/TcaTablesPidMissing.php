@@ -23,22 +23,22 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * All TCA records must point to existing pages
  */
 final readonly class TcaTablesPidMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for records on not existing pages');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_REMOVE);
-        $io->text([
-            'TCA records have a pid field set to a single page. This page must exist.',
-            'Records on pages that do not exist anymore are deleted.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for records on not existing pages',
+            [self::TAG_REMOVE],
+            [
+                'TCA records have a pid field set to a single page. This page must exist.',
+                'Records on pages that do not exist anymore are deleted.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

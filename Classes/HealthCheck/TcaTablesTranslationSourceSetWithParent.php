@@ -20,7 +20,6 @@ use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
 /**
@@ -29,20 +28,21 @@ use TYPO3\CMS\Core\Database\Connection;
  */
 final readonly class TcaTablesTranslationSourceSetWithParent extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for translated records with parent but without translation source');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_UPDATE);
-        $io->text([
-            'Translated records with a language parent ("connected mode", "transOrigPointerField",',
-            'typically l10n_parent) should have their "translationSource" (typically l10n_source) set,',
-            'the backend uses it to show where a translation came from. Records translated with old',
-            'TYPO3 versions or created by imports often have zero there, so this check may find many',
-            'records. Setting the translation source to the language parent is what the core does',
-            'when translating from the default language, the frontend output does not change. Records',
-            'pointing to themselves as language parent are skipped.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for translated records with parent but without translation source',
+            [self::TAG_UPDATE],
+            [
+                'Translated records with a language parent ("connected mode", "transOrigPointerField",',
+                'typically l10n_parent) should have their "translationSource" (typically l10n_source) set,',
+                'the backend uses it to show where a translation came from. Records translated with old',
+                'TYPO3 versions or created by imports often have zero there, so this check may find many',
+                'records. Setting the translation source to the language parent is what the core does',
+                'when translating from the default language, the frontend output does not change. Records',
+                'pointing to themselves as language parent are skipped.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

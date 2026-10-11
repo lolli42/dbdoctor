@@ -21,7 +21,6 @@ use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * TYPO3 v10 migrated workspace related records away from pid=-1.
@@ -29,17 +28,18 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  */
 final readonly class WorkspacesPidNegative extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for records with negative pid');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_REMOVE);
-        $io->text([
-            'Records must have a pid equal or greater than zero (0).',
-            'Until TYPO3 v10, workspace records where placed on pid=-1. This check removes leftovers.',
-            'If this check finds records, it may indicate the upgrade wizard "WorkspaceVersionRecordsMigration"',
-            'has not been run. ABORT NOW and run the wizard, it is included in TYPO3 core v10 and v11.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for records with negative pid',
+            [self::TAG_REMOVE],
+            [
+                'Records must have a pid equal or greater than zero (0).',
+                'Until TYPO3 v10, workspace records where placed on pid=-1. This check removes leftovers.',
+                'If this check finds records, it may indicate the upgrade wizard "WorkspaceVersionRecordsMigration"',
+                'has not been run. ABORT NOW and run the wizard, it is included in TYPO3 core v10 and v11.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

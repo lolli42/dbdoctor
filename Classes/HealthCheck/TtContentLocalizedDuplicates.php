@@ -21,7 +21,6 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -34,18 +33,19 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class TtContentLocalizedDuplicates extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Duplicate localized tt_content records');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_SOFT_DELETE);
-        $io->text([
-            'There must be only one localized record in "tt_content" per target language.',
-            'Having more than one leads to various issues in FE and BE. This check finds',
-            'duplicates, keeps the one the frontend shows and soft-deletes others: The visible',
-            'one (not hidden, start and end time not excluding it) with the lowest uid, or the',
-            'one with the lowest uid if none is visible.',
-        ]);
+        return new HealthCheckDescription(
+            'Duplicate localized tt_content records',
+            [self::TAG_SOFT_DELETE],
+            [
+                'There must be only one localized record in "tt_content" per target language.',
+                'Having more than one leads to various issues in FE and BE. This check finds',
+                'duplicates, keeps the one the frontend shows and soft-deletes others: The visible',
+                'one (not hidden, start and end time not excluding it) with the lowest uid, or the',
+                'one with the lowest uid if none is visible.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

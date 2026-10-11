@@ -25,7 +25,6 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * Deleted localized tt_content records must point to a sys_language_uid=0 parent that
@@ -34,16 +33,17 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  */
 final readonly class TtContentDeletedLocalizedParentDifferentPid extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for soft-deleted localized tt_content records with parent on different pid');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_REMOVE);
-        $io->text([
-            'Soft deleted localized records in "tt_content" (sys_language_uid > 0) having',
-            'l18n_parent > 0 must point to a sys_language_uid = 0 language parent record',
-            'on the same pid. Records violating this are removed.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for soft-deleted localized tt_content records with parent on different pid',
+            [self::TAG_REMOVE],
+            [
+                'Soft deleted localized records in "tt_content" (sys_language_uid > 0) having',
+                'l18n_parent > 0 must point to a sys_language_uid = 0 language parent record',
+                'on the same pid. Records violating this are removed.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

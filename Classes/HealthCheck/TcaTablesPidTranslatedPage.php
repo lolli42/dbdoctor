@@ -21,7 +21,6 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
 /**
@@ -32,17 +31,18 @@ use TYPO3\CMS\Core\Database\Connection;
  */
 final readonly class TcaTablesPidTranslatedPage extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for records on translated pages');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_UPDATE);
-        $io->text([
-            'TCA records have a pid field set to a single page. This must be a default language',
-            'page: Records attached to a translated page, for instance "sys_file_reference" records',
-            'of the translated page "media" field, are located on the default language page, too.',
-            'Records pointing to a translated page are moved to its default language page.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for records on translated pages',
+            [self::TAG_UPDATE],
+            [
+                'TCA records have a pid field set to a single page. This must be a default language',
+                'page: Records attached to a translated page, for instance "sys_file_reference" records',
+                'of the translated page "media" field, are located on the default language page, too.',
+                'Records pointing to a translated page are moved to its default language page.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

@@ -24,7 +24,6 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -35,19 +34,20 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for localized tt_content records with parent on different pid');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_UPDATE, self::TAG_WORKSPACE_REMOVE);
-        $io->text([
-            'Localized records in "tt_content" (sys_language_uid > 0) having',
-            'l18n_parent > 0 must point to a sys_language_uid = 0 language parent record',
-            'on the same pid. Records violating this are typically still shown in FE at',
-            'the correct page the l18n_parent lives on, but are shown in the BE at the',
-            'wrong page. Affected records are moved to the pid of the l18n_parent record',
-            'when possible, or removed in some workspace scenarios.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for localized tt_content records with parent on different pid',
+            [self::TAG_UPDATE, self::TAG_WORKSPACE_REMOVE],
+            [
+                'Localized records in "tt_content" (sys_language_uid > 0) having',
+                'l18n_parent > 0 must point to a sys_language_uid = 0 language parent record',
+                'on the same pid. Records violating this are typically still shown in FE at',
+                'the correct page the l18n_parent lives on, but are shown in the BE at the',
+                'wrong page. Affected records are moved to the pid of the l18n_parent record',
+                'when possible, or removed in some workspace scenarios.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

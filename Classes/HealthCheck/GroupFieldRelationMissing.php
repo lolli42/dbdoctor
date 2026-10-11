@@ -23,7 +23,6 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordFieldKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
@@ -33,19 +32,20 @@ use TYPO3\CMS\Core\Utility\MathUtility;
  */
 final readonly class GroupFieldRelationMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for group fields with relations to missing records');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_UPDATE);
-        $io->text([
-            'Fields of TCA type "group" without MM table store their relations as comma',
-            'separated list, for instance the tt_content field "records" of content type',
-            '"Insert records". This check finds relations to records that do not exist',
-            'and removes them from the list. Relations to soft-deleted records are kept:',
-            'The backend does not remove them when a record is deleted, and they are',
-            'needed when a record is restored using the recycler.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for group fields with relations to missing records',
+            [self::TAG_UPDATE],
+            [
+                'Fields of TCA type "group" without MM table store their relations as comma',
+                'separated list, for instance the tt_content field "records" of content type',
+                '"Insert records". This check finds relations to records that do not exist',
+                'and removes them from the list. Relations to soft-deleted records are kept:',
+                'The backend does not remove them when a record is deleted, and they are',
+                'needed when a record is restored using the recycler.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

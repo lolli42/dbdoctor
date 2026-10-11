@@ -292,7 +292,19 @@ abstract readonly class AbstractHealthCheck
         }
     }
 
-    abstract public function header(SymfonyStyle $io): void;
+    /**
+     * Section title, class name, actions and description of the check.
+     */
+    final public function header(SymfonyStyle $io): void
+    {
+        $description = $this->getDescription();
+        $io->section($description->title);
+        $this->outputClass($io);
+        $this->outputTags($io, ...$description->tags);
+        $io->text($description->lines);
+    }
+
+    abstract protected function getDescription(): HealthCheckDescription;
 
     /**
      * Find broken things, each with the changes that fix it.
@@ -415,7 +427,7 @@ abstract readonly class AbstractHealthCheck
      *
      * @param string ...$tags
      */
-    final protected function outputTags(SymfonyStyle $io, ...$tags): void
+    private function outputTags(SymfonyStyle $io, ...$tags): void
     {
         $wrappedTags = [];
         foreach ($tags as $tag) {
@@ -428,7 +440,7 @@ abstract readonly class AbstractHealthCheck
         $io->text('Actions: ' . implode(', ', $wrappedTags));
     }
 
-    final protected function outputClass(SymfonyStyle $io): void
+    private function outputClass(SymfonyStyle $io): void
     {
         $io->text(('Class: <comment>' . (new \ReflectionClass($this))->getShortName()) . '</comment>');
     }

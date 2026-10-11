@@ -23,7 +23,6 @@ use Lolli\Dbdoctor\Exception\NoSuchTableException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -33,18 +32,19 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class TtContentLocalizedParentSoftDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Localized tt_content records with soft-deleted parent');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE);
-        $io->text([
-            'Not soft-deleted localized records in "tt_content" (sys_language_uid > 0) having',
-            'l18n_parent > 0 must point to a sys_language_uid = 0 language parent record that',
-            'is not soft-deleted as well. Violating records are set to soft-deleted as well (or',
-            'removed if in workspaces), since they are typically never rendered in FE, even',
-            'though the BE renders them in page module.',
-        ]);
+        return new HealthCheckDescription(
+            'Localized tt_content records with soft-deleted parent',
+            [self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE],
+            [
+                'Not soft-deleted localized records in "tt_content" (sys_language_uid > 0) having',
+                'l18n_parent > 0 must point to a sys_language_uid = 0 language parent record that',
+                'is not soft-deleted as well. Violating records are set to soft-deleted as well (or',
+                'removed if in workspaces), since they are typically never rendered in FE, even',
+                'though the BE renders them in page module.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

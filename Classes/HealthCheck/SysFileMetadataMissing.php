@@ -21,7 +21,6 @@ use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Resource\Exception\FileDoesNotExistException;
@@ -41,17 +40,18 @@ final readonly class SysFileMetadataMissing extends AbstractHealthCheck implemen
         private ResourceFactory $resourceFactory,
     ) {}
 
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for sys_file records without sys_file_metadata record');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_INSERT);
-        $io->text([
-            'Each "sys_file" record needs a default language "sys_file_metadata" record. The core creates',
-            'it when a file is indexed, but does not re-create a missing one: Image dimensions are then',
-            'unknown and images can not be cropped in backend. This check creates missing records. As',
-            'with core indexing, width and height of images in local storages are read from the file.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for sys_file records without sys_file_metadata record',
+            [self::TAG_INSERT],
+            [
+                'Each "sys_file" record needs a default language "sys_file_metadata" record. The core creates',
+                'it when a file is indexed, but does not re-create a missing one: Image dimensions are then',
+                'unknown and images can not be cropped in backend. This check creates missing records. As',
+                'with core indexing, width and height of images in local storages are read from the file.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array
