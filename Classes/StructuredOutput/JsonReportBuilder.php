@@ -74,6 +74,12 @@ final readonly class JsonReportBuilder
                 'tier' => $options->tier,
                 'limit' => $options->limit,
                 'context' => $options->context,
+                'filter' => (object)array_filter([
+                    'table' => $options->filterTable,
+                    'uid' => $options->filterUid,
+                    'pid' => $options->filterPid,
+                    'subtree' => $options->filterSubtree,
+                ], static fn(int|string|null $value): bool => $value !== null),
             ],
             'durationMs' => $durationMs,
             'exitCode' => $exitCode,
@@ -147,7 +153,7 @@ final readonly class JsonReportBuilder
         if ($inspection->skipReason !== null) {
             $check['skipReason'] = $inspection->skipReason;
         }
-        $findings = $inspection->findings;
+        $findings = $this->filterFindings($inspection->findings, $options);
         $tables = [];
         foreach ($findings as $finding) {
             $tables[$this->getKeyTableName($finding)] = true;
@@ -156,7 +162,7 @@ final readonly class JsonReportBuilder
             }
         }
         $check['keyTypes'] = array_values(array_unique(array_map(fn(Finding $finding): string => $this->getKeyType($finding), $findings)));
-        $check['counts'] = $this->buildCounts($findings);
+        $check['counts'] = $this->buildCounts($findings) + ['total' => count($inspection->findings)];
         $built = $this->buildFindings($className, $findings, $options);
         $check['facets'] = $built['facets'];
         $check['truncated'] = count($built['findings']) < count($findings);
@@ -199,6 +205,50 @@ final readonly class JsonReportBuilder
         }
         ksort($tables);
         return $tables;
+    }
+
+    /**
+     * Findings matching the drill-down filters of the options.
+     *
+     * @param list<Finding> $findings
+     * @return list<Finding>
+     */
+    private function filterFindings(array $findings, ReportOptions $options): array
+    {
+        $statements = new PreparedStatements();
+        try {
+            $subtreeByPid = [];
+            $filtered = [];
+            foreach ($findings as $finding) {
+                $key = $finding->key;
+                if ($options->filterTable !== null && $this->getKeyTableName($finding) !== $options->filterTable) {
+                    continue;
+                }
+                if ($options->filterUid !== null && ($key instanceof MmKey ? $key->uidLocal : $key->uid) !== $options->filterUid) {
+                    continue;
+                }
+                if ($options->filterPid !== null && $finding->pid !== $options->filterPid) {
+                    continue;
+                }
+                if ($options->filterSubtree !== null) {
+                    if ($finding->pid === null) {
+                        continue;
+                    }
+                    $subtreeByPid[$finding->pid] ??= in_array(
+                        $options->filterSubtree,
+                        array_map(static fn(array $page): int => (int)$page['uid'], $this->pagesRootlineHelper->getRootline($statements, $finding->pid)),
+                        true
+                    );
+                    if (!$subtreeByPid[$finding->pid]) {
+                        continue;
+                    }
+                }
+                $filtered[] = $finding;
+            }
+            return $filtered;
+        } finally {
+            $statements->release();
+        }
     }
 
     /**

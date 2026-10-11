@@ -39,11 +39,19 @@ final readonly class ReportOptions
 
     /**
      * @param int $limit Maximum number of findings per check, 0 for all. Counts are always complete.
+     * @param string|null $filterTable Only findings of this table: The record table, or the MM table
+     * @param int|null $filterUid Only findings of this record uid, with $filterTable
+     * @param int|null $filterPid Only findings on this page
+     * @param int|null $filterSubtree Only findings on this page and its sub pages
      */
     public function __construct(
         public string $scope,
         public string $tier,
         public int $limit,
         public string $context = self::CONTEXT_BASIC,
+        public ?string $filterTable = null,
+        public ?int $filterUid = null,
+        public ?int $filterPid = null,
+        public ?int $filterSubtree = null,
     ) {}
 }

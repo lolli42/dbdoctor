@@ -356,6 +356,9 @@ prompting for user input after each failed check.
     not run, they rely on the findings being fixed. `--scope all` runs all checks and marks
     results after the first not ok check as preliminary.
   * `--check <class>`: Report only this check, repeatable. Earlier checks still run.
+  * `--table <table>`, `--uid <uid>` (with `--table`), `--pid <page>`, `--subtree <page>`:
+    Report only findings of this table, record, page, or page and its sub pages. Counts and
+    facets are of the filtered findings, `counts.total` has the number of all findings.
   * `--limit <n>`: Findings per check, default 100, 0 for all. Counts and facets are always
     complete.
   * `--context basic` (default): Each finding has the rootline of its page, and language
