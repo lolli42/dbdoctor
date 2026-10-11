@@ -35,7 +35,7 @@ final readonly class HealthCheckRunner
         private FindingsRenderer $findingsRenderer,
     ) {}
 
-    public function handle(HealthCheckInterface $check, SymfonyStyle $io, int $mode, string $file): int
+    public function handle(HealthCheckInterface $check, SymfonyStyle $io, HealthCheckMode $mode, string $file): HealthCheckResult
     {
         $run = new HealthCheckRun($io, $file, new PreparedStatements());
         try {
@@ -45,7 +45,7 @@ final readonly class HealthCheckRunner
         }
     }
 
-    private function handleRun(HealthCheckInterface $check, HealthCheckRun $run, int $mode): int
+    private function handleRun(HealthCheckInterface $check, HealthCheckRun $run, HealthCheckMode $mode): HealthCheckResult
     {
         $io = $run->io;
         try {
@@ -53,39 +53,39 @@ final readonly class HealthCheckRunner
         } catch (EarlierCheckNotFixedException $e) {
             // Thrown by detection. Interactive and execute mode detect again later, but
             // only check mode turns this into a skip.
-            if ($mode !== HealthCheckInterface::MODE_CHECK) {
+            if ($mode !== HealthCheckMode::Check) {
                 throw $e;
             }
             // Check mode reports findings of earlier checks, but does not fix them. This
             // check relies on those fixes and can not run.
             $this->findingsRenderer->header($io, $check);
             $this->findingsRenderer->skipped($io, $e->getMessage());
-            return HealthCheckInterface::RESULT_BROKEN;
+            return HealthCheckResult::Broken;
         }
     }
 
     /**
      * @param list<Finding> $findings
      */
-    private function handleFindings(HealthCheckInterface $check, HealthCheckRun $run, int $mode, array $findings): int
+    private function handleFindings(HealthCheckInterface $check, HealthCheckRun $run, HealthCheckMode $mode, array $findings): HealthCheckResult
     {
         $io = $run->io;
         if (empty($findings) && !$io->isVerbose()) {
             $this->findingsRenderer->ok($io, $check);
-            return HealthCheckInterface::RESULT_OK;
+            return HealthCheckResult::Ok;
         }
         $this->findingsRenderer->header($io, $check);
         $this->findingsRenderer->summary($io, $findings);
         if (empty($findings)) {
-            return HealthCheckInterface::RESULT_OK;
+            return HealthCheckResult::Ok;
         }
-        if ($mode === HealthCheckInterface::MODE_CHECK) {
-            return HealthCheckInterface::RESULT_BROKEN;
+        if ($mode === HealthCheckMode::Check) {
+            return HealthCheckResult::Broken;
         }
-        if ($mode === HealthCheckInterface::MODE_EXECUTE) {
+        if ($mode === HealthCheckMode::Execute) {
             $this->writeSqlDumpFileHeader($check, $run);
             $this->recordChangeExecutor->execute($run, false, $findings);
-            return HealthCheckInterface::RESULT_BROKEN;
+            return HealthCheckResult::Broken;
         }
         while (true) {
             switch ($io->ask('<info>Handle records [e,s,a,r,p,d,?]?</info> ', '?')) {
@@ -100,7 +100,7 @@ final readonly class HealthCheckRunner
                         $this->findingsRenderer->reloaded($io);
                         $this->findingsRenderer->summary($io, $findings);
                         if (empty($findings)) {
-                            return HealthCheckInterface::RESULT_OK;
+                            return HealthCheckResult::Ok;
                         }
                         break;
                     }
@@ -110,7 +110,7 @@ final readonly class HealthCheckRunner
                     $findings = $check->detect($run);
                     $this->findingsRenderer->summary($io, $findings);
                     if (empty($findings)) {
-                        return HealthCheckInterface::RESULT_BROKEN;
+                        return HealthCheckResult::Broken;
                     }
                     break;
                 case 's':
@@ -118,12 +118,12 @@ final readonly class HealthCheckRunner
                     $this->findingsRenderer->summary($io, $findings);
                     break;
                 case 'a':
-                    return HealthCheckInterface::RESULT_ABORT;
+                    return HealthCheckResult::Abort;
                 case 'r':
                     $findings = $check->detect($run);
                     $this->findingsRenderer->summary($io, $findings);
                     if (empty($findings)) {
-                        return HealthCheckInterface::RESULT_OK;
+                        return HealthCheckResult::Ok;
                     }
                     break;
                 case 'p':

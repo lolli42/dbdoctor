@@ -18,7 +18,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  */
 
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
-use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
+use Lolli\Dbdoctor\HealthCheck\HealthCheckMode;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\HealthCheck\WorkspacesPidNegative;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
@@ -72,7 +72,7 @@ class WorkspacesPidNegativeTest extends AbstractFunctionalTestCase
         $subject = $this->get(WorkspacesPidNegative::class);
         $io->expects(self::atLeastOnce())->method('warning');
         $io->expects(self::atLeastOnce())->method('ask')->willReturn('p', 'd', 'a');
-        $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckInterface::MODE_INTERACTIVE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckMode::Interactive, '');
     }
 
     #[Test]
@@ -81,7 +81,7 @@ class WorkspacesPidNegativeTest extends AbstractFunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesPidNegativeImport.csv');
         /** @var WorkspacesPidNegative $subject */
         $subject = $this->get(WorkspacesPidNegative::class);
-        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckMode::Execute, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesPidNegativeFixed.csv');
     }
 }

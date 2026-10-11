@@ -21,19 +21,6 @@ use Lolli\Dbdoctor\Finding\Finding;
 
 interface HealthCheckInterface
 {
-    public const MODE_INTERACTIVE = 0;
-    public const MODE_CHECK = 1;
-    public const MODE_EXECUTE = 2;
-
-    /** @var int Bitmask - No changes needed */
-    public const RESULT_OK = 0;
-    /** @var int Bitmask - Changes needed or done */
-    public const RESULT_BROKEN = 1;
-    /** @var int Bitmask - User abort */
-    public const RESULT_ABORT = 2;
-    /** @var int Bitmask - Error occurred */
-    public const RESULT_ERROR = 4;
-
     /**
      * Title, action tags and description of the check.
      */
