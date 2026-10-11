@@ -17,9 +17,9 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Lolli\Dbdoctor\Finding\WriteOperation;
-use Lolli\Dbdoctor\Finding\WritePlan;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -72,7 +72,7 @@ final readonly class TcaTablesTranslationSourceSetWithParent extends AbstractHea
                     new RecordKey($tableName, (int)$row['uid']),
                     (int)$row['pid'],
                     [
-                        new WritePlan(WriteOperation::Update, $tableName, (int)$row['uid'], [
+                        new RecordChange(RecordChangeType::Update, $tableName, (int)$row['uid'], [
                             $translationSourceField => [
                                 'value' => (int)$row[$translationParentField],
                                 'type' => Connection::PARAM_INT,

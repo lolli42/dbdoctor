@@ -17,14 +17,14 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Doctrine\DBAL\ParameterType;
-use Lolli\Dbdoctor\Database\PlanExecutor;
 use Lolli\Dbdoctor\Database\PreparedStatements;
+use Lolli\Dbdoctor\Database\RecordChangeExecutor;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\MmKey;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordFieldKey;
-use Lolli\Dbdoctor\Finding\WriteOperation;
-use Lolli\Dbdoctor\Finding\WritePlan;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Helper\TableHelper;
 use Lolli\Dbdoctor\Helper\TcaHelper;
@@ -65,7 +65,7 @@ abstract readonly class AbstractHealthCheck
     protected TableHelper $tableHelper;
     private AffectedPagesRenderer $affectedPagesRenderer;
     private RecordsRenderer $recordsRenderer;
-    private PlanExecutor $planExecutor;
+    private RecordChangeExecutor $recordChangeExecutor;
 
     final public function injectConnectionPool(ConnectionPool $connectionPool): void
     {
@@ -97,9 +97,9 @@ abstract readonly class AbstractHealthCheck
         $this->recordsRenderer = $recordsRenderer;
     }
 
-    final public function injectPlanExecutor(PlanExecutor $planExecutor): void
+    final public function injectRecordChangeExecutor(RecordChangeExecutor $recordChangeExecutor): void
     {
-        $this->planExecutor = $planExecutor;
+        $this->recordChangeExecutor = $recordChangeExecutor;
     }
 
     final public function handle(SymfonyStyle $io, int $mode, string $file): int
@@ -161,7 +161,7 @@ abstract readonly class AbstractHealthCheck
         }
         if ($mode === HealthCheckInterface::MODE_EXECUTE) {
             $this->writeSqlDumpFileHeader($run);
-            $this->planExecutor->execute($run, false, $findings);
+            $this->recordChangeExecutor->execute($run, false, $findings);
             return HealthCheckInterface::RESULT_BROKEN;
         }
         while (true) {
@@ -169,7 +169,7 @@ abstract readonly class AbstractHealthCheck
                 case 'e':
                     $findings = $this->detectFindings($run);
                     $this->writeSqlDumpFileHeader($run);
-                    $this->planExecutor->execute($run, false, $findings);
+                    $this->recordChangeExecutor->execute($run, false, $findings);
                     $findings = $this->detectFindings($run);
                     $this->outputMainSummary($io, $this->groupFindingsByTable($findings));
                     if (empty($findings)) {
@@ -178,7 +178,7 @@ abstract readonly class AbstractHealthCheck
                     break;
                 case 's':
                     $findings = $this->detectFindings($run);
-                    $this->planExecutor->execute($run, true, $findings);
+                    $this->recordChangeExecutor->execute($run, true, $findings);
                     $this->outputMainSummary($io, $this->groupFindingsByTable($findings));
                     if (empty($findings)) {
                         return HealthCheckInterface::RESULT_OK;
@@ -569,7 +569,7 @@ abstract readonly class AbstractHealthCheck
      */
     final protected function deleteSingleTcaRecord(HealthCheckRun $run, bool $simulate, string $tableName, int $uid): void
     {
-        $this->planExecutor->executePlan($run, $simulate, new WritePlan(WriteOperation::Delete, $tableName, $uid));
+        $this->recordChangeExecutor->executeChange($run, $simulate, new RecordChange(RecordChangeType::Delete, $tableName, $uid));
     }
 
     /**
@@ -597,7 +597,7 @@ abstract readonly class AbstractHealthCheck
      */
     final protected function insertSingleTcaRecord(HealthCheckRun $run, bool $simulate, string $tableName, array $fields): void
     {
-        $this->planExecutor->executePlan($run, $simulate, new WritePlan(WriteOperation::Insert, $tableName, null, $fields));
+        $this->recordChangeExecutor->executeChange($run, $simulate, new RecordChange(RecordChangeType::Insert, $tableName, null, $fields));
     }
 
     /**
@@ -607,7 +607,7 @@ abstract readonly class AbstractHealthCheck
      */
     final protected function updateSingleTcaRecord(HealthCheckRun $run, bool $simulate, string $tableName, int $uid, array $fields): void
     {
-        $this->planExecutor->executePlan($run, $simulate, new WritePlan(WriteOperation::Update, $tableName, $uid, $fields));
+        $this->recordChangeExecutor->executeChange($run, $simulate, new RecordChange(RecordChangeType::Update, $tableName, $uid, $fields));
     }
 
     /**
@@ -617,7 +617,7 @@ abstract readonly class AbstractHealthCheck
      */
     final protected function deleteMmRows(HealthCheckRun $run, bool $simulate, string $mmTableName, array $whereFields): void
     {
-        $this->planExecutor->executePlan($run, $simulate, new WritePlan(WriteOperation::MmDelete, $mmTableName, null, [], $whereFields));
+        $this->recordChangeExecutor->executeChange($run, $simulate, new RecordChange(RecordChangeType::MmDelete, $mmTableName, null, [], $whereFields));
     }
 
     /**
@@ -651,9 +651,9 @@ abstract readonly class AbstractHealthCheck
         $updateCount = 0;
         $deleteCount = 0;
         foreach ($rows as $row) {
-            $plan = $this->softOrHardDeletePlan($tableName, $row);
-            $this->planExecutor->executePlan($run, $simulate, $plan);
-            if ($plan->operation === WriteOperation::Delete) {
+            $change = $this->softOrHardDeleteChange($tableName, $row);
+            $this->recordChangeExecutor->executeChange($run, $simulate, $change);
+            if ($change->type === RecordChangeType::Delete) {
                 $deleteCount++;
             } else {
                 $updateCount++;
@@ -670,7 +670,7 @@ abstract readonly class AbstractHealthCheck
      *
      * @param array<string, int|string> $row Record with "uid", and "t3ver_wsid" for workspace aware tables
      */
-    final protected function softOrHardDeletePlan(string $tableName, array $row): WritePlan
+    final protected function softOrHardDeleteChange(string $tableName, array $row): RecordChange
     {
         $deleteField = $this->tcaHelper->getDeletedField($tableName);
         $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
@@ -684,10 +684,10 @@ abstract readonly class AbstractHealthCheck
         if (empty($deleteField)
             || ($isTableWorkspaceAware && ((int)$row[$workspaceIdField] > 0))
         ) {
-            return new WritePlan(WriteOperation::Delete, $tableName, (int)$row['uid']);
+            return new RecordChange(RecordChangeType::Delete, $tableName, (int)$row['uid']);
         }
-        return new WritePlan(
-            WriteOperation::SoftDelete,
+        return new RecordChange(
+            RecordChangeType::SoftDelete,
             $tableName,
             (int)$row['uid'],
             [

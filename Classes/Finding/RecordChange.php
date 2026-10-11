@@ -21,9 +21,9 @@ use Doctrine\DBAL\ParameterType;
 
 /**
  * A single change of a finding: One statement. Created by health checks while
- * detecting, executed or rendered by PlanExecutor.
+ * detecting, executed or rendered by RecordChangeExecutor.
  */
-final readonly class WritePlan
+final readonly class RecordChange
 {
     /**
      * @param int|null $uid Record to update or delete, null for insert and mm-delete
@@ -31,7 +31,7 @@ final readonly class WritePlan
      * @param array<string, array{value: int|string, type: ParameterType}> $where Fields identifying the rows of mm-delete
      */
     public function __construct(
-        public WriteOperation $operation,
+        public RecordChangeType $type,
         public string $tableName,
         public ?int $uid = null,
         public array $values = [],

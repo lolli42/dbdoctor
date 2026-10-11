@@ -17,7 +17,7 @@ namespace Lolli\Dbdoctor\Finding;
  * The TYPO3 project - inspiring people to share!
  */
 
-enum WriteOperation: string
+enum RecordChangeType: string
 {
     case Update = 'update';
     // UPDATE of the delete field only

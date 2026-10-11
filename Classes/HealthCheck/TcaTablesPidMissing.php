@@ -20,9 +20,9 @@ namespace Lolli\Dbdoctor\HealthCheck;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Lolli\Dbdoctor\Finding\WriteOperation;
-use Lolli\Dbdoctor\Finding\WritePlan;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -67,7 +67,7 @@ final readonly class TcaTablesPidMissing extends AbstractHealthCheck implements 
                     $findings[] = new Finding(
                         new RecordKey($tableName, (int)$row['uid']),
                         $pid,
-                        [new WritePlan(WriteOperation::Delete, $tableName, (int)$row['uid'])],
+                        [new RecordChange(RecordChangeType::Delete, $tableName, (int)$row['uid'])],
                         new Reason('page-missing', 'Page "' . $pid . '" does not exist', ['pid' => $pid]),
                     );
                 }
