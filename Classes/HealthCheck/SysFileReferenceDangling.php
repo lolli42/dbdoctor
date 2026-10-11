@@ -34,7 +34,7 @@ final readonly class SysFileReferenceDangling extends AbstractHealthCheck implem
     {
         return new HealthCheckDescription(
             'Scan for orphan sys_file_reference records',
-            [self::TAG_REMOVE],
+            [ActionTag::Remove],
             [
                 'Basic check of sys_file_reference: Records referenced in uid_local and uid_foreign',
                 'must exist, otherwise that sys_file_reference row is obsolete and removed.',

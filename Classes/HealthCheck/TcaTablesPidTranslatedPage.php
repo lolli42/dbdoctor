@@ -35,7 +35,7 @@ final readonly class TcaTablesPidTranslatedPage extends AbstractHealthCheck impl
     {
         return new HealthCheckDescription(
             'Scan for records on translated pages',
-            [self::TAG_UPDATE],
+            [ActionTag::UpdateFields],
             [
                 'TCA records have a pid field set to a single page. This must be a default language',
                 'page: Records attached to a translated page, for instance "sys_file_reference" records',

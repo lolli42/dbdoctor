@@ -36,21 +36,6 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
  */
 abstract readonly class AbstractHealthCheck
 {
-    // Used in IO when a check is fully disabled, for instance due to TYPO3 version
-    public const TAG_DISABLED = 'disabled';
-    // Used in IO when a check is considered risky, for instance when it may change FE output
-    public const TAG_RISKY = 'risky';
-    // Used in IO when a check may DELETE records
-    public const TAG_REMOVE = 'remove';
-    // Used in IO when a check may "deleted=1" records
-    public const TAG_SOFT_DELETE = 'soft-delete';
-    // Used in IO when a check may DELETE workspace records
-    public const TAG_WORKSPACE_REMOVE = 'workspace-remove';
-    // Used in IO when a check may UPDATE single fields of records
-    public const TAG_UPDATE = 'update-fields';
-    // Used in IO when a check may INSERT missing records
-    public const TAG_INSERT = 'insert';
-
     protected ConnectionPool $connectionPool;
     protected TcaHelper $tcaHelper;
     protected RecordsHelper $recordsHelper;

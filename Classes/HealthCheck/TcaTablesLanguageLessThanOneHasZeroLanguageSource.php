@@ -31,7 +31,7 @@ final readonly class TcaTablesLanguageLessThanOneHasZeroLanguageSource extends A
     {
         return new HealthCheckDescription(
             'Scan for records in default language not having language source zero',
-            [self::TAG_UPDATE],
+            [ActionTag::UpdateFields],
             [
                 'TCA records in default or "all" language (typically sys_language_uid field having 0 or -1)',
                 'must have their "translationSource" (typically l10n_source) field set to zero (0).',

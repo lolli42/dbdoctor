@@ -33,7 +33,7 @@ final readonly class TcaTablesTranslationSourceExists extends AbstractHealthChec
     {
         return new HealthCheckDescription(
             'Scan for translated records with not existing translation source',
-            [self::TAG_UPDATE],
+            [ActionTag::UpdateFields],
             [
                 'When the "translationSource" field (typically l10n_source) of a translated record is not zero,',
                 'the target record must exist. A broken translation source especially confuses the "Translate"',

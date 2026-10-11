@@ -33,7 +33,7 @@ final readonly class WorkspacesSoftDeletedRecords extends AbstractHealthCheck im
     {
         return new HealthCheckDescription(
             'Scan for soft-deleted workspaces records',
-            [self::TAG_WORKSPACE_REMOVE],
+            [ActionTag::WorkspaceRemove],
             [
                 'Records in workspaces (t3ver_wsid != 0) are not soft-delete aware since TYPO3 v11:',
                 'When "discarding" workspace changes, affected records are fully removed from the database.',

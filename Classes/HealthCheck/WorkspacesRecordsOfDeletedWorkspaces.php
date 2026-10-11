@@ -39,7 +39,7 @@ final readonly class WorkspacesRecordsOfDeletedWorkspaces extends AbstractHealth
     {
         return new HealthCheckDescription(
             'Scan for workspace records of deleted sys_workspace\'s',
-            [self::TAG_REMOVE],
+            [ActionTag::Remove],
             [
                 'When a workspace (table "sys_workspace") is deleted, all existing workspace',
                 'overlays in all tables of this workspace are removed. When this goes wrong,',

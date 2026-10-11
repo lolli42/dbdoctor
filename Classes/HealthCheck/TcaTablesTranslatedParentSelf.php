@@ -31,7 +31,7 @@ final readonly class TcaTablesTranslatedParentSelf extends AbstractHealthCheck i
     {
         return new HealthCheckDescription(
             'Scan for record translations pointing to self',
-            [self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE, self::TAG_RISKY],
+            [ActionTag::SoftDelete, ActionTag::Remove, ActionTag::WorkspaceRemove, ActionTag::Risky],
             [
                 'Record translations ("translate" / "connected" mode, as opposed to "free" mode) use the',
                 'database field "transOrigPointerField" (field name usually "l10n_parent" or "l18n_parent").',

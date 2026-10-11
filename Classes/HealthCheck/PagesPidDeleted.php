@@ -33,7 +33,7 @@ final readonly class PagesPidDeleted extends AbstractHealthCheck implements Heal
     {
         return new HealthCheckDescription(
             'Check pages within deleted pages',
-            [self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE],
+            [ActionTag::SoftDelete, ActionTag::WorkspaceRemove],
             [
                 'This health check finds not deleted "pages" records with their "pid" set to a soft-deleted',
                 'page, including whole sub trees below a deleted page. The core deletes sub pages when a',

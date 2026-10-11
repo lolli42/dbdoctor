@@ -37,7 +37,7 @@ final readonly class TtContentLocalizedParentExists extends AbstractHealthCheck 
     {
         return new HealthCheckDescription(
             'Localized tt_content records without parent',
-            [self::TAG_REMOVE],
+            [ActionTag::Remove],
             [
                 'Localized records in "tt_content" (sys_language_uid > 0) having',
                 'l18n_parent > 0 must point to a sys_language_uid = 0 existing language parent record.',

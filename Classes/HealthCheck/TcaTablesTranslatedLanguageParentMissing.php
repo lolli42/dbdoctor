@@ -36,7 +36,7 @@ final readonly class TcaTablesTranslatedLanguageParentMissing extends AbstractHe
     {
         return new HealthCheckDescription(
             'Scan for record translations with missing parent',
-            [self::TAG_REMOVE],
+            [ActionTag::Remove],
             [
                 'Record translations use the TCA ctrl field "transOrigPointerField"',
                 '(DB field name usually "l10n_parent" or "l18n_parent"). This field points to a',

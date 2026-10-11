@@ -36,7 +36,7 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
     {
         return new HealthCheckDescription(
             'Scan for group fields with MM relations to missing records',
-            [self::TAG_REMOVE],
+            [ActionTag::Remove],
             [
                 'Fields of TCA type "group" with MM table store their relations as rows in',
                 'the MM table, for instance the sys_category field "items". This check finds',

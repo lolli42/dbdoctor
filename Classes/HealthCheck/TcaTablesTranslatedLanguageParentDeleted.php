@@ -37,7 +37,7 @@ final readonly class TcaTablesTranslatedLanguageParentDeleted extends AbstractHe
     {
         return new HealthCheckDescription(
             'Scan for not-deleted record translations with deleted parent',
-            [self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE],
+            [ActionTag::SoftDelete, ActionTag::WorkspaceRemove],
             [
                 'Record translations use the TCA ctrl field "transOrigPointerField"',
                 '(DB field name usually "l10n_parent" or "l18n_parent"). This field points to a',

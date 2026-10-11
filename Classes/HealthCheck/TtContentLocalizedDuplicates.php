@@ -37,7 +37,7 @@ final readonly class TtContentLocalizedDuplicates extends AbstractHealthCheck im
     {
         return new HealthCheckDescription(
             'Duplicate localized tt_content records',
-            [self::TAG_SOFT_DELETE],
+            [ActionTag::SoftDelete],
             [
                 'There must be only one localized record in "tt_content" per target language.',
                 'Having more than one leads to various issues in FE and BE. This check finds',

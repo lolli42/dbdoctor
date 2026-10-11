@@ -34,7 +34,7 @@ final readonly class PagesTranslatedLanguageParentDifferentPid extends AbstractH
     {
         return new HealthCheckDescription(
             'Check pages with different pid than their language parent',
-            [self::TAG_REMOVE],
+            [ActionTag::Remove],
             [
                 'This health check finds translated "pages" records (sys_language_uid > 0) with',
                 'their default language record (l10n_parent field) on a different pid.',

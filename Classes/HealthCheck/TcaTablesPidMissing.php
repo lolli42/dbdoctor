@@ -33,7 +33,7 @@ final readonly class TcaTablesPidMissing extends AbstractHealthCheck implements 
     {
         return new HealthCheckDescription(
             'Scan for records on not existing pages',
-            [self::TAG_REMOVE],
+            [ActionTag::Remove],
             [
                 'TCA records have a pid field set to a single page. This page must exist.',
                 'Records on pages that do not exist anymore are deleted.',

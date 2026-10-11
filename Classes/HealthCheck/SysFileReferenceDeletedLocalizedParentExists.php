@@ -35,7 +35,7 @@ final readonly class SysFileReferenceDeletedLocalizedParentExists extends Abstra
     {
         return new HealthCheckDescription(
             'Scan for deleted localized sys_file_reference records without parent',
-            [self::TAG_REMOVE],
+            [ActionTag::Remove],
             [
                 'Soft deleted localized records in "sys_file_reference" (sys_language_uid > 0) having',
                 'l10n_parent > 0 must point to a sys_language_uid = 0 existing language parent record.',

@@ -38,7 +38,7 @@ final readonly class TcaTablesTranslatedParentInvalidPointer extends AbstractHea
     {
         return new HealthCheckDescription(
             'Scan for record translations pointing to non default language parent',
-            [self::TAG_UPDATE, self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE],
+            [ActionTag::UpdateFields, ActionTag::SoftDelete, ActionTag::Remove, ActionTag::WorkspaceRemove],
             [
                 'Record translations ("translate" / "connected" mode, as opposed to "free" mode) use the',
                 'database field "transOrigPointerField" (field name usually "l10n_parent" or "l18n_parent").',

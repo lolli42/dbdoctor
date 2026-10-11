@@ -20,7 +20,7 @@ namespace Lolli\Dbdoctor\Renderer;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\MmKey;
 use Lolli\Dbdoctor\Finding\RecordFieldKey;
-use Lolli\Dbdoctor\HealthCheck\AbstractHealthCheck;
+use Lolli\Dbdoctor\HealthCheck\ActionTag;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckRun;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -201,14 +201,14 @@ final readonly class FindingsRenderer
     /**
      * Render a list of tags to declare the type of changes a check applies.
      */
-    private function outputTags(SymfonyStyle $io, string ...$tags): void
+    private function outputTags(SymfonyStyle $io, ActionTag ...$tags): void
     {
         $wrappedTags = [];
         foreach ($tags as $tag) {
-            if ($tag === AbstractHealthCheck::TAG_RISKY) {
-                $wrappedTags[] = '<error>' . $tag . '</error>';
+            if ($tag === ActionTag::Risky) {
+                $wrappedTags[] = '<error>' . $tag->value . '</error>';
             } else {
-                $wrappedTags[] = '<comment>' . $tag . '</comment>';
+                $wrappedTags[] = '<comment>' . $tag->value . '</comment>';
             }
         }
         $io->text('Actions: ' . implode(', ', $wrappedTags));

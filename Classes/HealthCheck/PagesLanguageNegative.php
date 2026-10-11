@@ -31,7 +31,7 @@ final readonly class PagesLanguageNegative extends AbstractHealthCheck implement
     {
         return new HealthCheckDescription(
             'Check pages with negative language',
-            [self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE],
+            [ActionTag::SoftDelete, ActionTag::WorkspaceRemove],
             [
                 'This health check finds not deleted "pages" records with sys_language_uid < 0. The backend',
                 'never offers this language for pages, and does not show such pages in the page tree, together',

@@ -36,7 +36,7 @@ final readonly class SysFileReferenceLocalizedFieldSync extends AbstractHealthCh
     {
         return new HealthCheckDescription(
             'Scan for localized sys_file_reference records with parent not in sync',
-            [self::TAG_RISKY, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE],
+            [ActionTag::Risky, ActionTag::SoftDelete, ActionTag::WorkspaceRemove],
             [
                 'Localized records in "sys_file_reference" (sys_language_uid > 0) must have fields "tablenames"',
                 'and "fieldname" set to the same values as its language parent record.',

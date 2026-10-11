@@ -24,7 +24,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
 final readonly class HealthCheckDescription
 {
     /**
-     * @param list<string> $tags Action tags, AbstractHealthCheck::TAG_* constants
+     * @param list<ActionTag> $tags Kind of changes the check applies
      * @param list<string> $lines Description, one string per output line
      */
     public function __construct(

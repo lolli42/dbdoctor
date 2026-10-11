@@ -40,7 +40,7 @@ final readonly class TcaTablesTranslatedLanguageParentDifferentPid extends Abstr
     {
         return new HealthCheckDescription(
             'Scan for record translations on wrong pid',
-            [self::TAG_UPDATE, self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE],
+            [ActionTag::UpdateFields, ActionTag::SoftDelete, ActionTag::Remove, ActionTag::WorkspaceRemove],
             [
                 'Record translations use the TCA ctrl field "transOrigPointerField"',
                 '(DB field name usually "l10n_parent" or "l18n_parent"). This field points to a',

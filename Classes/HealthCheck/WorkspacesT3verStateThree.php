@@ -33,7 +33,7 @@ final readonly class WorkspacesT3verStateThree extends AbstractHealthCheck imple
     {
         return new HealthCheckDescription(
             'Scan for records with t3ver_state=3',
-            [self::TAG_WORKSPACE_REMOVE],
+            [ActionTag::WorkspaceRemove],
             [
                 'The workspace related field state t3ver_state=3 has been removed with TYPO3 v11.',
                 'Until TYPO3 v11, they were paired with a t3ver_state=4 record. A core upgrade',

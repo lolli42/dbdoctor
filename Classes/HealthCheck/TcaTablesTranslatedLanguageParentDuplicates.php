@@ -41,7 +41,7 @@ final readonly class TcaTablesTranslatedLanguageParentDuplicates extends Abstrac
     {
         return new HealthCheckDescription(
             'Scan for duplicate record translations',
-            [self::TAG_SOFT_DELETE, self::TAG_REMOVE],
+            [ActionTag::SoftDelete, ActionTag::Remove],
             [
                 'There must be only one translated record (TCA ctrl "languageField" > 0) per',
                 'default language record (TCA ctrl "transOrigPointerField") and language.',

@@ -35,7 +35,7 @@ final readonly class InlineForeignFieldChildrenParentLanguageDifferent extends A
     {
         return new HealthCheckDescription(
             'Scan for inline foreign field records with different language than their parent',
-            [self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE, self::TAG_UPDATE, self::TAG_RISKY],
+            [ActionTag::SoftDelete, ActionTag::Remove, ActionTag::WorkspaceRemove, ActionTag::UpdateFields, ActionTag::Risky],
             [
                 'TCA inline foreign field child records point to a parent record. This check finds',
                 'child records that have a different language than the parent record.',

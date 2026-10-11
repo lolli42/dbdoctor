@@ -36,7 +36,7 @@ final readonly class TcaTablesTranslatedWithAllowLanguageSynchronization extends
     {
         return new HealthCheckDescription(
             'Scan for translated records with values not in sync with default language',
-            [self::TAG_UPDATE],
+            [ActionTag::UpdateFields],
             [
                 'Fields with TCA "allowLanguageSynchronization" can use the value of the default language',
                 'record in translations, the database field "l10n_state" stores this per field. This check',
