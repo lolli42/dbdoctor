@@ -152,9 +152,10 @@ final readonly class JsonReportBuilder
         }
         $check['keyTypes'] = array_values(array_unique(array_map(fn(Finding $finding): string => $this->getKeyType($finding), $findings)));
         $check['counts'] = $this->buildCounts($findings);
-        $limitedFindings = $options->limit > 0 ? array_slice($findings, 0, $options->limit) : $findings;
-        $check['truncated'] = count($limitedFindings) < count($findings);
-        $check['findings'] = $this->buildFindings($className, $limitedFindings, $options);
+        $built = $this->buildFindings($className, $findings, $options);
+        $check['facets'] = $built['facets'];
+        $check['truncated'] = count($built['findings']) < count($findings);
+        $check['findings'] = $built['findings'];
         return [
             'check' => $check,
             'tables' => array_keys($tables),
@@ -227,8 +228,11 @@ final readonly class JsonReportBuilder
     }
 
     /**
+     * Findings up to the limit, and facets over all findings. Records are read one by one and
+     * only kept for findings up to the limit.
+     *
      * @param list<Finding> $findings
-     * @return list<array<string, mixed>>
+     * @return array{findings: list<array<string, mixed>>, facets: array<string, mixed>}
      */
     private function buildFindings(string $className, array $findings, ReportOptions $options): array
     {
@@ -243,15 +247,28 @@ final readonly class JsonReportBuilder
                 }
             }
         }
+        $facets = [
+            'operation' => [],
+            'state' => [],
+            'hidden' => [],
+            'language' => [],
+            'tstampAge' => [],
+            'stateByOperation' => [],
+            'writePatterns' => [],
+        ];
         $statements = new PreparedStatements();
         try {
             $result = [];
             $sequence = 0;
-            foreach ($findings as $finding) {
+            foreach ($findings as $index => $finding) {
                 $key = $finding->key;
                 $record = null;
                 if (!$key instanceof MmKey) {
                     $record = $this->recordReader->read($statements, $key->tableName, $key->uid, array_keys($writtenFields[$key->tableName] ?? []), $options->tier);
+                }
+                $facets = $this->addToFacets($facets, $finding, $record);
+                if ($options->limit > 0 && $index >= $options->limit) {
+                    continue;
                 }
                 $writes = [];
                 foreach ($finding->changes as $change) {
@@ -272,10 +289,115 @@ final readonly class JsonReportBuilder
                     'writes' => $writes,
                 ];
             }
-            return $result;
         } finally {
             $statements->release();
         }
+        ksort($facets['writePatterns']);
+        $facets['writePatterns'] = array_values($facets['writePatterns']);
+        foreach (['operation', 'state', 'hidden', 'language', 'tstampAge', 'stateByOperation'] as $facetName) {
+            $facets[$facetName] = (object)$facets[$facetName];
+        }
+        return [
+            'findings' => $result,
+            'facets' => $facets,
+        ];
+    }
+
+    /**
+     * Count a finding in the facets: Operations of its changes, state, visibility, language and
+     * age of its record, and patterns of its writes.
+     *
+     * @param array<string, mixed> $facets
+     * @param array<string, mixed>|null $record
+     * @return array<string, mixed>
+     */
+    private function addToFacets(array $facets, Finding $finding, ?array $record): array
+    {
+        $state = 'none';
+        if ($record !== null) {
+            $state = 'live';
+            if (($record['deleted'] ?? 0) === 1) {
+                $state = 'deleted';
+            } elseif (($record['workspace']['id'] ?? 0) > 0) {
+                $state = 'workspace';
+            }
+            if (array_key_exists('hidden', $record)) {
+                $hidden = $record['hidden'] === 1 ? 'hidden' : 'visible';
+                $facets['hidden'][$hidden] = ($facets['hidden'][$hidden] ?? 0) + 1;
+            }
+            if (array_key_exists('language', $record)) {
+                $language = (string)$record['language'];
+                $facets['language'][$language] = ($facets['language'][$language] ?? 0) + 1;
+            }
+            $age = $this->getAgeBucket((int)($record['tstamp'] ?? 0));
+            $facets['tstampAge'][$age] = ($facets['tstampAge'][$age] ?? 0) + 1;
+        }
+        $facets['state'][$state] = ($facets['state'][$state] ?? 0) + 1;
+        foreach ($finding->changes as $change) {
+            $operation = $change->type->value;
+            $facets['operation'][$operation] = ($facets['operation'][$operation] ?? 0) + 1;
+            $facets['stateByOperation'][$state][$operation] = ($facets['stateByOperation'][$state][$operation] ?? 0) + 1;
+            $patterns = [['operation' => $operation, 'table' => $change->tableName]];
+            if ($change->type === RecordChangeType::Update || $change->type === RecordChangeType::SoftDelete) {
+                $patterns = [];
+                foreach ($change->values as $field => $valueAndType) {
+                    $patterns[] = [
+                        'operation' => $operation,
+                        'table' => $change->tableName,
+                        'field' => $field,
+                        'value' => $this->getValueClass($valueAndType['value'], $record),
+                    ];
+                }
+            }
+            foreach ($patterns as $pattern) {
+                $patternKey = implode('|', $pattern);
+                $facets['writePatterns'][$patternKey] ??= $pattern + ['count' => 0];
+                $facets['writePatterns'][$patternKey]['count']++;
+            }
+        }
+        return $facets;
+    }
+
+    /**
+     * Kind of a new value: zero, one, empty string, the value of a field of the record like
+     * "role:l10nParent" (l10n_source := l10n_parent), or another value.
+     *
+     * @param array<string, mixed>|null $record
+     */
+    private function getValueClass(int|string $value, ?array $record): string
+    {
+        if ($value === 0 || $value === '0') {
+            return '0';
+        }
+        if ($value === 1 || $value === '1') {
+            return '1';
+        }
+        if ($value === '') {
+            return 'empty';
+        }
+        foreach (['pid', 'l10nParent', 'l10nSource', 'language'] as $role) {
+            if ($record !== null && array_key_exists($role, $record) && (string)$record[$role] === (string)$value) {
+                return 'role:' . $role;
+            }
+        }
+        return 'value';
+    }
+
+    /**
+     * Age of a timestamp relative to the time of the run.
+     */
+    private function getAgeBucket(int $timestamp): string
+    {
+        if ($timestamp <= 0) {
+            return '0';
+        }
+        $age = (int)$GLOBALS['EXEC_TIME'] - $timestamp;
+        return match (true) {
+            $age < 30 * 86400 => '<30d',
+            $age < 365 * 86400 => '<1y',
+            $age < 5 * 365 * 86400 => '<5y',
+            default => 'older',
+        };
     }
 
     /**
