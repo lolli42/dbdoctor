@@ -85,9 +85,9 @@ final readonly class RecordReader
     /**
      * @return list<string>
      */
-    public function getLabelFields(string $tableName, string $tier): array
+    public function getLabelFields(string $tableName, ReportTier $tier): array
     {
-        if ($tier !== ReportOptions::TIER_LABELS || in_array($tableName, self::TABLES_WITHOUT_LABELS, true)) {
+        if ($tier !== ReportTier::Labels || in_array($tableName, self::TABLES_WITHOUT_LABELS, true)) {
             return [];
         }
         return array_values($this->tcaHelper->getLabelFields($tableName) ?? []);
@@ -101,7 +101,7 @@ final readonly class RecordReader
      * @param list<string> $fields Database fields needed additionally, for instance written ones
      * @return array<string, mixed>|null
      */
-    public function read(PreparedStatements $statements, string $tableName, int $uid, array $fields, string $tier): ?array
+    public function read(PreparedStatements $statements, string $tableName, int $uid, array $fields, ReportTier $tier): ?array
     {
         $roles = $this->getRoles($tableName);
         $labelFields = $this->getLabelFields($tableName, $tier);

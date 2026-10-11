@@ -22,21 +22,6 @@ namespace Lolli\Dbdoctor\StructuredOutput;
  */
 final readonly class ReportOptions
 {
-    // Run checks until the first one that is not ok, later checks are not run
-    public const SCOPE_UNTIL_FIRST_FINDING = 'until-first-finding';
-    // Run all checks, results after the first not ok check are preliminary
-    public const SCOPE_ALL = 'all';
-
-    // Uids, pids, TCA ctrl fields like deleted, language and workspace, timestamps, written fields
-    public const TIER_STRUCTURE = 'structure';
-    // Additionally TCA label fields, except of tables with personal data
-    public const TIER_LABELS = 'labels';
-
-    // No related records
-    public const CONTEXT_NONE = 'none';
-    // Language parent and translation source of a record, rootline of its page
-    public const CONTEXT_BASIC = 'basic';
-
     /**
      * @param int $limit Maximum number of findings per check, 0 for all. Counts are always complete.
      * @param string|null $filterTable Only findings of this table: The record table, or the MM table
@@ -45,10 +30,10 @@ final readonly class ReportOptions
      * @param int|null $filterSubtree Only findings on this page and its sub pages
      */
     public function __construct(
-        public string $scope,
-        public string $tier,
+        public ReportScope $scope,
+        public ReportTier $tier,
         public int $limit,
-        public string $context = self::CONTEXT_BASIC,
+        public ReportContext $context = ReportContext::Basic,
         public ?string $filterTable = null,
         public ?int $filterUid = null,
         public ?int $filterPid = null,

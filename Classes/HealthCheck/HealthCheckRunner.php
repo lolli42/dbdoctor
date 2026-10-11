@@ -65,11 +65,11 @@ final readonly class HealthCheckRunner
         } finally {
             $run->statements->release();
         }
-        $status = HealthCheckInspection::STATUS_OK;
+        $status = InspectionStatus::Ok;
         if ($skipReason !== null) {
-            $status = HealthCheckInspection::STATUS_SKIPPED;
+            $status = InspectionStatus::Skipped;
         } elseif ($findings !== []) {
-            $status = HealthCheckInspection::STATUS_FINDINGS;
+            $status = InspectionStatus::Findings;
         }
         return new HealthCheckInspection(
             $check->getDescription(),

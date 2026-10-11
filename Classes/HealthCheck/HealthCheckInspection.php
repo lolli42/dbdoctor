@@ -24,18 +24,13 @@ use Lolli\Dbdoctor\Finding\Finding;
  */
 final readonly class HealthCheckInspection
 {
-    public const STATUS_OK = 'ok';
-    public const STATUS_FINDINGS = 'findings';
-    // The check relies on findings of an earlier check being fixed
-    public const STATUS_SKIPPED = 'skipped';
-
     /**
      * @param list<Finding> $findings
      * @param string|null $skipReason Message of the EarlierCheckNotFixedException of a skipped check
      */
     public function __construct(
         public HealthCheckDescription $description,
-        public string $status,
+        public InspectionStatus $status,
         public array $findings,
         public ?string $skipReason,
         public int $durationMs,
