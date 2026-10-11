@@ -32,6 +32,11 @@ final readonly class ReportOptions
     // Additionally TCA label fields, except of tables with personal data
     public const TIER_LABELS = 'labels';
 
+    // No related records
+    public const CONTEXT_NONE = 'none';
+    // Language parent and translation source of a record, rootline of its page
+    public const CONTEXT_BASIC = 'basic';
+
     /**
      * @param int $limit Maximum number of findings per check, 0 for all. Counts are always complete.
      */
@@ -39,5 +44,6 @@ final readonly class ReportOptions
         public string $scope,
         public string $tier,
         public int $limit,
+        public string $context = self::CONTEXT_BASIC,
     ) {}
 }

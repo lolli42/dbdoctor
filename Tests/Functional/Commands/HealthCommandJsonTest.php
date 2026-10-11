@@ -108,6 +108,16 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         self::assertSame(2, $check['findings'][0]['record']['l10nParent']);
         self::assertSame(['id' => 0, 'state' => 0, 'oid' => 0], $check['findings'][0]['record']['workspace']);
         self::assertSame(['title' => 'Not ok translated sub page 1'], $check['findings'][0]['record']['labels']);
+        $context = $check['findings'][0]['context'];
+        self::assertSame(2, $context['l10nParent']['uid']);
+        self::assertSame(0, $context['l10nParent']['language']);
+        self::assertSame(['title' => 'Sub page 1'], $context['l10nParent']['labels']);
+        self::assertArrayNotHasKey('l10nSource', $context);
+        self::assertSame(1, $context['page']['uid']);
+        self::assertSame(1, $context['page']['rootline'][1]['uid']);
+        self::assertSame('Site root', $context['page']['rootline'][1]['title']);
+        self::assertNull($context['page']['rootPageId']);
+        self::assertSame(['none' => $check['counts']['findings']], $check['facets']['rootPage']);
         // Facets count all findings, not only those up to the limit
         self::assertContains(
             ['operation' => 'update', 'table' => 'pages', 'field' => 'l10n_source', 'value' => 'role:l10nParent', 'count' => 1],

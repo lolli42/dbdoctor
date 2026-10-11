@@ -25,6 +25,8 @@ use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordFieldKey;
 use Lolli\Dbdoctor\Finding\RecordKey;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInspection;
+use Lolli\Dbdoctor\Helper\PagesRootlineHelper;
+use Lolli\Dbdoctor\Helper\TcaHelper;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Site\SiteFinder;
@@ -43,6 +45,8 @@ final readonly class JsonReportBuilder
         private RecordReader $recordReader,
         private ConnectionPool $connectionPool,
         private SiteFinder $siteFinder,
+        private PagesRootlineHelper $pagesRootlineHelper,
+        private TcaHelper $tcaHelper,
     ) {}
 
     /**
@@ -69,6 +73,7 @@ final readonly class JsonReportBuilder
                 'scope' => $options->scope,
                 'tier' => $options->tier,
                 'limit' => $options->limit,
+                'context' => $options->context,
             ],
             'durationMs' => $durationMs,
             'exitCode' => $exitCode,
@@ -178,6 +183,19 @@ final readonly class JsonReportBuilder
                 'rowCount' => $this->recordReader->countRows($tableName),
                 'roles' => $isTcaTable ? (object)$this->recordReader->getRoles($tableName) : new \stdClass(),
             ];
+            $inlineParents = $isTcaTable ? $this->tcaHelper->getInlineParentsOfTable($tableName) : [];
+            if ($inlineParents !== []) {
+                $tables[$tableName]['inlineParents'] = array_map(
+                    static fn(array $parent): array => [
+                        'table' => $parent['tableName'],
+                        'field' => $parent['fieldName'],
+                        'foreignField' => $parent['foreignField'],
+                        'foreignTableField' => $parent['foreignTableField'],
+                        'foreignMatchFields' => (object)$parent['foreignMatchFields'],
+                    ],
+                    $inlineParents
+                );
+            }
         }
         ksort($tables);
         return $tables;
@@ -254,8 +272,15 @@ final readonly class JsonReportBuilder
             'language' => [],
             'tstampAge' => [],
             'stateByOperation' => [],
+            'rootPage' => [],
             'writePatterns' => [],
         ];
+        $siteRootPageIds = [];
+        foreach ($this->siteFinder->getAllSites(false) as $site) {
+            $siteRootPageIds[$site->getRootPageId()] = true;
+        }
+        // Rootline per pid, a check often has many findings on the same pages
+        $rootlines = [];
         $statements = new PreparedStatements();
         try {
             $result = [];
@@ -267,6 +292,13 @@ final readonly class JsonReportBuilder
                     $record = $this->recordReader->read($statements, $key->tableName, $key->uid, array_keys($writtenFields[$key->tableName] ?? []), $options->tier);
                 }
                 $facets = $this->addToFacets($facets, $finding, $record);
+                $rootline = null;
+                if ($finding->pid !== null) {
+                    $rootlines[$finding->pid] ??= $this->buildRootline($statements, $finding->pid, $siteRootPageIds, $options);
+                    $rootline = $rootlines[$finding->pid];
+                    $rootPage = $rootline['rootPageId'] === null ? 'none' : (string)$rootline['rootPageId'];
+                    $facets['rootPage'][$rootPage] = ($facets['rootPage'][$rootPage] ?? 0) + 1;
+                }
                 if ($options->limit > 0 && $index >= $options->limit) {
                     continue;
                 }
@@ -288,19 +320,85 @@ final readonly class JsonReportBuilder
                     'record' => $record === null ? null : $this->withoutFields($record),
                     'writes' => $writes,
                 ];
+                if ($options->context === ReportOptions::CONTEXT_BASIC) {
+                    $result[array_key_last($result)]['context'] = $this->buildContext($statements, $finding, $record, $rootline, $options);
+                }
             }
         } finally {
             $statements->release();
         }
         ksort($facets['writePatterns']);
         $facets['writePatterns'] = array_values($facets['writePatterns']);
-        foreach (['operation', 'state', 'hidden', 'language', 'tstampAge', 'stateByOperation'] as $facetName) {
+        foreach (['operation', 'state', 'hidden', 'language', 'tstampAge', 'stateByOperation', 'rootPage'] as $facetName) {
             $facets[$facetName] = (object)$facets[$facetName];
         }
         return [
             'findings' => $result,
             'facets' => $facets,
         ];
+    }
+
+    /**
+     * Rootline of a page from the tree root down to the page, and the site root page next
+     * to the page. Missing and soft-deleted pages are flagged, titles only with tier "labels".
+     *
+     * @param array<int, true> $siteRootPageIds
+     * @return array{uid: int, rootline: list<array<string, mixed>>, rootPageId: int|null}
+     */
+    private function buildRootline(PreparedStatements $statements, int $pid, array $siteRootPageIds, ReportOptions $options): array
+    {
+        $rootline = [];
+        $rootPageId = null;
+        foreach ($this->pagesRootlineHelper->getRootline($statements, $pid) as $page) {
+            $entry = ['uid' => (int)$page['uid']];
+            if ((bool)$page['_isMissing']) {
+                $entry['missing'] = true;
+            } elseif ((bool)$page['deleted']) {
+                $entry['deleted'] = true;
+            }
+            if (!(bool)$page['_isMissing'] && (int)$page['t3ver_wsid'] > 0) {
+                $entry['workspace'] = (int)$page['t3ver_wsid'];
+            }
+            if ($options->tier === ReportOptions::TIER_LABELS && !(bool)$page['_isMissing']) {
+                $entry['title'] = (string)$page['title'];
+            }
+            if (isset($siteRootPageIds[(int)$page['uid']])) {
+                $rootPageId = (int)$page['uid'];
+            }
+            $rootline[] = $entry;
+        }
+        return [
+            'uid' => $pid,
+            'rootline' => $rootline,
+            'rootPageId' => $rootPageId,
+        ];
+    }
+
+    /**
+     * Related records of a finding: Its page with rootline, language parent and
+     * translation source of its record.
+     *
+     * @param array<string, mixed>|null $record
+     * @param array{uid: int, rootline: list<array<string, mixed>>, rootPageId: int|null}|null $rootline
+     * @return object Map of related records, an object in JSON also when empty
+     */
+    private function buildContext(PreparedStatements $statements, Finding $finding, ?array $record, ?array $rootline, ReportOptions $options): object
+    {
+        $context = [];
+        if ($rootline !== null) {
+            $context['page'] = $rootline;
+        }
+        $key = $finding->key;
+        if ($record !== null && !$key instanceof MmKey) {
+            foreach (['l10nParent', 'l10nSource'] as $role) {
+                $uid = (int)($record[$role] ?? 0);
+                if ($uid > 0) {
+                    $related = $this->recordReader->read($statements, $key->tableName, $uid, [], $options->tier);
+                    $context[$role] = $related === null ? ['uid' => $uid, 'missing' => true] : $this->withoutFields($related);
+                }
+            }
+        }
+        return (object)$context;
     }
 
     /**
