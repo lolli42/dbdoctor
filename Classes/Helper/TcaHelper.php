@@ -422,6 +422,38 @@ final readonly class TcaHelper
         return false;
     }
 
+    /**
+     * All inline and file fields of all tables having the given table as children: The full
+     * relation map of a child table, also of child tables having multiple parent tables.
+     *
+     * @return list<array{tableName: string, fieldName: string, foreignField: string, foreignTableField: string|null, foreignMatchFields: array<string, int|string>}>
+     */
+    public function getInlineParentsOfTable(string $childTableName): array
+    {
+        $this->verifyTcaIsArray();
+        $parents = [];
+        foreach ($GLOBALS['TCA'] as $tableName => $tableConfig) {
+            foreach (($tableConfig['columns'] ?? []) as $fieldName => $columnConfig) {
+                $config = $columnConfig['config'] ?? null;
+                if (!is_array($config)
+                    || !in_array($config['type'] ?? '', ['inline', 'file'], true)
+                    || ($config['foreign_table'] ?? '') !== $childTableName
+                    || empty($config['foreign_field'])
+                ) {
+                    continue;
+                }
+                $parents[] = [
+                    'tableName' => (string)$tableName,
+                    'fieldName' => (string)$fieldName,
+                    'foreignField' => (string)$config['foreign_field'],
+                    'foreignTableField' => empty($config['foreign_table_field']) ? null : (string)$config['foreign_table_field'],
+                    'foreignMatchFields' => is_array($config['foreign_match_fields'] ?? null) ? $config['foreign_match_fields'] : [],
+                ];
+            }
+        }
+        return $parents;
+    }
+
     public function getFieldNameByCtrlName(string $tableName, string $ctrlName): string
     {
         if (empty($GLOBALS['TCA'][$tableName]['ctrl'][$ctrlName])) {

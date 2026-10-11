@@ -1801,4 +1801,58 @@ class TcaHelperTest extends UnitTestCase
         $GLOBALS['TCA']['foo']['ctrl']['label_alt'] = 'labelAlt1, labelAlt2';
         self::assertSame(['labelField', 'labelAlt1', 'labelAlt2'], (new TcaHelper())->getLabelFields('foo'));
     }
+
+    #[Test]
+    public function getInlineParentsOfTableReturnsAllParentsOfChildTable(): void
+    {
+        $GLOBALS['TCA'] = [
+            'parent_table_1' => [
+                'columns' => [
+                    'children' => self::getInlineColumn(['parent_table' => 'parent_table_1']),
+                    'not_inline' => [
+                        'config' => [
+                            'type' => 'input',
+                        ],
+                    ],
+                ],
+            ],
+            'parent_table_2' => [
+                'columns' => [
+                    'files' => [
+                        'config' => [
+                            'type' => 'file',
+                            'foreign_table' => 'child_table',
+                            'foreign_field' => 'parent_uid',
+                            'foreign_table_field' => 'parent_table',
+                        ],
+                    ],
+                    'other_children' => [
+                        'config' => [
+                            'type' => 'inline',
+                            'foreign_table' => 'other_child_table',
+                            'foreign_field' => 'parent_uid',
+                        ],
+                    ],
+                ],
+            ],
+            'child_table' => self::getInlineChildTca(),
+        ];
+        $expected = [
+            [
+                'tableName' => 'parent_table_1',
+                'fieldName' => 'children',
+                'foreignField' => 'parent_uid',
+                'foreignTableField' => null,
+                'foreignMatchFields' => ['parent_table' => 'parent_table_1'],
+            ],
+            [
+                'tableName' => 'parent_table_2',
+                'fieldName' => 'files',
+                'foreignField' => 'parent_uid',
+                'foreignTableField' => 'parent_table',
+                'foreignMatchFields' => [],
+            ],
+        ];
+        self::assertSame($expected, (new TcaHelper())->getInlineParentsOfTable('child_table'));
+    }
 }

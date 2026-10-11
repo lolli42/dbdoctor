@@ -92,6 +92,14 @@ final class HealthCommand extends Command
             '100'
         );
         $this->addOption(
+            'context',
+            null,
+            InputOption::VALUE_REQUIRED,
+            ReportOptions::CONTEXT_BASIC . '|' . ReportOptions::CONTEXT_NONE . ' - json only: related records of findings,'
+            . ' basic adds rootline, language parent and translation source',
+            ReportOptions::CONTEXT_BASIC
+        );
+        $this->addOption(
             'check',
             null,
             InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
@@ -195,6 +203,10 @@ final class HealthCommand extends Command
         if (!in_array($tier, [ReportOptions::TIER_STRUCTURE, ReportOptions::TIER_LABELS], true)) {
             return $this->outputJsonError($output, 'Invalid tier "' . $tier . '".');
         }
+        $context = (string)$input->getOption('context');
+        if (!in_array($context, [ReportOptions::CONTEXT_BASIC, ReportOptions::CONTEXT_NONE], true)) {
+            return $this->outputJsonError($output, 'Invalid context "' . $context . '".');
+        }
         if (!ctype_digit($limit)) {
             return $this->outputJsonError($output, 'Invalid limit "' . $limit . '".');
         }
@@ -204,7 +216,7 @@ final class HealthCommand extends Command
                 'Current database schema is not in sync with TCA: Missing tables, missing or not adapted columns or indexes were detected.'
             );
         }
-        $options = new ReportOptions($scope, $tier, (int)$limit);
+        $options = new ReportOptions($scope, $tier, (int)$limit, $context);
         /** @var list<string> $onlyChecks */
         $onlyChecks = (array)$input->getOption('check');
 
