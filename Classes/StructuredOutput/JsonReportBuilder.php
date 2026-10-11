@@ -1,0 +1,366 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Lolli\Dbdoctor\StructuredOutput;
+
+/*
+ * This file is part of the TYPO3 CMS project.
+ *
+ * It is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License, either version 2
+ * of the License, or any later version.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE.txt file that was distributed with this source code.
+ *
+ * The TYPO3 project - inspiring people to share!
+ */
+
+use Lolli\Dbdoctor\Database\PreparedStatements;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\MmKey;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
+use Lolli\Dbdoctor\Finding\RecordFieldKey;
+use Lolli\Dbdoctor\Finding\RecordKey;
+use Lolli\Dbdoctor\HealthCheck\HealthCheckInspection;
+use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Information\Typo3Version;
+use TYPO3\CMS\Core\Site\SiteFinder;
+use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
+
+/**
+ * Builds the structured report of a dbdoctor run as array, for JSON output. Experimental:
+ * The structure may change with any release while the schema version is 0.x. Check classes
+ * and their order are no API in any case.
+ */
+final readonly class JsonReportBuilder
+{
+    public const SCHEMA_VERSION = '0.1';
+
+    public function __construct(
+        private RecordReader $recordReader,
+        private ConnectionPool $connectionPool,
+        private SiteFinder $siteFinder,
+    ) {}
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function buildRun(ReportOptions $options, int $durationMs, int $exitCode): array
+    {
+        $connection = $this->connectionPool->getConnectionByName(ConnectionPool::DEFAULT_CONNECTION_NAME);
+        // The extension version is maintained in composer.json, in composer and classic mode
+        $composerManifest = json_decode((string)file_get_contents(__DIR__ . '/../../composer.json'), true);
+        $dbdoctorVersion = $composerManifest['extra']['typo3/cms']['version'] ?? null;
+        return [
+            'execTime' => (int)$GLOBALS['EXEC_TIME'],
+            'dbdoctor' => $dbdoctorVersion,
+            'typo3' => (new Typo3Version())->getVersion(),
+            'php' => PHP_VERSION,
+            'database' => [
+                'platform' => (new \ReflectionClass($connection->getDatabasePlatform()))->getShortName(),
+                'serverVersion' => $connection->getServerVersion(),
+                'driver' => (string)($connection->getParams()['driver'] ?? ''),
+            ],
+            'workspacesLoaded' => ExtensionManagementUtility::isLoaded('workspaces'),
+            'options' => [
+                'scope' => $options->scope,
+                'tier' => $options->tier,
+                'limit' => $options->limit,
+            ],
+            'durationMs' => $durationMs,
+            'exitCode' => $exitCode,
+        ];
+    }
+
+    /**
+     * Root pages and languages of all sites, identifiers and titles only with tier "labels".
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function buildSites(ReportOptions $options): array
+    {
+        $sites = [];
+        foreach ($this->siteFinder->getAllSites(false) as $site) {
+            $languages = [];
+            foreach ($site->getAllLanguages() as $language) {
+                $languages[] = $options->tier === ReportOptions::TIER_LABELS
+                    ? ['id' => $language->getLanguageId(), 'title' => $language->getTitle()]
+                    : ['id' => $language->getLanguageId()];
+            }
+            $siteData = ['rootPageId' => $site->getRootPageId(), 'languages' => $languages];
+            if ($options->tier === ReportOptions::TIER_LABELS) {
+                $siteData = ['identifier' => $site->getIdentifier()] + $siteData;
+            }
+            $sites[] = $siteData;
+        }
+        return $sites;
+    }
+
+    /**
+     * A check that was not run, or that does not support structured output.
+     *
+     * @param class-string $className
+     * @return array<string, mixed>
+     */
+    public function buildCheckWithoutInspection(int $position, string $className, string $status): array
+    {
+        return [
+            'position' => $position,
+            'class' => (new \ReflectionClass($className))->getShortName(),
+            'className' => $className,
+            'status' => $status,
+        ];
+    }
+
+    /**
+     * @param class-string $className
+     * @return array{check: array<string, mixed>, tables: list<string>}
+     */
+    public function buildCheck(int $position, string $className, HealthCheckInspection $inspection, bool $preliminary, ReportOptions $options): array
+    {
+        $check = [
+            'position' => $position,
+            'class' => (new \ReflectionClass($className))->getShortName(),
+            'className' => $className,
+            'title' => $inspection->description->title,
+            'tags' => $inspection->description->tags,
+            'status' => $inspection->status,
+            'preliminary' => $preliminary,
+            'durationMs' => $inspection->durationMs,
+            'peakMemory' => $inspection->peakMemory,
+        ];
+        if ($inspection->status === HealthCheckInspection::STATUS_OK) {
+            return [
+                'check' => $check,
+                'tables' => [],
+            ];
+        }
+        $check['description'] = implode(' ', $inspection->description->lines);
+        if ($inspection->skipReason !== null) {
+            $check['skipReason'] = $inspection->skipReason;
+        }
+        $findings = $inspection->findings;
+        $tables = [];
+        foreach ($findings as $finding) {
+            $tables[$this->getKeyTableName($finding)] = true;
+            foreach ($finding->changes as $change) {
+                $tables[$change->tableName] = true;
+            }
+        }
+        $check['keyTypes'] = array_values(array_unique(array_map(fn(Finding $finding): string => $this->getKeyType($finding), $findings)));
+        $check['counts'] = $this->buildCounts($findings);
+        $limitedFindings = $options->limit > 0 ? array_slice($findings, 0, $options->limit) : $findings;
+        $check['truncated'] = count($limitedFindings) < count($findings);
+        $check['findings'] = $this->buildFindings($className, $limitedFindings, $options);
+        return [
+            'check' => $check,
+            'tables' => array_keys($tables),
+        ];
+    }
+
+    /**
+     * TCA roles and row count of each table that occurs in findings or changes.
+     *
+     * @param list<string> $tableNames
+     * @return array<string, array<string, mixed>>
+     */
+    public function buildTables(array $tableNames): array
+    {
+        $tables = [];
+        foreach ($tableNames as $tableName) {
+            $isTcaTable = is_array($GLOBALS['TCA'][$tableName] ?? false);
+            $tables[$tableName] = [
+                'tca' => $isTcaTable,
+                'rowCount' => $this->recordReader->countRows($tableName),
+                'roles' => $isTcaTable ? (object)$this->recordReader->getRoles($tableName) : new \stdClass(),
+            ];
+        }
+        ksort($tables);
+        return $tables;
+    }
+
+    /**
+     * @param list<Finding> $findings
+     * @return array<string, mixed>
+     */
+    private function buildCounts(array $findings): array
+    {
+        $records = [];
+        $writes = 0;
+        $findingsByTable = [];
+        // Affected rows per table: Records of record and record field findings, a record with
+        // several broken fields is one row. MM findings of a missing local record have their rows
+        // as evidence.
+        $rowsByTable = [];
+        $mmRowsByTable = [];
+        foreach ($findings as $finding) {
+            $key = $finding->key;
+            $tableName = $this->getKeyTableName($finding);
+            if ($key instanceof MmKey) {
+                $mmRowsByTable[$tableName] = ($mmRowsByTable[$tableName] ?? 0) + (int)($finding->evidence['mmRowCount'] ?? 1);
+            } else {
+                $records[$key->tableName . ':' . $key->uid] = true;
+                $rowsByTable[$tableName][$key->uid] = true;
+            }
+            $writes += count($finding->changes);
+            $findingsByTable[$tableName] = ($findingsByTable[$tableName] ?? 0) + 1;
+        }
+        $byTableCounts = [];
+        foreach ($findingsByTable as $tableName => $count) {
+            $rowCount = $this->recordReader->countRows($tableName);
+            $rows = count($rowsByTable[$tableName] ?? []) + ($mmRowsByTable[$tableName] ?? 0);
+            $byTableCounts[$tableName] = [
+                'findings' => $count,
+                'rows' => $rows,
+                'share' => $rowCount > 0 ? round($rows / $rowCount, 5) : null,
+            ];
+        }
+        return [
+            'findings' => count($findings),
+            'records' => count($records),
+            'writes' => $writes,
+            'byTable' => (object)$byTableCounts,
+        ];
+    }
+
+    /**
+     * @param list<Finding> $findings
+     * @return list<array<string, mixed>>
+     */
+    private function buildFindings(string $className, array $findings, ReportOptions $options): array
+    {
+        // Written fields per table: Read with the record, their current value is the old value of the change
+        $writtenFields = [];
+        foreach ($findings as $finding) {
+            foreach ($finding->changes as $change) {
+                if ($change->type === RecordChangeType::Update || $change->type === RecordChangeType::SoftDelete) {
+                    foreach (array_keys($change->values) as $field) {
+                        $writtenFields[$change->tableName][$field] = true;
+                    }
+                }
+            }
+        }
+        $statements = new PreparedStatements();
+        try {
+            $result = [];
+            $sequence = 0;
+            foreach ($findings as $finding) {
+                $key = $finding->key;
+                $record = null;
+                if (!$key instanceof MmKey) {
+                    $record = $this->recordReader->read($statements, $key->tableName, $key->uid, array_keys($writtenFields[$key->tableName] ?? []), $options->tier);
+                }
+                $writes = [];
+                foreach ($finding->changes as $change) {
+                    $sequence++;
+                    $writes[] = $this->buildWrite($statements, $sequence, $change, $key, $record, $options);
+                }
+                $result[] = [
+                    'id' => substr(sha1($className . '|' . json_encode($this->buildKey($finding), JSON_THROW_ON_ERROR)), 0, 16),
+                    'key' => $this->buildKey($finding),
+                    'pid' => $finding->pid,
+                    'reason' => $finding->reason === null ? null : [
+                        'code' => $finding->reason->code,
+                        'message' => $finding->reason->message,
+                        'parameters' => (object)$finding->reason->parameters,
+                    ],
+                    'evidence' => (object)$finding->evidence,
+                    'record' => $record === null ? null : $this->withoutFields($record),
+                    'writes' => $writes,
+                ];
+            }
+            return $result;
+        } finally {
+            $statements->release();
+        }
+    }
+
+    /**
+     * @param array<string, mixed>|null $keyRecord
+     * @return array<string, mixed>
+     */
+    private function buildWrite(PreparedStatements $statements, int $sequence, RecordChange $change, RecordKey|RecordFieldKey|MmKey $key, ?array $keyRecord, ReportOptions $options): array
+    {
+        $write = [
+            'seq' => $sequence,
+            'operation' => $change->type->value,
+            'table' => $change->tableName,
+        ];
+        if ($change->uid !== null) {
+            $write['uid'] = $change->uid;
+        }
+        switch ($change->type) {
+            case RecordChangeType::Update:
+            case RecordChangeType::SoftDelete:
+                $target = $keyRecord;
+                if ($key instanceof MmKey || $key->tableName !== $change->tableName || $key->uid !== $change->uid) {
+                    $target = $this->recordReader->read($statements, $change->tableName, (int)$change->uid, array_keys($change->values), $options->tier);
+                }
+                $set = [];
+                foreach ($change->values as $field => $valueAndType) {
+                    $set[$field] = [
+                        'old' => $target['fields'][$field] ?? null,
+                        'new' => $valueAndType['value'],
+                    ];
+                }
+                $write['set'] = $set;
+                break;
+            case RecordChangeType::Insert:
+                $write['values'] = array_map(static fn(array $valueAndType): int|string => $valueAndType['value'], $change->values);
+                break;
+            case RecordChangeType::MmDelete:
+                $write['where'] = array_map(static fn(array $valueAndType): int|string => $valueAndType['value'], $change->where);
+                break;
+            case RecordChangeType::Delete:
+                break;
+        }
+        return $write;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildKey(Finding $finding): array
+    {
+        $key = $finding->key;
+        return match (true) {
+            $key instanceof RecordKey => ['type' => 'record', 'table' => $key->tableName, 'uid' => $key->uid],
+            $key instanceof RecordFieldKey => ['type' => 'record-field', 'table' => $key->tableName, 'uid' => $key->uid, 'field' => $key->fieldName],
+            $key instanceof MmKey => [
+                'type' => 'mm',
+                'mmTable' => $key->mmTableName,
+                'uidLocal' => $key->uidLocal,
+                'localTable' => $key->localTableName,
+                'field' => $key->localFieldName,
+                'matchFields' => (object)$key->matchFields,
+            ],
+        };
+    }
+
+    private function getKeyType(Finding $finding): string
+    {
+        return match (true) {
+            $finding->key instanceof RecordKey => 'record',
+            $finding->key instanceof RecordFieldKey => 'record-field',
+            $finding->key instanceof MmKey => 'mm',
+        };
+    }
+
+    private function getKeyTableName(Finding $finding): string
+    {
+        return $finding->key instanceof MmKey ? $finding->key->mmTableName : $finding->key->tableName;
+    }
+
+    /**
+     * @param array<string, mixed> $record
+     * @return array<string, mixed>
+     */
+    private function withoutFields(array $record): array
+    {
+        unset($record['fields']);
+        return $record;
+    }
+}

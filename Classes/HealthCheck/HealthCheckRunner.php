@@ -22,6 +22,8 @@ use Lolli\Dbdoctor\Database\RecordChangeExecutor;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Renderer\FindingsRenderer;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -43,6 +45,40 @@ final readonly class HealthCheckRunner
         } finally {
             $run->statements->release();
         }
+    }
+
+    /**
+     * Detect without any output and without changes, for structured output. A check relying on
+     * findings of earlier checks being fixed is skipped, as in check mode.
+     */
+    public function inspect(HealthCheckInterface $check): HealthCheckInspection
+    {
+        memory_reset_peak_usage();
+        $start = hrtime(true);
+        $run = new HealthCheckRun(new SymfonyStyle(new ArrayInput([]), new NullOutput()), '', new PreparedStatements());
+        $findings = [];
+        $skipReason = null;
+        try {
+            $findings = $check->detect($run);
+        } catch (EarlierCheckNotFixedException $e) {
+            $skipReason = $e->getMessage();
+        } finally {
+            $run->statements->release();
+        }
+        $status = HealthCheckInspection::STATUS_OK;
+        if ($skipReason !== null) {
+            $status = HealthCheckInspection::STATUS_SKIPPED;
+        } elseif ($findings !== []) {
+            $status = HealthCheckInspection::STATUS_FINDINGS;
+        }
+        return new HealthCheckInspection(
+            $check->getDescription(),
+            $status,
+            $findings,
+            $skipReason,
+            (int)((hrtime(true) - $start) / 1000000),
+            memory_get_peak_usage(),
+        );
     }
 
     private function handleRun(HealthCheckInterface $check, HealthCheckRun $run, HealthCheckMode $mode): HealthCheckResult

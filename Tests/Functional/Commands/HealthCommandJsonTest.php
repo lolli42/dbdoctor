@@ -1,0 +1,155 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Lolli\Dbdoctor\Tests\Functional\Commands;
+
+/*
+ * This file is part of the TYPO3 CMS project.
+ *
+ * It is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License, either version 2
+ * of the License, or any later version.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE.txt file that was distributed with this source code.
+ *
+ * The TYPO3 project - inspiring people to share!
+ */
+use Lolli\Dbdoctor\HealthCheck\HealthCheckResult;
+use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
+use PHPUnit\Framework\Attributes\Test;
+use Symfony\Component\Console\Tester\CommandTester;
+use TYPO3\CMS\Core\Console\CommandRegistry;
+
+class HealthCommandJsonTest extends AbstractFunctionalTestCase
+{
+    protected array $coreExtensionsToLoad = [
+        'workspaces',
+    ];
+
+    protected array $testExtensionsToLoad = [
+        'lolli/dbdoctor',
+    ];
+
+    #[Test]
+    public function reportsFindingWithRecordAndDeleteChange(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingImport.csv');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $result = $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--check' => ['TcaTablesPidMissing'],
+        ]);
+        $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame(HealthCheckResult::Broken->value, $result);
+        self::assertSame('0.1', $report['schemaVersion']);
+        self::assertMatchesRegularExpression('/^\d+\.\d+\.\d+$/', $report['run']['dbdoctor']);
+        self::assertCount(1, $report['checks']);
+        $check = $report['checks'][0];
+        self::assertSame('TcaTablesPidMissing', $check['class']);
+        self::assertSame('findings', $check['status']);
+        self::assertSame(['remove'], $check['tags']);
+        self::assertSame(['record'], $check['keyTypes']);
+        self::assertSame(1, $check['counts']['findings']);
+        self::assertSame(1, $check['counts']['writes']);
+        self::assertSame(['type' => 'record', 'table' => 'be_users', 'uid' => 3], $check['findings'][0]['key']);
+        self::assertSame(3, $check['findings'][0]['pid']);
+        self::assertSame('page-missing', $check['findings'][0]['reason']['code']);
+        self::assertSame(['pid' => 3], $check['findings'][0]['reason']['parameters']);
+        self::assertSame(3, $check['findings'][0]['record']['uid']);
+        self::assertSame(0, $check['findings'][0]['record']['deleted']);
+        self::assertSame([['seq' => 1, 'operation' => 'delete', 'table' => 'be_users', 'uid' => 3]], $check['findings'][0]['writes']);
+        self::assertSame(3, $report['tables']['be_users']['rowCount']);
+        self::assertSame('deleted', $report['tables']['be_users']['roles']['deleted']);
+    }
+
+    #[Test]
+    public function reportsNoLabelsOfTablesWithPersonalData(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingImport.csv');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--tier' => 'labels',
+            '--check' => ['TcaTablesPidMissing'],
+        ]);
+        $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertArrayNotHasKey('labels', $report['checks'][0]['findings'][0]['record']);
+    }
+
+    #[Test]
+    public function reportsOldAndNewValueOfUpdateChangeAndLabels(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslationSourceSetWithParentImport.csv');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--scope' => 'all',
+            '--tier' => 'labels',
+            '--limit' => '1',
+            '--check' => ['TcaTablesTranslationSourceSetWithParent'],
+        ]);
+        $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        $check = $report['checks'][0];
+        self::assertTrue($check['truncated']);
+        self::assertCount(1, $check['findings']);
+        self::assertSame(['type' => 'record', 'table' => 'pages', 'uid' => 4], $check['findings'][0]['key']);
+        self::assertSame(['l10n_source' => ['old' => 0, 'new' => 2]], $check['findings'][0]['writes'][0]['set']);
+        self::assertSame('update', $check['findings'][0]['writes'][0]['operation']);
+        self::assertSame(2, $check['findings'][0]['record']['language']);
+        self::assertSame(2, $check['findings'][0]['record']['l10nParent']);
+        self::assertSame(['id' => 0, 'state' => 0, 'oid' => 0], $check['findings'][0]['record']['workspace']);
+        self::assertSame(['title' => 'Not ok translated sub page 1'], $check['findings'][0]['record']['labels']);
+    }
+
+    #[Test]
+    public function doesNotRunChecksAfterFirstCheckWithFindings(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingImport.csv');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--check' => ['TcaTablesPidMissing', 'TcaTablesPidDeleted'],
+        ]);
+        $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame('findings', $report['checks'][0]['status']);
+        self::assertFalse($report['checks'][0]['preliminary']);
+        self::assertSame('TcaTablesPidDeleted', $report['checks'][1]['class']);
+        self::assertSame('not-run', $report['checks'][1]['status']);
+    }
+
+    #[Test]
+    public function marksChecksAfterFirstCheckWithFindingsAsPreliminaryAndSkipsChecksRelyingOnFixes(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingImport.csv');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--scope' => 'all',
+            '--check' => ['TcaTablesPidDeleted'],
+        ]);
+        $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        // be_users 3 is on a missing page, which TcaTablesPidMissing finds: This check relies on it being fixed
+        self::assertSame('skipped', $report['checks'][0]['status']);
+        self::assertStringContainsString('but that page does not exist', $report['checks'][0]['skipReason']);
+        self::assertTrue($report['checks'][0]['preliminary']);
+    }
+
+    #[Test]
+    public function reportsErrorWithoutCheckMode(): void
+    {
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $result = $commandTester->execute([
+            '--format' => 'json',
+        ]);
+        $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame(HealthCheckResult::Error->value, $result);
+        self::assertSame('Option "--format json" is available with "--mode check" only.', $report['error']['message']);
+    }
+}
