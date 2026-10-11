@@ -48,19 +48,19 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 abstract readonly class AbstractHealthCheck
 {
     // Used in IO when a check is fully disabled, for instance due to TYPO3 version
-    protected const TAG_DISABLED = 'disabled';
+    public const TAG_DISABLED = 'disabled';
     // Used in IO when a check is considered risky, for instance when it may change FE output
-    protected const TAG_RISKY = 'risky';
+    public const TAG_RISKY = 'risky';
     // Used in IO when a check may DELETE records
-    protected const TAG_REMOVE = 'remove';
+    public const TAG_REMOVE = 'remove';
     // Used in IO when a check may "deleted=1" records
-    protected const TAG_SOFT_DELETE = 'soft-delete';
+    public const TAG_SOFT_DELETE = 'soft-delete';
     // Used in IO when a check may DELETE workspace records
-    protected const TAG_WORKSPACE_REMOVE = 'workspace-remove';
+    public const TAG_WORKSPACE_REMOVE = 'workspace-remove';
     // Used in IO when a check may UPDATE single fields of records
-    protected const TAG_UPDATE = 'update-fields';
+    public const TAG_UPDATE = 'update-fields';
     // Used in IO when a check may INSERT missing records
-    protected const TAG_INSERT = 'insert';
+    public const TAG_INSERT = 'insert';
 
     protected ConnectionPool $connectionPool;
     protected TcaHelper $tcaHelper;
@@ -314,14 +314,14 @@ abstract readonly class AbstractHealthCheck
         $io->text($description->lines);
     }
 
-    abstract protected function getDescription(): HealthCheckDescription;
+    abstract public function getDescription(): HealthCheckDescription;
 
     /**
      * Find broken things, each with the changes that fix it.
      *
      * @return list<Finding>
      */
-    abstract protected function detect(HealthCheckRun $run): array;
+    abstract public function detect(HealthCheckRun $run): array;
 
     /**
      * Ctrl fields like "transOrigPointerField" shown in record details of findings of a table,
@@ -329,7 +329,7 @@ abstract readonly class AbstractHealthCheck
      *
      * @return list<string>
      */
-    protected function getDetailCtrlFields(string $tableName): array
+    public function getDetailCtrlFields(string $tableName): array
     {
         return [];
     }
@@ -340,7 +340,7 @@ abstract readonly class AbstractHealthCheck
      *
      * @return list<string>
      */
-    protected function getDetailDbFields(string $tableName): array
+    public function getDetailDbFields(string $tableName): array
     {
         return [];
     }

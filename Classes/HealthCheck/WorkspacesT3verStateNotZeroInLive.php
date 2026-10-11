@@ -28,7 +28,7 @@ use TYPO3\CMS\Core\Database\Connection;
  */
 final readonly class WorkspacesT3verStateNotZeroInLive extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for records with t3ver_wsid=0 and t3ver_state!=0',
@@ -46,7 +46,7 @@ final readonly class WorkspacesT3verStateNotZeroInLive extends AbstractHealthChe
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $findings = [];
         foreach ($this->tcaHelper->getNextWorkspaceEnabledTcaTable() as $tableName) {

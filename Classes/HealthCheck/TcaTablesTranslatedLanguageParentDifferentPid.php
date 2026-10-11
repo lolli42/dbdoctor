@@ -36,7 +36,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class TcaTablesTranslatedLanguageParentDifferentPid extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for record translations on wrong pid',
@@ -51,7 +51,7 @@ final readonly class TcaTablesTranslatedLanguageParentDifferentPid extends Abstr
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $findings = [];
         // @todo: sys_file_reference is excluded due to https://github.com/lolli42/dbdoctor/issues/30, see comment below, too.
@@ -135,7 +135,7 @@ final readonly class TcaTablesTranslatedLanguageParentDifferentPid extends Abstr
         return $findings;
     }
 
-    protected function getDetailCtrlFields(string $tableName): array
+    public function getDetailCtrlFields(string $tableName): array
     {
         return ['transOrigPointerField'];
     }

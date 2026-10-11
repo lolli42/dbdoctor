@@ -32,7 +32,7 @@ use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
  */
 final readonly class WorkspacesNotLoadedRecordsDangling extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for workspace records when ext:workspaces is not loaded',
@@ -47,7 +47,7 @@ final readonly class WorkspacesNotLoadedRecordsDangling extends AbstractHealthCh
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         if (ExtensionManagementUtility::isLoaded('workspaces')) {
             // Nothing to do when ext:workspaces is loaded

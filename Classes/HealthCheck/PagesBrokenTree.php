@@ -32,7 +32,7 @@ final readonly class PagesBrokenTree extends AbstractHealthCheck implements Heal
         private PagesTreeHelper $pagesTreeHelper,
     ) {}
 
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Check page tree integrity',
@@ -45,7 +45,7 @@ final readonly class PagesBrokenTree extends AbstractHealthCheck implements Heal
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         // All pages rows count as connected, including deleted and workspace rows.
         $uidToPid = $this->pagesTreeHelper->getAllPageUidToPid();

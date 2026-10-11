@@ -31,7 +31,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class InlineForeignFieldChildrenParentLanguageDifferent extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for inline foreign field records with different language than their parent',
@@ -47,7 +47,7 @@ final readonly class InlineForeignFieldChildrenParentLanguageDifferent extends A
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         // Per table: Updates of children with language -1 first, then soft or hard deletes of the others.
         $updateFindings = [];
@@ -149,7 +149,7 @@ final readonly class InlineForeignFieldChildrenParentLanguageDifferent extends A
         return $this->mergeFindings($tableNames, $updateFindings, $deleteFindings);
     }
 
-    protected function getDetailDbFields(string $tableName): array
+    public function getDetailDbFields(string $tableName): array
     {
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
             if ($inlineChild['tableName'] === $tableName) {

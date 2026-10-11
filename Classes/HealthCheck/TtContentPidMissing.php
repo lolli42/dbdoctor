@@ -36,7 +36,7 @@ use Lolli\Dbdoctor\Finding\RecordKey;
  */
 final readonly class TtContentPidMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for tt_content on not existing pages',
@@ -52,7 +52,7 @@ final readonly class TtContentPidMissing extends AbstractHealthCheck implements 
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $findings = [];
         // Iterate all TCA tables, but ignore pages table

@@ -33,7 +33,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class TtContentLocalizedDuplicates extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Duplicate localized tt_content records',
@@ -48,7 +48,7 @@ final readonly class TtContentLocalizedDuplicates extends AbstractHealthCheck im
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
         // Ignore deleted=1 records

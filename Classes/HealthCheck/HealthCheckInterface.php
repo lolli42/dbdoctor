@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Finding\Finding;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 interface HealthCheckInterface
@@ -42,4 +43,32 @@ interface HealthCheckInterface
      */
     public function header(SymfonyStyle $io): void;
     public function handle(SymfonyStyle $io, int $mode, string $file): int;
+
+    /**
+     * Title, action tags and description of the check.
+     */
+    public function getDescription(): HealthCheckDescription;
+
+    /**
+     * Find broken things, each with the changes that fix it. Detection does not change records.
+     *
+     * @return list<Finding>
+     */
+    public function detect(HealthCheckRun $run): array;
+
+    /**
+     * Ctrl fields like "transOrigPointerField" shown in record details of findings of a table,
+     * additionally to the default fields.
+     *
+     * @return list<string>
+     */
+    public function getDetailCtrlFields(string $tableName): array;
+
+    /**
+     * Database fields shown in record details of findings of a table, additionally to the default
+     * fields. Fields of RecordFieldKey findings are added automatically.
+     *
+     * @return list<string>
+     */
+    public function getDetailDbFields(string $tableName): array;
 }

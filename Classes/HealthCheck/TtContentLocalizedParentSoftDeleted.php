@@ -32,7 +32,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class TtContentLocalizedParentSoftDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Localized tt_content records with soft-deleted parent',
@@ -47,7 +47,7 @@ final readonly class TtContentLocalizedParentSoftDeleted extends AbstractHealthC
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');

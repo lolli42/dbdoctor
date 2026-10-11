@@ -40,7 +40,7 @@ final readonly class SysFileMetadataMissing extends AbstractHealthCheck implemen
         private ResourceFactory $resourceFactory,
     ) {}
 
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for sys_file records without sys_file_metadata record',
@@ -54,7 +54,7 @@ final readonly class SysFileMetadataMissing extends AbstractHealthCheck implemen
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file');
         $queryBuilder->getRestrictions()->removeAll();
@@ -88,7 +88,7 @@ final readonly class SysFileMetadataMissing extends AbstractHealthCheck implemen
         return $findings;
     }
 
-    protected function getDetailDbFields(string $tableName): array
+    public function getDetailDbFields(string $tableName): array
     {
         return ['storage', 'identifier', 'missing'];
     }

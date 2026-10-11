@@ -36,7 +36,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class TtContentLocalizedPageTranslationMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for localized tt_content records without page translation',
@@ -54,7 +54,7 @@ final readonly class TtContentLocalizedPageTranslationMissing extends AbstractHe
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         // Records are sorted by pid: Only the page of the current pid is kept.
         $currentPid = null;
@@ -119,7 +119,7 @@ final readonly class TtContentLocalizedPageTranslationMissing extends AbstractHe
         return $findings;
     }
 
-    protected function getDetailCtrlFields(string $tableName): array
+    public function getDetailCtrlFields(string $tableName): array
     {
         return ['languageField', 'transOrigPointerField'];
     }

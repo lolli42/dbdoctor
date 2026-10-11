@@ -44,7 +44,7 @@ final readonly class TcaTablesTranslatedLanguageNotInSiteConfiguration extends A
         private PagesTreeHelper $pagesTreeHelper,
     ) {}
 
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for translated records with language not in site configuration',
@@ -60,7 +60,7 @@ final readonly class TcaTablesTranslatedLanguageNotInSiteConfiguration extends A
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         // Resolve sites with PagesTreeHelper instead of SiteFinder->getSiteByPageId(). This is deliberate:
         // SiteFinder uses RootlineUtility, which is unsuitable for bulk lookups, see PagesTreeHelper.
@@ -154,7 +154,7 @@ final readonly class TcaTablesTranslatedLanguageNotInSiteConfiguration extends A
         return $findings;
     }
 
-    protected function getDetailCtrlFields(string $tableName): array
+    public function getDetailCtrlFields(string $tableName): array
     {
         return ['languageField', 'transOrigPointerField'];
     }

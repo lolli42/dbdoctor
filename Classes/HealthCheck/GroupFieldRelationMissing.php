@@ -32,7 +32,7 @@ use TYPO3\CMS\Core\Utility\MathUtility;
  */
 final readonly class GroupFieldRelationMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for group fields with relations to missing records',
@@ -48,7 +48,7 @@ final readonly class GroupFieldRelationMissing extends AbstractHealthCheck imple
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $findings = [];
         foreach ($this->tcaHelper->getNextGroupFieldWithoutMm() as $groupField) {

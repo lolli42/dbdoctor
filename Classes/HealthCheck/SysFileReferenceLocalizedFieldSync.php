@@ -32,7 +32,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class SysFileReferenceLocalizedFieldSync extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for localized sys_file_reference records with parent not in sync',
@@ -51,7 +51,7 @@ final readonly class SysFileReferenceLocalizedFieldSync extends AbstractHealthCh
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
@@ -95,7 +95,7 @@ final readonly class SysFileReferenceLocalizedFieldSync extends AbstractHealthCh
         return $findings;
     }
 
-    protected function getDetailDbFields(string $tableName): array
+    public function getDetailDbFields(string $tableName): array
     {
         return ['sys_language_uid', 'l10n_parent', 'deleted', 'tablenames', 'fieldname', 'uid_foreign', 'uid_local'];
     }

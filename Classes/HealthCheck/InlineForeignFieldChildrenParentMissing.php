@@ -29,7 +29,7 @@ use Lolli\Dbdoctor\Finding\RecordKey;
  */
 final readonly class InlineForeignFieldChildrenParentMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for inline foreign field records with missing parent',
@@ -42,7 +42,7 @@ final readonly class InlineForeignFieldChildrenParentMissing extends AbstractHea
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $findings = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
@@ -91,7 +91,7 @@ final readonly class InlineForeignFieldChildrenParentMissing extends AbstractHea
         return $findings;
     }
 
-    protected function getDetailDbFields(string $tableName): array
+    public function getDetailDbFields(string $tableName): array
     {
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
             if ($inlineChild['tableName'] === $tableName) {

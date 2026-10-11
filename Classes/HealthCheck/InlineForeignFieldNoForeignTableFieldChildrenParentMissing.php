@@ -29,7 +29,7 @@ use TYPO3\CMS\Core\Database\Connection;
  */
 final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for inline foreign field records with missing parent',
@@ -42,7 +42,7 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentMissing 
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $findingsByTable = [];
 
@@ -93,7 +93,7 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentMissing 
         return $findings;
     }
 
-    protected function getDetailDbFields(string $tableName): array
+    public function getDetailDbFields(string $tableName): array
     {
         $fields = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldParent() as $inlineChild) {

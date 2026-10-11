@@ -27,7 +27,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class TcaTablesTranslatedParentSelf extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for record translations pointing to self',
@@ -44,7 +44,7 @@ final readonly class TcaTablesTranslatedParentSelf extends AbstractHealthCheck i
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $findings = [];
         foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {
@@ -81,7 +81,7 @@ final readonly class TcaTablesTranslatedParentSelf extends AbstractHealthCheck i
         return $findings;
     }
 
-    protected function getDetailCtrlFields(string $tableName): array
+    public function getDetailCtrlFields(string $tableName): array
     {
         return ['languageField', 'transOrigPointerField'];
     }

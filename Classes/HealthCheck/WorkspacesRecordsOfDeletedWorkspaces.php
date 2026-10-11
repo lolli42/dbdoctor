@@ -35,7 +35,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class WorkspacesRecordsOfDeletedWorkspaces extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for workspace records of deleted sys_workspace\'s',
@@ -49,7 +49,7 @@ final readonly class WorkspacesRecordsOfDeletedWorkspaces extends AbstractHealth
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         if (!ExtensionManagementUtility::isLoaded('workspaces')) {
             // Check WorkspacesNotLoadedRecordsDangling that is executed before this check

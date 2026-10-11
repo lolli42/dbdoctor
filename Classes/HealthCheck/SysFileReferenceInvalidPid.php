@@ -30,7 +30,7 @@ use TYPO3\CMS\Core\Database\Connection;
  */
 final readonly class SysFileReferenceInvalidPid extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for sys_file_reference records with invalid pid',
@@ -43,7 +43,7 @@ final readonly class SysFileReferenceInvalidPid extends AbstractHealthCheck impl
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
@@ -99,7 +99,7 @@ final readonly class SysFileReferenceInvalidPid extends AbstractHealthCheck impl
         return $findings;
     }
 
-    protected function getDetailDbFields(string $tableName): array
+    public function getDetailDbFields(string $tableName): array
     {
         return ['tablenames', 'uid_foreign', 'fieldname', 'uid_local'];
     }

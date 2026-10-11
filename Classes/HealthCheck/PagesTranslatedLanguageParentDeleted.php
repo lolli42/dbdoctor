@@ -30,7 +30,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class PagesTranslatedLanguageParentDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Check pages with deleted language parent',
@@ -44,7 +44,7 @@ final readonly class PagesTranslatedLanguageParentDeleted extends AbstractHealth
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         // Do not consider page translation records that have been set to deleted already.
@@ -80,7 +80,7 @@ final readonly class PagesTranslatedLanguageParentDeleted extends AbstractHealth
         return $findings;
     }
 
-    protected function getDetailCtrlFields(string $tableName): array
+    public function getDetailCtrlFields(string $tableName): array
     {
         return ['transOrigPointerField'];
     }
