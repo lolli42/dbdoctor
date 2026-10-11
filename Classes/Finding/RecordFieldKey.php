@@ -1,0 +1,31 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Lolli\Dbdoctor\Finding;
+
+/*
+ * This file is part of the TYPO3 CMS project.
+ *
+ * It is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License, either version 2
+ * of the License, or any later version.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE.txt file that was distributed with this source code.
+ *
+ * The TYPO3 project - inspiring people to share!
+ */
+
+/**
+ * A finding on a single field of a record. A record with multiple broken fields
+ * has one finding per field.
+ */
+final readonly class RecordFieldKey
+{
+    public function __construct(
+        public string $tableName,
+        public int $uid,
+        public string $fieldName,
+    ) {}
+}

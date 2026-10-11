@@ -17,8 +17,14 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Doctrine\DBAL\ParameterType;
+use Lolli\Dbdoctor\Database\PlanExecutor;
 use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\MmKey;
+use Lolli\Dbdoctor\Finding\RecordFieldKey;
+use Lolli\Dbdoctor\Finding\WriteOperation;
+use Lolli\Dbdoctor\Finding\WritePlan;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Helper\TableHelper;
 use Lolli\Dbdoctor\Helper\TcaHelper;
@@ -59,6 +65,7 @@ abstract readonly class AbstractHealthCheck
     protected TableHelper $tableHelper;
     private AffectedPagesRenderer $affectedPagesRenderer;
     private RecordsRenderer $recordsRenderer;
+    private PlanExecutor $planExecutor;
 
     final public function injectConnectionPool(ConnectionPool $connectionPool): void
     {
@@ -90,6 +97,11 @@ abstract readonly class AbstractHealthCheck
         $this->recordsRenderer = $recordsRenderer;
     }
 
+    final public function injectPlanExecutor(PlanExecutor $planExecutor): void
+    {
+        $this->planExecutor = $planExecutor;
+    }
+
     final public function handle(SymfonyStyle $io, int $mode, string $file): int
     {
         $run = new HealthCheckRun($io, $file, new PreparedStatements());
@@ -104,8 +116,14 @@ abstract readonly class AbstractHealthCheck
     {
         $io = $run->io;
         try {
-            $affectedRecords = $this->getAffectedRecords($run);
+            $findings = $this->detect($run);
+            if ($findings === null) {
+                return $this->handleLegacyRun($run, $mode);
+            }
+            return $this->handleFindings($run, $mode, $findings);
         } catch (EarlierCheckNotFixedException $e) {
+            // Thrown by detection. Interactive and execute mode detect again later, but
+            // only check mode turns this into a skip.
             if ($mode !== HealthCheckInterface::MODE_CHECK) {
                 throw $e;
             }
@@ -119,6 +137,179 @@ abstract readonly class AbstractHealthCheck
             ]);
             return HealthCheckInterface::RESULT_BROKEN;
         }
+    }
+
+    /**
+     * @param list<Finding> $findings
+     */
+    private function handleFindings(HealthCheckRun $run, int $mode, array $findings): int
+    {
+        $io = $run->io;
+        if (empty($findings) && !$io->isVerbose()) {
+            // Keep the output short: A check without findings is a single line,
+            // header and description are shown with -v.
+            $io->writeln('<info>OK</info>  ' . (new \ReflectionClass($this))->getShortName());
+            return HealthCheckInterface::RESULT_OK;
+        }
+        $this->header($io);
+        $this->outputMainSummary($io, $this->groupFindingsByTable($findings));
+        if (empty($findings)) {
+            return HealthCheckInterface::RESULT_OK;
+        }
+        if ($mode === HealthCheckInterface::MODE_CHECK) {
+            return HealthCheckInterface::RESULT_BROKEN;
+        }
+        if ($mode === HealthCheckInterface::MODE_EXECUTE) {
+            $this->writeSqlDumpFileHeader($run);
+            $this->planExecutor->execute($run, false, $findings);
+            return HealthCheckInterface::RESULT_BROKEN;
+        }
+        while (true) {
+            switch ($io->ask('<info>Handle records [e,s,a,r,p,d,?]?</info> ', '?')) {
+                case 'e':
+                    $findings = $this->detectFindings($run);
+                    $this->writeSqlDumpFileHeader($run);
+                    $this->planExecutor->execute($run, false, $findings);
+                    $findings = $this->detectFindings($run);
+                    $this->outputMainSummary($io, $this->groupFindingsByTable($findings));
+                    if (empty($findings)) {
+                        return HealthCheckInterface::RESULT_BROKEN;
+                    }
+                    break;
+                case 's':
+                    $findings = $this->detectFindings($run);
+                    $this->planExecutor->execute($run, true, $findings);
+                    $this->outputMainSummary($io, $this->groupFindingsByTable($findings));
+                    if (empty($findings)) {
+                        return HealthCheckInterface::RESULT_OK;
+                    }
+                    break;
+                case 'a':
+                    return HealthCheckInterface::RESULT_ABORT;
+                case 'r':
+                    $findings = $this->detectFindings($run);
+                    $this->outputMainSummary($io, $this->groupFindingsByTable($findings));
+                    if (empty($findings)) {
+                        return HealthCheckInterface::RESULT_OK;
+                    }
+                    break;
+                case 'p':
+                    $this->outputMainSummary($io, $this->groupFindingsByTable($findings));
+                    $this->outputFindingsPages($run, $findings);
+                    break;
+                case 'd':
+                    $this->outputMainSummary($io, $this->groupFindingsByTable($findings));
+                    $this->outputFindingsDetails($run, $findings);
+                    break;
+                case 'h':
+                default:
+                    $io->text($this->getHelp());
+                    break;
+            }
+        }
+    }
+
+    /**
+     * @return list<Finding>
+     */
+    private function detectFindings(HealthCheckRun $run): array
+    {
+        $findings = $this->detect($run);
+        if ($findings === null) {
+            throw new \LogicException('detect() of a migrated check must not return null.', 1791700002);
+        }
+        return $findings;
+    }
+
+    /**
+     * Findings grouped by the table they are counted for: The record table, or the MM table
+     * for MM rows of a missing local record.
+     *
+     * @param list<Finding> $findings
+     * @return array<string, list<Finding>>
+     */
+    private function groupFindingsByTable(array $findings): array
+    {
+        $grouped = [];
+        foreach ($findings as $finding) {
+            $tableName = $finding->key instanceof MmKey ? $finding->key->mmTableName : $finding->key->tableName;
+            $grouped[$tableName][] = $finding;
+        }
+        return $grouped;
+    }
+
+    /**
+     * @param list<Finding> $findings
+     */
+    private function outputFindingsPages(HealthCheckRun $run, array $findings): void
+    {
+        $rows = [];
+        foreach ($findings as $finding) {
+            if ($finding->pid === null || $finding->key instanceof MmKey) {
+                continue;
+            }
+            $rows[$finding->key->tableName][] = [
+                'uid' => $finding->key->uid,
+                'pid' => $finding->pid,
+            ];
+        }
+        $this->outputAffectedPages($run, $rows);
+    }
+
+    /**
+     * Record findings are shown with their record, MM findings with their key.
+     *
+     * @param list<Finding> $findings
+     */
+    private function outputFindingsDetails(HealthCheckRun $run, array $findings): void
+    {
+        foreach ($this->groupFindingsByTable($findings) as $tableName => $tableFindings) {
+            if ($tableFindings[0]->key instanceof MmKey) {
+                $run->io->note('MM table "' . $tableName . '":');
+                $header = ['uid_local', 'local table', 'field'];
+                $rows = [];
+                foreach ($tableFindings as $finding) {
+                    /** @var MmKey $key */
+                    $key = $finding->key;
+                    $row = [$key->uidLocal, $key->localTableName, $key->localFieldName];
+                    foreach ($finding->evidence as $value) {
+                        $row[] = is_scalar($value) ? (string)$value : json_encode($value, JSON_THROW_ON_ERROR);
+                    }
+                    $rows[] = $row;
+                }
+                $run->io->table(array_merge($header, array_keys($tableFindings[0]->evidence)), $rows);
+                continue;
+            }
+            $hasReason = false;
+            $extraDbFields = $this->getDetailDbFields($tableName);
+            $rows = [];
+            foreach ($tableFindings as $finding) {
+                $key = $finding->key;
+                if ($key instanceof MmKey) {
+                    continue;
+                }
+                if ($key instanceof RecordFieldKey && !in_array($key->fieldName, $extraDbFields, true)) {
+                    $extraDbFields[] = $key->fieldName;
+                }
+                $row = ['uid' => $key->uid];
+                if ($finding->reason !== null) {
+                    $hasReason = true;
+                    $row['_reasonBroken'] = $finding->reason->message;
+                }
+                $rows[] = $row;
+            }
+            if ($hasReason) {
+                $rows = array_map(static fn(array $row): array => $row + ['_reasonBroken' => ''], $rows);
+            }
+            $this->outputRecordDetails($run, [$tableName => $rows], $hasReason ? '_reasonBroken' : '', $this->getDetailCtrlFields($tableName), $extraDbFields);
+        }
+    }
+
+    private function handleLegacyRun(HealthCheckRun $run, int $mode): int
+    {
+        // @todo Remove with the last check migrated to detect()
+        $io = $run->io;
+        $affectedRecords = $this->getAffectedRecords($run);
         if (empty($affectedRecords) && !$io->isVerbose()) {
             // Keep the output short: A check without affected records is a single line,
             // header and description are shown with -v.
@@ -221,14 +412,57 @@ abstract readonly class AbstractHealthCheck
     abstract public function header(SymfonyStyle $io): void;
 
     /**
-     * @return array<string, array<int, array<string, int|string>>>
+     * Find broken things, each with the changes that fix it. Checks not migrated yet return
+     * null and implement getAffectedRecords() and processRecords() instead.
+     *
+     * @return list<Finding>|null
      */
-    abstract protected function getAffectedRecords(HealthCheckRun $run): array;
+    protected function detect(HealthCheckRun $run): ?array
+    {
+        return null;
+    }
 
     /**
+     * Ctrl fields like "transOrigPointerField" shown in record details of findings of a table,
+     * additionally to the default fields.
+     *
+     * @return list<string>
+     */
+    protected function getDetailCtrlFields(string $tableName): array
+    {
+        return [];
+    }
+
+    /**
+     * Database fields shown in record details of findings of a table, additionally to the default
+     * fields. Fields of RecordFieldKey findings are added automatically.
+     *
+     * @return list<string>
+     */
+    protected function getDetailDbFields(string $tableName): array
+    {
+        return [];
+    }
+
+    /**
+     * Legacy, checks not migrated to detect() yet.
+     *
+     * @return array<string, array<int, array<string, int|string>>>
+     */
+    protected function getAffectedRecords(HealthCheckRun $run): array
+    {
+        throw new \LogicException('Implement detect() or getAffectedRecords().', 1791700003);
+    }
+
+    /**
+     * Legacy, checks not migrated to detect() yet.
+     *
      * @param array<string, array<int, array<string, int|string>>> $affectedRecords
      */
-    abstract protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void;
+    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
+    {
+        throw new \LogicException('Implement detect() or processRecords().', 1791700004);
+    }
 
     /**
      * Default implementation. Overridden by subclasses sometimes to provide more specific details.
@@ -251,7 +485,7 @@ abstract readonly class AbstractHealthCheck
     }
 
     /**
-     * @param array<string, array<int, array<string, int|string>>> $danglingRows
+     * @param array<string, array<int, mixed>> $danglingRows Affected rows or findings per table
      */
     final protected function outputMainSummary(SymfonyStyle $io, array $danglingRows): void
     {
@@ -335,8 +569,7 @@ abstract readonly class AbstractHealthCheck
      */
     final protected function deleteSingleTcaRecord(HealthCheckRun $run, bool $simulate, string $tableName, int $uid): void
     {
-        $sql = $this->recordsHelper->deleteTcaRecord($run->statements, $simulate, $tableName, $uid);
-        $this->logAndOutputSql($run, $simulate, $sql);
+        $this->planExecutor->executePlan($run, $simulate, new WritePlan(WriteOperation::Delete, $tableName, $uid));
     }
 
     /**
@@ -364,8 +597,7 @@ abstract readonly class AbstractHealthCheck
      */
     final protected function insertSingleTcaRecord(HealthCheckRun $run, bool $simulate, string $tableName, array $fields): void
     {
-        $sql = $this->recordsHelper->insertTcaRecord($run->statements, $simulate, $tableName, $fields);
-        $this->logAndOutputSql($run, $simulate, $sql);
+        $this->planExecutor->executePlan($run, $simulate, new WritePlan(WriteOperation::Insert, $tableName, null, $fields));
     }
 
     /**
@@ -375,8 +607,7 @@ abstract readonly class AbstractHealthCheck
      */
     final protected function updateSingleTcaRecord(HealthCheckRun $run, bool $simulate, string $tableName, int $uid, array $fields): void
     {
-        $sql = $this->recordsHelper->updateTcaRecord($run->statements, $simulate, $tableName, $uid, $fields);
-        $this->logAndOutputSql($run, $simulate, $sql);
+        $this->planExecutor->executePlan($run, $simulate, new WritePlan(WriteOperation::Update, $tableName, $uid, $fields));
     }
 
     /**
@@ -386,8 +617,7 @@ abstract readonly class AbstractHealthCheck
      */
     final protected function deleteMmRows(HealthCheckRun $run, bool $simulate, string $mmTableName, array $whereFields): void
     {
-        $sql = $this->recordsHelper->deleteMmRows($run->statements, $simulate, $mmTableName, $whereFields);
-        $this->logAndOutputSql($run, $simulate, $sql);
+        $this->planExecutor->executePlan($run, $simulate, new WritePlan(WriteOperation::MmDelete, $mmTableName, null, [], $whereFields));
     }
 
     /**
@@ -418,44 +648,55 @@ abstract readonly class AbstractHealthCheck
     final protected function softOrHardDeleteRecordsOfTable(HealthCheckRun $run, bool $simulate, string $tableName, array $rows): void
     {
         $this->outputTableHandleBefore($run, $simulate, $tableName);
+        $updateCount = 0;
+        $deleteCount = 0;
+        foreach ($rows as $row) {
+            $plan = $this->softOrHardDeletePlan($tableName, $row);
+            $this->planExecutor->executePlan($run, $simulate, $plan);
+            if ($plan->operation === WriteOperation::Delete) {
+                $deleteCount++;
+            } else {
+                $updateCount++;
+            }
+        }
+        $this->outputTableHandleAfter($run, $simulate, $tableName, $updateCount, $deleteCount);
+    }
 
+    /**
+     * DELETE or UPDATE a record, depending on TCA and the record:
+     * * If the table is not delete-aware, the record is DELETED
+     * * If the table is delete-aware and the record is live (t3ver_wsid = 0), the record is UPDATED with soft-delete=1
+     * * If the record is workspace-aware and the record is within a workspace (t3ver_wsid > 0), the record is DELETED
+     *
+     * @param array<string, int|string> $row Record with "uid", and "t3ver_wsid" for workspace aware tables
+     */
+    final protected function softOrHardDeletePlan(string $tableName, array $row): WritePlan
+    {
         $deleteField = $this->tcaHelper->getDeletedField($tableName);
-        $isTableSoftDeleteAware = !empty($deleteField);
-        $updateFields = [];
-        if ($isTableSoftDeleteAware) {
-            $updateFields = [
+        $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
+        $isTableWorkspaceAware = !empty($workspaceIdField);
+        if ($isTableWorkspaceAware && !array_key_exists($workspaceIdField, $row)) {
+            throw new \RuntimeException(
+                'When soft or hard deleting records from a workspace aware table, t3ver_wsid field must be hand over.',
+                1688281493
+            );
+        }
+        if (empty($deleteField)
+            || ($isTableWorkspaceAware && ((int)$row[$workspaceIdField] > 0))
+        ) {
+            return new WritePlan(WriteOperation::Delete, $tableName, (int)$row['uid']);
+        }
+        return new WritePlan(
+            WriteOperation::SoftDelete,
+            $tableName,
+            (int)$row['uid'],
+            [
                 $deleteField => [
                     'value' => 1,
                     'type' => Connection::PARAM_INT,
                 ],
-            ];
-        }
-        $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
-        $isTableWorkspaceAware = !empty($workspaceIdField);
-
-        $updateCount = 0;
-        $deleteCount = 0;
-        foreach ($rows as $row) {
-            if ($isTableWorkspaceAware && !array_key_exists($workspaceIdField, $row)) {
-                throw new \RuntimeException(
-                    'When soft or hard deleting records from a workspace aware table, t3ver_wsid field must be hand over.',
-                    1688281493
-                );
-            }
-            if (!$isTableSoftDeleteAware
-                || ($isTableWorkspaceAware && ((int)$row[$workspaceIdField] > 0))
-            ) {
-                // DELETE record if table is not workspace aware, or if record is a workspace record
-                $this->deleteSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid']);
-                $deleteCount++;
-            } else {
-                // UPDATE record, set "deleted=1" if table is soft-delete aware and record is not a workspace record
-                $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid'], $updateFields);
-                $updateCount++;
-            }
-        }
-
-        $this->outputTableHandleAfter($run, $simulate, $tableName, $updateCount, $deleteCount);
+            ]
+        );
     }
 
     /**
@@ -575,14 +816,6 @@ abstract readonly class AbstractHealthCheck
         if ($run->sqlDumpFile) {
             file_put_contents($run->sqlDumpFile, '# Triggered by ' . static::class . "\n", \FILE_APPEND);
         }
-    }
-
-    private function logAndOutputSql(HealthCheckRun $run, bool $simulate, string $sql): void
-    {
-        if ($run->sqlDumpFile && !$simulate) {
-            file_put_contents($run->sqlDumpFile, $sql . "\n", \FILE_APPEND);
-        }
-        $run->io->text($sql);
     }
 
     /**

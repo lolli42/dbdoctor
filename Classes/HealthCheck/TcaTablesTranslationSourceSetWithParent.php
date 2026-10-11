@@ -16,6 +16,10 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Finding\Finding;
+use Lolli\Dbdoctor\Finding\RecordKey;
+use Lolli\Dbdoctor\Finding\WriteOperation;
+use Lolli\Dbdoctor\Finding\WritePlan;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
@@ -41,9 +45,9 @@ final readonly class TcaTablesTranslationSourceSetWithParent extends AbstractHea
         ]);
     }
 
-    protected function getAffectedRecords(HealthCheckRun $run): array
+    protected function detect(HealthCheckRun $run): array
     {
-        $affectedRecords = [];
+        $findings = [];
         foreach ($this->tcaHelper->getNextLanguageSourceAwareTcaTable() as $tableName) {
             [$languageField, $translationParentField, $translationSourceField] = $this->getFields($tableName);
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
@@ -64,28 +68,21 @@ final readonly class TcaTablesTranslationSourceSetWithParent extends AbstractHea
                 ->executeQuery();
             while ($row = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $row */
-                $affectedRecords[$tableName][] = $row;
-            }
-        }
-        return $affectedRecords;
-    }
-
-    protected function processRecords(HealthCheckRun $run, bool $simulate, array $affectedRecords): void
-    {
-        foreach ($affectedRecords as $tableName => $rows) {
-            [, $translationParentField, $translationSourceField] = $this->getFields($tableName);
-            $this->outputTableUpdateBefore($run, $simulate, $tableName);
-            foreach ($rows as $row) {
-                $updateFields = [
-                    $translationSourceField => [
-                        'value' => (int)$row[$translationParentField],
-                        'type' => Connection::PARAM_INT,
+                $findings[] = new Finding(
+                    new RecordKey($tableName, (int)$row['uid']),
+                    (int)$row['pid'],
+                    [
+                        new WritePlan(WriteOperation::Update, $tableName, (int)$row['uid'], [
+                            $translationSourceField => [
+                                'value' => (int)$row[$translationParentField],
+                                'type' => Connection::PARAM_INT,
+                            ],
+                        ]),
                     ],
-                ];
-                $this->updateSingleTcaRecord($run, $simulate, $tableName, (int)$row['uid'], $updateFields);
+                );
             }
-            $this->outputTableUpdateAfter($run, $simulate, $tableName, count($rows));
         }
+        return $findings;
     }
 
     /**
