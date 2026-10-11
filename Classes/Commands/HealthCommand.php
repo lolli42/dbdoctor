@@ -18,10 +18,13 @@ namespace Lolli\Dbdoctor\Commands;
  */
 
 use Lolli\Dbdoctor\DatabaseSchema\DatabaseSchemaChecker;
+use Lolli\Dbdoctor\HealthCheck\HealthCheckInspection;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckMode;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckResult;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\HealthFactory\HealthFactoryInterface;
+use Lolli\Dbdoctor\StructuredOutput\JsonReportBuilder;
+use Lolli\Dbdoctor\StructuredOutput\ReportOptions;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -38,6 +41,7 @@ final class HealthCommand extends Command
         private readonly HealthFactoryInterface $healthFactory,
         private readonly DatabaseSchemaChecker $databaseSchemaChecker,
         private readonly HealthCheckRunner $healthCheckRunner,
+        private readonly JsonReportBuilder $jsonReportBuilder,
     ) {
         parent::__construct();
     }
@@ -57,11 +61,55 @@ final class HealthCommand extends Command
             InputOption::VALUE_OPTIONAL,
             'log execute queries to a given absolute file'
         );
+        $this->addOption(
+            'format',
+            null,
+            InputOption::VALUE_REQUIRED,
+            'text|json - json (experimental): structured, read-only report on stdout, with --mode check only',
+            'text'
+        );
+        $this->addOption(
+            'scope',
+            null,
+            InputOption::VALUE_REQUIRED,
+            ReportOptions::SCOPE_UNTIL_FIRST_FINDING . '|' . ReportOptions::SCOPE_ALL . ' - json only: run checks until the first'
+            . ' one that is not ok, or all checks with results after it marked as preliminary',
+            ReportOptions::SCOPE_UNTIL_FIRST_FINDING
+        );
+        $this->addOption(
+            'tier',
+            null,
+            InputOption::VALUE_REQUIRED,
+            ReportOptions::TIER_STRUCTURE . '|' . ReportOptions::TIER_LABELS . ' - json only: record data in the report,'
+            . ' labels add TCA label fields except of tables with personal data',
+            ReportOptions::TIER_STRUCTURE
+        );
+        $this->addOption(
+            'limit',
+            null,
+            InputOption::VALUE_REQUIRED,
+            'json only: maximum number of findings per check, 0 for all, counts are always complete',
+            '100'
+        );
+        $this->addOption(
+            'check',
+            null,
+            InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
+            'json only: report only this check, class name with or without namespace, repeatable.'
+            . ' Earlier checks still run to tell if the result is preliminary'
+        );
         $this->setHelp('This is an interactive command to go through a list of database health checks finding inconsistencies.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        if ((string)$input->getOption('format') === 'json') {
+            return $this->executeJson($input, $output);
+        }
+        if ((string)$input->getOption('format') !== 'text') {
+            (new SymfonyStyle($input, $output))->error('Invalid format "' . $input->getOption('format') . '". Use -h for help on valid options.');
+            return HealthCheckResult::Error->value;
+        }
         $io = new SymfonyStyle($input, $output);
         $io->title($this->getDescription());
 
@@ -127,6 +175,85 @@ final class HealthCommand extends Command
         $exitCode |= $this->removeEmptyFile($io, $file)->value;
         $this->outputSysRefIndexWarning($io, $mode, $exitCode);
         return $exitCode;
+    }
+
+    /**
+     * Read-only structured report: Only JSON on stdout, the exit code as in check mode.
+     */
+    private function executeJson(InputInterface $input, OutputInterface $output): int
+    {
+        $start = hrtime(true);
+        $scope = (string)$input->getOption('scope');
+        $tier = (string)$input->getOption('tier');
+        $limit = (string)$input->getOption('limit');
+        if ((string)$input->getOption('mode') !== 'check') {
+            return $this->outputJsonError($output, 'Option "--format json" is available with "--mode check" only.');
+        }
+        if (!in_array($scope, [ReportOptions::SCOPE_UNTIL_FIRST_FINDING, ReportOptions::SCOPE_ALL], true)) {
+            return $this->outputJsonError($output, 'Invalid scope "' . $scope . '".');
+        }
+        if (!in_array($tier, [ReportOptions::TIER_STRUCTURE, ReportOptions::TIER_LABELS], true)) {
+            return $this->outputJsonError($output, 'Invalid tier "' . $tier . '".');
+        }
+        if (!ctype_digit($limit)) {
+            return $this->outputJsonError($output, 'Invalid limit "' . $limit . '".');
+        }
+        if ($this->databaseSchemaChecker->hasIncompleteTablesColumnsIndexes()) {
+            return $this->outputJsonError(
+                $output,
+                'Current database schema is not in sync with TCA: Missing tables, missing or not adapted columns or indexes were detected.'
+            );
+        }
+        $options = new ReportOptions($scope, $tier, (int)$limit);
+        /** @var list<string> $onlyChecks */
+        $onlyChecks = (array)$input->getOption('check');
+
+        $result = HealthCheckResult::Ok->value;
+        $checks = [];
+        $tableNames = [];
+        $position = 0;
+        $isNotOkSeen = false;
+        foreach ($this->healthFactory->getNext() as $healthInstance) {
+            $position++;
+            $isReported = $onlyChecks === []
+                || in_array($healthInstance::class, $onlyChecks, true)
+                || in_array((new \ReflectionClass($healthInstance))->getShortName(), $onlyChecks, true);
+            if ($isNotOkSeen && $options->scope === ReportOptions::SCOPE_UNTIL_FIRST_FINDING) {
+                if (!$isReported) {
+                    continue;
+                }
+                $checks[] = $this->jsonReportBuilder->buildCheckWithoutInspection($position, $healthInstance::class, 'not-run');
+                continue;
+            }
+            $inspection = $this->healthCheckRunner->inspect($healthInstance);
+            if ($isReported) {
+                $checkResult = $this->jsonReportBuilder->buildCheck($position, $healthInstance::class, $inspection, $isNotOkSeen, $options);
+                $checks[] = $checkResult['check'];
+                $tableNames = array_merge($tableNames, $checkResult['tables']);
+            }
+            if ($inspection->status !== HealthCheckInspection::STATUS_OK) {
+                $isNotOkSeen = true;
+                $result = HealthCheckResult::Broken->value;
+            }
+        }
+        $report = [
+            'schemaVersion' => JsonReportBuilder::SCHEMA_VERSION,
+            'run' => $this->jsonReportBuilder->buildRun($options, (int)((hrtime(true) - $start) / 1000000), $result),
+            'sites' => $this->jsonReportBuilder->buildSites($options),
+            'tables' => (object)$this->jsonReportBuilder->buildTables(array_values(array_unique($tableNames))),
+            'checks' => $checks,
+        ];
+        $output->writeln(json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+        return $result;
+    }
+
+    private function outputJsonError(OutputInterface $output, string $message): int
+    {
+        $output->writeln(json_encode([
+            'schemaVersion' => JsonReportBuilder::SCHEMA_VERSION,
+            'error' => ['message' => $message],
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+        return HealthCheckResult::Error->value;
     }
 
     /**

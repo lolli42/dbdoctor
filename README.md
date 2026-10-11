@@ -343,6 +343,28 @@ prompting for user input after each failed check.
   checks that found something only. With `-v`, all checks show their title, actions and
   description.
 
+* Structured output (experimental): `--format json`, with check mode only:
+  ```
+  $ bin/typo3 dbdoctor:health -m check --format json
+  ```
+  A read-only report as JSON on stdout, for tools and agents: run data, the tables found, and
+  per check its status, counts and findings. A finding carries its key (record, record field
+  or MM rows), the record with TCA control fields like deleted, language and workspace under
+  names that are the same for all tables, the reason and the changes dbdoctor would do,
+  with old and new values. The exit code is the same as in check mode. Further options:
+  * `--scope until-first-finding` (default): Checks after the first one that is not ok are
+    not run, they rely on the findings being fixed. `--scope all` runs all checks and marks
+    results after the first not ok check as preliminary.
+  * `--check <class>`: Report only this check, repeatable. Earlier checks still run.
+  * `--limit <n>`: Findings per check, default 100, 0 for all. Counts are always complete.
+  * `--tier structure` (default): uids, pids, TCA control fields, timestamps and written fields.
+    `--tier labels` adds TCA label fields and site identifiers, never for tables with personal
+    data like be_users and fe_users.
+
+  The report is experimental: While its `schemaVersion` is 0.x, its structure may change with
+  any release, there is no compatibility promise yet. Checks, their names and their order are
+  no API in any case.
+
 
 # Further hints
 
