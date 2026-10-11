@@ -61,6 +61,10 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         self::assertSame(3, $check['findings'][0]['record']['uid']);
         self::assertSame(0, $check['findings'][0]['record']['deleted']);
         self::assertSame([['seq' => 1, 'operation' => 'delete', 'table' => 'be_users', 'uid' => 3]], $check['findings'][0]['writes']);
+        self::assertSame(['delete' => 1], $check['facets']['operation']);
+        self::assertSame(['live' => 1], $check['facets']['state']);
+        self::assertSame(['live' => ['delete' => 1]], $check['facets']['stateByOperation']);
+        self::assertSame([['operation' => 'delete', 'table' => 'be_users', 'count' => 1]], $check['facets']['writePatterns']);
         self::assertSame(3, $report['tables']['be_users']['rowCount']);
         self::assertSame('deleted', $report['tables']['be_users']['roles']['deleted']);
     }
@@ -104,6 +108,12 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         self::assertSame(2, $check['findings'][0]['record']['l10nParent']);
         self::assertSame(['id' => 0, 'state' => 0, 'oid' => 0], $check['findings'][0]['record']['workspace']);
         self::assertSame(['title' => 'Not ok translated sub page 1'], $check['findings'][0]['record']['labels']);
+        // Facets count all findings, not only those up to the limit
+        self::assertContains(
+            ['operation' => 'update', 'table' => 'pages', 'field' => 'l10n_source', 'value' => 'role:l10nParent', 'count' => 1],
+            $check['facets']['writePatterns']
+        );
+        self::assertSame($check['counts']['findings'], array_sum($check['facets']['state']));
     }
 
     #[Test]
