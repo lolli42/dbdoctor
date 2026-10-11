@@ -54,6 +54,8 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         self::assertSame(['record'], $check['keyTypes']);
         self::assertSame(1, $check['counts']['findings']);
         self::assertSame(1, $check['counts']['writes']);
+        // One of three be_users rows, far below the threshold
+        self::assertSame(['findings' => 1, 'rows' => 1, 'share' => 0.33333, 'suspicious' => false], $check['counts']['byTable']['be_users']);
         self::assertSame(['type' => 'record', 'table' => 'be_users', 'uid' => 3], $check['findings'][0]['key']);
         self::assertSame(3, $check['findings'][0]['pid']);
         self::assertSame('page-missing', $check['findings'][0]['reason']['code']);
