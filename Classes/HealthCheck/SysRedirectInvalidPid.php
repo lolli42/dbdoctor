@@ -19,6 +19,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
+use TYPO3\CMS\Core\Exception\Page\CircularRootLineException;
 use TYPO3\CMS\Core\Exception\SiteNotFoundException;
 use TYPO3\CMS\Core\Site\SiteFinder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -92,6 +93,9 @@ final readonly class SysRedirectInvalidPid extends AbstractHealthCheck implement
                     $rootPageId = $this->siteFinder->getSiteByPageId((int)$tableRow['pid'])->getRootPageId();
                 } catch (SiteNotFoundException $e) {
                     // Move redirects without proper site config root page to pid 0.
+                    $rootPageId = 0;
+                } catch (CircularRootLineException $e) {
+                    // A pid loop has no site root either, PagesBrokenTree removes these pages later.
                     $rootPageId = 0;
                 }
                 $updateFields = [

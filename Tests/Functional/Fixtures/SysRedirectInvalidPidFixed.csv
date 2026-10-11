@@ -5,6 +5,8 @@
 ,3,0,0,0,0,"Site root 2"
 ,4,3,0,0,0,"Sub page 2-1"
 ,5,0,0,0,0,"Has no site config"
+,6,7,0,0,0,"In a pid loop with page 7"
+,7,6,0,0,0,"In a pid loop with page 6"
 "sys_redirect"
 ,"uid","pid","deleted","source_path"
 ,1,0,0,"OK on pid 0"
@@ -18,3 +20,4 @@
 ,8,4,1,"OK deleted on pid 4"
 ,9,0,0,"Not ok on pid 5"
 ,10,5,1,"OK deleted on pid 5"
+,11,0,0,"Not ok on pid 6 in a pid loop"
