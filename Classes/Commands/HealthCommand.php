@@ -18,13 +18,16 @@ namespace Lolli\Dbdoctor\Commands;
  */
 
 use Lolli\Dbdoctor\DatabaseSchema\DatabaseSchemaChecker;
-use Lolli\Dbdoctor\HealthCheck\HealthCheckInspection;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckMode;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckResult;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
+use Lolli\Dbdoctor\HealthCheck\InspectionStatus;
 use Lolli\Dbdoctor\HealthFactory\HealthFactoryInterface;
 use Lolli\Dbdoctor\StructuredOutput\JsonReportBuilder;
+use Lolli\Dbdoctor\StructuredOutput\ReportContext;
 use Lolli\Dbdoctor\StructuredOutput\ReportOptions;
+use Lolli\Dbdoctor\StructuredOutput\ReportScope;
+use Lolli\Dbdoctor\StructuredOutput\ReportTier;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -72,17 +75,17 @@ final class HealthCommand extends Command
             'scope',
             null,
             InputOption::VALUE_REQUIRED,
-            ReportOptions::SCOPE_UNTIL_FIRST_FINDING . '|' . ReportOptions::SCOPE_ALL . ' - json only: run checks until the first'
+            ReportScope::UntilFirstFinding->value . '|' . ReportScope::All->value . ' - json only: run checks until the first'
             . ' one that is not ok, or all checks with results after it marked as preliminary',
-            ReportOptions::SCOPE_UNTIL_FIRST_FINDING
+            ReportScope::UntilFirstFinding->value
         );
         $this->addOption(
             'tier',
             null,
             InputOption::VALUE_REQUIRED,
-            ReportOptions::TIER_STRUCTURE . '|' . ReportOptions::TIER_LABELS . ' - json only: record data in the report,'
+            ReportTier::Structure->value . '|' . ReportTier::Labels->value . ' - json only: record data in the report,'
             . ' labels add TCA label fields except of tables with personal data',
-            ReportOptions::TIER_STRUCTURE
+            ReportTier::Structure->value
         );
         $this->addOption(
             'limit',
@@ -95,9 +98,9 @@ final class HealthCommand extends Command
             'context',
             null,
             InputOption::VALUE_REQUIRED,
-            ReportOptions::CONTEXT_BASIC . '|' . ReportOptions::CONTEXT_NONE . ' - json only: related records of findings,'
+            ReportContext::Basic->value . '|' . ReportContext::None->value . ' - json only: related records of findings,'
             . ' basic adds rootline, language parent and translation source',
-            ReportOptions::CONTEXT_BASIC
+            ReportContext::Basic->value
         );
         $this->addOption(
             'table',
@@ -215,21 +218,24 @@ final class HealthCommand extends Command
     private function executeJson(InputInterface $input, OutputInterface $output): int
     {
         $start = hrtime(true);
-        $scope = (string)$input->getOption('scope');
-        $tier = (string)$input->getOption('tier');
+        $scopeOption = (string)$input->getOption('scope');
+        $tierOption = (string)$input->getOption('tier');
         $limit = (string)$input->getOption('limit');
         if ((string)$input->getOption('mode') !== 'check') {
             return $this->outputJsonError($output, 'Option "--format json" is available with "--mode check" only.');
         }
-        if (!in_array($scope, [ReportOptions::SCOPE_UNTIL_FIRST_FINDING, ReportOptions::SCOPE_ALL], true)) {
-            return $this->outputJsonError($output, 'Invalid scope "' . $scope . '".');
+        $scope = ReportScope::tryFrom($scopeOption);
+        if ($scope === null) {
+            return $this->outputJsonError($output, 'Invalid scope "' . $scopeOption . '".');
         }
-        if (!in_array($tier, [ReportOptions::TIER_STRUCTURE, ReportOptions::TIER_LABELS], true)) {
-            return $this->outputJsonError($output, 'Invalid tier "' . $tier . '".');
+        $tier = ReportTier::tryFrom($tierOption);
+        if ($tier === null) {
+            return $this->outputJsonError($output, 'Invalid tier "' . $tierOption . '".');
         }
-        $context = (string)$input->getOption('context');
-        if (!in_array($context, [ReportOptions::CONTEXT_BASIC, ReportOptions::CONTEXT_NONE], true)) {
-            return $this->outputJsonError($output, 'Invalid context "' . $context . '".');
+        $contextOption = (string)$input->getOption('context');
+        $context = ReportContext::tryFrom($contextOption);
+        if ($context === null) {
+            return $this->outputJsonError($output, 'Invalid context "' . $contextOption . '".');
         }
         if (!ctype_digit($limit)) {
             return $this->outputJsonError($output, 'Invalid limit "' . $limit . '".');
@@ -266,7 +272,7 @@ final class HealthCommand extends Command
             $isReported = $onlyChecks === []
                 || in_array($healthInstance::class, $onlyChecks, true)
                 || in_array((new \ReflectionClass($healthInstance))->getShortName(), $onlyChecks, true);
-            if ($isNotOkSeen && $options->scope === ReportOptions::SCOPE_UNTIL_FIRST_FINDING) {
+            if ($isNotOkSeen && $options->scope === ReportScope::UntilFirstFinding) {
                 if (!$isReported) {
                     continue;
                 }
@@ -279,7 +285,7 @@ final class HealthCommand extends Command
                 $checks[] = $checkResult['check'];
                 $tableNames = array_merge($tableNames, $checkResult['tables']);
             }
-            if ($inspection->status !== HealthCheckInspection::STATUS_OK) {
+            if ($inspection->status !== InspectionStatus::Ok) {
                 $isNotOkSeen = true;
                 $result = HealthCheckResult::Broken->value;
             }

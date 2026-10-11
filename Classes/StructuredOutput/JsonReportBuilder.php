@@ -25,6 +25,7 @@ use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordFieldKey;
 use Lolli\Dbdoctor\Finding\RecordKey;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInspection;
+use Lolli\Dbdoctor\HealthCheck\InspectionStatus;
 use Lolli\Dbdoctor\Helper\PagesRootlineHelper;
 use Lolli\Dbdoctor\Helper\TcaHelper;
 use TYPO3\CMS\Core\Database\ConnectionPool;
@@ -74,10 +75,10 @@ final readonly class JsonReportBuilder
             ],
             'workspacesLoaded' => ExtensionManagementUtility::isLoaded('workspaces'),
             'options' => [
-                'scope' => $options->scope,
-                'tier' => $options->tier,
+                'scope' => $options->scope->value,
+                'tier' => $options->tier->value,
                 'limit' => $options->limit,
-                'context' => $options->context,
+                'context' => $options->context->value,
                 'filter' => (object)array_filter([
                     'table' => $options->filterTable,
                     'uid' => $options->filterUid,
@@ -101,12 +102,12 @@ final readonly class JsonReportBuilder
         foreach ($this->siteFinder->getAllSites(false) as $site) {
             $languages = [];
             foreach ($site->getAllLanguages() as $language) {
-                $languages[] = $options->tier === ReportOptions::TIER_LABELS
+                $languages[] = $options->tier === ReportTier::Labels
                     ? ['id' => $language->getLanguageId(), 'title' => $language->getTitle()]
                     : ['id' => $language->getLanguageId()];
             }
             $siteData = ['rootPageId' => $site->getRootPageId(), 'languages' => $languages];
-            if ($options->tier === ReportOptions::TIER_LABELS) {
+            if ($options->tier === ReportTier::Labels) {
                 $siteData = ['identifier' => $site->getIdentifier()] + $siteData;
             }
             $sites[] = $siteData;
@@ -142,12 +143,12 @@ final readonly class JsonReportBuilder
             'className' => $className,
             'title' => $inspection->description->title,
             'tags' => $inspection->description->tags,
-            'status' => $inspection->status,
+            'status' => $inspection->status->value,
             'preliminary' => $preliminary,
             'durationMs' => $inspection->durationMs,
             'peakMemory' => $inspection->peakMemory,
         ];
-        if ($inspection->status === HealthCheckInspection::STATUS_OK) {
+        if ($inspection->status === InspectionStatus::Ok) {
             return [
                 'check' => $check,
                 'tables' => [],
@@ -376,7 +377,7 @@ final readonly class JsonReportBuilder
                     'record' => $record === null ? null : $this->withoutFields($record),
                     'writes' => $writes,
                 ];
-                if ($options->context === ReportOptions::CONTEXT_BASIC) {
+                if ($options->context === ReportContext::Basic) {
                     $result[array_key_last($result)]['context'] = $this->buildContext($statements, $finding, $record, $rootline, $options);
                 }
             }
@@ -415,7 +416,7 @@ final readonly class JsonReportBuilder
             if (!(bool)$page['_isMissing'] && (int)$page['t3ver_wsid'] > 0) {
                 $entry['workspace'] = (int)$page['t3ver_wsid'];
             }
-            if ($options->tier === ReportOptions::TIER_LABELS && !(bool)$page['_isMissing']) {
+            if ($options->tier === ReportTier::Labels && !(bool)$page['_isMissing']) {
                 $entry['title'] = (string)$page['title'];
             }
             if (isset($siteRootPageIds[(int)$page['uid']])) {
