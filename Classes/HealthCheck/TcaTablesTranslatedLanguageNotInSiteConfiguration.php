@@ -48,7 +48,7 @@ final readonly class TcaTablesTranslatedLanguageNotInSiteConfiguration extends A
     {
         return new HealthCheckDescription(
             'Scan for translated records with language not in site configuration',
-            [self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE, self::TAG_RISKY],
+            [ActionTag::SoftDelete, ActionTag::Remove, ActionTag::WorkspaceRemove, ActionTag::Risky],
             [
                 'Translated records reference a sys_language_uid. This language must be configured',
                 'in the site configuration of the page they are located on. This check finds records',

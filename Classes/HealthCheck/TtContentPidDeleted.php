@@ -41,7 +41,7 @@ final readonly class TtContentPidDeleted extends AbstractHealthCheck implements 
     {
         return new HealthCheckDescription(
             'Scan for tt_content on soft-deleted pages',
-            [self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE],
+            [ActionTag::SoftDelete, ActionTag::WorkspaceRemove],
             [
                 'tt_content not soft-delete must have a "pid" page record that is not soft-deleted. Otherwise, they are',
                 'most likely not editable. This is similar to the previous check, affected records will be soft-deleted',

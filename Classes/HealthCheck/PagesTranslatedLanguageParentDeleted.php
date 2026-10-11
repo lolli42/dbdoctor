@@ -34,7 +34,7 @@ final readonly class PagesTranslatedLanguageParentDeleted extends AbstractHealth
     {
         return new HealthCheckDescription(
             'Check pages with deleted language parent',
-            [self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE],
+            [ActionTag::SoftDelete, ActionTag::WorkspaceRemove],
             [
                 'This health check finds not deleted but translated (sys_language_uid > 0) "pages" records,',
                 'with their default language record (l10n_parent field) being soft-deleted.',

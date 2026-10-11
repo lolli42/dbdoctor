@@ -32,7 +32,7 @@ final readonly class WorkspacesT3verStateNotZeroInLive extends AbstractHealthChe
     {
         return new HealthCheckDescription(
             'Scan for records with t3ver_wsid=0 and t3ver_state!=0',
-            [self::TAG_REMOVE, self::TAG_SOFT_DELETE, self::TAG_UPDATE],
+            [ActionTag::Remove, ActionTag::SoftDelete, ActionTag::UpdateFields],
             [
                 'There should be no t3ver_state non-zero (0) records in live.',
                 'If this check finds records, ABORT NOW and run these upgrades wizards:',

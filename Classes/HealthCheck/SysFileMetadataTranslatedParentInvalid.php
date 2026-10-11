@@ -43,7 +43,7 @@ final readonly class SysFileMetadataTranslatedParentInvalid extends AbstractHeal
     {
         return new HealthCheckDescription(
             'Scan for translated sys_file_metadata records with invalid language parent',
-            [self::TAG_UPDATE],
+            [ActionTag::UpdateFields],
             [
                 'Translated "sys_file_metadata" records must point to the default language record of their',
                 'file in "l10n_parent". This check finds live translations pointing to a not existing record,',

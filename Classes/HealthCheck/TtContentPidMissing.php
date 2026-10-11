@@ -40,7 +40,7 @@ final readonly class TtContentPidMissing extends AbstractHealthCheck implements 
     {
         return new HealthCheckDescription(
             'Scan for tt_content on not existing pages',
-            [self::TAG_REMOVE],
+            [ActionTag::Remove],
             [
                 'tt_content must have a "pid" page record that exists. Otherwise, they are most likely not editable',
                 'and can be removed. There are potential exceptions for tt_content records that are inline children',

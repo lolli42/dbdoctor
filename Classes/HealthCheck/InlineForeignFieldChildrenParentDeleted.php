@@ -33,7 +33,7 @@ final readonly class InlineForeignFieldChildrenParentDeleted extends AbstractHea
     {
         return new HealthCheckDescription(
             'Scan for inline foreign field records with deleted=1 parent',
-            [self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE],
+            [ActionTag::SoftDelete, ActionTag::WorkspaceRemove],
             [
                 'TCA inline foreign field records point to a parent record. When this parent is',
                 'soft-deleted, all children must be soft-deleted, too.',

@@ -38,7 +38,7 @@ final readonly class PagesTranslatedLanguageParentDuplicates extends AbstractHea
     {
         return new HealthCheckDescription(
             'Scan for duplicate page translations',
-            [self::TAG_SOFT_DELETE],
+            [ActionTag::SoftDelete],
             [
                 'There must be only one translated "pages" record (sys_language_uid > 0) per',
                 'default language page (l10n_parent) and language. This check finds duplicates,',

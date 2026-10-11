@@ -35,7 +35,7 @@ final readonly class TtContentDeletedLocalizedParentExists extends AbstractHealt
     {
         return new HealthCheckDescription(
             'Scan for soft-deleted localized tt_content records without parent',
-            [self::TAG_REMOVE],
+            [ActionTag::Remove],
             [
                 'Soft deleted localized records in "tt_content" (sys_language_uid > 0) having',
                 'l18n_parent > 0 must point to a sys_language_uid = 0 existing language parent record.',

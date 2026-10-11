@@ -31,7 +31,7 @@ final readonly class TcaTablesDeleteFlagZeroOrOne extends AbstractHealthCheck im
     {
         return new HealthCheckDescription(
             'Scan for rows with delete field not "0" or "1"',
-            [self::TAG_SOFT_DELETE],
+            [ActionTag::SoftDelete],
             [
                 'Values of the "deleted" column of TCA tables with enabled soft-delete',
                 '(["ctrl"]["delete"] set to a column name) must be either zero (0) or one (1).',

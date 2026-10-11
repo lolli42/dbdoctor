@@ -32,7 +32,7 @@ final readonly class WorkspacesPidNegative extends AbstractHealthCheck implement
     {
         return new HealthCheckDescription(
             'Scan for records with negative pid',
-            [self::TAG_REMOVE],
+            [ActionTag::Remove],
             [
                 'Records must have a pid equal or greater than zero (0).',
                 'Until TYPO3 v10, workspace records where placed on pid=-1. This check removes leftovers.',

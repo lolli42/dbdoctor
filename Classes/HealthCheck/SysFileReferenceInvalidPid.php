@@ -34,7 +34,7 @@ final readonly class SysFileReferenceInvalidPid extends AbstractHealthCheck impl
     {
         return new HealthCheckDescription(
             'Scan for sys_file_reference records with invalid pid',
-            [self::TAG_UPDATE],
+            [ActionTag::UpdateFields],
             [
                 'Records in "sys_file_reference" must have "pid" set to the same pid as the',
                 'parent record: If for instance a tt_content record on pid 5 references a sys_file, the',

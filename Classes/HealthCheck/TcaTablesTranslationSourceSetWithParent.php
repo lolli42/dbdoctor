@@ -32,7 +32,7 @@ final readonly class TcaTablesTranslationSourceSetWithParent extends AbstractHea
     {
         return new HealthCheckDescription(
             'Scan for translated records with parent but without translation source',
-            [self::TAG_UPDATE],
+            [ActionTag::UpdateFields],
             [
                 'Translated records with a language parent ("connected mode", "transOrigPointerField",',
                 'typically l10n_parent) should have their "translationSource" (typically l10n_source) set,',

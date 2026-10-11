@@ -38,7 +38,7 @@ final readonly class TtContentLocalizedParentDifferentPid extends AbstractHealth
     {
         return new HealthCheckDescription(
             'Scan for localized tt_content records with parent on different pid',
-            [self::TAG_UPDATE, self::TAG_WORKSPACE_REMOVE],
+            [ActionTag::UpdateFields, ActionTag::WorkspaceRemove],
             [
                 'Localized records in "tt_content" (sys_language_uid > 0) having',
                 'l18n_parent > 0 must point to a sys_language_uid = 0 language parent record',

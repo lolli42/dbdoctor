@@ -31,7 +31,7 @@ final readonly class TcaTablesLanguageLessThanOneHasZeroLanguageParent extends A
     {
         return new HealthCheckDescription(
             'Scan for records in default language not having language parent zero',
-            [self::TAG_UPDATE],
+            [ActionTag::UpdateFields],
             [
                 'TCA records in default or "all" language (typically sys_language_uid field having 0 or -1)',
                 'must have their "transOrigPointerField" (typically l10n_parent or l18n_parent) field',

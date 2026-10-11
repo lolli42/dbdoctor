@@ -36,7 +36,7 @@ final readonly class TcaTablesTranslationSourceLogicWithParent extends AbstractH
     {
         return new HealthCheckDescription(
             'Scan for translated records with logically wrong translation source',
-            [self::TAG_UPDATE],
+            [ActionTag::UpdateFields],
             [
                 'When "transOrigPointerField" (typically l10n_parent) and "translationSource" (typically',
                 'l10n_source) of a translated record are not zero but point to different uids, it indicates',

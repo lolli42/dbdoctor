@@ -37,7 +37,7 @@ final readonly class TtContentDeletedLocalizedParentDifferentPid extends Abstrac
     {
         return new HealthCheckDescription(
             'Scan for soft-deleted localized tt_content records with parent on different pid',
-            [self::TAG_REMOVE],
+            [ActionTag::Remove],
             [
                 'Soft deleted localized records in "tt_content" (sys_language_uid > 0) having',
                 'l18n_parent > 0 must point to a sys_language_uid = 0 language parent record',

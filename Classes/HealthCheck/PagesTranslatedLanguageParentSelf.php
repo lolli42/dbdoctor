@@ -31,7 +31,7 @@ final readonly class PagesTranslatedLanguageParentSelf extends AbstractHealthChe
     {
         return new HealthCheckDescription(
             'Check localized pages having language parent set to self',
-            [self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE],
+            [ActionTag::SoftDelete, ActionTag::WorkspaceRemove],
             [
                 'This health check finds not deleted but localized (sys_language_uid > 0) "pages" records',
                 'having their own uid set as their localization parent (l10n_parent = uid).',

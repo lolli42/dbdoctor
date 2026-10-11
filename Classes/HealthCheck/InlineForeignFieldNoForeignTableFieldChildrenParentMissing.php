@@ -33,7 +33,7 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentMissing 
     {
         return new HealthCheckDescription(
             'Scan for inline foreign field records with missing parent',
-            [self::TAG_REMOVE],
+            [ActionTag::Remove],
             [
                 'TCA inline foreign field records point to a parent record. This parent must exist.',
                 'This check is for inline children defined *without* foreign_table_field in TCA.',

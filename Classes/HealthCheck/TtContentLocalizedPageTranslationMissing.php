@@ -40,7 +40,7 @@ final readonly class TtContentLocalizedPageTranslationMissing extends AbstractHe
     {
         return new HealthCheckDescription(
             'Scan for localized tt_content records without page translation',
-            [self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE, self::TAG_RISKY],
+            [ActionTag::SoftDelete, ActionTag::WorkspaceRemove, ActionTag::Risky],
             [
                 'Localized tt_content records (sys_language_uid > 0) need a not deleted page translation',
                 'in their language on their page, otherwise they are not rendered on their page. This check',

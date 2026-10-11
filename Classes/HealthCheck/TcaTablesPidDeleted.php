@@ -34,7 +34,7 @@ final readonly class TcaTablesPidDeleted extends AbstractHealthCheck implements 
     {
         return new HealthCheckDescription(
             'Scan for not-deleted records on pages set to deleted',
-            [self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE],
+            [ActionTag::SoftDelete, ActionTag::Remove, ActionTag::WorkspaceRemove],
             [
                 'TCA records have a pid field set to a single page. This page must exist.',
                 'This scan finds deleted=0 records pointing to pages having deleted=1.',

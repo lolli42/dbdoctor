@@ -44,7 +44,7 @@ final readonly class SysFileMetadataMissing extends AbstractHealthCheck implemen
     {
         return new HealthCheckDescription(
             'Scan for sys_file records without sys_file_metadata record',
-            [self::TAG_INSERT],
+            [ActionTag::Insert],
             [
                 'Each "sys_file" record needs a default language "sys_file_metadata" record. The core creates',
                 'it when a file is indexed, but does not re-create a missing one: Image dimensions are then',

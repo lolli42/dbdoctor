@@ -36,7 +36,7 @@ final readonly class WorkspacesNotLoadedRecordsDangling extends AbstractHealthCh
     {
         return new HealthCheckDescription(
             'Scan for workspace records when ext:workspaces is not loaded',
-            [self::TAG_REMOVE],
+            [ActionTag::Remove],
             [
                 'When extension "workspaces" is not loaded, there should be no workspace overlay',
                 'records (t3ver_wsid != 0). This check removes all workspace related records if',

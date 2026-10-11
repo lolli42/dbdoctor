@@ -36,7 +36,7 @@ final readonly class GroupFieldRelationMissing extends AbstractHealthCheck imple
     {
         return new HealthCheckDescription(
             'Scan for group fields with relations to missing records',
-            [self::TAG_UPDATE],
+            [ActionTag::UpdateFields],
             [
                 'Fields of TCA type "group" without MM table store their relations as comma',
                 'separated list, for instance the tt_content field "records" of content type',

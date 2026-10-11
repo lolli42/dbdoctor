@@ -46,7 +46,7 @@ final readonly class SysRedirectInvalidPid extends AbstractHealthCheck implement
     {
         return new HealthCheckDescription(
             'Scan for sys_redirect records on wrong pid',
-            [self::TAG_UPDATE],
+            [ActionTag::UpdateFields],
             [
                 'Redirect records should be located on pages having a site config, or pid 0.',
                 'A TYPO3 core upgrade wizard introduced in v12 deals with this. This check takes',

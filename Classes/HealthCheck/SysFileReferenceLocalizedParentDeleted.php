@@ -36,7 +36,7 @@ final readonly class SysFileReferenceLocalizedParentDeleted extends AbstractHeal
     {
         return new HealthCheckDescription(
             'Scan for localized sys_file_reference records with deleted parent',
-            [self::TAG_RISKY, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE],
+            [ActionTag::Risky, ActionTag::SoftDelete, ActionTag::WorkspaceRemove],
             [
                 'Localized, not deleted records in "sys_file_reference" (sys_language_uid > 0) having',
                 'l10n_parent > 0 must point to a sys_language_uid = 0, not soft-deleted, language parent record.',

@@ -36,7 +36,7 @@ final readonly class PagesBrokenTree extends AbstractHealthCheck implements Heal
     {
         return new HealthCheckDescription(
             'Check page tree integrity',
-            [self::TAG_REMOVE],
+            [ActionTag::Remove],
             [
                 'This health check finds "pages" records with their "pid" set to pages that do',
                 'not exist in the database. Pages without proper connection to the tree root are never',

@@ -33,7 +33,7 @@ final readonly class InlineForeignFieldChildrenParentMissing extends AbstractHea
     {
         return new HealthCheckDescription(
             'Scan for inline foreign field records with missing parent',
-            [self::TAG_REMOVE],
+            [ActionTag::Remove],
             [
                 'TCA inline foreign field records point to a parent record. This parent must exist.',
                 'This check is for inline children defined *with* foreign_table_field in TCA.',
