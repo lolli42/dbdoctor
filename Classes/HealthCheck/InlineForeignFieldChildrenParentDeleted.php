@@ -29,7 +29,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class InlineForeignFieldChildrenParentDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for inline foreign field records with deleted=1 parent',
@@ -43,7 +43,7 @@ final readonly class InlineForeignFieldChildrenParentDeleted extends AbstractHea
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $findings = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
@@ -121,7 +121,7 @@ final readonly class InlineForeignFieldChildrenParentDeleted extends AbstractHea
         return $findings;
     }
 
-    protected function getDetailDbFields(string $tableName): array
+    public function getDetailDbFields(string $tableName): array
     {
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
             if ($inlineChild['tableName'] === $tableName) {

@@ -28,7 +28,7 @@ use TYPO3\CMS\Core\Database\Connection;
  */
 final readonly class TcaTablesTranslationSourceSetWithParent extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for translated records with parent but without translation source',
@@ -45,7 +45,7 @@ final readonly class TcaTablesTranslationSourceSetWithParent extends AbstractHea
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $findings = [];
         foreach ($this->tcaHelper->getNextLanguageSourceAwareTcaTable() as $tableName) {

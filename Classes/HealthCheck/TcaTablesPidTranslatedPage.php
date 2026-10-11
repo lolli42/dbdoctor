@@ -31,7 +31,7 @@ use TYPO3\CMS\Core\Database\Connection;
  */
 final readonly class TcaTablesPidTranslatedPage extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for records on translated pages',
@@ -45,7 +45,7 @@ final readonly class TcaTablesPidTranslatedPage extends AbstractHealthCheck impl
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $translatedPages = $this->getTranslatedPages();
         if ($translatedPages === []) {

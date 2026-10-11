@@ -27,7 +27,7 @@ use TYPO3\CMS\Core\Database\Connection;
  */
 final readonly class TcaTablesDeleteFlagZeroOrOne extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for rows with delete field not "0" or "1"',
@@ -41,7 +41,7 @@ final readonly class TcaTablesDeleteFlagZeroOrOne extends AbstractHealthCheck im
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $findings = [];
         foreach ($this->tcaHelper->getNextSoftDeleteAwareTable() as $tableName) {

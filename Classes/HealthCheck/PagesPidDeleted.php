@@ -29,7 +29,7 @@ final readonly class PagesPidDeleted extends AbstractHealthCheck implements Heal
         private PagesTreeHelper $pagesTreeHelper,
     ) {}
 
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Check pages within deleted pages',
@@ -43,7 +43,7 @@ final readonly class PagesPidDeleted extends AbstractHealthCheck implements Heal
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         $queryBuilder->getRestrictions()->removeAll();

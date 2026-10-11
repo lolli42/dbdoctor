@@ -30,7 +30,7 @@ use TYPO3\CMS\Core\Database\Connection;
  */
 final readonly class PagesTranslatedLanguageParentDifferentPid extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Check pages with different pid than their language parent',
@@ -43,7 +43,7 @@ final readonly class PagesTranslatedLanguageParentDifferentPid extends AbstractH
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         // Deleted pages are considered as well, we remove all restrictions.
@@ -85,7 +85,7 @@ final readonly class PagesTranslatedLanguageParentDifferentPid extends AbstractH
         return $findings;
     }
 
-    protected function getDetailCtrlFields(string $tableName): array
+    public function getDetailCtrlFields(string $tableName): array
     {
         return ['transOrigPointerField'];
     }

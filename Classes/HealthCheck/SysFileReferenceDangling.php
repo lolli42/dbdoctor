@@ -30,7 +30,7 @@ use Lolli\Dbdoctor\Finding\RecordKey;
  */
 final readonly class SysFileReferenceDangling extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for orphan sys_file_reference records',
@@ -42,7 +42,7 @@ final readonly class SysFileReferenceDangling extends AbstractHealthCheck implem
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
@@ -87,7 +87,7 @@ final readonly class SysFileReferenceDangling extends AbstractHealthCheck implem
         return $findings;
     }
 
-    protected function getDetailDbFields(string $tableName): array
+    public function getDetailDbFields(string $tableName): array
     {
         return ['uid_local', 'tablenames', 'uid_foreign', 'fieldname'];
     }

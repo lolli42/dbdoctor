@@ -27,7 +27,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class PagesLanguageNegative extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Check pages with negative language',
@@ -41,7 +41,7 @@ final readonly class PagesLanguageNegative extends AbstractHealthCheck implement
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         // Do not consider page records that have been set to deleted already.
@@ -63,7 +63,7 @@ final readonly class PagesLanguageNegative extends AbstractHealthCheck implement
         return $findings;
     }
 
-    protected function getDetailCtrlFields(string $tableName): array
+    public function getDetailCtrlFields(string $tableName): array
     {
         return ['languageField'];
     }

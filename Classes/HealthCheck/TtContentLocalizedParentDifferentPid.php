@@ -34,7 +34,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class TtContentLocalizedParentDifferentPid extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for localized tt_content records with parent on different pid',
@@ -50,7 +50,7 @@ final readonly class TtContentLocalizedParentDifferentPid extends AbstractHealth
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');

@@ -42,7 +42,7 @@ final readonly class SysRedirectInvalidPid extends AbstractHealthCheck implement
         private SiteFinder $siteFinder,
     ) {}
 
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for sys_redirect records on wrong pid',
@@ -56,7 +56,7 @@ final readonly class SysRedirectInvalidPid extends AbstractHealthCheck implement
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         if (!$this->tableHelper->tableExistsInDatabase('sys_redirect')) {
             return [];

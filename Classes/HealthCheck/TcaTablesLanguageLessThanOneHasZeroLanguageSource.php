@@ -27,7 +27,7 @@ use TYPO3\CMS\Core\Database\Connection;
  */
 final readonly class TcaTablesLanguageLessThanOneHasZeroLanguageSource extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for records in default language not having language source zero',
@@ -40,7 +40,7 @@ final readonly class TcaTablesLanguageLessThanOneHasZeroLanguageSource extends A
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $findings = [];
         foreach ($this->tcaHelper->getNextLanguageSourceAwareTcaTable() as $tableName) {

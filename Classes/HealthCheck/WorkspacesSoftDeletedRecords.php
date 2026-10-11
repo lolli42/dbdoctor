@@ -29,7 +29,7 @@ use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
  */
 final readonly class WorkspacesSoftDeletedRecords extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for soft-deleted workspaces records',
@@ -42,7 +42,7 @@ final readonly class WorkspacesSoftDeletedRecords extends AbstractHealthCheck im
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         if (!ExtensionManagementUtility::isLoaded('workspaces')) {
             // Check WorkspacesNotLoadedRecordsDangling that is executed before this check

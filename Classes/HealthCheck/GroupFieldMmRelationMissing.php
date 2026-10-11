@@ -32,7 +32,7 @@ use TYPO3\CMS\Core\Database\Connection;
  */
 final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for group fields with MM relations to missing records',
@@ -50,7 +50,7 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         // Findings per table they are counted for: The local table, or the MM table for MM rows of missing local records.
         $findingsByTable = [];

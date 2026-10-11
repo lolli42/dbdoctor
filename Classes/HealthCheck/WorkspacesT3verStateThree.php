@@ -29,7 +29,7 @@ use Lolli\Dbdoctor\Finding\RecordKey;
  */
 final readonly class WorkspacesT3verStateThree extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for records with t3ver_state=3',
@@ -44,7 +44,7 @@ final readonly class WorkspacesT3verStateThree extends AbstractHealthCheck imple
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $findings = [];
         foreach ($this->tcaHelper->getNextWorkspaceEnabledTcaTable() as $tableName) {

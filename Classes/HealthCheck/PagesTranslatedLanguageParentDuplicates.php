@@ -34,7 +34,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class PagesTranslatedLanguageParentDuplicates extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for duplicate page translations',
@@ -49,7 +49,7 @@ final readonly class PagesTranslatedLanguageParentDuplicates extends AbstractHea
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         // Find combinations of l10n_parent and sys_language_uid having more than one live translation
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
@@ -114,7 +114,7 @@ final readonly class PagesTranslatedLanguageParentDuplicates extends AbstractHea
         return $findings;
     }
 
-    protected function getDetailCtrlFields(string $tableName): array
+    public function getDetailCtrlFields(string $tableName): array
     {
         return ['transOrigPointerField'];
     }

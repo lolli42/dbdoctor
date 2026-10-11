@@ -39,7 +39,7 @@ use TYPO3\CMS\Core\Database\Connection;
  */
 final readonly class SysFileMetadataTranslatedParentInvalid extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for translated sys_file_metadata records with invalid language parent',
@@ -55,7 +55,7 @@ final readonly class SysFileMetadataTranslatedParentInvalid extends AbstractHeal
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_metadata');
         $queryBuilder->getRestrictions()->removeAll();
@@ -108,12 +108,12 @@ final readonly class SysFileMetadataTranslatedParentInvalid extends AbstractHeal
         return $findings;
     }
 
-    protected function getDetailCtrlFields(string $tableName): array
+    public function getDetailCtrlFields(string $tableName): array
     {
         return ['languageField', 'transOrigPointerField'];
     }
 
-    protected function getDetailDbFields(string $tableName): array
+    public function getDetailDbFields(string $tableName): array
     {
         return ['file'];
     }

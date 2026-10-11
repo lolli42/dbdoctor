@@ -31,7 +31,7 @@ use Lolli\Dbdoctor\Finding\RecordKey;
  */
 final readonly class TtContentDeletedLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for soft-deleted localized tt_content records without parent',
@@ -44,7 +44,7 @@ final readonly class TtContentDeletedLocalizedParentExists extends AbstractHealt
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');

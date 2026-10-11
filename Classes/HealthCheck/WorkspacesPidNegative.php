@@ -28,7 +28,7 @@ use Lolli\Dbdoctor\Finding\RecordKey;
  */
 final readonly class WorkspacesPidNegative extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for records with negative pid',
@@ -42,7 +42,7 @@ final readonly class WorkspacesPidNegative extends AbstractHealthCheck implement
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $findings = [];
         foreach ($this->tcaHelper->getNextTcaTable() as $tableName) {

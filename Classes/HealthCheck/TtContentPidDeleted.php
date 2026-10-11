@@ -37,7 +37,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class TtContentPidDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for tt_content on soft-deleted pages',
@@ -50,7 +50,7 @@ final readonly class TtContentPidDeleted extends AbstractHealthCheck implements 
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         // Do not consider deleted records, soft-deleted records on soft-deleted page are ok.
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');

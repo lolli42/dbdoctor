@@ -31,7 +31,7 @@ use TYPO3\CMS\Core\Database\Connection;
  */
 final readonly class SysFileReferenceLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface
 {
-    protected function getDescription(): HealthCheckDescription
+    public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
             'Scan for localized sys_file_reference records without parent',
@@ -51,7 +51,7 @@ final readonly class SysFileReferenceLocalizedParentExists extends AbstractHealt
         );
     }
 
-    protected function detect(HealthCheckRun $run): array
+    public function detect(HealthCheckRun $run): array
     {
         $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
@@ -93,7 +93,7 @@ final readonly class SysFileReferenceLocalizedParentExists extends AbstractHealt
         return $findings;
     }
 
-    protected function getDetailDbFields(string $tableName): array
+    public function getDetailDbFields(string $tableName): array
     {
         return ['sys_language_uid', 'l10n_parent', 'deleted', 'tablenames', 'uid_foreign', 'fieldname', 'uid_local'];
     }
