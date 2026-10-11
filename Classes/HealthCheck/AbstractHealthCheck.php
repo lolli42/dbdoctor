@@ -166,7 +166,21 @@ abstract readonly class AbstractHealthCheck
         while (true) {
             switch ($io->ask('<info>Handle records [e,s,a,r,p,d,?]?</info> ', '?')) {
                 case 'e':
-                    $findings = $this->detect($run);
+                    // Execute exactly the findings shown, on current data: Records may have changed
+                    // since detection, for instance by editors. Detect again, and when the findings
+                    // differ, show them instead of executing. Findings are data objects, == compares
+                    // them with all their properties.
+                    $currentFindings = $this->detect($run);
+                    if ($currentFindings != $findings) {
+                        $findings = $currentFindings;
+                        $io->warning('Records changed since they were shown, findings reloaded. Nothing executed.');
+                        $this->outputMainSummary($io, $this->groupFindingsByTable($findings));
+                        if (empty($findings)) {
+                            return HealthCheckInterface::RESULT_OK;
+                        }
+                        break;
+                    }
+                    // Then detect again to show what is left.
                     $this->writeSqlDumpFileHeader($run);
                     $this->recordChangeExecutor->execute($run, false, $findings);
                     $findings = $this->detect($run);
@@ -176,12 +190,8 @@ abstract readonly class AbstractHealthCheck
                     }
                     break;
                 case 's':
-                    $findings = $this->detect($run);
                     $this->recordChangeExecutor->execute($run, true, $findings);
                     $this->outputMainSummary($io, $this->groupFindingsByTable($findings));
-                    if (empty($findings)) {
-                        return HealthCheckInterface::RESULT_OK;
-                    }
                     break;
                 case 'a':
                     return HealthCheckInterface::RESULT_ABORT;
