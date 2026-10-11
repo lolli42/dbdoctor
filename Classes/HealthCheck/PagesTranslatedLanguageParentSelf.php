@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -28,18 +27,19 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class PagesTranslatedLanguageParentSelf extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Check localized pages having language parent set to self');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE);
-        $io->text([
-            'This health check finds not deleted but localized (sys_language_uid > 0) "pages" records',
-            'having their own uid set as their localization parent (l10n_parent = uid).',
-            'This is invalid, such page records are not listed in the BE list module and the Frontend',
-            'will most likely not render such pages.',
-            'They are soft-deleted in live and removed if they are workspace overlay records.',
-        ]);
+        return new HealthCheckDescription(
+            'Check localized pages having language parent set to self',
+            [self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE],
+            [
+                'This health check finds not deleted but localized (sys_language_uid > 0) "pages" records',
+                'having their own uid set as their localization parent (l10n_parent = uid).',
+                'This is invalid, such page records are not listed in the BE list module and the Frontend',
+                'will most likely not render such pages.',
+                'They are soft-deleted in live and removed if they are workspace overlay records.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

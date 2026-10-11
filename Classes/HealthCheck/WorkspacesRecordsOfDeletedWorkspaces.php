@@ -22,7 +22,6 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -36,17 +35,18 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class WorkspacesRecordsOfDeletedWorkspaces extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for workspace records of deleted sys_workspace\'s');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_REMOVE);
-        $io->text([
-            'When a workspace (table "sys_workspace") is deleted, all existing workspace',
-            'overlays in all tables of this workspace are removed. When this goes wrong,',
-            'or if the workspace extension is removed, the system ends up with "dangling"',
-            'workspace records in tables. This health check finds those records and removes them.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for workspace records of deleted sys_workspace\'s',
+            [self::TAG_REMOVE],
+            [
+                'When a workspace (table "sys_workspace") is deleted, all existing workspace',
+                'overlays in all tables of this workspace are removed. When this goes wrong,',
+                'or if the workspace extension is removed, the system ends up with "dangling"',
+                'workspace records in tables. This health check finds those records and removes them.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

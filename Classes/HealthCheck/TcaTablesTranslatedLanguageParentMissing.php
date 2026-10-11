@@ -22,7 +22,6 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
 /**
@@ -33,17 +32,18 @@ use TYPO3\CMS\Core\Database\Connection;
  */
 final readonly class TcaTablesTranslatedLanguageParentMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for record translations with missing parent');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_REMOVE);
-        $io->text([
-            'Record translations use the TCA ctrl field "transOrigPointerField"',
-            '(DB field name usually "l10n_parent" or "l18n_parent"). This field points to a',
-            'default language record. This health check verifies if that target exists.',
-            'Affected records without language parent are removed.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for record translations with missing parent',
+            [self::TAG_REMOVE],
+            [
+                'Record translations use the TCA ctrl field "transOrigPointerField"',
+                '(DB field name usually "l10n_parent" or "l18n_parent"). This field points to a',
+                'default language record. This health check verifies if that target exists.',
+                'Affected records without language parent are removed.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

@@ -20,7 +20,6 @@ use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
 /**
@@ -29,21 +28,22 @@ use TYPO3\CMS\Core\Database\Connection;
  */
 final readonly class WorkspacesT3verStateNotZeroInLive extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for records with t3ver_wsid=0 and t3ver_state!=0');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_REMOVE, self::TAG_SOFT_DELETE, self::TAG_UPDATE);
-        $io->text([
-            'There should be no t3ver_state non-zero (0) records in live.',
-            'If this check finds records, ABORT NOW and run these upgrades wizards:',
-            'WorkspaceVersionRecordsMigration (TYPO3 v10 & v11),',
-            'WorkspaceNewPlaceholderRemovalMigration (TYPO3 v11 & v12),',
-            'WorkspaceMovePlaceholderRemovalMigration (TYPO3 v11 & v12).',
-            'If there are still affected records, this check will remove, soft-delete or update them,',
-            'depending on their specific t3ver_state value: Records typically shown in FE are kept,',
-            'others are deleted or soft-deleted.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for records with t3ver_wsid=0 and t3ver_state!=0',
+            [self::TAG_REMOVE, self::TAG_SOFT_DELETE, self::TAG_UPDATE],
+            [
+                'There should be no t3ver_state non-zero (0) records in live.',
+                'If this check finds records, ABORT NOW and run these upgrades wizards:',
+                'WorkspaceVersionRecordsMigration (TYPO3 v10 & v11),',
+                'WorkspaceNewPlaceholderRemovalMigration (TYPO3 v11 & v12),',
+                'WorkspaceMovePlaceholderRemovalMigration (TYPO3 v11 & v12).',
+                'If there are still affected records, this check will remove, soft-delete or update them,',
+                'depending on their specific t3ver_state value: Records typically shown in FE are kept,',
+                'others are deleted or soft-deleted.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

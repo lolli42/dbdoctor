@@ -21,7 +21,6 @@ use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 
 /**
@@ -33,18 +32,19 @@ use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
  */
 final readonly class WorkspacesNotLoadedRecordsDangling extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for workspace records when ext:workspaces is not loaded');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_REMOVE);
-        $io->text([
-            'When extension "workspaces" is not loaded, there should be no workspace overlay',
-            'records (t3ver_wsid != 0). This check removes all workspace related records if',
-            'the extension is not loaded. Think about this twice: If workspaces is a thing',
-            'in your instance, the extension must be loaded, otherwise this check will',
-            'remove all existing workspace overlay records!',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for workspace records when ext:workspaces is not loaded',
+            [self::TAG_REMOVE],
+            [
+                'When extension "workspaces" is not loaded, there should be no workspace overlay',
+                'records (t3ver_wsid != 0). This check removes all workspace related records if',
+                'the extension is not loaded. Think about this twice: If workspaces is a thing',
+                'in your instance, the extension must be loaded, otherwise this check will',
+                'remove all existing workspace overlay records!',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

@@ -21,7 +21,6 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Exception\Page\CircularRootLineException;
@@ -43,17 +42,18 @@ final readonly class SysRedirectInvalidPid extends AbstractHealthCheck implement
         private SiteFinder $siteFinder,
     ) {}
 
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for sys_redirect records on wrong pid');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_UPDATE);
-        $io->text([
-            'Redirect records should be located on pages having a site config, or pid 0.',
-            'A TYPO3 core upgrade wizard introduced in v12 deals with this. This check takes',
-            'care of affected records as well: Records on pages that have no site config',
-            'are moved to the first page up in rootline that has a site config, or to pid 0.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for sys_redirect records on wrong pid',
+            [self::TAG_UPDATE],
+            [
+                'Redirect records should be located on pages having a site config, or pid 0.',
+                'A TYPO3 core upgrade wizard introduced in v12 deals with this. This check takes',
+                'care of affected records as well: Records on pages that have no site config',
+                'are moved to the first page up in rootline that has a site config, or to pid 0.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

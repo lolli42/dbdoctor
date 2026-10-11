@@ -20,7 +20,6 @@ use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -31,18 +30,19 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for inline foreign field records with deleted=1 parent');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE);
-        $io->text([
-            'TCA inline foreign field records point to a parent record. When this parent is',
-            'soft-deleted, all children must be soft-deleted, too.',
-            'This check is for inline children defined *without* foreign_table_field in TCA.',
-            'This check finds not soft-deleted children and sets soft-deleted for for live records,',
-            'or removes them when dealing with workspace records.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for inline foreign field records with deleted=1 parent',
+            [self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE],
+            [
+                'TCA inline foreign field records point to a parent record. When this parent is',
+                'soft-deleted, all children must be soft-deleted, too.',
+                'This check is for inline children defined *without* foreign_table_field in TCA.',
+                'This check finds not soft-deleted children and sets soft-deleted for for live records,',
+                'or removes them when dealing with workspace records.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

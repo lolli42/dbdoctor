@@ -24,7 +24,6 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -34,17 +33,18 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class TtContentLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Localized tt_content records without parent');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_REMOVE);
-        $io->text([
-            'Localized records in "tt_content" (sys_language_uid > 0) having',
-            'l18n_parent > 0 must point to a sys_language_uid = 0 existing language parent record.',
-            'Violating records are removed since they are typically never rendered in FE,',
-            'even though the BE renders them in page module.',
-        ]);
+        return new HealthCheckDescription(
+            'Localized tt_content records without parent',
+            [self::TAG_REMOVE],
+            [
+                'Localized records in "tt_content" (sys_language_uid > 0) having',
+                'l18n_parent > 0 must point to a sys_language_uid = 0 existing language parent record.',
+                'Violating records are removed since they are typically never rendered in FE,',
+                'even though the BE renders them in page module.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

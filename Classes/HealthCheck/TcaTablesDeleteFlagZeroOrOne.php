@@ -20,7 +20,6 @@ use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
 /**
@@ -28,17 +27,18 @@ use TYPO3\CMS\Core\Database\Connection;
  */
 final readonly class TcaTablesDeleteFlagZeroOrOne extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for rows with delete field not "0" or "1"');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_SOFT_DELETE);
-        $io->text([
-            'Values of the "deleted" column of TCA tables with enabled soft-delete',
-            '(["ctrl"]["delete"] set to a column name) must be either zero (0) or one (1).',
-            'The default core database DeletedRestriction tests for equality with zero.',
-            'This scan finds records having a different value than zero or one and sets them to one.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for rows with delete field not "0" or "1"',
+            [self::TAG_SOFT_DELETE],
+            [
+                'Values of the "deleted" column of TCA tables with enabled soft-delete',
+                '(["ctrl"]["delete"] set to a column name) must be either zero (0) or one (1).',
+                'The default core database DeletedRestriction tests for equality with zero.',
+                'This scan finds records having a different value than zero or one and sets them to one.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

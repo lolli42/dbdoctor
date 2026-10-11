@@ -22,7 +22,6 @@ use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -38,16 +37,17 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class TtContentPidDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for tt_content on soft-deleted pages');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE);
-        $io->text([
-            'tt_content not soft-delete must have a "pid" page record that is not soft-deleted. Otherwise, they are',
-            'most likely not editable. This is similar to the previous check, affected records will be soft-deleted',
-            'if in live, and removed if in workspaces.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for tt_content on soft-deleted pages',
+            [self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE],
+            [
+                'tt_content not soft-delete must have a "pid" page record that is not soft-deleted. Otherwise, they are',
+                'most likely not editable. This is similar to the previous check, affected records will be soft-deleted',
+                'if in live, and removed if in workspaces.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

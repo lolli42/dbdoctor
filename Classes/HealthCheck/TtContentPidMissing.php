@@ -23,7 +23,6 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * Records in tt_content must live on a pid that exists.
@@ -37,19 +36,20 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  */
 final readonly class TtContentPidMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for tt_content on not existing pages');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_REMOVE);
-        $io->text([
-            'tt_content must have a "pid" page record that exists. Otherwise, they are most likely not editable',
-            'and can be removed. There are potential exceptions for tt_content records that are inline children',
-            'for example using "news" extension that may create such scenarios, but even then, those records',
-            'are most likely not shown in FE. You may want to look at some cases manually if this instance',
-            'has some weird scenarios where tt_content is used as inline child. Otherwise, it is usually ok',
-            'to let dbdoctor just REMOVE tt_content records that are located at a page that does not exist.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for tt_content on not existing pages',
+            [self::TAG_REMOVE],
+            [
+                'tt_content must have a "pid" page record that exists. Otherwise, they are most likely not editable',
+                'and can be removed. There are potential exceptions for tt_content records that are inline children',
+                'for example using "news" extension that may create such scenarios, but even then, those records',
+                'are most likely not shown in FE. You may want to look at some cases manually if this instance',
+                'has some weird scenarios where tt_content is used as inline child. Otherwise, it is usually ok',
+                'to let dbdoctor just REMOVE tt_content records that are located at a page that does not exist.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

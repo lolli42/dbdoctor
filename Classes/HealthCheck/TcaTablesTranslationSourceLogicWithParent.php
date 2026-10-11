@@ -22,7 +22,6 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 
 /**
@@ -33,19 +32,20 @@ use TYPO3\CMS\Core\Database\Connection;
  */
 final readonly class TcaTablesTranslationSourceLogicWithParent extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for translated records with logically wrong translation source');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_UPDATE);
-        $io->text([
-            'When "transOrigPointerField" (typically l10n_parent) and "translationSource" (typically',
-            'l10n_source) of a translated record are not zero but point to different uids, it indicates',
-            'the record has been derived from a different language record and not from the default language',
-            'record. That different language record should have the same "transOrigPointerField" value. If',
-            'this is not the case, set the translation source to the value of "transOrigPointerField" to fix',
-            'the inheritance chain. Records pointing to themselves as language parent are skipped.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for translated records with logically wrong translation source',
+            [self::TAG_UPDATE],
+            [
+                'When "transOrigPointerField" (typically l10n_parent) and "translationSource" (typically',
+                'l10n_source) of a translated record are not zero but point to different uids, it indicates',
+                'the record has been derived from a different language record and not from the default language',
+                'record. That different language record should have the same "transOrigPointerField" value. If',
+                'this is not the case, set the translation source to the value of "transOrigPointerField" to fix',
+                'the inheritance chain. Records pointing to themselves as language parent are skipped.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

@@ -21,7 +21,6 @@ use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -31,16 +30,17 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class TcaTablesPidDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for not-deleted records on pages set to deleted');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE);
-        $io->text([
-            'TCA records have a pid field set to a single page. This page must exist.',
-            'This scan finds deleted=0 records pointing to pages having deleted=1.',
-            'Affected records are soft deleted if possible, or removed.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for not-deleted records on pages set to deleted',
+            [self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE],
+            [
+                'TCA records have a pid field set to a single page. This page must exist.',
+                'This scan finds deleted=0 records pointing to pages having deleted=1.',
+                'Affected records are soft deleted if possible, or removed.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

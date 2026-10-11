@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -28,20 +27,21 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class TcaTablesTranslatedParentSelf extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for record translations pointing to self');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE, self::TAG_RISKY);
-        $io->text([
-            'Record translations ("translate" / "connected" mode, as opposed to "free" mode) use the',
-            'database field "transOrigPointerField" (field name usually "l10n_parent" or "l18n_parent").',
-            'This field should point to the default language record. This health check scans for not',
-            'soft-deleted and localized records that point to their own uid in "transOrigPointerField".',
-            'They are soft-deleted in live and removed if they are workspace overlay records.',
-            'This change is considered risky since depending on configuration, such records may still be',
-            'shown in the Frontend and will disappear when deleted.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for record translations pointing to self',
+            [self::TAG_SOFT_DELETE, self::TAG_REMOVE, self::TAG_WORKSPACE_REMOVE, self::TAG_RISKY],
+            [
+                'Record translations ("translate" / "connected" mode, as opposed to "free" mode) use the',
+                'database field "transOrigPointerField" (field name usually "l10n_parent" or "l18n_parent").',
+                'This field should point to the default language record. This health check scans for not',
+                'soft-deleted and localized records that point to their own uid in "transOrigPointerField".',
+                'They are soft-deleted in live and removed if they are workspace overlay records.',
+                'This change is considered risky since depending on configuration, such records may still be',
+                'shown in the Frontend and will disappear when deleted.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

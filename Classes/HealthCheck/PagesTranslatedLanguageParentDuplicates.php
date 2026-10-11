@@ -21,7 +21,6 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -35,18 +34,19 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class PagesTranslatedLanguageParentDuplicates extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for duplicate page translations');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_SOFT_DELETE);
-        $io->text([
-            'There must be only one translated "pages" record (sys_language_uid > 0) per',
-            'default language page (l10n_parent) and language. This check finds duplicates,',
-            'keeps the one the frontend shows and soft-deletes others: The visible one (not',
-            'hidden, start and end time not excluding it) with the highest uid, or the one with',
-            'the highest uid if none is visible.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for duplicate page translations',
+            [self::TAG_SOFT_DELETE],
+            [
+                'There must be only one translated "pages" record (sys_language_uid > 0) per',
+                'default language page (l10n_parent) and language. This check finds duplicates,',
+                'keeps the one the frontend shows and soft-deletes others: The visible one (not',
+                'hidden, start and end time not excluding it) with the highest uid, or the one with',
+                'the highest uid if none is visible.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

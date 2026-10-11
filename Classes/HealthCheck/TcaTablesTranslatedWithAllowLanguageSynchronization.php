@@ -21,7 +21,6 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\DataHandling\Localization\State;
@@ -33,21 +32,22 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class TcaTablesTranslatedWithAllowLanguageSynchronization extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for translated records with values not in sync with default language');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_UPDATE);
-        $io->text([
-            'Fields with TCA "allowLanguageSynchronization" can use the value of the default language',
-            'record in translations, the database field "l10n_state" stores this per field. This check',
-            'finds live translations with l10n_state "parent" for a field, but a value different from',
-            'the default language record. The frontend renders the value of the translation, so the',
-            'l10n_state of such fields is set to "custom": The backend then shows the value as well, and',
-            'it is not overwritten when the default language record is changed. Fields of TCA type',
-            '"json" are not compared. In relation fields, NULL, empty string and "0" are equal: They',
-            'all mean "no relation".',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for translated records with values not in sync with default language',
+            [self::TAG_UPDATE],
+            [
+                'Fields with TCA "allowLanguageSynchronization" can use the value of the default language',
+                'record in translations, the database field "l10n_state" stores this per field. This check',
+                'finds live translations with l10n_state "parent" for a field, but a value different from',
+                'the default language record. The frontend renders the value of the translation, so the',
+                'l10n_state of such fields is set to "custom": The backend then shows the value as well, and',
+                'it is not overwritten when the default language record is changed. Fields of TCA type',
+                '"json" are not compared. In relation fields, NULL, empty string and "0" are equal: They',
+                'all mean "no relation".',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

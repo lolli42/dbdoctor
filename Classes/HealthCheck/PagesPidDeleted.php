@@ -19,7 +19,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordKey;
 use Lolli\Dbdoctor\Helper\PagesTreeHelper;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * Find not-deleted pages that are located within a deleted page, directly or further down the tree.
@@ -30,17 +29,18 @@ final readonly class PagesPidDeleted extends AbstractHealthCheck implements Heal
         private PagesTreeHelper $pagesTreeHelper,
     ) {}
 
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Check pages within deleted pages');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE);
-        $io->text([
-            'This health check finds not deleted "pages" records with their "pid" set to a soft-deleted',
-            'page, including whole sub trees below a deleted page. The core deletes sub pages when a',
-            'page is deleted, those pages are not reachable in backend and frontend anymore. They are',
-            'soft-deleted in live and removed if they are workspace records.',
-        ]);
+        return new HealthCheckDescription(
+            'Check pages within deleted pages',
+            [self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE],
+            [
+                'This health check finds not deleted "pages" records with their "pid" set to a soft-deleted',
+                'page, including whole sub trees below a deleted page. The core deletes sub pages when a',
+                'page is deleted, those pages are not reachable in backend and frontend anymore. They are',
+                'soft-deleted in live and removed if they are workspace records.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

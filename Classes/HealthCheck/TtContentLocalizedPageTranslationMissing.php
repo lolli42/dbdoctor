@@ -20,7 +20,6 @@ use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Domain\Repository\PageRepository;
@@ -37,21 +36,22 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class TtContentLocalizedPageTranslationMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for localized tt_content records without page translation');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE, self::TAG_RISKY);
-        $io->text([
-            'Localized tt_content records (sys_language_uid > 0) need a not deleted page translation',
-            'in their language on their page, otherwise they are not rendered on their page. This check',
-            'finds such records and soft-deletes them, workspace records are removed. tt_content records',
-            'in sys folders are not checked: They are typically rendered by "Insert records" elements on',
-            'other pages, which works without a page translation of the sys folder. Records on translated',
-            'pages are not checked either: TcaTablesPidTranslatedPage moves them to the default page.',
-            'Content rendered on other pages, for instance with TypoScript CONTENT or RECORDS, may be',
-            'shown anyway: Check affected records carefully.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for localized tt_content records without page translation',
+            [self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE, self::TAG_RISKY],
+            [
+                'Localized tt_content records (sys_language_uid > 0) need a not deleted page translation',
+                'in their language on their page, otherwise they are not rendered on their page. This check',
+                'finds such records and soft-deletes them, workspace records are removed. tt_content records',
+                'in sys folders are not checked: They are typically rendered by "Insert records" elements on',
+                'other pages, which works without a page translation of the sys folder. Records on translated',
+                'pages are not checked either: TcaTablesPidTranslatedPage moves them to the default page.',
+                'Content rendered on other pages, for instance with TypoScript CONTENT or RECORDS, may be',
+                'shown anyway: Check affected records carefully.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

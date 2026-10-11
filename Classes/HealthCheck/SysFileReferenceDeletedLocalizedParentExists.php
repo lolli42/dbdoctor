@@ -24,7 +24,6 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * Deleted localized sys_file_reference records must point to a sys_language_uid=0 parent that exists.
@@ -32,16 +31,17 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  */
 final readonly class SysFileReferenceDeletedLocalizedParentExists extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for deleted localized sys_file_reference records without parent');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_REMOVE);
-        $io->text([
-            'Soft deleted localized records in "sys_file_reference" (sys_language_uid > 0) having',
-            'l10n_parent > 0 must point to a sys_language_uid = 0 existing language parent record.',
-            'Records violating this are removed.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for deleted localized sys_file_reference records without parent',
+            [self::TAG_REMOVE],
+            [
+                'Soft deleted localized records in "sys_file_reference" (sys_language_uid > 0) having',
+                'l10n_parent > 0 must point to a sys_language_uid = 0 existing language parent record.',
+                'Records violating this are removed.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

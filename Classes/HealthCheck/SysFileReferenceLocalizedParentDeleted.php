@@ -21,7 +21,6 @@ use Lolli\Dbdoctor\Exception\NoSuchTableException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -33,23 +32,24 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class SysFileReferenceLocalizedParentDeleted extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for localized sys_file_reference records with deleted parent');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_RISKY, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE);
-        $io->text([
-            'Localized, not deleted records in "sys_file_reference" (sys_language_uid > 0) having',
-            'l10n_parent > 0 must point to a sys_language_uid = 0, not soft-deleted, language parent record.',
-            'Records violating this are soft-deleted in live and removed if in workspaces.',
-            'This change is <error>risky</error>. Records with a deleted=1 l10n_parent typically throw',
-            'an exception in the BE when edited. However, the FE often still shows such an image.',
-            'As such, when this check soft-deletes or removes records, you may want to check them manually by',
-            'looking at the referencing inline parent record indicated by fields "tablenames" and "uid_foreign"',
-            'to eventually find a better solution manually, for instance by setting l10n_parent=0 or',
-            'connecting it to the correct l10n_parent if in "connected mode", or by creating a new',
-            'image relation and then letting dbdoctor remove this one after reloading the check.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for localized sys_file_reference records with deleted parent',
+            [self::TAG_RISKY, self::TAG_SOFT_DELETE, self::TAG_WORKSPACE_REMOVE],
+            [
+                'Localized, not deleted records in "sys_file_reference" (sys_language_uid > 0) having',
+                'l10n_parent > 0 must point to a sys_language_uid = 0, not soft-deleted, language parent record.',
+                'Records violating this are soft-deleted in live and removed if in workspaces.',
+                'This change is <error>risky</error>. Records with a deleted=1 l10n_parent typically throw',
+                'an exception in the BE when edited. However, the FE often still shows such an image.',
+                'As such, when this check soft-deletes or removes records, you may want to check them manually by',
+                'looking at the referencing inline parent record indicated by fields "tablenames" and "uid_foreign"',
+                'to eventually find a better solution manually, for instance by setting l10n_parent=0 or',
+                'connecting it to the correct l10n_parent if in "connected mode", or by creating a new',
+                'image relation and then letting dbdoctor remove this one after reloading the check.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array

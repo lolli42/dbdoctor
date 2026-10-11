@@ -19,7 +19,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordKey;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -38,19 +37,20 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class TcaTablesTranslatedLanguageParentDuplicates extends AbstractHealthCheck implements HealthCheckInterface
 {
-    public function header(SymfonyStyle $io): void
+    protected function getDescription(): HealthCheckDescription
     {
-        $io->section('Scan for duplicate record translations');
-        $this->outputClass($io);
-        $this->outputTags($io, self::TAG_SOFT_DELETE, self::TAG_REMOVE);
-        $io->text([
-            'There must be only one translated record (TCA ctrl "languageField" > 0) per',
-            'default language record (TCA ctrl "transOrigPointerField") and language.',
-            'This check finds duplicates in all tables except "pages" and "tt_content", keeps',
-            'the one the frontend shows: The visible one (not hidden, start and end time not',
-            'excluding it) with the lowest uid, or the one with the lowest uid if none is',
-            'visible. Others are soft-deleted, or removed if the table is not soft-delete aware.',
-        ]);
+        return new HealthCheckDescription(
+            'Scan for duplicate record translations',
+            [self::TAG_SOFT_DELETE, self::TAG_REMOVE],
+            [
+                'There must be only one translated record (TCA ctrl "languageField" > 0) per',
+                'default language record (TCA ctrl "transOrigPointerField") and language.',
+                'This check finds duplicates in all tables except "pages" and "tt_content", keeps',
+                'the one the frontend shows: The visible one (not hidden, start and end time not',
+                'excluding it) with the lowest uid, or the one with the lowest uid if none is',
+                'visible. Others are soft-deleted, or removed if the table is not soft-delete aware.',
+            ],
+        );
     }
 
     protected function detect(HealthCheckRun $run): array
