@@ -68,7 +68,7 @@ final readonly class TtContentPidDeleted extends AbstractHealthCheck implements 
                     $findings[] = new Finding(
                         new RecordKey('tt_content', (int)$row['uid']),
                         (int)$row['pid'],
-                        [$this->softOrHardDeletePlan('tt_content', $row)],
+                        [$this->softOrHardDeleteChange('tt_content', $row)],
                         new Reason('page-deleted', 'Page "' . $row['pid'] . '" is soft-deleted', ['pid' => (int)$row['pid']]),
                     );
                 }

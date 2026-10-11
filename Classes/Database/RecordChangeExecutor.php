@@ -18,23 +18,23 @@ namespace Lolli\Dbdoctor\Database;
  */
 
 use Lolli\Dbdoctor\Finding\Finding;
-use Lolli\Dbdoctor\Finding\WriteOperation;
-use Lolli\Dbdoctor\Finding\WritePlan;
+use Lolli\Dbdoctor\Finding\RecordChange;
+use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckRun;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 
 /**
- * Executes or simulates write plans of findings. The only place changing records:
- * Each plan is one statement, shown and logged to the sql dump file of the run.
+ * Executes or simulates changes of findings. The only place changing records:
+ * Each change is one statement, shown and logged to the sql dump file of the run.
  */
-final readonly class PlanExecutor
+final readonly class RecordChangeExecutor
 {
     public function __construct(
         private RecordsHelper $recordsHelper,
     ) {}
 
     /**
-     * All plans of all findings in their order. Consecutive plans of one table are a
+     * All changes of all findings in their order. Consecutive changes of one table are a
      * block with a summary before and after.
      *
      * @param list<Finding> $findings
@@ -44,17 +44,17 @@ final readonly class PlanExecutor
         $currentTableName = null;
         $counts = [];
         foreach ($findings as $finding) {
-            foreach ($finding->plans as $plan) {
-                if ($plan->tableName !== $currentTableName) {
+            foreach ($finding->changes as $change) {
+                if ($change->tableName !== $currentTableName) {
                     if ($currentTableName !== null) {
                         $this->outputTableAfter($run, $simulate, $currentTableName, $counts);
                     }
-                    $currentTableName = $plan->tableName;
+                    $currentTableName = $change->tableName;
                     $counts = [];
                     $this->outputTableBefore($run, $simulate, $currentTableName);
                 }
-                $this->executePlan($run, $simulate, $plan);
-                $counts[$plan->operation->value] = ($counts[$plan->operation->value] ?? 0) + 1;
+                $this->executeChange($run, $simulate, $change);
+                $counts[$change->type->value] = ($counts[$change->type->value] ?? 0) + 1;
             }
         }
         if ($currentTableName !== null) {
@@ -62,13 +62,13 @@ final readonly class PlanExecutor
         }
     }
 
-    public function executePlan(HealthCheckRun $run, bool $simulate, WritePlan $plan): void
+    public function executeChange(HealthCheckRun $run, bool $simulate, RecordChange $change): void
     {
-        $sql = match ($plan->operation) {
-            WriteOperation::Update, WriteOperation::SoftDelete => $this->recordsHelper->updateTcaRecord($run->statements, $simulate, $plan->tableName, $this->getUid($plan), $plan->values),
-            WriteOperation::Delete => $this->recordsHelper->deleteTcaRecord($run->statements, $simulate, $plan->tableName, $this->getUid($plan)),
-            WriteOperation::Insert => $this->recordsHelper->insertTcaRecord($run->statements, $simulate, $plan->tableName, $plan->values),
-            WriteOperation::MmDelete => $this->recordsHelper->deleteMmRows($run->statements, $simulate, $plan->tableName, $plan->where),
+        $sql = match ($change->type) {
+            RecordChangeType::Update, RecordChangeType::SoftDelete => $this->recordsHelper->updateTcaRecord($run->statements, $simulate, $change->tableName, $this->getUid($change), $change->values),
+            RecordChangeType::Delete => $this->recordsHelper->deleteTcaRecord($run->statements, $simulate, $change->tableName, $this->getUid($change)),
+            RecordChangeType::Insert => $this->recordsHelper->insertTcaRecord($run->statements, $simulate, $change->tableName, $change->values),
+            RecordChangeType::MmDelete => $this->recordsHelper->deleteMmRows($run->statements, $simulate, $change->tableName, $change->where),
         };
         if ($run->sqlDumpFile && !$simulate) {
             file_put_contents($run->sqlDumpFile, $sql . "\n", \FILE_APPEND);
@@ -76,15 +76,15 @@ final readonly class PlanExecutor
         $run->io->text($sql);
     }
 
-    private function getUid(WritePlan $plan): int
+    private function getUid(RecordChange $change): int
     {
-        if ($plan->uid === null) {
+        if ($change->uid === null) {
             throw new \RuntimeException(
-                'Write plan "' . $plan->operation->value . '" on table "' . $plan->tableName . '" needs a uid.',
+                'Change "' . $change->type->value . '" on table "' . $change->tableName . '" needs a uid.',
                 1791700001
             );
         }
-        return $plan->uid;
+        return $change->uid;
     }
 
     private function outputTableBefore(HealthCheckRun $run, bool $simulate, string $tableName): void
@@ -98,9 +98,9 @@ final readonly class PlanExecutor
     private function outputTableAfter(HealthCheckRun $run, bool $simulate, string $tableName, array $counts): void
     {
         $lines = [
-            'Updated' => ($counts[WriteOperation::Update->value] ?? 0) + ($counts[WriteOperation::SoftDelete->value] ?? 0),
-            'Deleted' => ($counts[WriteOperation::Delete->value] ?? 0) + ($counts[WriteOperation::MmDelete->value] ?? 0),
-            'Inserted' => $counts[WriteOperation::Insert->value] ?? 0,
+            'Updated' => ($counts[RecordChangeType::Update->value] ?? 0) + ($counts[RecordChangeType::SoftDelete->value] ?? 0),
+            'Deleted' => ($counts[RecordChangeType::Delete->value] ?? 0) + ($counts[RecordChangeType::MmDelete->value] ?? 0),
+            'Inserted' => $counts[RecordChangeType::Insert->value] ?? 0,
         ];
         foreach ($lines as $action => $count) {
             if ($count === 0) {

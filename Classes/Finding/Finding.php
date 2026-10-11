@@ -20,21 +20,21 @@ namespace Lolli\Dbdoctor\Finding;
 /**
  * Something a health check found broken, and the changes that fix it.
  *
- * One fix per finding: The plans are the one way dbdoctor handles it. Most findings have
- * a single plan, a finding of a group field with MM table has one plan per removed relation.
- * Plans are executed in the order of findings, and in their order within a finding.
+ * One fix per finding: The changes are the one way dbdoctor handles it. Most findings have
+ * a single change, a finding of a group field with MM table has one change per removed relation.
+ * Changes are executed in the order of findings, and in their order within a finding.
  */
 final readonly class Finding
 {
     /**
      * @param int|null $pid Page the record is located on, null if the finding is on no page, for instance MM rows of a missing record
-     * @param list<WritePlan> $plans
+     * @param list<RecordChange> $changes
      * @param array<string, mixed> $evidence Check specific details, named, documented by the check
      */
     public function __construct(
         public RecordKey|RecordFieldKey|MmKey $key,
         public ?int $pid,
-        public array $plans,
+        public array $changes,
         public ?Reason $reason = null,
         public array $evidence = [],
     ) {}

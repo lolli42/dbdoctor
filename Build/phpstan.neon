@@ -24,4 +24,4 @@ parameters:
     - Lolli\Dbdoctor\HealthCheck\AbstractHealthCheck::injectTableHelper
     - Lolli\Dbdoctor\HealthCheck\AbstractHealthCheck::injectAffectedPagesRenderer
     - Lolli\Dbdoctor\HealthCheck\AbstractHealthCheck::injectRecordsRenderer
-    - Lolli\Dbdoctor\HealthCheck\AbstractHealthCheck::injectPlanExecutor
+    - Lolli\Dbdoctor\HealthCheck\AbstractHealthCheck::injectRecordChangeExecutor
