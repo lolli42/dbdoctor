@@ -22,6 +22,3 @@ parameters:
     - Lolli\Dbdoctor\HealthCheck\AbstractHealthCheck::injectTcaHelper
     - Lolli\Dbdoctor\HealthCheck\AbstractHealthCheck::injectRecordsHelper
     - Lolli\Dbdoctor\HealthCheck\AbstractHealthCheck::injectTableHelper
-    - Lolli\Dbdoctor\HealthCheck\AbstractHealthCheck::injectAffectedPagesRenderer
-    - Lolli\Dbdoctor\HealthCheck\AbstractHealthCheck::injectRecordsRenderer
-    - Lolli\Dbdoctor\HealthCheck\AbstractHealthCheck::injectRecordChangeExecutor

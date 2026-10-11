@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
+use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedLanguageParentDuplicates;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -42,7 +43,7 @@ class TcaTablesTranslatedLanguageParentDuplicatesTest extends AbstractFunctional
         $subject = $this->get(TcaTablesTranslatedLanguageParentDuplicates::class);
         $io->expects(self::atLeastOnce())->method('warning');
         $io->expects(self::atLeastOnce())->method('ask')->willReturn('p', 'd', 'a');
-        $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckInterface::MODE_INTERACTIVE, '');
     }
 
     #[Test]
@@ -51,7 +52,7 @@ class TcaTablesTranslatedLanguageParentDuplicatesTest extends AbstractFunctional
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDuplicatesImport.csv');
         /** @var TcaTablesTranslatedLanguageParentDuplicates $subject */
         $subject = $this->get(TcaTablesTranslatedLanguageParentDuplicates::class);
-        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDuplicatesFixed.csv');
     }
 }

@@ -18,6 +18,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  */
 use Lolli\Dbdoctor\HealthCheck\GroupFieldRelationMissing;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
+use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -39,7 +40,7 @@ class GroupFieldRelationMissingTest extends AbstractFunctionalTestCase
         $subject = $this->get(GroupFieldRelationMissing::class);
         $io->expects(self::atLeastOnce())->method('warning');
         $io->expects(self::atLeastOnce())->method('ask')->willReturn('p', 'd', 'a');
-        $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckInterface::MODE_INTERACTIVE, '');
     }
 
     #[Test]
@@ -48,7 +49,7 @@ class GroupFieldRelationMissingTest extends AbstractFunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldRelationMissingImport.csv');
         /** @var GroupFieldRelationMissing $subject */
         $subject = $this->get(GroupFieldRelationMissing::class);
-        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldRelationMissingFixed.csv');
     }
 
@@ -58,7 +59,7 @@ class GroupFieldRelationMissingTest extends AbstractFunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldRelationMissingFileReferenceImport.csv');
         /** @var GroupFieldRelationMissing $subject */
         $subject = $this->get(GroupFieldRelationMissing::class);
-        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldRelationMissingFileReferenceFixed.csv');
     }
 
@@ -68,7 +69,7 @@ class GroupFieldRelationMissingTest extends AbstractFunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldRelationMissingInlineParentImport.csv');
         /** @var GroupFieldRelationMissing $subject */
         $subject = $this->get(GroupFieldRelationMissing::class);
-        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldRelationMissingInlineParentFixed.csv');
     }
 }

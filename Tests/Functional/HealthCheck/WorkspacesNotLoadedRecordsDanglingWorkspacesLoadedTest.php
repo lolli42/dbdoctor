@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
+use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\HealthCheck\WorkspacesNotLoadedRecordsDangling;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -42,7 +43,7 @@ class WorkspacesNotLoadedRecordsDanglingWorkspacesLoadedTest extends AbstractFun
         // No affected records: A single line, details are shown with -v only.
         $io->expects(self::once())->method('writeln')->with('<info>OK</info>  WorkspacesNotLoadedRecordsDangling');
         $io->expects(self::never())->method('success');
-        $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckInterface::MODE_INTERACTIVE, '');
     }
 
     #[Test]
@@ -51,7 +52,7 @@ class WorkspacesNotLoadedRecordsDanglingWorkspacesLoadedTest extends AbstractFun
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesNotLoadedRecordsDanglingImport.csv');
         /** @var WorkspacesNotLoadedRecordsDangling $subject */
         $subject = $this->get(WorkspacesNotLoadedRecordsDangling::class);
-        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/WorkspacesNotLoadedRecordsDanglingWorkspacesLoadedFixed.csv');
     }
 }

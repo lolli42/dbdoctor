@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
+use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\HealthCheck\TcaTablesPidMissing;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -37,7 +38,7 @@ class TcaTablesPidMissingTest extends AbstractFunctionalTestCase
         $subject = $this->get(TcaTablesPidMissing::class);
         $io->expects(self::atLeastOnce())->method('warning');
         $io->expects(self::atLeastOnce())->method('ask')->willReturn('p', 'd', 'a');
-        $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckInterface::MODE_INTERACTIVE, '');
     }
 
     #[Test]
@@ -46,7 +47,7 @@ class TcaTablesPidMissingTest extends AbstractFunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingImport.csv');
         /** @var TcaTablesPidMissing $subject */
         $subject = $this->get(TcaTablesPidMissing::class);
-        $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingFixed.csv');
     }
 
@@ -58,7 +59,7 @@ class TcaTablesPidMissingTest extends AbstractFunctionalTestCase
         $io->expects(self::atLeastOnce())->method('ask')->willReturn('s', 'e');
         /** @var TcaTablesPidMissing $subject */
         $subject = $this->get(TcaTablesPidMissing::class);
-        $result = $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
+        $result = $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckInterface::MODE_INTERACTIVE, '');
         self::assertSame(HealthCheckInterface::RESULT_BROKEN, $result);
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingFixed.csv');
     }
@@ -91,7 +92,7 @@ class TcaTablesPidMissingTest extends AbstractFunctionalTestCase
         );
         /** @var TcaTablesPidMissing $subject */
         $subject = $this->get(TcaTablesPidMissing::class);
-        $result = $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
+        $result = $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckInterface::MODE_INTERACTIVE, '');
         self::assertSame(HealthCheckInterface::RESULT_BROKEN, $result);
         self::assertContains('Records changed since they were shown, findings reloaded. Nothing executed.', $warnings);
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingFixed.csv');

@@ -19,6 +19,7 @@ namespace Lolli\Dbdoctor\Commands;
 
 use Lolli\Dbdoctor\DatabaseSchema\DatabaseSchemaChecker;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
+use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\HealthFactory\HealthFactoryInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -35,6 +36,7 @@ final class HealthCommand extends Command
     public function __construct(
         private readonly HealthFactoryInterface $healthFactory,
         private readonly DatabaseSchemaChecker $databaseSchemaChecker,
+        private readonly HealthCheckRunner $healthCheckRunner,
     ) {
         parent::__construct();
     }
@@ -111,7 +113,7 @@ final class HealthCommand extends Command
 
         $result = HealthCheckInterface::RESULT_OK;
         foreach ($this->healthFactory->getNext() as $healthInstance) {
-            $result |= $healthInstance->handle($io, $mode, $file);
+            $result |= $this->healthCheckRunner->handle($healthInstance, $io, $mode, $file);
             if (($result & HealthCheckInterface::RESULT_ABORT) === HealthCheckInterface::RESULT_ABORT) {
                 $io->warning('Aborting ...');
                 $result |= $this->removeEmptyFile($io, $file);

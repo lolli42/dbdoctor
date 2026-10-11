@@ -21,7 +21,7 @@ use Lolli\Dbdoctor\Database\PreparedStatements;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Data of a single handle() call of a health check. Created by AbstractHealthCheck->handle()
+ * Data of a single run of a health check. Created by HealthCheckRunner->handle()
  * and handed down, so the health check services themselves stay stateless.
  */
 final readonly class HealthCheckRun

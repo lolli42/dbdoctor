@@ -18,6 +18,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  */
 
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
+use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\HealthCheck\PagesTranslatedLanguageParentDeleted;
 use Lolli\Dbdoctor\HealthCheck\TcaTablesDeleteFlagZeroOrOne;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
@@ -50,11 +51,11 @@ class SqlDumpFileHeaderTest extends AbstractFunctionalTestCase
         /** @var TcaTablesDeleteFlagZeroOrOne $otherCheck */
         $otherCheck = $this->get(TcaTablesDeleteFlagZeroOrOne::class);
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/SqlDumpFileHeaderFirstPassImport.csv');
-        $multiPositionCheck->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, $file);
+        $this->get(HealthCheckRunner::class)->handle($multiPositionCheck, self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, $file);
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/SqlDumpFileHeaderOtherCheckImport.csv');
-        $otherCheck->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, $file);
+        $this->get(HealthCheckRunner::class)->handle($otherCheck, self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, $file);
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/SqlDumpFileHeaderSecondPassImport.csv');
-        $multiPositionCheck->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, $file);
+        $this->get(HealthCheckRunner::class)->handle($multiPositionCheck, self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, $file);
         // SQL quoting differs per DBMS, the header lines are checked exactly.
         $lines = file($file, FILE_IGNORE_NEW_LINES);
         self::assertIsArray($lines);
