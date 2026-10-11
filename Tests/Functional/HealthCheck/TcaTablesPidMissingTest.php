@@ -49,4 +49,51 @@ class TcaTablesPidMissingTest extends AbstractFunctionalTestCase
         $subject->handle(self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingFixed.csv');
     }
+
+    #[Test]
+    public function fixBrokenRecordsInteractive(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingImport.csv');
+        $io = $this->createMock(SymfonyStyle::class);
+        $io->expects(self::atLeastOnce())->method('ask')->willReturn('s', 'e');
+        /** @var TcaTablesPidMissing $subject */
+        $subject = $this->get(TcaTablesPidMissing::class);
+        $result = $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
+        self::assertSame(HealthCheckInterface::RESULT_BROKEN, $result);
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingFixed.csv');
+    }
+
+    #[Test]
+    public function executeInteractiveReloadsWhenRecordsChangedMeanwhile(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingImport.csv');
+        $connection = $this->getConnectionPool()->getConnectionForTable('be_users');
+        $io = $this->createMock(SymfonyStyle::class);
+        $warnings = [];
+        $io->method('warning')->willReturnCallback(
+            function (string|array $message) use (&$warnings): void {
+                $warnings[] = $message;
+            }
+        );
+        $askCount = 0;
+        $io->expects(self::exactly(2))->method('ask')->willReturnCallback(
+            function () use ($connection, &$askCount): string {
+                $askCount++;
+                if ($askCount === 1) {
+                    // Another broken record is added after the findings have been shown
+                    $connection->insert('be_users', ['uid' => 4, 'pid' => 7, 'username' => 'Not ok user on pid 7']);
+                } else {
+                    // The first "e" did not execute
+                    self::assertSame(1, $connection->count('*', 'be_users', ['uid' => 3]));
+                }
+                return 'e';
+            }
+        );
+        /** @var TcaTablesPidMissing $subject */
+        $subject = $this->get(TcaTablesPidMissing::class);
+        $result = $subject->handle($io, HealthCheckInterface::MODE_INTERACTIVE, '');
+        self::assertSame(HealthCheckInterface::RESULT_BROKEN, $result);
+        self::assertContains('Records changed since they were shown, findings reloaded. Nothing executed.', $warnings);
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingFixed.csv');
+    }
 }

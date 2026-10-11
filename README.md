@@ -264,6 +264,10 @@ and waits for user input:
 * d - SHOW record details
 * ? - HELP
 
+`s`, `p`, `d` and `e` work on the records found when the check ran: `e` executes exactly the
+changes `s` shows. Before executing, `e` runs the check again: When records changed meanwhile,
+it shows the new findings instead of executing. `r` runs the check again at any time.
+
 
 # Exit values
 
