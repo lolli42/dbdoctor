@@ -17,7 +17,8 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
-use Lolli\Dbdoctor\HealthCheck\HealthCheckInterface;
+use Lolli\Dbdoctor\HealthCheck\HealthCheckMode;
+use Lolli\Dbdoctor\HealthCheck\HealthCheckResult;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\HealthCheck\PagesTranslatedLanguageParentDeleted;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
@@ -43,7 +44,7 @@ class PagesTranslatedLanguageParentDeletedTest extends AbstractFunctionalTestCas
         $subject = $this->get(PagesTranslatedLanguageParentDeleted::class);
         $io->expects(self::atLeastOnce())->method('warning');
         $io->expects(self::atLeastOnce())->method('ask')->willReturn('p', 'd', 'a');
-        $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckInterface::MODE_INTERACTIVE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckMode::Interactive, '');
     }
 
     #[Test]
@@ -52,7 +53,7 @@ class PagesTranslatedLanguageParentDeletedTest extends AbstractFunctionalTestCas
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/PagesTranslatedLanguageParentDeletedImport.csv');
         /** @var PagesTranslatedLanguageParentDeleted $subject */
         $subject = $this->get(PagesTranslatedLanguageParentDeleted::class);
-        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckMode::Execute, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/PagesTranslatedLanguageParentDeletedFixed.csv');
     }
 
@@ -64,7 +65,7 @@ class PagesTranslatedLanguageParentDeletedTest extends AbstractFunctionalTestCas
         /** @var PagesTranslatedLanguageParentDeleted $subject */
         $subject = $this->get(PagesTranslatedLanguageParentDeleted::class);
         $io->expects(self::once())->method('warning');
-        self::assertSame(HealthCheckInterface::RESULT_BROKEN, $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckInterface::MODE_CHECK, ''));
+        self::assertSame(HealthCheckResult::Broken, $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckMode::Check, ''));
     }
 
     #[Test]
@@ -75,6 +76,6 @@ class PagesTranslatedLanguageParentDeletedTest extends AbstractFunctionalTestCas
         $subject = $this->get(PagesTranslatedLanguageParentDeleted::class);
         $this->expectException(EarlierCheckNotFixedException::class);
         $this->expectExceptionCode(1647793648);
-        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckInterface::MODE_EXECUTE, '');
+        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckMode::Execute, '');
     }
 }
