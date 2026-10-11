@@ -41,6 +41,10 @@ final readonly class JsonReportBuilder
 {
     public const SCHEMA_VERSION = '0.1';
 
+    // A table is suspicious if a check flags more than this share of its rows, and more than this number of rows
+    private const SUSPICIOUS_SHARE = 0.5;
+    private const SUSPICIOUS_MIN_ROWS = 100;
+
     public function __construct(
         private RecordReader $recordReader,
         private ConnectionPool $connectionPool,
@@ -285,6 +289,8 @@ final readonly class JsonReportBuilder
                 'findings' => $count,
                 'rows' => $rows,
                 'share' => $rowCount > 0 ? round($rows / $rowCount, 5) : null,
+                // A check flagging most rows of a table hints to a mismatch of check and TCA, not to broken data
+                'suspicious' => $rows > self::SUSPICIOUS_MIN_ROWS && $rowCount > 0 && $rows / $rowCount > self::SUSPICIOUS_SHARE,
             ];
         }
         return [

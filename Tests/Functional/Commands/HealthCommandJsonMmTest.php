@@ -69,8 +69,8 @@ class HealthCommandJsonMmTest extends AbstractFunctionalTestCase
         self::assertFalse($report['tables']['sys_category_record_mm']['tca']);
         self::assertSame(5, $report['tables']['sys_category_record_mm']['rowCount']);
         // Item 1 has two broken fields: Two findings, but one affected row of the three items
-        self::assertSame(['findings' => 3, 'rows' => 2, 'share' => 0.66667], $check['counts']['byTable']['tx_dbdoctortestsgroup_item']);
+        self::assertSame(['findings' => 3, 'rows' => 2, 'share' => 0.66667, 'suspicious' => false], $check['counts']['byTable']['tx_dbdoctortestsgroup_item']);
         // The missing category 2 is one finding with its two MM rows
-        self::assertSame(['findings' => 1, 'rows' => 2, 'share' => 0.4], $check['counts']['byTable']['sys_category_record_mm']);
+        self::assertSame(['findings' => 1, 'rows' => 2, 'share' => 0.4, 'suspicious' => false], $check['counts']['byTable']['sys_category_record_mm']);
     }
 }

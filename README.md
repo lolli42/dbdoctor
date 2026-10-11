@@ -351,7 +351,10 @@ prompting for user input after each failed check.
   per check its status, counts, facets and findings. A finding carries its key (record, record field
   or MM rows), the record with TCA control fields like deleted, language and workspace under
   names that are the same for all tables, the reason and the changes dbdoctor would do,
-  with old and new values. The exit code is the same as in check mode. Further options:
+  with old and new values. Counts per table come with the affected rows and their share of the
+  table: A check flagging more than half of a table, and more than 100 rows, marks it
+  `suspicious`, which rather hints to a mismatch of check and TCA than to broken data. The exit
+  code is the same as in check mode. Further options:
   * `--scope until-first-finding` (default): Checks after the first one that is not ok are
     not run, they rely on the findings being fixed. `--scope all` runs all checks and marks
     results after the first not ok check as preliminary.
