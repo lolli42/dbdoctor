@@ -100,6 +100,30 @@ final class HealthCommand extends Command
             ReportOptions::CONTEXT_BASIC
         );
         $this->addOption(
+            'table',
+            null,
+            InputOption::VALUE_REQUIRED,
+            'json only: report only findings of this table, the record table or the MM table'
+        );
+        $this->addOption(
+            'uid',
+            null,
+            InputOption::VALUE_REQUIRED,
+            'json only: report only findings of this record uid, with --table'
+        );
+        $this->addOption(
+            'pid',
+            null,
+            InputOption::VALUE_REQUIRED,
+            'json only: report only findings of records on this page'
+        );
+        $this->addOption(
+            'subtree',
+            null,
+            InputOption::VALUE_REQUIRED,
+            'json only: report only findings of records on this page and its sub pages'
+        );
+        $this->addOption(
             'check',
             null,
             InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
@@ -216,7 +240,19 @@ final class HealthCommand extends Command
                 'Current database schema is not in sync with TCA: Missing tables, missing or not adapted columns or indexes were detected.'
             );
         }
-        $options = new ReportOptions($scope, $tier, (int)$limit, $context);
+        $filters = [];
+        foreach (['uid', 'pid', 'subtree'] as $filterName) {
+            $filterValue = $input->getOption($filterName);
+            if ($filterValue !== null && !ctype_digit((string)$filterValue)) {
+                return $this->outputJsonError($output, 'Invalid ' . $filterName . ' "' . $filterValue . '".');
+            }
+            $filters[$filterName] = $filterValue === null ? null : (int)$filterValue;
+        }
+        $filterTable = $input->getOption('table') === null ? null : (string)$input->getOption('table');
+        if ($filters['uid'] !== null && $filterTable === null) {
+            return $this->outputJsonError($output, 'Option "--uid" needs "--table".');
+        }
+        $options = new ReportOptions($scope, $tier, (int)$limit, $context, $filterTable, $filters['uid'], $filters['pid'], $filters['subtree']);
         /** @var list<string> $onlyChecks */
         $onlyChecks = (array)$input->getOption('check');
 

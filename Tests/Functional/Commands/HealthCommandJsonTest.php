@@ -172,4 +172,75 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         self::assertSame(HealthCheckResult::Error->value, $result);
         self::assertSame('Option "--format json" is available with "--mode check" only.', $report['error']['message']);
     }
+
+    #[Test]
+    public function filtersFindingsByTable(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslationSourceSetWithParentImport.csv');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--scope' => 'all',
+            '--table' => 'pages',
+            '--check' => ['TcaTablesTranslationSourceSetWithParent'],
+        ]);
+        $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        $check = $report['checks'][0];
+        self::assertSame(1, $check['counts']['findings']);
+        self::assertGreaterThan(1, $check['counts']['total']);
+        self::assertSame(['type' => 'record', 'table' => 'pages', 'uid' => 4], $check['findings'][0]['key']);
+        self::assertSame(['table' => 'pages'], $report['run']['options']['filter']);
+    }
+
+    #[Test]
+    public function filtersFindingsByPid(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslationSourceSetWithParentImport.csv');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--scope' => 'all',
+            '--pid' => '1',
+            '--check' => ['TcaTablesTranslationSourceSetWithParent'],
+        ]);
+        $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        $check = $report['checks'][0];
+        self::assertSame(1, $check['counts']['findings']);
+        self::assertSame(['type' => 'record', 'table' => 'pages', 'uid' => 4], $check['findings'][0]['key']);
+    }
+
+    #[Test]
+    public function filtersFindingsBySubtree(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslationSourceSetWithParentImport.csv');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--scope' => 'all',
+            '--subtree' => '2',
+            '--check' => ['TcaTablesTranslationSourceSetWithParent'],
+        ]);
+        $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        $check = $report['checks'][0];
+        // Records on sub page 2, not the page translation on its parent page 1
+        self::assertSame(['tt_content'], array_keys($check['counts']['byTable']));
+        self::assertSame($check['counts']['findings'], $check['counts']['byTable']['tt_content']['findings']);
+    }
+
+    #[Test]
+    public function reportsErrorForUidWithoutTable(): void
+    {
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $result = $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--uid' => '4',
+        ]);
+        $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame(HealthCheckResult::Error->value, $result);
+        self::assertSame('Option "--uid" needs "--table".', $report['error']['message']);
+    }
 }
