@@ -115,6 +115,7 @@ final readonly class InlineForeignFieldChildrenParentLanguageDifferent extends A
                         && !($parentRowLanguage === 0 && $childRowLanguage === -1)
                     ) {
                         $childUid = (int)$inlineChildRow['uid'];
+                        $parentUid = (int)$inlineChildRow[$fieldNameOfParentTableUid];
                         $tableNames[$childTableName] = true;
                         if ($childRowLanguage === -1) {
                             $updateFindings[$childTableName][] = new Finding(
@@ -128,14 +129,22 @@ final readonly class InlineForeignFieldChildrenParentLanguageDifferent extends A
                                         ],
                                     ]),
                                 ],
-                                new Reason('all-languages-parent-language', 'Language -1 with parent record language ' . $parentRowLanguage, ['parentLanguage' => $parentRowLanguage]),
+                                new Reason(
+                                    'all-languages-parent-language',
+                                    'Language -1 with parent "' . $parentTableName . ':' . $parentUid . '" language ' . $parentRowLanguage,
+                                    ['parentTable' => $parentTableName, 'parentUid' => $parentUid, 'parentLanguage' => $parentRowLanguage]
+                                ),
                             );
                         } else {
                             $deleteFindings[$childTableName][] = new Finding(
                                 new RecordKey($childTableName, $childUid),
                                 (int)$inlineChildRow['pid'],
                                 [$this->softOrHardDeleteChange($childTableName, $inlineChildRow)],
-                                new Reason('parent-language-different', 'Parent record language ' . $parentRowLanguage, ['parentLanguage' => $parentRowLanguage]),
+                                new Reason(
+                                    'parent-language-different',
+                                    'Parent "' . $parentTableName . ':' . $parentUid . '" language ' . $parentRowLanguage,
+                                    ['parentTable' => $parentTableName, 'parentUid' => $parentUid, 'parentLanguage' => $parentRowLanguage]
+                                ),
                             );
                         }
                     }
