@@ -148,8 +148,8 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
         $check = $report['checks'][0];
         self::assertSame(0, $report['run']['options']['limit']);
-        self::assertSame([], $check['findings']);
-        self::assertTrue($check['truncated']);
+        self::assertArrayNotHasKey('findings', $check);
+        self::assertArrayNotHasKey('truncated', $check);
         self::assertSame(6, $check['counts']['findings']);
         self::assertSame(6, array_sum($check['facets']['state']));
         self::assertArrayNotHasKey('tables', $report);
