@@ -29,6 +29,7 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 /**
  * Reads records for structured output: TCA ctrl fields with role names, the same for
  * every table, raw values. Labels only with tier "labels", never of tables with personal data.
+ * Labels identify a record only: They are shortened, written fields are read separately.
  */
 final readonly class RecordReader
 {
@@ -43,6 +44,11 @@ final readonly class RecordReader
         'sys_log',
         'sys_history',
     ];
+
+    /**
+     * Labels are cut to this length including the ellipsis, after stripping tags.
+     */
+    public const LABEL_MAX_LENGTH = 80;
 
     public function __construct(
         private TcaHelper $tcaHelper,
@@ -129,12 +135,33 @@ final readonly class RecordReader
             ];
         }
         if ($labelFields !== []) {
-            $record['labels'] = array_combine($labelFields, array_map(fn(string $field): int|string|null => $this->castValue($tableName, $field, $row[$field]), $labelFields));
+            $record['labels'] = array_combine($labelFields, array_map(
+                function (string $field) use ($tableName, $row): int|string|null {
+                    $value = $this->castValue($tableName, $field, $row[$field]);
+                    return is_string($value) ? $this->shortenLabel($value) : $value;
+                },
+                $labelFields
+            ));
         }
         if ($fields !== []) {
             $record['fields'] = array_combine($fields, array_map(fn(string $field): int|string|null => $this->castValue($tableName, $field, $row[$field]), $fields));
         }
         return $record;
+    }
+
+    /**
+     * A label as one short line of text: Without tags and entities, whitespace collapsed,
+     * cut to LABEL_MAX_LENGTH with an ellipsis. A label field like tt_content bodytext
+     * would otherwise carry kilobytes of HTML.
+     */
+    public function shortenLabel(string $label): string
+    {
+        $text = html_entity_decode(strip_tags($label), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = trim((string)preg_replace('/[\s\x{00A0}]+/u', ' ', $text));
+        if (mb_strlen($text) <= self::LABEL_MAX_LENGTH) {
+            return $text;
+        }
+        return mb_substr($text, 0, self::LABEL_MAX_LENGTH - 1) . '…';
     }
 
     /**

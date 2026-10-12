@@ -21,6 +21,7 @@ use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Tester\CommandTester;
 use TYPO3\CMS\Core\Console\CommandRegistry;
+use TYPO3\CMS\Core\Database\ConnectionPool;
 
 class HealthCommandJsonTest extends AbstractFunctionalTestCase
 {
@@ -44,7 +45,7 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         ]);
         $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame(HealthCheckResult::Broken->value, $result);
-        self::assertSame('0.1', $report['schemaVersion']);
+        self::assertSame('0.2', $report['schemaVersion']);
         self::assertMatchesRegularExpression('/^\d+\.\d+\.\d+$/', $report['run']['dbdoctor']);
         self::assertCount(1, $report['checks']);
         $check = $report['checks'][0];
@@ -129,6 +130,86 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
     }
 
     #[Test]
+    public function reportsCountsAndFacetsWithoutFindingsWithLimitZero(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslationSourceSetWithParentImport.csv');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--scope' => 'all',
+            '--limit' => '0',
+            '--check' => ['TcaTablesTranslationSourceSetWithParent'],
+        ]);
+        $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        $check = $report['checks'][0];
+        self::assertSame(0, $report['run']['options']['limit']);
+        self::assertSame([], $check['findings']);
+        self::assertTrue($check['truncated']);
+        self::assertSame(6, $check['counts']['findings']);
+        self::assertSame(6, array_sum($check['facets']['state']));
+        self::assertArrayNotHasKey('tables', $report);
+    }
+
+    #[Test]
+    public function reportsOkChecksInShortWithLimitZero(): void
+    {
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--limit' => '0',
+            '--check' => ['TcaTablesPidMissing'],
+        ]);
+        $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame(['position', 'class', 'status', 'preliminary'], array_keys($report['checks'][0]));
+        self::assertSame('ok', $report['checks'][0]['status']);
+    }
+
+    #[Test]
+    public function reportsAllFindingsWithLimitAll(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslationSourceSetWithParentImport.csv');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--scope' => 'all',
+            '--limit' => 'all',
+            '--check' => ['TcaTablesTranslationSourceSetWithParent'],
+        ]);
+        $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        $check = $report['checks'][0];
+        self::assertSame('all', $report['run']['options']['limit']);
+        self::assertCount(6, $check['findings']);
+        self::assertFalse($check['truncated']);
+    }
+
+    #[Test]
+    public function reportsLabelsWithoutTagsAndShortened(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslationSourceSetWithParentImport.csv');
+        $connectionPool = $this->get(ConnectionPool::class);
+        $connectionPool->getConnectionForTable('pages')->update('pages', ['title' => '<b>Site</b> &amp;  root'], ['uid' => 1]);
+        $connectionPool->getConnectionForTable('tt_content')->update('tt_content', ['bodytext' => '<p>' . str_repeat('Lorem&nbsp;ipsum ', 10) . '</p>'], ['uid' => 5]);
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--scope' => 'all',
+            '--tier' => 'labels',
+            '--table' => 'tt_content',
+            '--uid' => '5',
+            '--check' => ['TcaTablesTranslationSourceSetWithParent'],
+        ]);
+        $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        $finding = $report['checks'][0]['findings'][0];
+        self::assertSame(['tagsStripped' => true, 'maxLength' => 80], $report['run']['options']['labels']);
+        self::assertSame(substr(str_repeat('Lorem ipsum ', 10), 0, 79) . '…', $finding['record']['labels']['bodytext']);
+        self::assertSame('Site & root', $finding['context']['page']['rootline'][1]['title']);
+    }
+
+    #[Test]
     public function doesNotRunChecksAfterFirstCheckWithFindings(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingImport.csv');
@@ -209,8 +290,30 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         ]);
         $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
         $check = $report['checks'][0];
+        self::assertTrue($check['filterMatches']);
         self::assertSame(1, $check['counts']['findings']);
         self::assertSame(['type' => 'record', 'table' => 'pages', 'uid' => 4], $check['findings'][0]['key']);
+    }
+
+    #[Test]
+    public function reportsCheckWithoutFindingsMatchingTheFilterInShort(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslationSourceSetWithParentImport.csv');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--scope' => 'all',
+            '--pid' => '3',
+            '--check' => ['TcaTablesTranslationSourceSetWithParent'],
+        ]);
+        $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        $check = $report['checks'][0];
+        self::assertSame('findings', $check['status']);
+        self::assertFalse($check['filterMatches']);
+        self::assertSame(['findings' => 0, 'total' => 6], $check['counts']);
+        self::assertArrayNotHasKey('facets', $check);
+        self::assertArrayNotHasKey('findings', $check);
     }
 
     #[Test]

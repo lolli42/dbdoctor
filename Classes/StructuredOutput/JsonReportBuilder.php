@@ -40,7 +40,7 @@ use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
  */
 final readonly class JsonReportBuilder
 {
-    public const SCHEMA_VERSION = '0.1';
+    public const SCHEMA_VERSION = '0.2';
 
     // A table is suspicious if a check flags more than this share of its rows, and more than this number of rows
     private const SUSPICIOUS_SHARE = 0.5;
@@ -63,6 +63,21 @@ final readonly class JsonReportBuilder
         // The extension version is maintained in composer.json, in composer and classic mode
         $composerManifest = json_decode((string)file_get_contents(__DIR__ . '/../../composer.json'), true);
         $dbdoctorVersion = $composerManifest['extra']['typo3/cms']['version'] ?? null;
+        $optionsData = [
+            'scope' => $options->scope->value,
+            'tier' => $options->tier->value,
+            'limit' => $options->limit ?? 'all',
+            'context' => $options->context->value,
+            'filter' => (object)array_filter([
+                'table' => $options->filterTable,
+                'uid' => $options->filterUid,
+                'pid' => $options->filterPid,
+                'subtree' => $options->filterSubtree,
+            ], static fn(int|string|null $value): bool => $value !== null),
+        ];
+        if ($options->tier === ReportTier::Labels) {
+            $optionsData['labels'] = ['tagsStripped' => true, 'maxLength' => RecordReader::LABEL_MAX_LENGTH];
+        }
         return [
             'execTime' => (int)$GLOBALS['EXEC_TIME'],
             'dbdoctor' => $dbdoctorVersion,
@@ -74,18 +89,7 @@ final readonly class JsonReportBuilder
                 'driver' => (string)($connection->getParams()['driver'] ?? ''),
             ],
             'workspacesLoaded' => ExtensionManagementUtility::isLoaded('workspaces'),
-            'options' => [
-                'scope' => $options->scope->value,
-                'tier' => $options->tier->value,
-                'limit' => $options->limit,
-                'context' => $options->context->value,
-                'filter' => (object)array_filter([
-                    'table' => $options->filterTable,
-                    'uid' => $options->filterUid,
-                    'pid' => $options->filterPid,
-                    'subtree' => $options->filterSubtree,
-                ], static fn(int|string|null $value): bool => $value !== null),
-            ],
+            'options' => $optionsData,
             'durationMs' => $durationMs,
             'exitCode' => $exitCode,
         ];
@@ -137,6 +141,17 @@ final readonly class JsonReportBuilder
      */
     public function buildCheck(int $position, string $className, HealthCheckInspection $inspection, bool $preliminary, ReportOptions $options): array
     {
+        if ($inspection->status === InspectionStatus::Ok && $options->isSummary()) {
+            return [
+                'check' => [
+                    'position' => $position,
+                    'class' => (new \ReflectionClass($className))->getShortName(),
+                    'status' => $inspection->status->value,
+                    'preliminary' => $preliminary,
+                ],
+                'tables' => [],
+            ];
+        }
         $check = [
             'position' => $position,
             'class' => (new \ReflectionClass($className))->getShortName(),
@@ -159,6 +174,17 @@ final readonly class JsonReportBuilder
             $check['skipReason'] = $inspection->skipReason;
         }
         $findings = $this->filterFindings($inspection->findings, $options);
+        if ($options->hasFilter() && $inspection->status === InspectionStatus::Findings) {
+            $check['filterMatches'] = $findings !== [];
+            if ($findings === []) {
+                // Still listed: The check is not ok, which explains the exit code and the status of later checks
+                $check['counts'] = ['findings' => 0, 'total' => count($inspection->findings)];
+                return [
+                    'check' => $check,
+                    'tables' => [],
+                ];
+            }
+        }
         $tables = [];
         foreach ($findings as $finding) {
             $tables[$this->getKeyTableName($finding)] = true;
@@ -356,7 +382,7 @@ final readonly class JsonReportBuilder
                     $rootPage = $rootline['rootPageId'] === null ? 'none' : (string)$rootline['rootPageId'];
                     $facets['rootPage'][$rootPage] = ($facets['rootPage'][$rootPage] ?? 0) + 1;
                 }
-                if ($options->limit > 0 && $index >= $options->limit) {
+                if ($options->limit !== null && $index >= $options->limit) {
                     continue;
                 }
                 $writes = [];
@@ -417,7 +443,7 @@ final readonly class JsonReportBuilder
                 $entry['workspace'] = (int)$page['t3ver_wsid'];
             }
             if ($options->tier === ReportTier::Labels && !(bool)$page['_isMissing']) {
-                $entry['title'] = (string)$page['title'];
+                $entry['title'] = $this->recordReader->shortenLabel((string)$page['title']);
             }
             if (isset($siteRootPageIds[(int)$page['uid']])) {
                 $rootPageId = (int)$page['uid'];
