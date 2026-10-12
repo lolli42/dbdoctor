@@ -72,7 +72,11 @@ final readonly class InlineForeignFieldChildrenParentMissing extends AbstractHea
                         new RecordKey($childTableName, (int)$inlineChildRow['uid']),
                         (int)$inlineChildRow['pid'],
                         [new RecordChange(RecordChangeType::Delete, $childTableName, (int)$inlineChildRow['uid'])],
-                        new Reason('parent-invalid', 'Invalid parent'),
+                        new Reason(
+                            'parent-invalid',
+                            'Invalid parent "' . $inlineChildRow[$fieldNameOfParentTableName] . ':' . $inlineChildRow[$fieldNameOfParentTableUid] . '"',
+                            ['parentTable' => (string)$inlineChildRow[$fieldNameOfParentTableName], 'parentUid' => (int)$inlineChildRow[$fieldNameOfParentTableUid]]
+                        ),
                     );
                     continue;
                 }
@@ -83,7 +87,11 @@ final readonly class InlineForeignFieldChildrenParentMissing extends AbstractHea
                         new RecordKey($childTableName, (int)$inlineChildRow['uid']),
                         (int)$inlineChildRow['pid'],
                         [new RecordChange(RecordChangeType::Delete, $childTableName, (int)$inlineChildRow['uid'])],
-                        new Reason('parent-missing', 'Missing parent'),
+                        new Reason(
+                            'parent-missing',
+                            'Missing parent "' . $inlineChildRow[$fieldNameOfParentTableName] . ':' . (int)$inlineChildRow[$fieldNameOfParentTableUid] . '"',
+                            ['parentTable' => (string)$inlineChildRow[$fieldNameOfParentTableName], 'parentUid' => (int)$inlineChildRow[$fieldNameOfParentTableUid]]
+                        ),
                     );
                 }
             }
