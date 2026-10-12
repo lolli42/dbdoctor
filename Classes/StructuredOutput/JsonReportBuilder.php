@@ -193,8 +193,10 @@ final readonly class JsonReportBuilder
         $check['counts'] = $this->buildCounts($findings) + ['total' => count($inspection->findings)];
         $built = $this->buildFindings($className, $findings, $options);
         $check['facets'] = $built['facets'];
-        $check['truncated'] = count($built['findings']) < count($findings);
-        $check['findings'] = $built['findings'];
+        if (!$options->isSummary()) {
+            $check['truncated'] = count($built['findings']) < count($findings);
+            $check['findings'] = $built['findings'];
+        }
         return [
             'check' => $check,
             'tables' => array_keys($tables),
