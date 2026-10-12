@@ -80,7 +80,11 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentMissing 
                         new RecordKey($childTableName, (int)$inlineChildRow['uid']),
                         (int)$inlineChildRow['pid'],
                         [new RecordChange(RecordChangeType::Delete, $childTableName, (int)$inlineChildRow['uid'])],
-                        new Reason('parent-missing', 'Missing parent'),
+                        new Reason(
+                            'parent-missing',
+                            'Missing parent "' . $parentTableName . ':' . (int)$inlineChildRow[$fieldNameOfParentTableUid] . '"',
+                            ['parentTable' => $parentTableName, 'parentUid' => (int)$inlineChildRow[$fieldNameOfParentTableUid]]
+                        ),
                     );
                 }
             }
