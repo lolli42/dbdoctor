@@ -68,6 +68,8 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         self::assertSame(['delete' => 1], $check['facets']['operation']);
         self::assertSame(['page-missing' => 1], $check['facets']['reason']);
         self::assertSame(['live' => 1], $check['facets']['state']);
+        // The fixture row has no tstamp
+        self::assertSame(['none' => 1], $check['facets']['tstampAge']);
         self::assertSame(['live' => ['delete' => 1]], $check['facets']['stateByOperation']);
         self::assertSame([['operation' => 'delete', 'table' => 'be_users', 'count' => 1]], $check['facets']['writePatterns']);
         self::assertSame(3, $report['tables']['be_users']['rowCount']);
