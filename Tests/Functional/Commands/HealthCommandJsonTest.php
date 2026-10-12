@@ -234,6 +234,23 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
     }
 
     #[Test]
+    public function reportsCompactJson(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingImport.csv');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--compact' => true,
+            '--check' => ['TcaTablesPidMissing'],
+        ]);
+        $display = $commandTester->getDisplay();
+        self::assertStringNotContainsString("\n", trim($display));
+        $report = json_decode($display, true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame('findings', $report['checks'][0]['status']);
+    }
+
+    #[Test]
     public function doesNotRunChecksAfterFirstCheckWithFindings(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingImport.csv');

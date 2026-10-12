@@ -373,6 +373,7 @@ prompting for user input after each failed check.
   * `--limit <n>`: Findings per check, default 100, 0 for none (summary), `all` for all.
     Counts and facets are always complete. Facets count findings per operation, reason code,
     record state, visibility, language, age, site root page and write pattern.
+  * `--compact`: JSON without whitespace, about half the size. Recommended for tools and agents.
   * `--context basic` (default): Each finding has the rootline of its page, and language
     parent and translation source of its record. `--context none` leaves them out.
   * `--tier structure` (default): uids, pids, TCA control fields, timestamps and written fields.

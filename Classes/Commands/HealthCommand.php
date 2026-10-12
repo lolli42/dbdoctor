@@ -133,6 +133,12 @@ final class HealthCommand extends Command
             'json only: report only this check, class name with or without namespace, repeatable.'
             . ' Earlier checks still run to tell if the result is preliminary'
         );
+        $this->addOption(
+            'compact',
+            null,
+            InputOption::VALUE_NONE,
+            'json only: JSON without whitespace, about half the size, for tools and agents'
+        );
         $this->setHelp('This is an interactive command to go through a list of database health checks finding inconsistencies.');
     }
 
@@ -222,26 +228,27 @@ final class HealthCommand extends Command
         $tierOption = (string)$input->getOption('tier');
         $limit = (string)$input->getOption('limit');
         if ((string)$input->getOption('mode') !== 'check') {
-            return $this->outputJsonError($output, 'Option "--format json" is available with "--mode check" only.');
+            return $this->outputJsonError($input, $output, 'Option "--format json" is available with "--mode check" only.');
         }
         $scope = ReportScope::tryFrom($scopeOption);
         if ($scope === null) {
-            return $this->outputJsonError($output, 'Invalid scope "' . $scopeOption . '".');
+            return $this->outputJsonError($input, $output, 'Invalid scope "' . $scopeOption . '".');
         }
         $tier = ReportTier::tryFrom($tierOption);
         if ($tier === null) {
-            return $this->outputJsonError($output, 'Invalid tier "' . $tierOption . '".');
+            return $this->outputJsonError($input, $output, 'Invalid tier "' . $tierOption . '".');
         }
         $contextOption = (string)$input->getOption('context');
         $context = ReportContext::tryFrom($contextOption);
         if ($context === null) {
-            return $this->outputJsonError($output, 'Invalid context "' . $contextOption . '".');
+            return $this->outputJsonError($input, $output, 'Invalid context "' . $contextOption . '".');
         }
         if ($limit !== 'all' && !ctype_digit($limit)) {
-            return $this->outputJsonError($output, 'Invalid limit "' . $limit . '".');
+            return $this->outputJsonError($input, $output, 'Invalid limit "' . $limit . '".');
         }
         if ($this->databaseSchemaChecker->hasIncompleteTablesColumnsIndexes()) {
             return $this->outputJsonError(
+                $input,
                 $output,
                 'Current database schema is not in sync with TCA: Missing tables, missing or not adapted columns or indexes were detected.'
             );
@@ -250,13 +257,13 @@ final class HealthCommand extends Command
         foreach (['uid', 'pid', 'subtree'] as $filterName) {
             $filterValue = $input->getOption($filterName);
             if ($filterValue !== null && !ctype_digit((string)$filterValue)) {
-                return $this->outputJsonError($output, 'Invalid ' . $filterName . ' "' . $filterValue . '".');
+                return $this->outputJsonError($input, $output, 'Invalid ' . $filterName . ' "' . $filterValue . '".');
             }
             $filters[$filterName] = $filterValue === null ? null : (int)$filterValue;
         }
         $filterTable = $input->getOption('table') === null ? null : (string)$input->getOption('table');
         if ($filters['uid'] !== null && $filterTable === null) {
-            return $this->outputJsonError($output, 'Option "--uid" needs "--table".');
+            return $this->outputJsonError($input, $output, 'Option "--uid" needs "--table".');
         }
         /** @var list<string> $onlyChecks */
         $onlyChecks = array_values((array)$input->getOption('check'));
@@ -301,17 +308,29 @@ final class HealthCommand extends Command
             // TCA roles, row counts and inline parents help to judge records, a summary has none
             unset($report['tables']);
         }
-        $output->writeln(json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+        $output->writeln($this->encodeJson($input, $report));
         return $result;
     }
 
-    private function outputJsonError(OutputInterface $output, string $message): int
+    private function outputJsonError(InputInterface $input, OutputInterface $output, string $message): int
     {
-        $output->writeln(json_encode([
+        $output->writeln($this->encodeJson($input, [
             'schemaVersion' => JsonReportBuilder::SCHEMA_VERSION,
             'error' => ['message' => $message],
-        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+        ]));
         return HealthCheckResult::Error->value;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function encodeJson(InputInterface $input, array $data): string
+    {
+        $flags = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR;
+        if (!(bool)$input->getOption('compact')) {
+            $flags |= JSON_PRETTY_PRINT;
+        }
+        return json_encode($data, $flags);
     }
 
     /**
