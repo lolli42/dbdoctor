@@ -214,6 +214,27 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
     }
 
     #[Test]
+    public function reportsLabelsWithoutNullFields(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslationSourceSetWithParentImport.csv');
+        $this->get(ConnectionPool::class)->getConnectionForTable('tt_content')->update('tt_content', ['bodytext' => null], ['uid' => 5]);
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--scope' => 'all',
+            '--tier' => 'labels',
+            '--table' => 'tt_content',
+            '--uid' => '5',
+            '--check' => ['TcaTablesTranslationSourceSetWithParent'],
+        ]);
+        $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        $labels = $report['checks'][0]['findings'][0]['record']['labels'];
+        self::assertArrayHasKey('header', $labels);
+        self::assertArrayNotHasKey('bodytext', $labels);
+    }
+
+    #[Test]
     public function doesNotRunChecksAfterFirstCheckWithFindings(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingImport.csv');

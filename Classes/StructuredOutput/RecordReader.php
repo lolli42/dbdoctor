@@ -101,7 +101,7 @@ final readonly class RecordReader
 
     /**
      * A record with uid, pid and its roles, a "workspace" object for workspace aware tables,
-     * "labels" with tier "labels", and the raw values of the additionally requested fields
+     * "labels" with tier "labels" (fields that are not null), and the raw values of the additionally requested fields
      * in "fields". Null if the record does not exist.
      *
      * @param list<string> $fields Database fields needed additionally, for instance written ones
@@ -134,14 +134,16 @@ final readonly class RecordReader
                 'oid' => (int)$row['t3ver_oid'],
             ];
         }
-        if ($labelFields !== []) {
-            $record['labels'] = array_combine($labelFields, array_map(
-                function (string $field) use ($tableName, $row): int|string|null {
-                    $value = $this->castValue($tableName, $field, $row[$field]);
-                    return is_string($value) ? $this->shortenLabel($value) : $value;
-                },
-                $labelFields
-            ));
+        $labels = [];
+        foreach ($labelFields as $field) {
+            // Null label fields are typically fields of other record types, they identify nothing
+            $value = $this->castValue($tableName, $field, $row[$field]);
+            if ($value !== null) {
+                $labels[$field] = is_string($value) ? $this->shortenLabel($value) : $value;
+            }
+        }
+        if ($labels !== []) {
+            $record['labels'] = $labels;
         }
         if ($fields !== []) {
             $record['fields'] = array_combine($fields, array_map(fn(string $field): int|string|null => $this->castValue($tableName, $field, $row[$field]), $fields));
