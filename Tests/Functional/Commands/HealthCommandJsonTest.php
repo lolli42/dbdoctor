@@ -156,13 +156,12 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
     }
 
     #[Test]
-    public function reportsOkChecksInShortWithLimitZero(): void
+    public function reportsOkChecksInShort(): void
     {
         $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
         $commandTester->execute([
             '--mode' => 'check',
             '--format' => 'json',
-            '--limit' => '0',
             '--check' => ['TcaTablesPidMissing'],
         ]);
         $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
@@ -267,6 +266,7 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         self::assertSame('skipped', $report['checks'][0]['status']);
         self::assertStringContainsString('but that page does not exist', $report['checks'][0]['skipReason']);
         self::assertTrue($report['checks'][0]['preliminary']);
+        self::assertSame(['position', 'class', 'status', 'preliminary', 'skipReason'], array_keys($report['checks'][0]));
     }
 
     #[Test]

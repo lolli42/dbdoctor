@@ -142,14 +142,19 @@ final readonly class JsonReportBuilder
      */
     public function buildCheck(int $position, string $className, HealthCheckInspection $inspection, bool $preliminary, ReportOptions $options): array
     {
-        if ($inspection->status === InspectionStatus::Ok && $options->isSummary()) {
+        if ($inspection->status !== InspectionStatus::Findings) {
+            // Ok and skipped checks have no findings to judge, their description is in the check
+            $check = [
+                'position' => $position,
+                'class' => (new \ReflectionClass($className))->getShortName(),
+                'status' => $inspection->status->value,
+                'preliminary' => $preliminary,
+            ];
+            if ($inspection->skipReason !== null) {
+                $check['skipReason'] = $inspection->skipReason;
+            }
             return [
-                'check' => [
-                    'position' => $position,
-                    'class' => (new \ReflectionClass($className))->getShortName(),
-                    'status' => $inspection->status->value,
-                    'preliminary' => $preliminary,
-                ],
+                'check' => $check,
                 'tables' => [],
             ];
         }
@@ -163,19 +168,10 @@ final readonly class JsonReportBuilder
             'preliminary' => $preliminary,
             'durationMs' => $inspection->durationMs,
             'peakMemory' => $inspection->peakMemory,
+            'description' => implode(' ', $inspection->description->lines),
         ];
-        if ($inspection->status === InspectionStatus::Ok) {
-            return [
-                'check' => $check,
-                'tables' => [],
-            ];
-        }
-        $check['description'] = implode(' ', $inspection->description->lines);
-        if ($inspection->skipReason !== null) {
-            $check['skipReason'] = $inspection->skipReason;
-        }
         $findings = $this->filterFindings($inspection->findings, $options);
-        if ($options->hasFilter() && $inspection->status === InspectionStatus::Findings) {
+        if ($options->hasFilter()) {
             $check['filterMatches'] = $findings !== [];
             if ($findings === []) {
                 // Still listed: The check is not ok, which explains the exit code and the status of later checks
