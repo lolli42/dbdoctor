@@ -258,9 +258,9 @@ final class HealthCommand extends Command
         if ($filters['uid'] !== null && $filterTable === null) {
             return $this->outputJsonError($output, 'Option "--uid" needs "--table".');
         }
-        $options = new ReportOptions($scope, $tier, $limit === 'all' ? null : (int)$limit, $context, $filterTable, $filters['uid'], $filters['pid'], $filters['subtree']);
         /** @var list<string> $onlyChecks */
-        $onlyChecks = (array)$input->getOption('check');
+        $onlyChecks = array_values((array)$input->getOption('check'));
+        $options = new ReportOptions($scope, $tier, $limit === 'all' ? null : (int)$limit, $context, $filterTable, $filters['uid'], $filters['pid'], $filters['subtree'], $onlyChecks);
 
         $result = HealthCheckResult::Ok->value;
         $checks = [];

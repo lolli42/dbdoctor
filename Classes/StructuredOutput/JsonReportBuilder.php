@@ -73,7 +73,8 @@ final readonly class JsonReportBuilder
                 'uid' => $options->filterUid,
                 'pid' => $options->filterPid,
                 'subtree' => $options->filterSubtree,
-            ], static fn(int|string|null $value): bool => $value !== null),
+                'check' => $options->filterChecks === [] ? null : $options->filterChecks,
+            ], static fn(int|string|array|null $value): bool => $value !== null),
         ];
         if ($options->tier === ReportTier::Labels) {
             $optionsData['labels'] = ['tagsStripped' => true, 'maxLength' => RecordReader::LABEL_MAX_LENGTH];
