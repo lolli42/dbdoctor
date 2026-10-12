@@ -348,19 +348,19 @@ prompting for user input after each failed check.
   $ bin/typo3 dbdoctor:health -m check --format json
   ```
   A read-only report as JSON on stdout, for tools and agents: run data, the tables found, and
-  per check its status, counts, facets and findings. A finding carries its key (record, record field
-  or MM rows), the record with TCA control fields like deleted, language and workspace under
-  names that are the same for all tables, the reason and the changes dbdoctor would do,
-  with old and new values. Counts per table come with the affected rows and their share of the
+  per check its status, counts, facets and findings. Ok and skipped checks have their status
+  only, the description of a check comes with its findings. A finding carries its key (record,
+  record field or MM rows), the record with TCA control fields like deleted, language and
+  workspace under names that are the same for all tables, the reason and the changes dbdoctor
+  would do, with old and new values. Counts per table come with the affected rows and their share of the
   table: A check flagging more than half of a table, and more than 100 rows, marks it
   `suspicious`, which rather hints to a mismatch of check and TCA than to broken data. The exit
   code is the same as in check mode.
 
   The economical way through a report is overview, then one check, then one record or page:
-  `--scope all --limit 0` lists all checks with counts and facets, but no findings, no tables
-  and ok checks with their status only. `--check`
-  then shows the findings of one check, `--table` and `--uid`, `--pid` or `--subtree` narrow
-  them down further. Further options:
+  `--scope all --limit 0` lists all checks with counts and facets, but no findings and no
+  tables. `--check` then shows the findings of one check, `--table` and `--uid`, `--pid` or
+  `--subtree` narrow them down further. Further options:
   * `--scope until-first-finding` (default): Checks after the first one that is not ok are
     not run, they rely on the findings being fixed. `--scope all` runs all checks and marks
     results after the first not ok check as preliminary.
