@@ -354,21 +354,30 @@ prompting for user input after each failed check.
   with old and new values. Counts per table come with the affected rows and their share of the
   table: A check flagging more than half of a table, and more than 100 rows, marks it
   `suspicious`, which rather hints to a mismatch of check and TCA than to broken data. The exit
-  code is the same as in check mode. Further options:
+  code is the same as in check mode.
+
+  The economical way through a report is overview, then one check, then one record or page:
+  `--scope all --limit 0` lists all checks with counts and facets, but no findings, no tables
+  and ok checks with their status only. `--check`
+  then shows the findings of one check, `--table` and `--uid`, `--pid` or `--subtree` narrow
+  them down further. Further options:
   * `--scope until-first-finding` (default): Checks after the first one that is not ok are
     not run, they rely on the findings being fixed. `--scope all` runs all checks and marks
     results after the first not ok check as preliminary.
   * `--check <class>`: Report only this check, repeatable. Earlier checks still run.
   * `--table <table>`, `--uid <uid>` (with `--table`), `--pid <page>`, `--subtree <page>`:
     Report only findings of this table, record, page, or page and its sub pages. Counts and
-    facets are of the filtered findings, `counts.total` has the number of all findings.
-  * `--limit <n>`: Findings per check, default 100, 0 for all. Counts and facets are always
-    complete.
+    facets are of the filtered findings, `counts.total` has the number of all findings. Checks
+    with findings get `filterMatches`: Checks with no finding matching the filter are still
+    listed, they are not ok, but only with their counts.
+  * `--limit <n>`: Findings per check, default 100, 0 for none (summary), `all` for all.
+    Counts and facets are always complete.
   * `--context basic` (default): Each finding has the rootline of its page, and language
     parent and translation source of its record. `--context none` leaves them out.
   * `--tier structure` (default): uids, pids, TCA control fields, timestamps and written fields.
     `--tier labels` adds TCA label fields and site identifiers, never for tables with personal
-    data like be_users and fe_users.
+    data like be_users and fe_users. Labels only identify records: Tags are stripped and they
+    are cut to 80 characters, as declared in `run.options.labels`.
 
   The report is experimental: While its `schemaVersion` is 0.x, its structure may change with
   any release, there is no compatibility promise yet. Checks, their names and their order are

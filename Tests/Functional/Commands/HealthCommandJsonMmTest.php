@@ -37,7 +37,7 @@ class HealthCommandJsonMmTest extends AbstractFunctionalTestCase
             '--mode' => 'check',
             '--format' => 'json',
             '--scope' => 'all',
-            '--limit' => '0',
+            '--limit' => 'all',
             '--check' => ['GroupFieldMmRelationMissing'],
         ]);
         $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);

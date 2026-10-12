@@ -23,7 +23,7 @@ namespace Lolli\Dbdoctor\StructuredOutput;
 final readonly class ReportOptions
 {
     /**
-     * @param int $limit Maximum number of findings per check, 0 for all. Counts are always complete.
+     * @param int|null $limit Maximum number of findings per check, 0 for none, null for all. Counts and facets are always complete.
      * @param string|null $filterTable Only findings of this table: The record table, or the MM table
      * @param int|null $filterUid Only findings of this record uid, with $filterTable
      * @param int|null $filterPid Only findings on this page
@@ -32,11 +32,24 @@ final readonly class ReportOptions
     public function __construct(
         public ReportScope $scope,
         public ReportTier $tier,
-        public int $limit,
+        public ?int $limit,
         public ReportContext $context = ReportContext::Basic,
         public ?string $filterTable = null,
         public ?int $filterUid = null,
         public ?int $filterPid = null,
         public ?int $filterSubtree = null,
     ) {}
+
+    /**
+     * Summary: Counts and facets of the checks only, without findings and their record data.
+     */
+    public function isSummary(): bool
+    {
+        return $this->limit === 0;
+    }
+
+    public function hasFilter(): bool
+    {
+        return $this->filterTable !== null || $this->filterUid !== null || $this->filterPid !== null || $this->filterSubtree !== null;
+    }
 }

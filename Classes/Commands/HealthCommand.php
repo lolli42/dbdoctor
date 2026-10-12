@@ -91,7 +91,7 @@ final class HealthCommand extends Command
             'limit',
             null,
             InputOption::VALUE_REQUIRED,
-            'json only: maximum number of findings per check, 0 for all, counts are always complete',
+            'json only: maximum number of findings per check, 0 for none (summary), "all" for all, counts and facets are always complete',
             '100'
         );
         $this->addOption(
@@ -237,7 +237,7 @@ final class HealthCommand extends Command
         if ($context === null) {
             return $this->outputJsonError($output, 'Invalid context "' . $contextOption . '".');
         }
-        if (!ctype_digit($limit)) {
+        if ($limit !== 'all' && !ctype_digit($limit)) {
             return $this->outputJsonError($output, 'Invalid limit "' . $limit . '".');
         }
         if ($this->databaseSchemaChecker->hasIncompleteTablesColumnsIndexes()) {
@@ -258,7 +258,7 @@ final class HealthCommand extends Command
         if ($filters['uid'] !== null && $filterTable === null) {
             return $this->outputJsonError($output, 'Option "--uid" needs "--table".');
         }
-        $options = new ReportOptions($scope, $tier, (int)$limit, $context, $filterTable, $filters['uid'], $filters['pid'], $filters['subtree']);
+        $options = new ReportOptions($scope, $tier, $limit === 'all' ? null : (int)$limit, $context, $filterTable, $filters['uid'], $filters['pid'], $filters['subtree']);
         /** @var list<string> $onlyChecks */
         $onlyChecks = (array)$input->getOption('check');
 
@@ -297,6 +297,10 @@ final class HealthCommand extends Command
             'tables' => (object)$this->jsonReportBuilder->buildTables(array_values(array_unique($tableNames))),
             'checks' => $checks,
         ];
+        if ($options->isSummary()) {
+            // TCA roles, row counts and inline parents help to judge records, a summary has none
+            unset($report['tables']);
+        }
         $output->writeln(json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
         return $result;
     }
