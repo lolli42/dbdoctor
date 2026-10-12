@@ -569,12 +569,12 @@ final readonly class JsonReportBuilder
     }
 
     /**
-     * Age of a timestamp relative to the time of the run.
+     * Age of a timestamp relative to the time of the run, "none" without timestamp.
      */
     private function getAgeBucket(int $timestamp): string
     {
         if ($timestamp <= 0) {
-            return '0';
+            return 'none';
         }
         $age = (int)$GLOBALS['EXEC_TIME'] - $timestamp;
         return match (true) {
