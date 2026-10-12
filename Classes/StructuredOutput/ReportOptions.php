@@ -28,6 +28,7 @@ final readonly class ReportOptions
      * @param int|null $filterUid Only findings of this record uid, with $filterTable
      * @param int|null $filterPid Only findings on this page
      * @param int|null $filterSubtree Only findings on this page and its sub pages
+     * @param list<string> $filterChecks Only these checks, class names with or without namespace. Earlier checks still run.
      */
     public function __construct(
         public ReportScope $scope,
@@ -38,6 +39,7 @@ final readonly class ReportOptions
         public ?int $filterUid = null,
         public ?int $filterPid = null,
         public ?int $filterSubtree = null,
+        public array $filterChecks = [],
     ) {}
 
     /**

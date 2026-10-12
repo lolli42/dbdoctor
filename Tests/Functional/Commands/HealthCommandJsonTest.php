@@ -46,6 +46,7 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame(HealthCheckResult::Broken->value, $result);
         self::assertSame('0.2', $report['schemaVersion']);
+        self::assertSame(['check' => ['TcaTablesPidMissing']], $report['run']['options']['filter']);
         self::assertMatchesRegularExpression('/^\d+\.\d+\.\d+$/', $report['run']['dbdoctor']);
         self::assertCount(1, $report['checks']);
         $check = $report['checks'][0];
@@ -273,7 +274,7 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         self::assertSame(1, $check['counts']['findings']);
         self::assertGreaterThan(1, $check['counts']['total']);
         self::assertSame(['type' => 'record', 'table' => 'pages', 'uid' => 4], $check['findings'][0]['key']);
-        self::assertSame(['table' => 'pages'], $report['run']['options']['filter']);
+        self::assertSame(['table' => 'pages', 'check' => ['TcaTablesTranslationSourceSetWithParent']], $report['run']['options']['filter']);
     }
 
     #[Test]
