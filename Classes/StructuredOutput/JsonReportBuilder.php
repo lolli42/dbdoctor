@@ -351,6 +351,7 @@ final readonly class JsonReportBuilder
         }
         $facets = [
             'operation' => [],
+            'reason' => [],
             'state' => [],
             'hidden' => [],
             'language' => [],
@@ -413,7 +414,7 @@ final readonly class JsonReportBuilder
         }
         ksort($facets['writePatterns']);
         $facets['writePatterns'] = array_values($facets['writePatterns']);
-        foreach (['operation', 'state', 'hidden', 'language', 'tstampAge', 'stateByOperation', 'rootPage'] as $facetName) {
+        foreach (['operation', 'reason', 'state', 'hidden', 'language', 'tstampAge', 'stateByOperation', 'rootPage'] as $facetName) {
             $facets[$facetName] = (object)$facets[$facetName];
         }
         return [
@@ -486,8 +487,8 @@ final readonly class JsonReportBuilder
     }
 
     /**
-     * Count a finding in the facets: Operations of its changes, state, visibility, language and
-     * age of its record, and patterns of its writes.
+     * Count a finding in the facets: Operations of its changes, its reason code, state, visibility,
+     * language and age of its record, and patterns of its writes.
      *
      * @param array<string, mixed> $facets
      * @param array<string, mixed>|null $record
@@ -515,6 +516,8 @@ final readonly class JsonReportBuilder
             $facets['tstampAge'][$age] = ($facets['tstampAge'][$age] ?? 0) + 1;
         }
         $facets['state'][$state] = ($facets['state'][$state] ?? 0) + 1;
+        $reason = $finding->reason->code ?? 'none';
+        $facets['reason'][$reason] = ($facets['reason'][$reason] ?? 0) + 1;
         foreach ($finding->changes as $change) {
             $operation = $change->type->value;
             $facets['operation'][$operation] = ($facets['operation'][$operation] ?? 0) + 1;

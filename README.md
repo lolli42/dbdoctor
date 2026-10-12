@@ -371,7 +371,8 @@ prompting for user input after each failed check.
     with findings get `filterMatches`: Checks with no finding matching the filter are still
     listed, they are not ok, but only with their counts.
   * `--limit <n>`: Findings per check, default 100, 0 for none (summary), `all` for all.
-    Counts and facets are always complete.
+    Counts and facets are always complete. Facets count findings per operation, reason code,
+    record state, visibility, language, age, site root page and write pattern.
   * `--context basic` (default): Each finding has the rootline of its page, and language
     parent and translation source of its record. `--context none` leaves them out.
   * `--tier structure` (default): uids, pids, TCA control fields, timestamps and written fields.
