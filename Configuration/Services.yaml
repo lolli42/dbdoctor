@@ -63,13 +63,19 @@ services:
         identifier: 'dbdoctor-workspaces-t3ver-state-three'
         after: 'dbdoctor-workspaces-t3ver-state-minus-one'
 
+  Lolli\Dbdoctor\HealthCheck\WorkspacesT3verOidNotZeroInLive:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-workspaces-t3ver-oid-not-zero-in-live'
+        after: 'dbdoctor-workspaces-t3ver-state-three'
+
   # "move sys_redirects" before PagesBrokenTree for a better chance to move records to the correct pid
   Lolli\Dbdoctor\HealthCheck\SysRedirectInvalidPid:
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-sys-redirect-invalid-pid'
         before: 'dbdoctor-pages-broken-tree'
-        after: 'dbdoctor-workspaces-t3ver-state-three'
+        after: 'dbdoctor-workspaces-t3ver-oid-not-zero-in-live'
 
   Lolli\Dbdoctor\HealthCheck\TcaTablesLanguageLessThanOneHasZeroLanguageParent:
     tags:
