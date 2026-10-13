@@ -1,0 +1,30 @@
+"sys_workspace"
+,"uid","pid","deleted","title"
+,1,0,0,"ws-1"
+"pages"
+,"uid","pid","deleted","t3ver_wsid","t3ver_oid","t3ver_state","title"
+,1,0,0,0,0,0,"Ok site root"
+,2,1,0,0,0,0,"Ok sub page in live"
+,3,1,0,1,2,0,"Ok overlay of page 2 in ws-1"
+,4,1,0,1,0,1,"Ok new page in ws-1"
+# Removed - overlay of page 2 without workspace
+,5,1,0,0,2,0,"Not ok overlay of page 2 in live"
+# Removed - soft-deleted overlay of page 2 without workspace
+,6,1,1,0,2,0,"Not ok deleted overlay of page 2 in live"
+# Ok, not changed - t3ver_state!=0 in live is handled by WorkspacesT3verStateNotZeroInLive
+,7,1,0,0,2,4,"Move pointer of page 2 in live"
+"tt_content"
+,"uid","pid","deleted","t3ver_wsid","t3ver_oid","t3ver_state","header"
+,1,2,0,0,0,0,"Ok content"
+,2,2,0,1,1,0,"Ok overlay of content 1 in ws-1"
+# Removed - overlay of content 1 without workspace
+,3,2,0,0,1,0,"Not ok overlay of content 1 in live"
+# Removed - overlay of a not existing record without workspace
+,4,2,0,0,99,0,"Not ok overlay of content 99 in live"
+"sys_file_metadata"
+,"uid","pid","t3ver_wsid","t3ver_oid","t3ver_state","title"
+# This table is the only core one that is ws-aware but not delete aware
+,1,0,0,0,0,"Ok"
+,2,0,1,1,0,"Ok overlay of 1 in ws-1"
+# Removed - overlay of 1 without workspace
+,3,0,0,1,0,"Not ok overlay of 1 in live"

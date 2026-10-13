@@ -17,6 +17,7 @@ OK  WorkspacesPidNegative
 OK  WorkspacesT3verStateNotZeroInLive
 OK  WorkspacesT3verStateMinusOne
 OK  WorkspacesT3verStateThree
+OK  WorkspacesT3verOidNotZeroInLive
 OK  SysRedirectInvalidPid
 OK  TcaTablesLanguageLessThanOneHasZeroLanguageParent
 OK  TcaTablesLanguageLessThanOneHasZeroLanguageSource
