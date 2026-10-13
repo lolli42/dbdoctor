@@ -1,0 +1,27 @@
+"sys_file"
+,"uid","pid","storage","identifier","name"
+,1,0,1,"/file-1.png","file-1.png"
+,2,0,1,"/file-2.png","file-2.png"
+,3,0,1,"/file-3.png","file-3.png"
+,4,0,1,"/file-4.png","file-4.png"
+,5,0,1,"/file-5.png","file-5.png"
+"sys_file_metadata"
+,"uid","pid","file","sys_language_uid","l10n_parent","t3ver_wsid","t3ver_oid","title"
+,1,0,1,0,0,0,0,"Ok default file 1"
+# Removed - duplicate of 1
+,2,0,1,0,0,0,0,"Not ok duplicate default file 1"
+# Ok, not changed - translation of a duplicate, connected to 1 by SysFileMetadataTranslatedParentInvalid
+,3,0,1,1,2,0,0,"Translation of duplicate file 1"
+,4,0,2,-1,0,0,0,"Ok all languages file 2"
+# Removed - duplicate of 4, language 0 and -1 are both default records
+,5,0,2,0,0,0,0,"Not ok duplicate default file 2"
+,6,0,3,0,0,0,0,"Ok default file 3"
+# Ok, not changed - workspace overlay of 6
+,7,0,3,0,0,1,6,"Ok default file 3 ws-1"
+,8,0,4,0,0,0,0,"Ok default file 4"
+# Removed - duplicates of 8
+,9,0,4,0,0,0,0,"Not ok duplicate default file 4"
+,10,0,4,-1,0,0,0,"Not ok duplicate all languages file 4"
+# Ok, not changed - a new workspace record with lower uid is no live default record
+,11,0,5,0,0,1,0,"New default file 5 ws-1"
+,12,0,5,0,0,0,0,"Ok default file 5"

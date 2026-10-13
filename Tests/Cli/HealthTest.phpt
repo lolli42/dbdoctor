@@ -28,6 +28,8 @@ OK  PagesTranslatedLanguageParentMissing
 OK  PagesTranslatedLanguageParentDeleted
 OK  PagesTranslatedLanguageParentDifferentPid
 OK  PagesTranslatedLanguageParentDuplicates
+OK  SysFileMetadataFileMissing
+OK  SysFileMetadataDefaultDuplicates
 OK  SysFileMetadataMissing
 OK  SysFileMetadataTranslatedParentInvalid
 OK  TcaTablesTranslatedParentSelf
