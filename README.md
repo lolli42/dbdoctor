@@ -5,18 +5,19 @@ TYPO3 DB doctor
 ===============
 
 * [Mission](#mission)
-* [Alternatives](#alternatives)
+* [Installation via composer](#installation-via-composer)
+* [Usage](#usage)
+  * [Preparation](#preparation)
+  * [Agentic doctor](#agentic-doctor)
+  * [Human interface](#human-interface)
+    * [Interactive mode](#interactive-mode)
+    * [Exit values](#exit-values)
+    * [Options](#options)
+  * [Postprocessing](#postprocessing)
 * [Strategy](#strategy)
 * [Impact on Frontend rendering](#impact-on-frontend-rendering)
 * [Limits](#limits)
 * [Versions](#versions)
-* [Installation](#installation)
-* [Preparation](#preparation)
-* [Postprocessing](#postprocessing)
-* [Usage](#usage)
-* [Interactive mode](#interactive-mode)
-* [Exit values](#exit-values)
-* [Options](#options)
 * [Further hints](#further-hints)
 * [FAQ](#faq)
   * [Will the functionality be made available in a backend GUI?](#will-the-functionality-be-made-available-in-a-backend-gui)
@@ -27,7 +28,6 @@ TYPO3 DB doctor
   * [Why does dbdoctor not use the TcaSchema API of the core?](#why-does-dbdoctor-not-use-the-tcaschema-api-of-the-core)
   * [This project is heavily driven by agentic coding. Can I trust it?](#this-project-is-heavily-driven-by-agentic-coding-can-i-trust-it)
 * [Tagging and releasing](#tagging-and-releasing)
-
 
 # Mission
 
@@ -54,14 +54,257 @@ have to do time-consuming debugging sessions to find out what went wrong.
 This extension provides a CLI command that tries to find various such inconsistencies
 and gives admins options to fix them.
 
-
-# Alternatives
-
-We're not aware of other open extensions that try to achieve the same in a similar
+I'm not aware of other open extensions that try to achieve the same in a similar
 systematic way. The core `lowlevel` extension comes with a few commands that try to
 find and clean up some fishy DB state cases, but dbdoctor solves far more things.
-
 This extension is not a substitute for `lowlevel` commands. It will grow over time.
+
+
+# Installation via composer
+
+```
+$ composer require lolli/dbdoctor
+```
+
+The extension currently supports TYPO3 v13 and TYPO3 v14. It can be installed as non-dev
+dependency (not adding `--dev` to `composer require`): It has no impact on a live instance
+(except dependency injection definitions) as long as it is not actively executed via CLI.
+There are no TER releases after 2.2.0.
+
+
+# Usage
+
+## Preparation
+
+The nature of the CLI command is to perform destructive database operations on your
+instance. As such, a few things should be kept in mind:
+
+* [!!!] 💣 **Create a fresh database backup dump before and after using the CLI interface.**
+  Ensure the recovery strategy actually works: Both the extension and the user can potentially
+  get something wrong. We are dealing with low level database stuff here after all,
+  so things can potentially go south rather quickly. See the "Further hints" section below, too.
+
+* [!!!] Make sure the TYPO3 "Database analyzer" is happy and needs no new or changed columns or tables.
+  An early check verifies missing tables and columns, but it is still a good idea to double-check
+  before running dbdoctor.
+
+* [!!!] There should not be any pending core upgrade wizards. dbdoctor currently does not check
+  up-front if all upgrade wizards have been executed.
+
+
+## Agentic doctor
+
+Judging findings on a large instance is the laborious part of using dbdoctor. A coding agent
+can do much of it: [Documentation/AgentGuide.md](Documentation/AgentGuide.md) tells agents how
+to run dbdoctor read-only with the JSON report, how to go through the report in a few steps,
+and how to judge findings, for instance whether fixing them changes the frontend. The agent
+ends with a verdict per check: harmless, needs a look, or the check seems wrong.
+
+One prompt to an agent with shell access does it all, in the project root of the instance:
+
+```
+Install dbdoctor with "composer require lolli/dbdoctor" (in a ddev project: "ddev composer
+require lolli/dbdoctor"), then read vendor/lolli/dbdoctor/Documentation/AgentGuide.md and
+follow it: Run dbdoctor read-only on this instance and tell me which findings are harmless
+and which need my eye.
+```
+
+With dbdoctor installed already, the prompt starts with "Read …".
+
+To make this permanent for a project, add a line to its `AGENTS.md` or `CLAUDE.md`:
+
+```
+Database health of this TYPO3 instance: dbdoctor, see vendor/lolli/dbdoctor/Documentation/AgentGuide.md
+```
+
+Notes:
+
+* Use a local copy of the instance, for instance a ddev project with a recent database
+  dump: The agent queries the database, and the report contains record data. The guide has
+  agents write it to `var/` and remove it when done.
+* The guide keeps the agent read-only: It does not run execute mode or change records,
+  fixing stays your decision. It uses uids and TCA control fields only, and asks before
+  reading labels like titles with `--tier labels`.
+* The JSON report is experimental, so is the guide. Experiences with it are welcome as issues.
+
+
+## Human interface
+
+```
+$ bin/typo3 dbdoctor:health
+```
+
+Note dbdoctor is "runtime static" with TCA and database schema: Both are **not**
+expected to change meanwhile. When you are looking at single changes and decide to change
+TCA, then clear all caches and abort dbdoctor (press "a" in interactive mode) to
+start again. Failing to do so may lead to dbdoctor writing harmful changes to the database,
+depending on what you did with TCA.
+
+The interface looks like this:
+
+![](Documentation/cli-example.png)
+
+A run with TYPO3 v14: Healthy checks are a single "OK" line, a check that finds something
+shows its records and asks what to do.
+
+The main command is a chain of single checks. They are done one by one. Affected
+record details can be shown on a per-page and a per-record basis to give a quick
+overview. The interface allows deleting or updating affected records, depending
+on the type of the check.
+
+
+### Interactive mode
+
+When dbdoctor finds something to fix in (default) interactive mode, execution stops
+and waits for user input:
+
+* e - EXECUTE suggested changes!
+* s - SIMULATE suggested changes, no execution
+* a - ABORT now
+* r - RELOAD this check
+* p - SHOW records by page
+* d - SHOW record details
+* ? - HELP
+
+`s`, `p`, `d` and `e` work on the records found when the check ran: `e` executes exactly the
+changes `s` shows. Before executing, `e` runs the check again: When records changed meanwhile,
+it shows the new findings instead of executing. `r` runs the check again at any time.
+
+
+### Exit values
+
+Exit values are bit masks: Integer 3 means: "Changes needed or done" AND "User abort"
+
+* 0 - No changes needed or done
+* 1 - Changes needed or done
+* 2 - User abort
+* 4 - Error occurred
+
+
+### Options
+
+The CLI command can be executed with a couple of options. The default mode is "interactive",
+prompting for user input after each failed check.
+
+* Help overview:
+  ```
+  $ bin/typo3 dbdoctor:health -h
+  ```
+  Left to the reader to find out what is done here :-P
+
+* Interactive mode: `--mode interactive` or `-m interactive` or option not given:
+  ```
+  $ bin/typo3 dbdoctor:health -m interactive
+  ```
+  The default mode: Perform checks one-by-one and have an interactive interface
+  to see affected record details, show pages with affected records, simulate
+  performed queries, reload check and ultimately execute queries.
+
+* Check mode: `--mode check` or `-m check`:
+  ```
+  $ bin/typo3 dbdoctor:health -m check
+  ```
+  Run all checks but don't perform any DB changes. Returns 0 (zero) if all checks
+  are fine and non-zero if something was found by any check. Useful to verify a fix
+  run was complete, and as cron job to see if any check "goes red" over time after
+  everything has been fixed once. Some checks rely on earlier checks having fixed their
+  findings: Since check mode fixes nothing, such a check is skipped with a warning when
+  it runs into an unfixed finding of an earlier check.
+
+* Execute mode: `--mode execute` or `-m execute`:
+  ```
+  $ bin/typo3 dbdoctor:health -m execute -f /tmp/dbdoctor-my-instance-`date +%Y-%m-%d-%H-%M-%S`.sql
+  ```
+  Blindly execute without further questions! This will execute all update and delete queries
+  dbdoctor suggests! This is a potentially destructive auto-operation if you trust the command,
+  which you shouldn't ;-) Did you create a DB backup before? Note the `-f` option is mandatory
+  with this mode: You **must** log executed queries to a dump file that does not exist yet, to
+  at least give you the theoretical option to debug issues after dbdoctor destroyed your database.
+  The `-f` option should thus have some date or similar in it, to make it unique.
+
+* Log executed queries to file: `--file` or `-f`:
+  ```
+  $ bin/typo3 dbdoctor:health -f /tmp/dbdoctor-my-instance-`date +%Y-%m-%d-%H-%M-%S`.sql
+  ```
+  Log all data changing queries to a file. The argument must be an *absolute file name*.
+  **Never put such a file into the public web folder of your instance**. Option `-f` is **available**
+  in "interactive" and **mandatory** in "execute" mode. Executed data changing queries are not only
+  displayed, but also logged to a file. This can be useful if the command has been executed on a
+  staging system using a current live database image: The queries can be reviewed again and then
+  executed on a live instance using something like `mysql my_database < file.sql` or similar for
+  other DBMS.
+
+* Verbose output: `--verbose` or `-v`:
+  ```
+  $ bin/typo3 dbdoctor:health -m check -v
+  ```
+  Checks without affected records are a single "OK" line by default, details are shown for
+  checks that found something only. With `-v`, all checks show their title, actions and
+  description.
+
+* Structured output (experimental): `--format json`, with check mode only:
+  ```
+  $ bin/typo3 dbdoctor:health -m check --format json
+  ```
+  A read-only report as JSON on stdout or, with `--output`, as files in a directory, for tools
+  and agents: run data, the tables found, and per check its status, counts, facets and
+  findings. Ok and skipped checks have their status only, the description of a check comes with
+  its findings. A finding carries its key (record, record field or MM rows), the record with
+  TCA control fields like deleted, language and workspace under names that are the same for all
+  tables, the reason and the changes dbdoctor would do, with old and new values. Counts per
+  table come with the affected rows and their share of the table: A check flagging more than
+  half of a table, and more than 100 rows, marks it `suspicious`, which rather hints to a
+  mismatch of check and TCA than to broken data. Groups, pages with their rootline and
+  translations, and site language fallbacks help judging findings, see
+  [Documentation/AgentGuide.md](Documentation/AgentGuide.md). The exit code is the same as in
+  check mode.
+
+  The economical way through a large report is `--output`: An index, then one check, then
+  samples of its findings, read from files. On stdout, `--scope all --limit 0` lists all
+  checks with counts, facets and groups, but no findings and no tables. `--check` then shows
+  the findings of one check, `--table` and `--uid`, `--pid` or `--subtree` narrow them down
+  further. Further options:
+  * `--scope until-first-finding` (default): Checks after the first one that is not ok are
+    not run, they rely on the findings being fixed. `--scope all` runs all checks and marks
+    results after the first not ok check as preliminary.
+  * `--check <class>`: Report only this check, repeatable. Earlier checks still run.
+  * `--table <table>`, `--uid <uid>` (with `--table`), `--pid <page>`, `--subtree <page>`:
+    Report only findings of this table, record, page, or page and its sub pages. Counts and
+    facets are of the filtered findings, `counts.total` has the number of all findings. Checks
+    with findings get `filterMatches`: Checks with no finding matching the filter are still
+    listed, they are not ok, but only with their counts.
+  * `--limit <n>`: Findings per check, default 100, 0 for none (summary), `all` for all.
+    Counts, facets and groups are always complete. Facets count findings per operation, reason
+    code, record state, visibility, language, age, site root page and write pattern.
+  * `--output <directory>`: Write the report as files into a new directory instead of stdout,
+    for reports too large to read at once: `index.json` with the run data and one entry per
+    check, per check with findings a check file with counts, facets and groups, and a
+    findings file with all its findings as JSON Lines, one finding per line, and `tables.jsonl`
+    and `pages.jsonl` with one table or page per line. Findings are written while the checks
+    run and not kept in memory. `--limit` is `all` unless given.
+    A relative directory is relative to the current directory. The files contain record data:
+    Do not write them into a public folder, and remove them when done.
+  * `--compact`: JSON without whitespace, about half the size. Recommended for tools and agents.
+  * `--context basic` (default): The report has the rootlines of the pages of findings, each
+    finding the language parent and translation source of its record. `--context none` leaves
+    them out.
+  * `--tier structure` (default): uids, pids, TCA control fields, timestamps and written fields.
+    `--tier labels` adds TCA label fields and site identifiers, never for tables with personal
+    data like be_users and fe_users. Labels only identify records: Tags are stripped and they
+    are cut to 80 characters, as declared in `run.options.labels`.
+
+  The report is experimental: While its `schemaVersion` is 0.x, its structure may change with
+  any release, there is no compatibility promise yet. Checks, their names and their order are
+  no API in any case.
+
+  For agents reading the report, see [Agentic doctor](#agentic-doctor).
+
+
+## Postprocessing
+
+* [!!!] Run the reference index updater after this command has finished! It is very likely
+  it will update something. A clean reference index becomes more and more important
+  with newer core versions. The CLI command to do this: `bin/typo3 referenceindex:update`.
 
 
 # Strategy
@@ -160,7 +403,7 @@ that are broken, and will suggest changes that make the situation worse than bef
 dbdoctor never looks at potentially existing `zzz_deleted` columns - those do not exist
 from dbdoctor's point of view since they depend on some "before" TCA state that cannot be
 reconstructed. State created by scenarios like the above is not repairable
-and need manual reconstruction. Good luck.
+and needs manual reconstruction. Good luck.
 
 All in all, TCA and `ext_tables.sql` of extensions should be in good shape before working
 with dbdoctor, and changes suggested by health checks should **always be checked manually**
@@ -178,236 +421,9 @@ blindly!
 dbdoctor supports the PHP versions and database systems of the TYPO3 core versions it supports.
 
 
-# Installation
-
-## Composer
-
-The extension currently supports TYPO3 v13 and TYPO3 v14. The extension can be installed
-as non-dev dependency (not adding `--dev` to `composer require`): It has no impact on a
-live instance (except dependency injection definitions) as long as it is not actively
-executed via CLI.
-
-```
-$ composer require lolli/dbdoctor
-```
-
-## TYPO3 Extension Repository
-
-2.2.0 is the last version in TER. Later versions are available via composer only.
-
-
-# Preparation
-
-The nature of the CLI command is to perform destructive database operations on your
-instance. As such, a few things should be kept in mind:
-
-* [!!!] 💣 **Create a fresh database backup dump before and after using the CLI interface.**
-  Ensure the recovery strategy actually works: Both the extension and the user can potentially
-  get something wrong. We are dealing with low level database stuff here after all,
-  so things can potentially go south rather quickly. See the "Further hints" section below, too.
-
-* [!!!] Make sure the TYPO3 "Database analyzer" is happy and needs no new or changed columns or tables.
-  An early check verifies missing tables and columns, but it is still a good idea to double-check
-  before running dbdoctor.
-
-* [!!!] There should not be any pending core upgrade wizards. dbdoctor currently does not check
-  up-front if all upgrade wizards have been executed.
-
-
-# Postprocessing
-
-* [!!!] Run the reference index updater after this command has finished! It is very likely
-  it will update something. A clean reference index becomes more and more important
-  with newer core versions. The CLI command to do this: `bin/typo3 referenceindex:update`.
-
-
-# Usage
-
-```
-$ bin/typo3 dbdoctor:health
-```
-
-Note dbdoctor is "runtime static" with TCA and database schema: Both are **not**
-expected to change meanwhile. When you are looking at single changes and decide to change
-TCA, then clear all caches and abort dbdoctor (press "a" in interactive mode) to
-start again. Failing to do so may lead to dbdoctor writing harmful changes to the database,
-depending on what you did with TCA.
-
-The interface looks like this:
-
-![](Documentation/cli-example.png)
-
-A run with TYPO3 v14: Healthy checks are a single "OK" line, a check that finds something
-shows its records and asks what to do.
-
-The main command is a chain of single checks. They are done one by one. Affected
-record details can be shown on a per-page and a per-record basis to give a quick
-overview. The interface allows deleting or updating affected records, depending
-on the type of the check.
-
-The default interactive mode will never perform updates automatically and
-always asks the user for actions. When pressing 's' (simulate/show), the queries
-that *would* be performed are shown, when pressing 'e' (execute), the queries
-are actually executed.
-
-
-# Interactive mode
-
-When dbdoctor finds something to fix in (default) interactive mode, execution stops
-and waits for user input:
-
-* e - EXECUTE suggested changes!
-* s - SIMULATE suggested changes, no execution
-* a - ABORT now
-* r - RELOAD this check
-* p - SHOW records by page
-* d - SHOW record details
-* ? - HELP
-
-`s`, `p`, `d` and `e` work on the records found when the check ran: `e` executes exactly the
-changes `s` shows. Before executing, `e` runs the check again: When records changed meanwhile,
-it shows the new findings instead of executing. `r` runs the check again at any time.
-
-
-# Exit values
-
-Exit values are bit masks: Integer 3 means: "Changes needed or done" AND "User abort"
-
-* 0 - No changes needed or done
-* 1 - Changes needed or done
-* 2 - User abort
-* 4 - Error occurred
-
-
-# Options
-
-The CLI command can be executed with a couple of options. The default mode is "interactive",
-prompting for user input after each failed check.
-
-* Help overview:
-  ```
-  $ bin/typo3 dbdoctor:health -h
-  ```
-  Left to the reader to find out what is done here :-P
-
-* Interactive mode: `--mode interactive` or `-m interactive` or option not given:
-  ```
-  $ bin/typo3 dbdoctor:health -m interactive
-  ```
-  The default mode: Perform checks one-by-one and have an interactive interface
-  to see affected record details, show pages with affected records, simulate
-  performed queries, reload check and ultimately execute queries.
-
-* Check mode: `--mode check` or `-m check`:
-  ```
-  $ bin/typo3 dbdoctor:health -m check
-  ```
-  Run all checks but don't perform any DB changes. Returns 0 (zero) if all checks
-  are fine and non-zero if something was found by any check. Useful to verify a fix
-  run was complete, and as cron job to see if any check "goes red" over time after
-  everything has been fixed once. Some checks rely on earlier checks having fixed their
-  findings: Since check mode fixes nothing, such a check is skipped with a warning when
-  it runs into an unfixed finding of an earlier check.
-
-* Execute mode: `--mode execute` or `-m execute`:
-  ```
-  $ bin/typo3 dbdoctor:health -m execute -f /tmp/dbdoctor-my-instance-`date +%Y-%m-%d-%H-%M-%S`.sql
-  ```
-  Blindly execute without further questions! This will execute all update and delete queries
-  dbdoctor suggests! This is a potentially destructive auto-operation if you trust the command,
-  which you shouldn't ;-) Did you create a DB backup before? Note the `-f` option is mandatory
-  with this mode: You **must** log executed queries to a dump file that does not exist yet, to
-  at least give you the theoretical option to debug issues after dbdoctor destroyed your database.
-  The `-f` option should thus have some date or similar in it, to make it unique.
-
-* Log executed queries to file: `--file` or `-f`:
-  ```
-  $ bin/typo3 dbdoctor:health -f /tmp/foo.sql
-  ```
-  ```
-  $ bin/typo3 dbdoctor:health -f /tmp/dbdoctor-my-instance-`date +%Y-%m-%d-%H-%M-%S`.sql
-  ```
-  Log all data changing queries to a file. The argument must be an *absolute file name*.
-  **Never put such a file into the public web folder of your instance**. Option `-f` is **available**
-  in "interactive" and **mandatory** in "execute" mode. Executed data changing queries are not only
-  displayed, but also logged to a file. This can be useful if the command has been executed on a
-  staging system using a current live database image: The queries can be reviewed again and then
-  executed on a live instance using something like `mysql my_database < file.sql` or similar for
-  other DBMS.
-
-* Verbose output: `--verbose` or `-v`:
-  ```
-  $ bin/typo3 dbdoctor:health -m check -v
-  ```
-  Checks without affected records are a single "OK" line by default, details are shown for
-  checks that found something only. With `-v`, all checks show their title, actions and
-  description.
-
-* Structured output (experimental): `--format json`, with check mode only:
-  ```
-  $ bin/typo3 dbdoctor:health -m check --format json
-  ```
-  A read-only report as JSON on stdout, for tools and agents: run data, the tables found, and
-  per check its status, counts, facets and findings. Ok and skipped checks have their status
-  only, the description of a check comes with its findings. A finding carries its key (record,
-  record field or MM rows), the record with TCA control fields like deleted, language and
-  workspace under names that are the same for all tables, the reason and the changes dbdoctor
-  would do, with old and new values. Counts per table come with the affected rows and their share of the
-  table: A check flagging more than half of a table, and more than 100 rows, marks it
-  `suspicious`, which rather hints to a mismatch of check and TCA than to broken data. Groups
-  sum up the findings of a check by table, reason code, record state and visibility,
-  operations and whether the page is in a site, with the ids of a few findings as samples:
-  Judging a check with many findings usually means judging a few groups. Each page with findings
-  is in `pages` once, with its rootline, the doktype and visibility of the rootline pages, and
-  its translations. Site languages come with their fallback type and fallback languages. The exit code is the same as in check mode.
-
-  The economical way through a report is overview, then one check, then one record or page:
-  `--scope all --limit 0` lists all checks with counts and facets, but no findings and no
-  tables. `--check` then shows the findings of one check, `--table` and `--uid`, `--pid` or
-  `--subtree` narrow them down further. Further options:
-  * `--scope until-first-finding` (default): Checks after the first one that is not ok are
-    not run, they rely on the findings being fixed. `--scope all` runs all checks and marks
-    results after the first not ok check as preliminary.
-  * `--check <class>`: Report only this check, repeatable. Earlier checks still run.
-  * `--table <table>`, `--uid <uid>` (with `--table`), `--pid <page>`, `--subtree <page>`:
-    Report only findings of this table, record, page, or page and its sub pages. Counts and
-    facets are of the filtered findings, `counts.total` has the number of all findings. Checks
-    with findings get `filterMatches`: Checks with no finding matching the filter are still
-    listed, they are not ok, but only with their counts.
-  * `--limit <n>`: Findings per check, default 100, 0 for none (summary), `all` for all.
-    Counts, facets and groups are always complete. Facets count findings per operation, reason
-    code, record state, visibility, language, age, site root page and write pattern.
-  * `--output <directory>`: Write the report as files into a new directory instead of stdout,
-    for reports too large to read at once: `index.json` with the run data and one entry per
-    check, per check with findings a check file with counts, facets and groups, and a
-    findings file with all its findings as JSON Lines, one finding per line, and `tables.jsonl`
-    and `pages.jsonl` with one table or page per line. Findings are written while the checks
-    run and not kept in memory. `--limit` is `all` unless given.
-    A relative directory is relative to the current directory. The files contain record data:
-    Do not write them into a public folder, and remove them when done.
-  * `--compact`: JSON without whitespace, about half the size. Recommended for tools and agents.
-  * `--context basic` (default): The report has the rootlines of the pages of findings, each
-    finding the language parent and translation source of its record. `--context none` leaves
-    them out.
-  * `--tier structure` (default): uids, pids, TCA control fields, timestamps and written fields.
-    `--tier labels` adds TCA label fields and site identifiers, never for tables with personal
-    data like be_users and fe_users. Labels only identify records: Tags are stripped and they
-    are cut to 80 characters, as declared in `run.options.labels`.
-
-  The report is experimental: While its `schemaVersion` is 0.x, its structure may change with
-  any release, there is no compatibility promise yet. Checks, their names and their order are
-  no API in any case.
-
-  Agents judging a report for a developer: Point them to
-  [Documentation/AgentGuide.md](Documentation/AgentGuide.md), for instance from the
-  `AGENTS.md` of the project. It describes the report, a way through it in a few steps, and
-  how to judge findings. In a composer installation it is in
-  `vendor/lolli/dbdoctor/Documentation/AgentGuide.md`.
-
-
 # Further hints
 
-We highly encourage admins to back up databases when working with dbdoctor. Some basic rules
+I highly encourage admins to back up databases when working with dbdoctor. Some basic rules
 regarding SQL dumps must not be forgotten when doing this:
 
 * When dumping an existing MySQL / MariaDB database *before and after* executing the CLI command,
@@ -447,6 +463,7 @@ regarding SQL dumps must not be forgotten when doing this:
 
 No. CLI is the only sane way for this kind of thing.
 
+
 ## Can I manipulate health checks?
 
 Not via the CLI: It has no options to skip or configure checks, every check always fixes
@@ -455,6 +472,7 @@ maintenance of this already complex project impossible.
 Programmatically, ModifyHealthClassListEvent can remove or reorder checks, for instance
 to skip checks tagged as risky, and `disables` replaces a check, see below. Both work,
 but you are on your own: Read the event class comment first.
+
 
 ## Can I add my own health checks?
 
@@ -469,6 +487,7 @@ time. A check without `before` and `after` ends up at some position nobody chose
 `before` and `after` contradict each other, for instance after dbdoctor reordered checks,
 building the dependency injection container fails with an exception naming the cycle. Do
 not additionally add such a check using ModifyHealthClassListEvent, it would run twice.
+
 
 ## Can I replace a health check of dbdoctor?
 
@@ -488,6 +507,7 @@ checks, add one tag with its own identifier per replaced check. Identifiers in
 check you replaced, the dbdoctor check may run again, and yours ends up at some
 position nobody chose. Verify your replacements after each dbdoctor update.
 
+
 ## Does dbdoctor fix the number of relations stored in inline and MM fields?
 
 No. The field of a record with inline children (TCA `foreign_field`) or MM relations
@@ -498,6 +518,7 @@ core reads them from there, not from this count. The count is not reliable: For 
 of the relation, like the categories field of a content element, and discarding workspace
 changes removes MM rows without touching counts. dbdoctor ignores these count fields: It
 does not check them, and checks that remove child records or MM rows do not update them.
+
 
 ## Why does dbdoctor not use the TcaSchema API of the core?
 
@@ -510,6 +531,7 @@ The TCA array is the more stable contract: Extensions write it, the core migrate
 outdated syntax before dbdoctor reads it. Also, the relation related checks depend on
 details like `foreign_table_field`, `MM_opposite_field` or `MM_match_fields` that
 TcaSchema does not model, so dbdoctor would read the TCA array anyway.
+
 
 ## This project is heavily driven by agentic coding. Can I trust it?
 
