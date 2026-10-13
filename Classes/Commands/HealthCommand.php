@@ -70,7 +70,8 @@ final class HealthCommand extends Command
             'format',
             null,
             InputOption::VALUE_REQUIRED,
-            'text|json - json (experimental): structured, read-only report on stdout, with --mode check only',
+            'text|json - json (experimental): structured, read-only report on stdout, with --mode check only.'
+            . ' Agents: see Documentation/AgentGuide.md',
             'text'
         );
         $this->addOption(

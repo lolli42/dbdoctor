@@ -398,6 +398,12 @@ prompting for user input after each failed check.
   any release, there is no compatibility promise yet. Checks, their names and their order are
   no API in any case.
 
+  Agents judging a report for a developer: Point them to
+  [Documentation/AgentGuide.md](Documentation/AgentGuide.md), for instance from the
+  `AGENTS.md` of the project. It describes the report, a way through it in a few steps, and
+  how to judge findings. In a composer installation it is in
+  `vendor/lolli/dbdoctor/Documentation/AgentGuide.md`.
+
 
 # Further hints
 
