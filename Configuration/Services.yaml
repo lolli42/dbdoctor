@@ -132,14 +132,27 @@ services:
         after: 'dbdoctor-pages-translated-language-parent-different-pid'
 
   # sys_file_metadata is a bit special due to its cross dependency with sys_file: Each sys_file needs
-  # a default language metadata record, and translations must point to the one of their file. These
-  # two run before the generic transOrigPointerField checks, which would delete metadata translations
-  # with invalid language parent, while they can be connected to the right record instead.
+  # exactly one default language metadata record, and translations must point to the one of their file.
+  # Metadata of missing files and duplicate default records are removed first. The last two run before
+  # the generic transOrigPointerField checks, which would delete metadata translations with invalid
+  # language parent, while they can be connected to the right record instead.
+  Lolli\Dbdoctor\HealthCheck\SysFileMetadataFileMissing:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-sys-file-metadata-file-missing'
+        after: 'dbdoctor-pages-translated-language-parent-duplicates'
+
+  Lolli\Dbdoctor\HealthCheck\SysFileMetadataDefaultDuplicates:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-sys-file-metadata-default-duplicates'
+        after: 'dbdoctor-sys-file-metadata-file-missing'
+
   Lolli\Dbdoctor\HealthCheck\SysFileMetadataMissing:
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-sys-file-metadata-missing'
-        after: 'dbdoctor-pages-translated-language-parent-duplicates'
+        after: 'dbdoctor-sys-file-metadata-default-duplicates'
 
   Lolli\Dbdoctor\HealthCheck\SysFileMetadataTranslatedParentInvalid:
     tags:
