@@ -99,7 +99,8 @@ final readonly class JsonReportBuilder
     }
 
     /**
-     * Root pages and languages of all sites, identifiers and titles only with tier "labels".
+     * Root pages and languages of all sites with their fallbacks, identifiers and titles only
+     * with tier "labels".
      *
      * @return list<array<string, mixed>>
      */
@@ -109,9 +110,16 @@ final readonly class JsonReportBuilder
         foreach ($this->siteFinder->getAllSites(false) as $site) {
             $languages = [];
             foreach ($site->getAllLanguages() as $language) {
-                $languages[] = $options->tier === ReportTier::Labels
-                    ? ['id' => $language->getLanguageId(), 'title' => $language->getTitle()]
-                    : ['id' => $language->getLanguageId()];
+                $languageData = ['id' => $language->getLanguageId()];
+                if ($options->tier === ReportTier::Labels) {
+                    $languageData['title'] = $language->getTitle();
+                }
+                if ($language->getLanguageId() > 0) {
+                    // Whether a page without translation in this language is shown, and with which content
+                    $languageData['fallbackType'] = $language->getFallbackType();
+                    $languageData['fallbacks'] = $language->getFallbackLanguageIds();
+                }
+                $languages[] = $languageData;
             }
             $siteData = ['rootPageId' => $site->getRootPageId(), 'languages' => $languages];
             if ($options->tier === ReportTier::Labels) {
@@ -462,7 +470,7 @@ final readonly class JsonReportBuilder
      *
      * @param array<string, array<string, mixed>> $groups
      * @param array<string, mixed>|null $record
-     * @param array{uid: int, rootline: list<array<string, mixed>>, rootPageId: int|null}|null $rootline
+     * @param array{uid: int, rootline: list<array<string, mixed>>, rootPageId: int|null, translations: list<array<string, int|bool>>}|null $rootline
      * @return array<string, array<string, mixed>>
      */
     private function addToGroups(array $groups, Finding $finding, ?array $record, ?array $rootline, ?string $id): array
@@ -506,11 +514,12 @@ final readonly class JsonReportBuilder
     }
 
     /**
-     * Rootline of a page from the tree root down to the page, and the site root page next
-     * to the page. Missing and soft-deleted pages are flagged, titles only with tier "labels".
+     * Rootline of a page from the tree root down to the page with the doktype of each page,
+     * the site root page, and the translations of the page. Missing, soft-deleted and hidden
+     * pages are flagged, titles only with tier "labels".
      *
      * @param array<int, true> $siteRootPageIds
-     * @return array{uid: int, rootline: list<array<string, mixed>>, rootPageId: int|null}
+     * @return array{uid: int, rootline: list<array<string, mixed>>, rootPageId: int|null, translations: list<array<string, int|bool>>}
      */
     private function buildRootline(PreparedStatements $statements, int $pid, array $siteRootPageIds, ReportOptions $options): array
     {
@@ -518,10 +527,16 @@ final readonly class JsonReportBuilder
         $rootPageId = null;
         foreach ($this->pagesRootlineHelper->getRootline($statements, $pid) as $page) {
             $entry = ['uid' => (int)$page['uid']];
+            if ((int)$page['uid'] > 0 && !(bool)$page['_isMissing']) {
+                $entry['doktype'] = (int)$page['doktype'];
+            }
             if ((bool)$page['_isMissing']) {
                 $entry['missing'] = true;
             } elseif ((bool)$page['deleted']) {
                 $entry['deleted'] = true;
+            }
+            if ((bool)$page['hidden']) {
+                $entry['hidden'] = true;
             }
             if (!(bool)$page['_isMissing'] && (int)$page['t3ver_wsid'] > 0) {
                 $entry['workspace'] = (int)$page['t3ver_wsid'];
@@ -538,6 +553,7 @@ final readonly class JsonReportBuilder
             'uid' => $pid,
             'rootline' => $rootline,
             'rootPageId' => $rootPageId,
+            'translations' => $this->recordReader->readPageTranslations($statements, $pid),
         ];
     }
 

@@ -39,6 +39,8 @@ final readonly class PagesRootlineHelper
                 'uid' => 0,
                 'pid' => 0,
                 'deleted' => false,
+                'hidden' => false,
+                'doktype' => 0,
                 't3ver_wsid' => 0,
                 'title' => $GLOBALS['TYPO3_CONF_VARS']['SYS']['sitename'] ?? 'Root',
             ]);
@@ -63,6 +65,8 @@ final readonly class PagesRootlineHelper
                     'uid' => (int)($rootline[0]['pid'] ?? $uid),
                     'pid' => 0,
                     'deleted' => true,
+                    'hidden' => false,
+                    'doktype' => 0,
                     't3ver_wsid' => 0,
                     'title' => 'RECORD DOES NOT EXIST',
                 ]
@@ -77,7 +81,7 @@ final readonly class PagesRootlineHelper
     private function getPage(PreparedStatements $statements, int $uid): array
     {
         try {
-            $currentPage = $this->recordsHelper->getRecord($statements, 'pages', ['uid', 'pid', 'deleted', 't3ver_wsid', 'title'], $uid);
+            $currentPage = $this->recordsHelper->getRecord($statements, 'pages', ['uid', 'pid', 'deleted', 'hidden', 'doktype', 't3ver_wsid', 'title'], $uid);
         } catch (NoSuchRecordException) {
             throw new NoSuchPageException('record with uid "' . $uid . '" in table "pages" not found', 1646121409);
         }

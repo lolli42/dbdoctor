@@ -357,8 +357,9 @@ prompting for user input after each failed check.
   `suspicious`, which rather hints to a mismatch of check and TCA than to broken data. Groups
   sum up the findings of a check by table, reason code, record state and visibility,
   operations and whether the page is in a site, with the ids of a few findings as samples:
-  Judging a check with many findings usually means judging a few groups. The rootline of each
-  page with findings is in `pages`, once per page. The exit code is the same as in check mode.
+  Judging a check with many findings usually means judging a few groups. Each page with findings
+  is in `pages` once, with its rootline, the doktype and visibility of the rootline pages, and
+  its translations. Site languages come with their fallback type and fallback languages. The exit code is the same as in check mode.
 
   The economical way through a report is overview, then one check, then one record or page:
   `--scope all --limit 0` lists all checks with counts and facets, but no findings and no
