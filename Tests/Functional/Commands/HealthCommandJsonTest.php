@@ -22,6 +22,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Tester\CommandTester;
 use TYPO3\CMS\Core\Console\CommandRegistry;
 use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class HealthCommandJsonTest extends AbstractFunctionalTestCase
 {
@@ -32,6 +33,13 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
     protected array $testExtensionsToLoad = [
         'lolli/dbdoctor',
     ];
+
+    protected function tearDown(): void
+    {
+        GeneralUtility::rmdir($this->instancePath . '/dbdoctor-report', true);
+        @unlink($this->instancePath . '/dbdoctor-file');
+        parent::tearDown();
+    }
 
     #[Test]
     public function reportsFindingWithRecordAndDeleteChange(): void
@@ -45,7 +53,7 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         ]);
         $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame(HealthCheckResult::Broken->value, $result);
-        self::assertSame('0.3', $report['schemaVersion']);
+        self::assertSame('0.4', $report['schemaVersion']);
         self::assertSame(['check' => ['TcaTablesPidMissing']], $report['run']['options']['filter']);
         self::assertMatchesRegularExpression('/^\d+\.\d+\.\d+$/', $report['run']['dbdoctor']);
         self::assertCount(1, $report['checks']);
@@ -375,6 +383,112 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         // Records on sub page 2, not the page translation on its parent page 1
         self::assertSame(['tt_content'], array_keys($check['counts']['byTable']));
         self::assertSame($check['counts']['findings'], $check['counts']['byTable']['tt_content']['findings']);
+    }
+
+    #[Test]
+    public function writesIndexCheckFileAndAllFindingsAsJsonLinesToOutputDirectory(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslationSourceSetWithParentImport.csv');
+        $directory = $this->instancePath . '/dbdoctor-report';
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $result = $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--scope' => 'all',
+            '--check' => ['TcaTablesTranslationSourceSetWithParent'],
+            '--output' => $directory,
+        ]);
+        $stdout = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame(['schemaVersion' => '0.4', 'index' => $directory . '/index.json', 'exitCode' => $result], $stdout);
+        $index = json_decode((string)file_get_contents($directory . '/index.json'), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame('all', $index['run']['options']['limit']);
+        self::assertArrayNotHasKey('tables', $index);
+        $entry = $index['checks'][0];
+        self::assertSame('TcaTablesTranslationSourceSetWithParent', $entry['class']);
+        self::assertSame('findings', $entry['status']);
+        self::assertSame(['findings', 'records', 'writes', 'total'], array_keys($entry['counts']));
+        self::assertFalse($entry['truncated']);
+        $checkFile = json_decode((string)file_get_contents($directory . '/' . $entry['file']), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame('0.4', $checkFile['schemaVersion']);
+        self::assertArrayNotHasKey('findings', $checkFile['check']);
+        self::assertSame($entry['counts']['findings'], array_sum($checkFile['check']['facets']['state']));
+        self::assertSame('sys_language_uid', $checkFile['tables']['pages']['roles']['language']);
+        $lines = (array)file($directory . '/' . $entry['findingsFile'], FILE_IGNORE_NEW_LINES);
+        self::assertCount($entry['counts']['findings'], $lines);
+        $finding = json_decode((string)$lines[0], true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame(['type' => 'record', 'table' => 'pages', 'uid' => 4], $finding['key']);
+        self::assertSame(['l10n_source' => ['old' => 0, 'new' => 2]], $finding['writes'][0]['set']);
+    }
+
+    #[Test]
+    public function writesFindingsUpToGivenLimitToOutputDirectory(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslationSourceSetWithParentImport.csv');
+        $directory = $this->instancePath . '/dbdoctor-report';
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--scope' => 'all',
+            '--limit' => '1',
+            '--check' => ['TcaTablesTranslationSourceSetWithParent'],
+            '--output' => $directory,
+        ]);
+        $index = json_decode((string)file_get_contents($directory . '/index.json'), true, 512, JSON_THROW_ON_ERROR);
+        self::assertTrue($index['checks'][0]['truncated']);
+        self::assertCount(1, (array)file($directory . '/' . $index['checks'][0]['findingsFile']));
+    }
+
+    #[Test]
+    public function writesNoFindingsFileWithLimitZeroToOutputDirectory(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslationSourceSetWithParentImport.csv');
+        $directory = $this->instancePath . '/dbdoctor-report';
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--scope' => 'all',
+            '--limit' => '0',
+            '--check' => ['TcaTablesTranslationSourceSetWithParent'],
+            '--output' => $directory,
+        ]);
+        $index = json_decode((string)file_get_contents($directory . '/index.json'), true, 512, JSON_THROW_ON_ERROR);
+        self::assertArrayNotHasKey('findingsFile', $index['checks'][0]);
+        self::assertSame([basename($index['checks'][0]['file'])], array_values(array_diff(scandir($directory . '/checks'), ['.', '..'])));
+    }
+
+    #[Test]
+    public function reportsErrorIfOutputDirectoryExists(): void
+    {
+        $directory = $this->instancePath . '/dbdoctor-report';
+        GeneralUtility::mkdir_deep($directory);
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $result = $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--output' => $directory,
+        ]);
+        $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame(HealthCheckResult::Error->value, $result);
+        self::assertSame('Output directory "' . $directory . '" exists already.', $report['error']['message']);
+    }
+
+    #[Test]
+    public function reportsErrorIfOutputDirectoryCanNotBeCreated(): void
+    {
+        // A directory below a file can not be created
+        $directory = $this->instancePath . '/dbdoctor-file/report';
+        file_put_contents($this->instancePath . '/dbdoctor-file', '');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $result = $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--output' => $directory,
+        ]);
+        $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame(HealthCheckResult::Error->value, $result);
+        self::assertSame('Output directory "' . $directory . '" can not be created.', $report['error']['message']);
     }
 
     #[Test]

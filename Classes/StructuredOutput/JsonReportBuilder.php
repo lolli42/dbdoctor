@@ -40,7 +40,7 @@ use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
  */
 final readonly class JsonReportBuilder
 {
-    public const SCHEMA_VERSION = '0.3';
+    public const SCHEMA_VERSION = '0.4';
 
     // A table is suspicious if a check flags more than this share of its rows, and more than this number of rows
     private const SUSPICIOUS_SHARE = 0.5;
@@ -138,9 +138,10 @@ final readonly class JsonReportBuilder
 
     /**
      * @param class-string $className
+     * @param \Closure(array<string, mixed>): void|null $findingWriter Receives the findings one by one instead of the check
      * @return array{check: array<string, mixed>, tables: list<string>}
      */
-    public function buildCheck(int $position, string $className, HealthCheckInspection $inspection, bool $preliminary, ReportOptions $options): array
+    public function buildCheck(int $position, string $className, HealthCheckInspection $inspection, bool $preliminary, ReportOptions $options, ?\Closure $findingWriter = null): array
     {
         if ($inspection->status !== InspectionStatus::Findings) {
             // Ok and skipped checks have no findings to judge, their description is in the check
@@ -191,11 +192,13 @@ final readonly class JsonReportBuilder
         }
         $check['keyTypes'] = array_values(array_unique(array_map(fn(Finding $finding): string => $this->getKeyType($finding), $findings)));
         $check['counts'] = $this->buildCounts($findings) + ['total' => count($inspection->findings)];
-        $built = $this->buildFindings($className, $findings, $options);
+        $built = $this->buildFindings($className, $findings, $options, $findingWriter);
         $check['facets'] = $built['facets'];
         if (!$options->isSummary()) {
-            $check['truncated'] = count($built['findings']) < count($findings);
-            $check['findings'] = $built['findings'];
+            $check['truncated'] = $built['count'] < count($findings);
+            if ($findingWriter === null) {
+                $check['findings'] = $built['findings'];
+            }
         }
         return [
             'check' => $check,
@@ -329,12 +332,14 @@ final readonly class JsonReportBuilder
 
     /**
      * Findings up to the limit, and facets over all findings. Records are read one by one and
-     * only kept for findings up to the limit.
+     * only kept for findings up to the limit. With a writer, the findings are passed to it one
+     * by one and not kept at all.
      *
      * @param list<Finding> $findings
-     * @return array{findings: list<array<string, mixed>>, facets: array<string, mixed>}
+     * @param \Closure(array<string, mixed>): void|null $findingWriter
+     * @return array{findings: list<array<string, mixed>>, count: int, facets: array<string, mixed>}
      */
-    private function buildFindings(string $className, array $findings, ReportOptions $options): array
+    private function buildFindings(string $className, array $findings, ReportOptions $options, ?\Closure $findingWriter): array
     {
         // Written fields per table: Read with the record, their current value is the old value of the change
         $writtenFields = [];
@@ -367,6 +372,7 @@ final readonly class JsonReportBuilder
         $statements = new PreparedStatements();
         try {
             $result = [];
+            $count = 0;
             $sequence = 0;
             foreach ($findings as $index => $finding) {
                 $key = $finding->key;
@@ -390,7 +396,7 @@ final readonly class JsonReportBuilder
                     $sequence++;
                     $writes[] = $this->buildWrite($statements, $sequence, $change, $key, $record, $options);
                 }
-                $result[] = [
+                $built = [
                     'id' => substr(sha1($className . '|' . json_encode($this->buildKey($finding), JSON_THROW_ON_ERROR)), 0, 16),
                     'key' => $this->buildKey($finding),
                     'pid' => $finding->pid,
@@ -404,7 +410,13 @@ final readonly class JsonReportBuilder
                     'writes' => $writes,
                 ];
                 if ($options->context === ReportContext::Basic) {
-                    $result[array_key_last($result)]['context'] = $this->buildContext($statements, $finding, $record, $rootline, $options);
+                    $built['context'] = $this->buildContext($statements, $finding, $record, $rootline, $options);
+                }
+                $count++;
+                if ($findingWriter === null) {
+                    $result[] = $built;
+                } else {
+                    $findingWriter($built);
                 }
             }
         } finally {
@@ -417,6 +429,7 @@ final readonly class JsonReportBuilder
         }
         return [
             'findings' => $result,
+            'count' => $count,
             'facets' => $facets,
         ];
     }
