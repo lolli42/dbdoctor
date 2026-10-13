@@ -128,10 +128,13 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         self::assertSame(0, $context['l10nParent']['language']);
         self::assertSame(['title' => 'Sub page 1'], $context['l10nParent']['labels']);
         self::assertArrayNotHasKey('l10nSource', $context);
-        self::assertSame(1, $context['page']['uid']);
-        self::assertSame(1, $context['page']['rootline'][1]['uid']);
-        self::assertSame('Site root', $context['page']['rootline'][1]['title']);
-        self::assertNull($context['page']['rootPageId']);
+        self::assertArrayNotHasKey('evidence', $check['findings'][0]);
+        // Rootlines are once per page in the report
+        $page = $report['pages'][$check['findings'][0]['pid']];
+        self::assertSame(1, $page['uid']);
+        self::assertSame(1, $page['rootline'][1]['uid']);
+        self::assertSame('Site root', $page['rootline'][1]['title']);
+        self::assertNull($page['rootPageId']);
         self::assertSame(['none' => $check['counts']['findings']], $check['facets']['rootPage']);
         // Facets count all findings, not only those up to the limit
         self::assertContains(
@@ -217,7 +220,7 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         $finding = $report['checks'][0]['findings'][0];
         self::assertSame(['tagsStripped' => true, 'maxLength' => 80], $report['run']['options']['labels']);
         self::assertSame(substr(str_repeat('Lorem ipsum ', 10), 0, 79) . '…', $finding['record']['labels']['bodytext']);
-        self::assertSame('Site & root', $finding['context']['page']['rootline'][1]['title']);
+        self::assertSame('Site & root', $report['pages'][$finding['pid']]['rootline'][1]['title']);
     }
 
     #[Test]
@@ -412,12 +415,20 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         self::assertSame('0.4', $checkFile['schemaVersion']);
         self::assertArrayNotHasKey('findings', $checkFile['check']);
         self::assertSame($entry['counts']['findings'], array_sum($checkFile['check']['facets']['state']));
-        self::assertSame('sys_language_uid', $checkFile['tables']['pages']['roles']['language']);
+        self::assertSame($entry['counts']['findings'], array_sum(array_column($checkFile['check']['groups'], 'count')));
         $lines = (array)file($directory . '/' . $entry['findingsFile'], FILE_IGNORE_NEW_LINES);
         self::assertCount($entry['counts']['findings'], $lines);
         $finding = json_decode((string)$lines[0], true, 512, JSON_THROW_ON_ERROR);
         self::assertSame(['type' => 'record', 'table' => 'pages', 'uid' => 4], $finding['key']);
         self::assertSame(['l10n_source' => ['old' => 0, 'new' => 2]], $finding['writes'][0]['set']);
+        // Tables and pages are files of the report, one line each
+        self::assertSame('tables.jsonl', $index['tablesFile']);
+        $tables = array_map(static fn(string|false $line): array => json_decode((string)$line, true, 512, JSON_THROW_ON_ERROR), (array)file($directory . '/tables.jsonl', FILE_IGNORE_NEW_LINES));
+        self::assertSame(['pages', 'tt_content'], array_column($tables, 'table'));
+        self::assertSame('sys_language_uid', $tables[0]['roles']['language']);
+        self::assertSame('pages.jsonl', $index['pagesFile']);
+        $pages = array_map(static fn(string|false $line): array => json_decode((string)$line, true, 512, JSON_THROW_ON_ERROR), (array)file($directory . '/pages.jsonl', FILE_IGNORE_NEW_LINES));
+        self::assertSame([1, 2], array_column($pages, 'uid'));
     }
 
     #[Test]
@@ -489,6 +500,56 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame(HealthCheckResult::Error->value, $result);
         self::assertSame('Output directory "' . $directory . '" can not be created.', $report['error']['message']);
+    }
+
+    #[Test]
+    public function reportsGroupsWithSamplesOfFindingsInTheResult(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslationSourceSetWithParentImport.csv');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $commandTester->execute([
+            '--mode' => 'check',
+            '--format' => 'json',
+            '--scope' => 'all',
+            '--limit' => '1',
+            '--check' => ['TcaTablesTranslationSourceSetWithParent'],
+        ]);
+        $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        $check = $report['checks'][0];
+        // Largest group first. pages 4 is the first finding, the tt_content findings are cut by
+        // the limit: Their groups have no samples.
+        self::assertSame([
+            [
+                'table' => 'tt_content',
+                'reason' => 'none',
+                'state' => 'workspace',
+                'hidden' => 'visible',
+                'operation' => 'update',
+                'inSite' => false,
+                'count' => 4,
+                'samples' => [],
+            ],
+            [
+                'table' => 'pages',
+                'reason' => 'none',
+                'state' => 'live',
+                'hidden' => 'visible',
+                'operation' => 'update',
+                'inSite' => false,
+                'count' => 1,
+                'samples' => [$check['findings'][0]['id']],
+            ],
+            [
+                'table' => 'tt_content',
+                'reason' => 'none',
+                'state' => 'live',
+                'hidden' => 'visible',
+                'operation' => 'update',
+                'inSite' => false,
+                'count' => 1,
+                'samples' => [],
+            ],
+        ], $check['groups']);
     }
 
     #[Test]

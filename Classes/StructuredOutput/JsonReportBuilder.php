@@ -45,6 +45,8 @@ final readonly class JsonReportBuilder
     // A table is suspicious if a check flags more than this share of its rows, and more than this number of rows
     private const SUSPICIOUS_SHARE = 0.5;
     private const SUSPICIOUS_MIN_ROWS = 100;
+    // Finding ids per group as samples
+    private const GROUP_SAMPLES = 3;
 
     public function __construct(
         private RecordReader $recordReader,
@@ -139,7 +141,7 @@ final readonly class JsonReportBuilder
     /**
      * @param class-string $className
      * @param \Closure(array<string, mixed>): void|null $findingWriter Receives the findings one by one instead of the check
-     * @return array{check: array<string, mixed>, tables: list<string>}
+     * @return array{check: array<string, mixed>, tables: list<string>, pages: array<int, array<string, mixed>>}
      */
     public function buildCheck(int $position, string $className, HealthCheckInspection $inspection, bool $preliminary, ReportOptions $options, ?\Closure $findingWriter = null): array
     {
@@ -157,6 +159,7 @@ final readonly class JsonReportBuilder
             return [
                 'check' => $check,
                 'tables' => [],
+                'pages' => [],
             ];
         }
         $check = [
@@ -180,6 +183,7 @@ final readonly class JsonReportBuilder
                 return [
                     'check' => $check,
                     'tables' => [],
+                    'pages' => [],
                 ];
             }
         }
@@ -194,6 +198,7 @@ final readonly class JsonReportBuilder
         $check['counts'] = $this->buildCounts($findings) + ['total' => count($inspection->findings)];
         $built = $this->buildFindings($className, $findings, $options, $findingWriter);
         $check['facets'] = $built['facets'];
+        $check['groups'] = $built['groups'];
         if (!$options->isSummary()) {
             $check['truncated'] = $built['count'] < count($findings);
             if ($findingWriter === null) {
@@ -203,6 +208,7 @@ final readonly class JsonReportBuilder
         return [
             'check' => $check,
             'tables' => array_keys($tables),
+            'pages' => $built['pages'],
         ];
     }
 
@@ -331,13 +337,13 @@ final readonly class JsonReportBuilder
     }
 
     /**
-     * Findings up to the limit, and facets over all findings. Records are read one by one and
-     * only kept for findings up to the limit. With a writer, the findings are passed to it one
-     * by one and not kept at all.
+     * Findings up to the limit, the pages of their records, and facets and groups over all
+     * findings. Records are read one by one and only kept for findings up to the limit. With a
+     * writer, the findings are passed to it one by one and not kept at all.
      *
      * @param list<Finding> $findings
      * @param \Closure(array<string, mixed>): void|null $findingWriter
-     * @return array{findings: list<array<string, mixed>>, count: int, facets: array<string, mixed>}
+     * @return array{findings: list<array<string, mixed>>, count: int, facets: array<string, mixed>, groups: list<array<string, mixed>>, pages: array<int, array<string, mixed>>}
      */
     private function buildFindings(string $className, array $findings, ReportOptions $options, ?\Closure $findingWriter): array
     {
@@ -369,6 +375,9 @@ final readonly class JsonReportBuilder
         }
         // Rootline per pid, a check often has many findings on the same pages
         $rootlines = [];
+        // Pages of the findings in the result, with their rootline
+        $pages = [];
+        $groups = [];
         $statements = new PreparedStatements();
         try {
             $result = [];
@@ -388,8 +397,14 @@ final readonly class JsonReportBuilder
                     $rootPage = $rootline['rootPageId'] === null ? 'none' : (string)$rootline['rootPageId'];
                     $facets['rootPage'][$rootPage] = ($facets['rootPage'][$rootPage] ?? 0) + 1;
                 }
-                if ($options->limit !== null && $index >= $options->limit) {
+                $id = substr(sha1($className . '|' . json_encode($this->buildKey($finding), JSON_THROW_ON_ERROR)), 0, 16);
+                $isInResult = $options->limit === null || $index < $options->limit;
+                $groups = $this->addToGroups($groups, $finding, $record, $rootline, $isInResult ? $id : null);
+                if (!$isInResult) {
                     continue;
+                }
+                if ($rootline !== null && $options->context === ReportContext::Basic) {
+                    $pages[$finding->pid] = $rootline;
                 }
                 $writes = [];
                 foreach ($finding->changes as $change) {
@@ -397,7 +412,7 @@ final readonly class JsonReportBuilder
                     $writes[] = $this->buildWrite($statements, $sequence, $change, $key, $record, $options);
                 }
                 $built = [
-                    'id' => substr(sha1($className . '|' . json_encode($this->buildKey($finding), JSON_THROW_ON_ERROR)), 0, 16),
+                    'id' => $id,
                     'key' => $this->buildKey($finding),
                     'pid' => $finding->pid,
                     'reason' => $finding->reason === null ? null : [
@@ -405,12 +420,14 @@ final readonly class JsonReportBuilder
                         'message' => $finding->reason->message,
                         'parameters' => (object)$finding->reason->parameters,
                     ],
-                    'evidence' => (object)$finding->evidence,
-                    'record' => $record === null ? null : $this->withoutFields($record),
-                    'writes' => $writes,
                 ];
+                if ($finding->evidence !== []) {
+                    $built['evidence'] = $finding->evidence;
+                }
+                $built['record'] = $record === null ? null : $this->withoutFields($record);
+                $built['writes'] = $writes;
                 if ($options->context === ReportContext::Basic) {
-                    $built['context'] = $this->buildContext($statements, $finding, $record, $rootline, $options);
+                    $built['context'] = $this->buildContext($statements, $finding, $record, $options);
                 }
                 $count++;
                 if ($findingWriter === null) {
@@ -427,11 +444,65 @@ final readonly class JsonReportBuilder
         foreach (['operation', 'reason', 'state', 'hidden', 'language', 'tstampAge', 'stateByOperation', 'rootPage'] as $facetName) {
             $facets[$facetName] = (object)$facets[$facetName];
         }
+        // Largest groups first
+        uasort($groups, static fn(array $a, array $b): int => $b['count'] <=> $a['count']);
         return [
             'findings' => $result,
             'count' => $count,
             'facets' => $facets,
+            'groups' => array_values($groups),
+            'pages' => $pages,
         ];
+    }
+
+    /**
+     * Count a finding in its group: Findings of the same table, reason, record state and
+     * visibility, operations, and whether their page is in a site. A group keeps the ids of
+     * its first findings in the result as samples.
+     *
+     * @param array<string, array<string, mixed>> $groups
+     * @param array<string, mixed>|null $record
+     * @param array{uid: int, rootline: list<array<string, mixed>>, rootPageId: int|null}|null $rootline
+     * @return array<string, array<string, mixed>>
+     */
+    private function addToGroups(array $groups, Finding $finding, ?array $record, ?array $rootline, ?string $id): array
+    {
+        $operations = array_values(array_unique(array_map(static fn(RecordChange $change): string => $change->type->value, $finding->changes)));
+        sort($operations);
+        $group = [
+            'table' => $this->getKeyTableName($finding),
+            'reason' => $finding->reason->code ?? 'none',
+            'state' => $this->getState($record),
+            'hidden' => $record !== null && array_key_exists('hidden', $record) ? ($record['hidden'] === 1 ? 'hidden' : 'visible') : null,
+            'operation' => implode('+', $operations),
+            'inSite' => $rootline === null ? null : $rootline['rootPageId'] !== null,
+        ];
+        $groupKey = json_encode($group, JSON_THROW_ON_ERROR);
+        $groups[$groupKey] ??= $group + ['count' => 0, 'samples' => []];
+        $groups[$groupKey]['count']++;
+        if ($id !== null && count($groups[$groupKey]['samples']) < self::GROUP_SAMPLES) {
+            $groups[$groupKey]['samples'][] = $id;
+        }
+        return $groups;
+    }
+
+    /**
+     * State of the record of a finding: live, deleted, workspace, or none without record.
+     *
+     * @param array<string, mixed>|null $record
+     */
+    private function getState(?array $record): string
+    {
+        if ($record === null) {
+            return 'none';
+        }
+        if (($record['deleted'] ?? 0) === 1) {
+            return 'deleted';
+        }
+        if (($record['workspace']['id'] ?? 0) > 0) {
+            return 'workspace';
+        }
+        return 'live';
     }
 
     /**
@@ -471,23 +542,23 @@ final readonly class JsonReportBuilder
     }
 
     /**
-     * Related records of a finding: Its page with rootline, language parent and
-     * translation source of its record.
+     * Related records of a finding: Language parent and translation source of its record,
+     * the translation source only if it is not the language parent. The rootline of its page
+     * is in the pages of the report.
      *
      * @param array<string, mixed>|null $record
-     * @param array{uid: int, rootline: list<array<string, mixed>>, rootPageId: int|null}|null $rootline
      * @return object Map of related records, an object in JSON also when empty
      */
-    private function buildContext(PreparedStatements $statements, Finding $finding, ?array $record, ?array $rootline, ReportOptions $options): object
+    private function buildContext(PreparedStatements $statements, Finding $finding, ?array $record, ReportOptions $options): object
     {
         $context = [];
-        if ($rootline !== null) {
-            $context['page'] = $rootline;
-        }
         $key = $finding->key;
         if ($record !== null && !$key instanceof MmKey) {
             foreach (['l10nParent', 'l10nSource'] as $role) {
                 $uid = (int)($record[$role] ?? 0);
+                if ($role === 'l10nSource' && $uid === (int)($record['l10nParent'] ?? 0)) {
+                    continue;
+                }
                 if ($uid > 0) {
                     $related = $this->recordReader->read($statements, $key->tableName, $uid, [], $options->tier);
                     $context[$role] = $related === null ? ['uid' => $uid, 'missing' => true] : $this->withoutFields($related);
@@ -507,14 +578,8 @@ final readonly class JsonReportBuilder
      */
     private function addToFacets(array $facets, Finding $finding, ?array $record): array
     {
-        $state = 'none';
+        $state = $this->getState($record);
         if ($record !== null) {
-            $state = 'live';
-            if (($record['deleted'] ?? 0) === 1) {
-                $state = 'deleted';
-            } elseif (($record['workspace']['id'] ?? 0) > 0) {
-                $state = 'workspace';
-            }
             if (array_key_exists('hidden', $record)) {
                 $hidden = $record['hidden'] === 1 ? 'hidden' : 'visible';
                 $facets['hidden'][$hidden] = ($facets['hidden'][$hidden] ?? 0) + 1;
