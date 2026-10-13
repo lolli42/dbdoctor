@@ -1,0 +1,24 @@
+rootPageId: 1
+base: /
+languages:
+  -
+    title: English
+    enabled: true
+    languageId: 0
+    base: /
+    locale: en_US.UTF-8
+  -
+    title: German
+    enabled: true
+    languageId: 1
+    base: /de/
+    locale: de_DE.UTF-8
+    fallbackType: fallback
+    fallbacks: '0'
+  -
+    title: Danish
+    enabled: true
+    languageId: 2
+    base: /da/
+    locale: da_DK.UTF-8
+    fallbackType: strict

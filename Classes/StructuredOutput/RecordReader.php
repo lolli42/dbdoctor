@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\StructuredOutput;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Database\PreparedStatement;
 use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
@@ -24,6 +25,7 @@ use Lolli\Dbdoctor\Helper\TableHelper;
 use Lolli\Dbdoctor\Helper\TcaHelper;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use TYPO3\CMS\Core\Cache\Frontend\FrontendInterface;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
 /**
@@ -164,6 +166,58 @@ final readonly class RecordReader
             return $text;
         }
         return mb_substr($text, 0, self::LABEL_MAX_LENGTH - 1) . '…';
+    }
+
+    /**
+     * Translations of a page: uid and language of each pages record with the page as language
+     * parent, soft-deleted, hidden and workspace records flagged.
+     *
+     * @return list<array<string, int|bool>>
+     */
+    public function readPageTranslations(PreparedStatements $statements, int $pid): array
+    {
+        if ($pid === 0) {
+            // The tree root has no translations, pages with language parent 0 are no translations of it
+            return [];
+        }
+        $languageField = (string)$this->tcaHelper->getLanguageField('pages');
+        $parentField = (string)$this->tcaHelper->getTranslationParentField('pages');
+        $deletedField = $this->tcaHelper->getDeletedField('pages');
+        $hiddenField = $this->tcaHelper->getHiddenField('pages');
+        $preparedStatement = $statements->get('page-translations');
+        if ($preparedStatement === null) {
+            $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
+            $queryBuilder->getRestrictions()->removeAll();
+            $queryBuilder
+                ->select(...array_values(array_filter(['uid', $languageField, $deletedField, $hiddenField, 't3ver_wsid'])))
+                ->from('pages')
+                ->where(
+                    $queryBuilder->expr()->eq($parentField, $queryBuilder->createPositionalParameter(0, Connection::PARAM_INT)),
+                    $queryBuilder->expr()->gt($languageField, 0)
+                )
+                ->orderBy($languageField)
+                ->addOrderBy('uid');
+            $preparedStatement = $statements->add('page-translations', new PreparedStatement($queryBuilder->prepare()));
+        }
+        $statement = $preparedStatement->statement;
+        $statement->bindValue(1, $pid, Connection::PARAM_INT);
+        $result = $statement->executeQuery();
+        $translations = [];
+        while ($row = $result->fetchAssociative()) {
+            $translation = ['uid' => (int)$row['uid'], 'language' => (int)$row[$languageField]];
+            if ($deletedField !== null && (bool)$row[$deletedField]) {
+                $translation['deleted'] = true;
+            }
+            if ($hiddenField !== null && (bool)$row[$hiddenField]) {
+                $translation['hidden'] = true;
+            }
+            if ((int)$row['t3ver_wsid'] > 0) {
+                $translation['workspace'] = (int)$row['t3ver_wsid'];
+            }
+            $translations[] = $translation;
+        }
+        $result->free();
+        return $translations;
     }
 
     /**
