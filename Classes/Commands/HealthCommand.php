@@ -297,6 +297,7 @@ final class HealthCommand extends Command
         $result = HealthCheckResult::Ok->value;
         $checks = [];
         $tableNames = [];
+        $pages = [];
         $position = 0;
         $isNotOkSeen = false;
         foreach ($this->healthFactory->getNext() as $healthInstance) {
@@ -312,31 +313,47 @@ final class HealthCommand extends Command
                 continue;
             }
             $inspection = $this->healthCheckRunner->inspect($healthInstance);
-            if ($isReported && $outputDirectory !== null) {
-                $checks[] = $this->writeCheckFiles($input, $outputDirectory, $position, $healthInstance::class, $inspection, $isNotOkSeen, $options);
-            } elseif ($isReported) {
-                $checkResult = $this->jsonReportBuilder->buildCheck($position, $healthInstance::class, $inspection, $isNotOkSeen, $options);
+            if ($isReported) {
+                $checkResult = $outputDirectory === null
+                    ? $this->jsonReportBuilder->buildCheck($position, $healthInstance::class, $inspection, $isNotOkSeen, $options)
+                    : $this->writeCheckFiles($input, $outputDirectory, $position, $healthInstance::class, $inspection, $isNotOkSeen, $options);
                 $checks[] = $checkResult['check'];
                 $tableNames = array_merge($tableNames, $checkResult['tables']);
+                // Rootlines are the same for all checks of a run, the first one is kept
+                $pages += $checkResult['pages'];
             }
             if ($inspection->status !== InspectionStatus::Ok) {
                 $isNotOkSeen = true;
                 $result = HealthCheckResult::Broken->value;
             }
         }
+        $tables = $this->jsonReportBuilder->buildTables(array_values(array_unique($tableNames)));
+        ksort($pages);
         $report = [
             'schemaVersion' => JsonReportBuilder::SCHEMA_VERSION,
             'run' => $this->jsonReportBuilder->buildRun($options, (int)((hrtime(true) - $start) / 1000000), $result),
             'sites' => $this->jsonReportBuilder->buildSites($options),
-            'tables' => (object)$this->jsonReportBuilder->buildTables(array_values(array_unique($tableNames))),
+            'tables' => (object)$tables,
+            'pages' => (object)$pages,
             'checks' => $checks,
         ];
-        if ($options->isSummary() || $outputDirectory !== null) {
-            // TCA roles, row counts and inline parents help to judge records, a summary has none,
-            // a directory has them in the file of each check
-            unset($report['tables']);
+        if ($options->isSummary()) {
+            // TCA roles, row counts and inline parents, and rootlines help to judge records, a summary has none
+            unset($report['tables'], $report['pages']);
         }
         if ($outputDirectory !== null) {
+            // Tables and pages are files of their own with one entry per line, they can be large
+            unset($report['tables'], $report['pages']);
+            if (!$options->isSummary()) {
+                $report['tablesFile'] = 'tables.jsonl';
+                $report['pagesFile'] = 'pages.jsonl';
+                $this->writeJsonLines($outputDirectory . '/tables.jsonl', array_map(
+                    static fn(string $tableName, array $table): array => ['table' => $tableName] + $table,
+                    array_keys($tables),
+                    $tables
+                ));
+                $this->writeJsonLines($outputDirectory . '/pages.jsonl', array_values($pages));
+            }
             file_put_contents($outputDirectory . '/index.json', $this->encodeJson($input, $report) . "\n");
             $output->writeln($this->encodeJson($input, [
                 'schemaVersion' => JsonReportBuilder::SCHEMA_VERSION,
@@ -351,10 +368,11 @@ final class HealthCommand extends Command
 
     /**
      * Report of a check with findings in a check file, its findings in a JSON Lines file, one
-     * finding per line, written while they are built. Returns the entry of the check in the index.
+     * finding per line, written while they are built. Returns the entry of the check in the index
+     * as check, and its tables and pages.
      *
      * @param class-string $className
-     * @return array<string, mixed>
+     * @return array{check: array<string, mixed>, tables: list<string>, pages: array<int, array<string, mixed>>}
      */
     private function writeCheckFiles(InputInterface $input, string $outputDirectory, int $position, string $className, HealthCheckInspection $inspection, bool $preliminary, ReportOptions $options): array
     {
@@ -380,12 +398,11 @@ final class HealthCommand extends Command
         $check = $checkResult['check'];
         if (!isset($check['facets'])) {
             // Ok and skipped checks, and checks without findings matching the filter: Index only
-            return $check;
+            return $checkResult;
         }
         file_put_contents($outputDirectory . '/' . $baseName . '.json', $this->encodeJson($input, [
             'schemaVersion' => JsonReportBuilder::SCHEMA_VERSION,
             'check' => $check,
-            'tables' => (object)$this->jsonReportBuilder->buildTables($checkResult['tables']),
         ]) . "\n");
         $entry = [
             'position' => $check['position'],
@@ -403,7 +420,23 @@ final class HealthCommand extends Command
             $entry['findingsFile'] = $baseName . '.findings.jsonl';
             $entry['truncated'] = $check['truncated'];
         }
-        return $entry;
+        return [
+            'check' => $entry,
+            'tables' => $checkResult['tables'],
+            'pages' => $checkResult['pages'],
+        ];
+    }
+
+    /**
+     * @param list<array<string, mixed>> $lines
+     */
+    private function writeJsonLines(string $fileName, array $lines): void
+    {
+        $content = '';
+        foreach ($lines as $line) {
+            $content .= json_encode($line, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . "\n";
+        }
+        file_put_contents($fileName, $content);
     }
 
     private function outputJsonError(InputInterface $input, OutputInterface $output, string $message): int

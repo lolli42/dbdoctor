@@ -354,8 +354,11 @@ prompting for user input after each failed check.
   workspace under names that are the same for all tables, the reason and the changes dbdoctor
   would do, with old and new values. Counts per table come with the affected rows and their share of the
   table: A check flagging more than half of a table, and more than 100 rows, marks it
-  `suspicious`, which rather hints to a mismatch of check and TCA than to broken data. The exit
-  code is the same as in check mode.
+  `suspicious`, which rather hints to a mismatch of check and TCA than to broken data. Groups
+  sum up the findings of a check by table, reason code, record state and visibility,
+  operations and whether the page is in a site, with the ids of a few findings as samples:
+  Judging a check with many findings usually means judging a few groups. The rootline of each
+  page with findings is in `pages`, once per page. The exit code is the same as in check mode.
 
   The economical way through a report is overview, then one check, then one record or page:
   `--scope all --limit 0` lists all checks with counts and facets, but no findings and no
@@ -371,18 +374,20 @@ prompting for user input after each failed check.
     with findings get `filterMatches`: Checks with no finding matching the filter are still
     listed, they are not ok, but only with their counts.
   * `--limit <n>`: Findings per check, default 100, 0 for none (summary), `all` for all.
-    Counts and facets are always complete. Facets count findings per operation, reason code,
-    record state, visibility, language, age, site root page and write pattern.
+    Counts, facets and groups are always complete. Facets count findings per operation, reason
+    code, record state, visibility, language, age, site root page and write pattern.
   * `--output <directory>`: Write the report as files into a new directory instead of stdout,
     for reports too large to read at once: `index.json` with the run data and one entry per
-    check, and per check with findings a check file with counts, facets and tables, and a
-    findings file with all its findings as JSON Lines, one finding per line. Findings are
-    written while the checks run and not kept in memory. `--limit` is `all` unless given.
+    check, per check with findings a check file with counts, facets and groups, and a
+    findings file with all its findings as JSON Lines, one finding per line, and `tables.jsonl`
+    and `pages.jsonl` with one table or page per line. Findings are written while the checks
+    run and not kept in memory. `--limit` is `all` unless given.
     A relative directory is relative to the current directory. The files contain record data:
     Do not write them into a public folder, and remove them when done.
   * `--compact`: JSON without whitespace, about half the size. Recommended for tools and agents.
-  * `--context basic` (default): Each finding has the rootline of its page, and language
-    parent and translation source of its record. `--context none` leaves them out.
+  * `--context basic` (default): The report has the rootlines of the pages of findings, each
+    finding the language parent and translation source of its record. `--context none` leaves
+    them out.
   * `--tier structure` (default): uids, pids, TCA control fields, timestamps and written fields.
     `--tier labels` adds TCA label fields and site identifiers, never for tables with personal
     data like be_users and fe_users. Labels only identify records: Tags are stripped and they
