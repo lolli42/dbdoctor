@@ -373,6 +373,13 @@ prompting for user input after each failed check.
   * `--limit <n>`: Findings per check, default 100, 0 for none (summary), `all` for all.
     Counts and facets are always complete. Facets count findings per operation, reason code,
     record state, visibility, language, age, site root page and write pattern.
+  * `--output <directory>`: Write the report as files into a new directory instead of stdout,
+    for reports too large to read at once: `index.json` with the run data and one entry per
+    check, and per check with findings a check file with counts, facets and tables, and a
+    findings file with all its findings as JSON Lines, one finding per line. Findings are
+    written while the checks run and not kept in memory. `--limit` is `all` unless given.
+    A relative directory is relative to the current directory. The files contain record data:
+    Do not write them into a public folder, and remove them when done.
   * `--compact`: JSON without whitespace, about half the size. Recommended for tools and agents.
   * `--context basic` (default): Each finding has the rootline of its page, and language
     parent and translation source of its record. `--context none` leaves them out.

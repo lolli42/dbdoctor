@@ -18,6 +18,7 @@ namespace Lolli\Dbdoctor\Commands;
  */
 
 use Lolli\Dbdoctor\DatabaseSchema\DatabaseSchemaChecker;
+use Lolli\Dbdoctor\HealthCheck\HealthCheckInspection;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckMode;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckResult;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
@@ -33,6 +34,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\PathUtility;
 
 /**
@@ -134,6 +136,13 @@ final class HealthCommand extends Command
             . ' Earlier checks still run to tell if the result is preliminary'
         );
         $this->addOption(
+            'output',
+            null,
+            InputOption::VALUE_REQUIRED,
+            'json only: write the report into this new directory instead of stdout: index.json, and per check with'
+            . ' findings a check file and all its findings as JSON Lines. --limit is "all" unless given'
+        );
+        $this->addOption(
             'compact',
             null,
             InputOption::VALUE_NONE,
@@ -226,7 +235,9 @@ final class HealthCommand extends Command
         $start = hrtime(true);
         $scopeOption = (string)$input->getOption('scope');
         $tierOption = (string)$input->getOption('tier');
-        $limit = (string)$input->getOption('limit');
+        $outputDirectory = $input->getOption('output') === null ? null : (string)$input->getOption('output');
+        // A directory gets all findings, stdout the default limit
+        $limit = $outputDirectory !== null && !$input->hasParameterOption('--limit') ? 'all' : (string)$input->getOption('limit');
         if ((string)$input->getOption('mode') !== 'check') {
             return $this->outputJsonError($input, $output, 'Option "--format json" is available with "--mode check" only.');
         }
@@ -268,6 +279,20 @@ final class HealthCommand extends Command
         /** @var list<string> $onlyChecks */
         $onlyChecks = array_values((array)$input->getOption('check'));
         $options = new ReportOptions($scope, $tier, $limit === 'all' ? null : (int)$limit, $context, $filterTable, $filters['uid'], $filters['pid'], $filters['subtree'], $onlyChecks);
+        if ($outputDirectory !== null) {
+            if (!PathUtility::isAbsolutePath($outputDirectory)) {
+                $outputDirectory = getcwd() . '/' . $outputDirectory;
+            }
+            $outputDirectory = rtrim($outputDirectory, '/');
+            if (file_exists($outputDirectory)) {
+                return $this->outputJsonError($input, $output, 'Output directory "' . $outputDirectory . '" exists already.');
+            }
+            try {
+                GeneralUtility::mkdir_deep($outputDirectory . '/checks');
+            } catch (\RuntimeException) {
+                return $this->outputJsonError($input, $output, 'Output directory "' . $outputDirectory . '" can not be created.');
+            }
+        }
 
         $result = HealthCheckResult::Ok->value;
         $checks = [];
@@ -287,7 +312,9 @@ final class HealthCommand extends Command
                 continue;
             }
             $inspection = $this->healthCheckRunner->inspect($healthInstance);
-            if ($isReported) {
+            if ($isReported && $outputDirectory !== null) {
+                $checks[] = $this->writeCheckFiles($input, $outputDirectory, $position, $healthInstance::class, $inspection, $isNotOkSeen, $options);
+            } elseif ($isReported) {
                 $checkResult = $this->jsonReportBuilder->buildCheck($position, $healthInstance::class, $inspection, $isNotOkSeen, $options);
                 $checks[] = $checkResult['check'];
                 $tableNames = array_merge($tableNames, $checkResult['tables']);
@@ -304,12 +331,79 @@ final class HealthCommand extends Command
             'tables' => (object)$this->jsonReportBuilder->buildTables(array_values(array_unique($tableNames))),
             'checks' => $checks,
         ];
-        if ($options->isSummary()) {
-            // TCA roles, row counts and inline parents help to judge records, a summary has none
+        if ($options->isSummary() || $outputDirectory !== null) {
+            // TCA roles, row counts and inline parents help to judge records, a summary has none,
+            // a directory has them in the file of each check
             unset($report['tables']);
+        }
+        if ($outputDirectory !== null) {
+            file_put_contents($outputDirectory . '/index.json', $this->encodeJson($input, $report) . "\n");
+            $output->writeln($this->encodeJson($input, [
+                'schemaVersion' => JsonReportBuilder::SCHEMA_VERSION,
+                'index' => $outputDirectory . '/index.json',
+                'exitCode' => $result,
+            ]));
+            return $result;
         }
         $output->writeln($this->encodeJson($input, $report));
         return $result;
+    }
+
+    /**
+     * Report of a check with findings in a check file, its findings in a JSON Lines file, one
+     * finding per line, written while they are built. Returns the entry of the check in the index.
+     *
+     * @param class-string $className
+     * @return array<string, mixed>
+     */
+    private function writeCheckFiles(InputInterface $input, string $outputDirectory, int $position, string $className, HealthCheckInspection $inspection, bool $preliminary, ReportOptions $options): array
+    {
+        $baseName = 'checks/' . sprintf('%02d', $position) . '-' . (new \ReflectionClass($className))->getShortName();
+        $findingsHandle = null;
+        $findingWriter = null;
+        if ($inspection->status === InspectionStatus::Findings && !$options->isSummary()) {
+            $findingsHandle = fopen($outputDirectory . '/' . $baseName . '.findings.jsonl', 'w');
+            if ($findingsHandle === false) {
+                throw new \RuntimeException('Unable to create file "' . $outputDirectory . '/' . $baseName . '.findings.jsonl".', 1791887422);
+            }
+            $findingWriter = static function (array $finding) use ($findingsHandle): void {
+                fwrite($findingsHandle, json_encode($finding, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . "\n");
+            };
+        }
+        try {
+            $checkResult = $this->jsonReportBuilder->buildCheck($position, $className, $inspection, $preliminary, $options, $findingWriter);
+        } finally {
+            if ($findingsHandle !== null) {
+                fclose($findingsHandle);
+            }
+        }
+        $check = $checkResult['check'];
+        if (!isset($check['facets'])) {
+            // Ok and skipped checks, and checks without findings matching the filter: Index only
+            return $check;
+        }
+        file_put_contents($outputDirectory . '/' . $baseName . '.json', $this->encodeJson($input, [
+            'schemaVersion' => JsonReportBuilder::SCHEMA_VERSION,
+            'check' => $check,
+            'tables' => (object)$this->jsonReportBuilder->buildTables($checkResult['tables']),
+        ]) . "\n");
+        $entry = [
+            'position' => $check['position'],
+            'class' => $check['class'],
+            'title' => $check['title'],
+            'status' => $check['status'],
+            'preliminary' => $check['preliminary'],
+        ];
+        if (isset($check['filterMatches'])) {
+            $entry['filterMatches'] = $check['filterMatches'];
+        }
+        $entry['counts'] = array_intersect_key($check['counts'], array_flip(['findings', 'records', 'writes', 'total']));
+        $entry['file'] = $baseName . '.json';
+        if ($findingWriter !== null) {
+            $entry['findingsFile'] = $baseName . '.findings.jsonl';
+            $entry['truncated'] = $check['truncated'];
+        }
+        return $entry;
     }
 
     private function outputJsonError(InputInterface $input, OutputInterface $output, string $message): int
