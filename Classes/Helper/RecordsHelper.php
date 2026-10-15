@@ -199,21 +199,32 @@ final readonly class RecordsHelper
      * DELETE rows of an MM table. MM tables are no TCA tables, they have a uid
      * column only for fields with "multiple": Rows are identified by all given
      * fields. There may be duplicate rows, so at least one affected row is expected.
+     * A field with a list of integers is restricted by IN(), the type is the type
+     * of each value. Callers keep the list short: Platforms limit the number of
+     * bound parameters of a statement.
      *
-     * @param array<string, array{value: int|string, type: ParameterType}> $whereFields
+     * @param array<string, array{value: int|string|list<int>, type: ParameterType}> $whereFields
      */
     public function deleteMmRows(PreparedStatements $statements, bool $simulate, string $mmTableName, array $whereFields): string
     {
         if (empty($whereFields)) {
             throw new \RuntimeException('Must restrict MM rows to delete by at least one field.', 1791484210);
         }
-        $statementKey = 'deleteMm-' . $mmTableName . '-' . implode(',', array_keys($whereFields));
+        $statementKeyParts = [];
+        foreach ($whereFields as $fieldName => $valueAndType) {
+            $statementKeyParts[] = $fieldName . (is_array($valueAndType['value']) ? ':' . count($valueAndType['value']) : '');
+        }
+        $statementKey = 'deleteMm-' . $mmTableName . '-' . implode(',', $statementKeyParts);
         $preparedStatement = $statements->get($statementKey);
         if ($preparedStatement === null) {
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($mmTableName);
             $queryBuilder->delete($mmTableName);
             foreach ($whereFields as $fieldName => $valueAndType) {
-                $queryBuilder->andWhere($queryBuilder->expr()->eq($fieldName, '?'));
+                if (is_array($valueAndType['value'])) {
+                    $queryBuilder->andWhere($queryBuilder->expr()->in($fieldName, array_fill(0, count($valueAndType['value']), '?')));
+                } else {
+                    $queryBuilder->andWhere($queryBuilder->expr()->eq($fieldName, '?'));
+                }
             }
             $preparedStatement = $statements->add($statementKey, new PreparedStatement($queryBuilder->prepare(), $queryBuilder->getSQL()));
         }
@@ -221,6 +232,17 @@ final readonly class RecordsHelper
         $sqlString = $preparedStatement->sqlString;
         $currentParam = 1;
         foreach ($whereFields as $valueAndType) {
+            if (is_array($valueAndType['value'])) {
+                $placeholders = implode(', ', array_fill(0, count($valueAndType['value']), '?'));
+                $sqlString = $this->strReplaceFirst('IN (' . $placeholders . ')', 'IN (' . implode(', ', $valueAndType['value']) . ')', $sqlString);
+                foreach ($valueAndType['value'] as $value) {
+                    if (!$simulate) {
+                        $statement->bindValue($currentParam, $value, $valueAndType['type']);
+                    }
+                    $currentParam++;
+                }
+                continue;
+            }
             if ($valueAndType['type'] === Connection::PARAM_STR) {
                 $sqlValue = '\'' . $valueAndType['value'] . '\'';
             } else {

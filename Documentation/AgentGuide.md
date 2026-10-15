@@ -139,7 +139,7 @@ summary, not "unlimited". The filters work with `--output` as well.
     version marked `visible` is still not shown to visitors before publishing.
   * `writes`: The changes dbdoctor would do: `seq` (their order within the check),
     `operation`, `table`, `uid`, for updates `set` with `old` and `new` per field, `values` of
-    an insert, `where` of an MM delete.
+    an insert, `where` of an MM delete. A list in `where` matches any of its values.
   * `context`: The language parent `l10nParent` and translation source `l10nSource` of the
     record, `missing` if they do not exist. The translation source is left out when it is the
     language parent.

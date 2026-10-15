@@ -40,7 +40,7 @@ use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
  */
 final readonly class JsonReportBuilder
 {
-    public const SCHEMA_VERSION = '0.4';
+    public const SCHEMA_VERSION = '0.5';
 
     // A table is suspicious if a check flags more than this share of its rows, and more than this number of rows
     private const SUSPICIOUS_SHARE = 0.5;
@@ -711,7 +711,7 @@ final readonly class JsonReportBuilder
                 $write['values'] = array_map(static fn(array $valueAndType): int|string => $valueAndType['value'], $change->values);
                 break;
             case RecordChangeType::MmDelete:
-                $write['where'] = array_map(static fn(array $valueAndType): int|string => $valueAndType['value'], $change->where);
+                $write['where'] = array_map(static fn(array $valueAndType): int|string|array => $valueAndType['value'], $change->where);
                 break;
             case RecordChangeType::Delete:
                 break;

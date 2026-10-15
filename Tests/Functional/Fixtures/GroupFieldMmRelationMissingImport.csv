@@ -7,7 +7,7 @@
 ,2,1,1,"Ok - soft-deleted"
 "tx_dbdoctortestsgroup_item"
 ,"uid","pid","deleted","title","relations_mm","relations_mm_single"
-,1,1,0,"Not Ok - relations to missing records",3,2
+,1,1,0,"Not Ok - relations to missing records",4,2
 ,2,1,0,"Ok - relation to soft-deleted record",1,0
 # Soft-deleted records are handled as well
 ,3,1,1,"Not Ok - soft-deleted with relation to missing record",1,0
@@ -15,6 +15,8 @@
 ,"uid_local","uid_foreign","tablenames","fieldname"
 ,1,1,"pages","relations_mm"
 ,1,1,"tt_content","relations_mm"
+# Two missing records of one table: One DELETE with both
+,1,93,"tt_content","relations_mm"
 ,1,99,"tt_content","relations_mm"
 # Not an allowed table: Not a relation of this field, not touched
 ,1,96,"sys_file","relations_mm"

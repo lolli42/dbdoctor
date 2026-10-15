@@ -22,6 +22,7 @@ use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Database\ConnectionPool;
 
 class GroupFieldMmRelationMissingTest extends AbstractFunctionalTestCase
 {
@@ -50,6 +51,29 @@ class GroupFieldMmRelationMissingTest extends AbstractFunctionalTestCase
         $subject = $this->get(GroupFieldMmRelationMissing::class);
         $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckMode::Execute, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldMmRelationMissingFixed.csv');
+    }
+
+    #[Test]
+    public function manyMissingRelationsOfOneRecordAreDeletedInChunks(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldMmRelationMissingManyImport.csv');
+        $this->get(ConnectionPool::class)->getConnectionForTable('sys_category_record_mm')->bulkInsert(
+            'sys_category_record_mm',
+            array_map(static fn(int $uidForeign): array => [1, $uidForeign, 'tt_content', 'categories'], range(1000, 1249)),
+            ['uid_local', 'uid_foreign', 'tablenames', 'fieldname']
+        );
+        /** @var GroupFieldMmRelationMissing $subject */
+        $subject = $this->get(GroupFieldMmRelationMissing::class);
+        $findings = $this->get(HealthCheckRunner::class)->inspect($subject)->findings;
+        self::assertCount(1, $findings);
+        self::assertNotNull($findings[0]->reason);
+        self::assertCount(250, (array)$findings[0]->reason->parameters['missing']);
+        self::assertCount(3, $findings[0]->changes);
+        self::assertSame(range(1000, 1099), $findings[0]->changes[0]->where['uid_foreign']['value']);
+        self::assertSame(range(1100, 1199), $findings[0]->changes[1]->where['uid_foreign']['value']);
+        self::assertSame(range(1200, 1249), $findings[0]->changes[2]->where['uid_foreign']['value']);
+        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckMode::Execute, '');
+        self::assertSame(0, $this->get(ConnectionPool::class)->getConnectionForTable('sys_category_record_mm')->count('*', 'sys_category_record_mm', []));
     }
 
     #[Test]

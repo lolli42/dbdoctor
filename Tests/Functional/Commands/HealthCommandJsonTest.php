@@ -53,7 +53,7 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         ]);
         $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame(HealthCheckResult::Broken->value, $result);
-        self::assertSame('0.4', $report['schemaVersion']);
+        self::assertSame('0.5', $report['schemaVersion']);
         self::assertSame(['check' => ['TcaTablesPidMissing']], $report['run']['options']['filter']);
         self::assertMatchesRegularExpression('/^\d+\.\d+\.\d+$/', $report['run']['dbdoctor']);
         self::assertCount(1, $report['checks']);
@@ -402,7 +402,7 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
             '--output' => $directory,
         ]);
         $stdout = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
-        self::assertSame(['schemaVersion' => '0.4', 'index' => $directory . '/index.json', 'exitCode' => $result], $stdout);
+        self::assertSame(['schemaVersion' => '0.5', 'index' => $directory . '/index.json', 'exitCode' => $result], $stdout);
         $index = json_decode((string)file_get_contents($directory . '/index.json'), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame('all', $index['run']['options']['limit']);
         self::assertArrayNotHasKey('tables', $index);
@@ -412,7 +412,7 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         self::assertSame(['findings', 'records', 'writes', 'total'], array_keys($entry['counts']));
         self::assertFalse($entry['truncated']);
         $checkFile = json_decode((string)file_get_contents($directory . '/' . $entry['file']), true, 512, JSON_THROW_ON_ERROR);
-        self::assertSame('0.4', $checkFile['schemaVersion']);
+        self::assertSame('0.5', $checkFile['schemaVersion']);
         self::assertArrayNotHasKey('findings', $checkFile['check']);
         self::assertSame($entry['counts']['findings'], array_sum($checkFile['check']['facets']['state']));
         self::assertSame($entry['counts']['findings'], array_sum(array_column($checkFile['check']['groups'], 'count')));

@@ -21,7 +21,8 @@ namespace Lolli\Dbdoctor\Finding;
  * Something a health check found broken, and the changes that fix it.
  *
  * One fix per finding: The changes are the one way dbdoctor handles it. Most findings have
- * a single change, a finding of a group field with MM table has one change per removed relation.
+ * a single change, a finding of a group field with MM table has one change per up to 100
+ * removed relations of a table.
  * Changes are executed in the order of findings, and in their order within a finding.
  */
 final readonly class Finding

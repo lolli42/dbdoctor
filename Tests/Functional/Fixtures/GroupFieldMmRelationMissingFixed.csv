@@ -8,7 +8,7 @@
 "tx_dbdoctortestsgroup_item"
 ,"uid","pid","deleted","title","relations_mm","relations_mm_single"
 # Count fields "relations_mm" and "relations_mm_single" are not updated
-,1,1,0,"Not Ok - relations to missing records",3,2
+,1,1,0,"Not Ok - relations to missing records",4,2
 ,2,1,0,"Ok - relation to soft-deleted record",1,0
 # Soft-deleted records are handled as well
 ,3,1,1,"Not Ok - soft-deleted with relation to missing record",1,0
