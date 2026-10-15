@@ -126,13 +126,15 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
                     continue;
                 }
                 if ($uidForeign > 0 && $this->isRecordMissing($run, $targetTableName, $uidForeign)) {
-                    // Once per DELETE condition: Fields without match fields, like sys_category "items", read
-                    // rows of all fields of the opposite side, one DELETE removes all of them.
-                    $missingRelations[($tablenames ?? '') . ':' . $uidForeign] = [
+                    // Grouped by "tablenames", a DELETE condition of its own. Once per uid_foreign: Fields without
+                    // match fields, like sys_category "items", read rows of all fields of the opposite side, one
+                    // DELETE removes all of them.
+                    $missingRelations[$tablenames ?? ''] ??= [
                         'tableName' => $targetTableName,
-                        'uid_foreign' => $uidForeign,
                         'tablenames' => $tablenames,
+                        'uids' => [],
                     ];
+                    $missingRelations[$tablenames ?? '']['uids'][$uidForeign] = $uidForeign;
                 }
             }
             if ($currentUidLocal !== null && $isLocalRecordMissing) {
@@ -221,11 +223,14 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
     }
 
     /**
-     * One DELETE per missing relation. It may remove multiple MM rows: Duplicates, and rows of
-     * other fields of the opposite side for fields without match fields.
+     * One DELETE per up to 100 missing relations to one table: Many missing relations, for
+     * instance of a category assigned to many records deleted meanwhile, need few changes and
+     * little memory, and IN() stays below the limits of bound parameters of the platforms.
+     * A DELETE may remove more MM rows than relations: Duplicates, and rows of other fields
+     * of the opposite side for fields without match fields.
      *
      * @param array{tableName: string, fieldName: string, mmTableName: string, allowedTables: array<int, string>, matchFields: array<string, int|string>} $groupField
-     * @param array<string, array{tableName: string, uid_foreign: int, tablenames: string|null}> $missingRelations
+     * @param array<string, array{tableName: string, tablenames: string|null, uids: array<int, int>}> $missingRelations
      */
     private function getMissingRelationsFinding(HealthCheckRun $run, array $groupField, int $uidLocal, array $missingRelations): ?Finding
     {
@@ -239,25 +244,29 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
         $missing = [];
         $changes = [];
         foreach ($missingRelations as $missingRelation) {
-            $missing[] = $missingRelation['tableName'] . ':' . $missingRelation['uid_foreign'];
-            $where = [
-                'uid_local' => [
-                    'value' => $uidLocal,
-                    'type' => Connection::PARAM_INT,
-                ],
-                'uid_foreign' => [
-                    'value' => $missingRelation['uid_foreign'],
-                    'type' => Connection::PARAM_INT,
-                ],
-            ];
-            if ($missingRelation['tablenames'] !== null) {
-                $where['tablenames'] = [
-                    'value' => $missingRelation['tablenames'],
-                    'type' => Connection::PARAM_STR,
-                ];
+            foreach ($missingRelation['uids'] as $uidForeign) {
+                $missing[] = $missingRelation['tableName'] . ':' . $uidForeign;
             }
-            $where = array_merge($where, $this->getMatchFieldsWhere($groupField['matchFields']));
-            $changes[] = new RecordChange(RecordChangeType::MmDelete, $groupField['mmTableName'], null, [], $where);
+            foreach (array_chunk(array_values($missingRelation['uids']), 100) as $uidsForeign) {
+                $where = [
+                    'uid_local' => [
+                        'value' => $uidLocal,
+                        'type' => Connection::PARAM_INT,
+                    ],
+                    'uid_foreign' => [
+                        'value' => $uidsForeign,
+                        'type' => Connection::PARAM_INT,
+                    ],
+                ];
+                if ($missingRelation['tablenames'] !== null) {
+                    $where['tablenames'] = [
+                        'value' => $missingRelation['tablenames'],
+                        'type' => Connection::PARAM_STR,
+                    ];
+                }
+                $where = array_merge($where, $this->getMatchFieldsWhere($groupField['matchFields']));
+                $changes[] = new RecordChange(RecordChangeType::MmDelete, $groupField['mmTableName'], null, [], $where);
+            }
         }
         return new Finding(
             new RecordFieldKey($groupField['tableName'], (int)$localRecord['uid'], $groupField['fieldName']),

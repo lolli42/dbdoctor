@@ -28,7 +28,7 @@ final readonly class RecordChange
     /**
      * @param int|null $uid Record to update or delete, null for insert and mm-delete
      * @param array<string, array{value: int|string, type: ParameterType}> $values Fields to set for update, soft-delete and insert
-     * @param array<string, array{value: int|string, type: ParameterType}> $where Fields identifying the rows of mm-delete
+     * @param array<string, array{value: int|string|list<int>, type: ParameterType}> $where Fields identifying the rows of mm-delete, a list of values is IN()
      */
     public function __construct(
         public RecordChangeType $type,

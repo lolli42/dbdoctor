@@ -65,7 +65,7 @@ class HealthCommandJsonMmTest extends AbstractFunctionalTestCase
         self::assertContains($missingRelationKey, $keys);
         $missingRelationFinding = $check['findings'][array_search($missingRelationKey, $keys, true)];
         self::assertSame(1, $missingRelationFinding['record']['uid']);
-        self::assertSame(['uid_local' => 1, 'uid_foreign' => 94, 'tablenames' => 'tt_content'], $missingRelationFinding['writes'][0]['where']);
+        self::assertSame(['uid_local' => 1, 'uid_foreign' => [94], 'tablenames' => 'tt_content'], $missingRelationFinding['writes'][0]['where']);
         self::assertFalse($report['tables']['sys_category_record_mm']['tca']);
         self::assertSame(5, $report['tables']['sys_category_record_mm']['rowCount']);
         // Item 1 has two broken fields: Two findings, but one affected row of the three items
