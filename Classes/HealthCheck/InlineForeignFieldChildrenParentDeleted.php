@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
@@ -43,7 +44,7 @@ final readonly class InlineForeignFieldChildrenParentDeleted extends AbstractHea
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         $findings = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
@@ -97,7 +98,7 @@ final readonly class InlineForeignFieldChildrenParentDeleted extends AbstractHea
                     continue;
                 }
                 try {
-                    $parentRow = $this->recordsHelper->getRecord($run->statements, (string)$inlineChildRow[$fieldNameOfParentTableName], ['uid', $parentTableDeleteField], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
+                    $parentRow = $this->recordsHelper->getRecord($statements, (string)$inlineChildRow[$fieldNameOfParentTableName], ['uid', $parentTableDeleteField], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
                     if ((bool)$parentRow[$parentTableDeleteField]) {
                         $parentUid = (int)$inlineChildRow[$fieldNameOfParentTableUid];
                         $findings[] = new Finding(

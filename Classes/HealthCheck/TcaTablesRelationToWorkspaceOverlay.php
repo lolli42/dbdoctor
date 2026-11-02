@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
@@ -87,16 +88,16 @@ final readonly class TcaTablesRelationToWorkspaceOverlay extends AbstractHealthC
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         if (!$this->hasOverlays()) {
             // Instances without workspace overlays, the common case: Nothing to find, no relation field is read.
             return [];
         }
         return [
-            ...$this->listRelationHelper->getFindings($run, $this->getListFields(), RelationProblem::WorkspaceOverlay),
-            ...$this->mmRelationHelper->getFindings($run, $this->getMmFields(), RelationProblem::WorkspaceOverlay),
-            ...$this->getInlineChildrenFindings($run),
+            ...$this->listRelationHelper->getFindings($statements, $this->getListFields(), RelationProblem::WorkspaceOverlay),
+            ...$this->mmRelationHelper->getFindings($statements, $this->getMmFields(), RelationProblem::WorkspaceOverlay),
+            ...$this->getInlineChildrenFindings($statements),
         ];
     }
 
@@ -150,13 +151,13 @@ final readonly class TcaTablesRelationToWorkspaceOverlay extends AbstractHealthC
      *
      * @return list<Finding>
      */
-    private function getInlineChildrenFindings(HealthCheckRun $run): array
+    private function getInlineChildrenFindings(PreparedStatements $statements): array
     {
         // Keyed by table and uid: Two parent fields of the same parent table may select the same row.
         $findingsByTable = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
             $findingsByTable = $this->addChildrenOfOverlayParentFindings(
-                $run,
+                $statements,
                 $findingsByTable,
                 $inlineChild->tableName,
                 $inlineChild->fieldNameOfParentTableUid,
@@ -170,7 +171,7 @@ final readonly class TcaTablesRelationToWorkspaceOverlay extends AbstractHealthC
                 continue;
             }
             $findingsByTable = $this->addChildrenOfOverlayParentFindings(
-                $run,
+                $statements,
                 $findingsByTable,
                 $inlineParent->tableName,
                 $inlineParent->fieldNameOfParentTableUid,
@@ -196,7 +197,7 @@ final readonly class TcaTablesRelationToWorkspaceOverlay extends AbstractHealthC
      * @return array<string, array<int, Finding>>
      */
     private function addChildrenOfOverlayParentFindings(
-        HealthCheckRun $run,
+        PreparedStatements $statements,
         array $findingsByTable,
         string $childTableName,
         string $parentUidField,
@@ -237,7 +238,7 @@ final readonly class TcaTablesRelationToWorkspaceOverlay extends AbstractHealthC
             $parentUid = (int)$row[$parentUidField];
             if ($parentUid <= 0
                 || !is_array($GLOBALS['TCA'][$rowParentTableName] ?? false)
-                || !$this->relationTargetHelper->hasProblem($run, RelationProblem::WorkspaceOverlay, $rowParentTableName, $parentUid)
+                || !$this->relationTargetHelper->hasProblem($statements, RelationProblem::WorkspaceOverlay, $rowParentTableName, $parentUid)
             ) {
                 continue;
             }

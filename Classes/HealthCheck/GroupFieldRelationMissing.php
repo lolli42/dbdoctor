@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Helper\ListRelationHelper;
 use Lolli\Dbdoctor\Helper\RelationProblem;
 use Lolli\Dbdoctor\Tca\GroupField;
@@ -47,9 +48,9 @@ final readonly class GroupFieldRelationMissing extends AbstractHealthCheck imple
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
-        return $this->listRelationHelper->getFindings($run, $this->getGroupFields(), RelationProblem::Missing);
+        return $this->listRelationHelper->getFindings($statements, $this->getGroupFields(), RelationProblem::Missing);
     }
 
     /**

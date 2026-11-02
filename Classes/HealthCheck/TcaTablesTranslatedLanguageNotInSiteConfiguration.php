@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordKey;
@@ -60,7 +61,7 @@ final readonly class TcaTablesTranslatedLanguageNotInSiteConfiguration extends A
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         // Resolve sites with PagesTreeHelper instead of SiteFinder->getSiteByPageId(). This is deliberate:
         // SiteFinder uses RootlineUtility, which is unsuitable for bulk lookups, see PagesTreeHelper.

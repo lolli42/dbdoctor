@@ -17,9 +17,9 @@ namespace Lolli\Dbdoctor\Helper;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Reason;
-use Lolli\Dbdoctor\HealthCheck\HealthCheckRun;
 
 /**
  * Stateless service telling if the target record of a relation has a RelationProblem,
@@ -39,7 +39,7 @@ final readonly class RelationTargetHelper
      * of a workspace have t3ver_oid 0, they become live records with the same uid when published.
      * Tables that do not exist in the database are no problem, the relation can not be checked.
      */
-    public function hasProblem(HealthCheckRun $run, RelationProblem $problem, string $tableName, int $uid): bool
+    public function hasProblem(PreparedStatements $statements, RelationProblem $problem, string $tableName, int $uid): bool
     {
         if (!$this->tableHelper->tableExistsInDatabase($tableName)) {
             return false;
@@ -49,7 +49,7 @@ final readonly class RelationTargetHelper
                 return false;
             }
             try {
-                $record = $this->recordsHelper->getRecord($run->statements, $tableName, ['uid', 't3ver_oid'], $uid);
+                $record = $this->recordsHelper->getRecord($statements, $tableName, ['uid', 't3ver_oid'], $uid);
             } catch (NoSuchRecordException $e) {
                 // Missing records are handled by other checks.
                 return false;
@@ -57,7 +57,7 @@ final readonly class RelationTargetHelper
             return (int)$record['t3ver_oid'] > 0;
         }
         try {
-            $this->recordsHelper->getRecord($run->statements, $tableName, ['uid'], $uid);
+            $this->recordsHelper->getRecord($statements, $tableName, ['uid'], $uid);
         } catch (NoSuchRecordException $e) {
             return true;
         }

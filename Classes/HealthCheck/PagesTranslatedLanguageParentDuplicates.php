@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
@@ -49,7 +50,7 @@ final readonly class PagesTranslatedLanguageParentDuplicates extends AbstractHea
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         // Find combinations of l10n_parent and sys_language_uid having more than one live translation
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');

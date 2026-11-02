@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
 use Lolli\Dbdoctor\Finding\Finding;
@@ -43,7 +44,7 @@ final readonly class SysFileReferenceInvalidPid extends AbstractHealthCheck impl
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
@@ -64,7 +65,7 @@ final readonly class SysFileReferenceInvalidPid extends AbstractHealthCheck impl
                 $parentPid = (int)$row['uid_foreign'];
             } else {
                 try {
-                    $referencingRecord = $this->recordsHelper->getRecord($run->statements, (string)$row['tablenames'], ['pid'], (int)$row['uid_foreign']);
+                    $referencingRecord = $this->recordsHelper->getRecord($statements, (string)$row['tablenames'], ['pid'], (int)$row['uid_foreign']);
                 } catch (NoSuchRecordException|NoSuchTableException $e) {
                     // Missing parents and tables are handled by the earlier SysFileReferenceDangling.
                     // They are still there in check mode, where earlier checks change nothing.

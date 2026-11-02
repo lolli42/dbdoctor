@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
@@ -43,7 +44,7 @@ final readonly class SysFileReferenceDeletedLocalizedParentExists extends Abstra
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
@@ -59,7 +60,7 @@ final readonly class SysFileReferenceDeletedLocalizedParentExists extends Abstra
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
-                $this->recordsHelper->getRecord($run->statements, 'sys_file_reference', ['uid'], (int)$row['l10n_parent']);
+                $this->recordsHelper->getRecord($statements, 'sys_file_reference', ['uid'], (int)$row['l10n_parent']);
             } catch (NoSuchRecordException $e) {
                 // Match if parent does not exist at all
                 $findings[] = new Finding(

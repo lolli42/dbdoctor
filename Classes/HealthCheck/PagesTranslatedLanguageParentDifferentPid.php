@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
@@ -44,7 +45,7 @@ final readonly class PagesTranslatedLanguageParentDifferentPid extends AbstractH
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         // Deleted pages are considered as well, we remove all restrictions.
@@ -59,7 +60,7 @@ final readonly class PagesTranslatedLanguageParentDifferentPid extends AbstractH
             /** @var array<string, int|string> $row */
             try {
                 /** @var array<string, int|string> $languageParentRow */
-                $languageParentRow = $this->recordsHelper->getRecord($run->statements, 'pages', ['uid', 'pid'], (int)$row['l10n_parent']);
+                $languageParentRow = $this->recordsHelper->getRecord($statements, 'pages', ['uid', 'pid'], (int)$row['l10n_parent']);
                 if ((int)$row['pid'] !== (int)$languageParentRow['pid']
                     // Ignore "workspace moved" translations due to the odd l10n_parent behavior, as
                     // shown with the tests from https://review.typo3.org/c/Packages/TYPO3.CMS/+/89803

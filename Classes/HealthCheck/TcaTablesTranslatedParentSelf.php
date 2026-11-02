@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordKey;
 use TYPO3\CMS\Core\Database\Connection;
@@ -44,7 +45,7 @@ final readonly class TcaTablesTranslatedParentSelf extends AbstractHealthCheck i
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         $findings = [];
         foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {

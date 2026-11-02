@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
@@ -42,7 +43,7 @@ final readonly class InlineForeignFieldChildrenParentMissing extends AbstractHea
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         $findings = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
@@ -81,7 +82,7 @@ final readonly class InlineForeignFieldChildrenParentMissing extends AbstractHea
                     continue;
                 }
                 try {
-                    $this->recordsHelper->getRecord($run->statements, (string)$inlineChildRow[$fieldNameOfParentTableName], ['uid'], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
+                    $this->recordsHelper->getRecord($statements, (string)$inlineChildRow[$fieldNameOfParentTableName], ['uid'], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
                 } catch (NoSuchRecordException $e) {
                     $findings[] = new Finding(
                         new RecordKey($childTableName, (int)$inlineChildRow['uid']),

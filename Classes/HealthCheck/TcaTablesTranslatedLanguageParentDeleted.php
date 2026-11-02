@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
@@ -47,7 +48,7 @@ final readonly class TcaTablesTranslatedLanguageParentDeleted extends AbstractHe
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         $findings = [];
         foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {
@@ -95,7 +96,7 @@ final readonly class TcaTablesTranslatedLanguageParentDeleted extends AbstractHe
             while ($localizedRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $localizedRow */
                 try {
-                    $parentRow = $this->recordsHelper->getRecord($run->statements, $tableName, $parentRowFields, (int)$localizedRow[$translationParentField]);
+                    $parentRow = $this->recordsHelper->getRecord($statements, $tableName, $parentRowFields, (int)$localizedRow[$translationParentField]);
                     if ((int)$parentRow[$deletedField] === 1) {
                         $findings[] = new Finding(
                             new RecordKey($tableName, (int)$localizedRow['uid']),

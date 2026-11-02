@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
 use Lolli\Dbdoctor\Finding\Finding;
@@ -42,7 +43,7 @@ final readonly class SysFileReferenceDangling extends AbstractHealthCheck implem
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
@@ -56,13 +57,13 @@ final readonly class SysFileReferenceDangling extends AbstractHealthCheck implem
             /** @var array<string, int|string> $row */
             $reason = null;
             try {
-                $this->recordsHelper->getRecord($run->statements, 'sys_file', ['uid'], (int)$row['uid_local']);
+                $this->recordsHelper->getRecord($statements, 'sys_file', ['uid'], (int)$row['uid_local']);
             } catch (NoSuchRecordException $e) {
                 $reason = new Reason('file-missing', 'File "' . $row['uid_local'] . '" does not exist', ['uidLocal' => (int)$row['uid_local']]);
             }
             if ($reason === null) {
                 try {
-                    $this->recordsHelper->getRecord($run->statements, (string)$row['tablenames'], ['uid'], (int)$row['uid_foreign']);
+                    $this->recordsHelper->getRecord($statements, (string)$row['tablenames'], ['uid'], (int)$row['uid_foreign']);
                 } catch (NoSuchTableException $e) {
                     $reason = (string)$row['tablenames'] === ''
                         ? new Reason('table-missing', 'Field "tablenames" is empty', ['tablenames' => ''])

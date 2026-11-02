@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
@@ -41,7 +42,7 @@ final readonly class TcaTablesPidMissing extends AbstractHealthCheck implements 
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         $findings = [];
         foreach ($this->tcaHelper->getNextTcaTable(['pages', 'sys_workspace', 'tt_content']) as $tableName) {
@@ -62,7 +63,7 @@ final readonly class TcaTablesPidMissing extends AbstractHealthCheck implements 
                     continue;
                 }
                 try {
-                    $this->recordsHelper->getRecord($run->statements, 'pages', ['uid'], $pid);
+                    $this->recordsHelper->getRecord($statements, 'pages', ['uid'], $pid);
                 } catch (NoSuchRecordException $e) {
                     $findings[] = new Finding(
                         new RecordKey($tableName, (int)$row['uid']),

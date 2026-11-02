@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Helper\ListRelationHelper;
 use Lolli\Dbdoctor\Helper\RelationProblem;
 
@@ -47,8 +48,8 @@ final readonly class InlineFieldUidListRelationMissing extends AbstractHealthChe
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
-        return $this->listRelationHelper->getFindings($run, $this->tcaHelper->getNextInlineFieldWithUidList(), RelationProblem::Missing);
+        return $this->listRelationHelper->getFindings($statements, $this->tcaHelper->getNextInlineFieldWithUidList(), RelationProblem::Missing);
     }
 }

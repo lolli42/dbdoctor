@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
@@ -54,7 +55,7 @@ final readonly class TcaTablesTranslatedParentInvalidPointer extends AbstractHea
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         $inlineChildTables = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChildTable) {
@@ -115,7 +116,7 @@ final readonly class TcaTablesTranslatedParentInvalidPointer extends AbstractHea
             while ($localizedRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $localizedRow */
                 try {
-                    $parentRow = $this->recordsHelper->getRecord($run->statements, $tableName, $parentRowFields, (int)$localizedRow[$translationParentField]);
+                    $parentRow = $this->recordsHelper->getRecord($statements, $tableName, $parentRowFields, (int)$localizedRow[$translationParentField]);
                 } catch (NoSuchRecordException $e) {
                     // Ignore non-existing localization parent rows for now.
                     continue;
@@ -130,7 +131,7 @@ final readonly class TcaTablesTranslatedParentInvalidPointer extends AbstractHea
                 $uid = (int)$localizedRow['uid'];
                 $isChildOfTranslatedRecord = $parentRowLanguage < 0
                     && isset($inlineChildTables[$tableName])
-                    && $this->isChildOfTranslatedRecord($run, $tableName, $inlineChildTables[$tableName], $uid);
+                    && $this->isChildOfTranslatedRecord($statements, $tableName, $inlineChildTables[$tableName], $uid);
                 if ($parentRowLanguage < 0 && !$isChildOfTranslatedRecord) {
                     $deleteFindings[] = new Finding(
                         new RecordKey($tableName, $uid),
@@ -185,7 +186,7 @@ final readonly class TcaTablesTranslatedParentInvalidPointer extends AbstractHea
      *
      * @param list<InlineForeignFieldChild|InlineForeignFieldNoForeignTableFieldParent> $inlineParents
      */
-    private function isChildOfTranslatedRecord(HealthCheckRun $run, string $childTableName, array $inlineParents, int $uid): bool
+    private function isChildOfTranslatedRecord(PreparedStatements $statements, string $childTableName, array $inlineParents, int $uid): bool
     {
         $fields = [];
         foreach ($inlineParents as $inlineParent) {
@@ -198,7 +199,7 @@ final readonly class TcaTablesTranslatedParentInvalidPointer extends AbstractHea
                 }
             }
         }
-        $childRow = $this->recordsHelper->getRecord($run->statements, $childTableName, array_values(array_unique($fields)), $uid);
+        $childRow = $this->recordsHelper->getRecord($statements, $childTableName, array_values(array_unique($fields)), $uid);
         foreach ($inlineParents as $inlineParent) {
             if ($inlineParent instanceof InlineForeignFieldChild) {
                 $parentTableName = (string)$childRow[$inlineParent->fieldNameOfParentTableName];
@@ -215,7 +216,7 @@ final readonly class TcaTablesTranslatedParentInvalidPointer extends AbstractHea
                 return false;
             }
             try {
-                $parentRow = $this->recordsHelper->getRecord($run->statements, $parentTableName, [$parentLanguageField], (int)$childRow[$inlineParent->fieldNameOfParentTableUid]);
+                $parentRow = $this->recordsHelper->getRecord($statements, $parentTableName, [$parentLanguageField], (int)$childRow[$inlineParent->fieldNameOfParentTableUid]);
             } catch (NoSuchRecordException $e) {
                 // Missing inline parent: Handled by later inline checks.
                 return false;

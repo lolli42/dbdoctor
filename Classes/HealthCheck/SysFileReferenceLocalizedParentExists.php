@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
@@ -50,7 +51,7 @@ final readonly class SysFileReferenceLocalizedParentExists extends AbstractHealt
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         $findings = [];
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_file_reference');
@@ -65,7 +66,7 @@ final readonly class SysFileReferenceLocalizedParentExists extends AbstractHealt
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
-                $this->recordsHelper->getRecord($run->statements, 'sys_file_reference', ['uid'], (int)$row['l10n_parent']);
+                $this->recordsHelper->getRecord($statements, 'sys_file_reference', ['uid'], (int)$row['l10n_parent']);
             } catch (NoSuchRecordException $e) {
                 // @todo: Possible improvement. We could try to look at the uid_foreign/tablesnames inline parent record,
                 //        see if is "connected mode", has a sys_language_uid=0 l10n_parent on the same pid, look up the
