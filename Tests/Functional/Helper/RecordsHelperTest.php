@@ -22,6 +22,7 @@ use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Core\Database\Connection;
+use TYPO3\CMS\Core\Database\ConnectionPool;
 
 class RecordsHelperTest extends AbstractFunctionalTestCase
 {
@@ -76,5 +77,55 @@ class RecordsHelperTest extends AbstractFunctionalTestCase
         self::assertStringContainsString('= 42', $sql);
         self::assertStringContainsString('= \'tt_content\'', $sql);
         self::assertStringNotContainsString('?', $sql);
+    }
+
+    #[Test]
+    public function updateTcaRecordThrowsExceptionIfNoRowIsUpdated(): void
+    {
+        $this->expectException(UnexpectedNumberOfAffectedRowsException::class);
+        $this->expectExceptionCode(1646228188);
+        $this->expectExceptionMessageMatches('/^Update query /');
+        /** @var RecordsHelper $recordsHelper */
+        $recordsHelper = $this->get(RecordsHelper::class);
+        $recordsHelper->updateTcaRecord(new PreparedStatements(), false, 'pages', 42, ['hidden' => ['value' => 1, 'type' => Connection::PARAM_INT]]);
+    }
+
+    #[Test]
+    public function updateTcaRecordReturnsSqlWithQuotedValues(): void
+    {
+        /** @var RecordsHelper $recordsHelper */
+        $recordsHelper = $this->get(RecordsHelper::class);
+        $sql = $recordsHelper->updateTcaRecord(
+            new PreparedStatements(),
+            true,
+            'pages',
+            42,
+            [
+                'title' => ['value' => 'It\'s = ? $1 \\', 'type' => Connection::PARAM_STR],
+                'hidden' => ['value' => 1, 'type' => Connection::PARAM_INT],
+            ]
+        );
+        $quotedTitle = $this->get(ConnectionPool::class)->getConnectionForTable('pages')->quote('It\'s = ? $1 \\');
+        self::assertStringContainsString('= ' . $quotedTitle . ',', $sql);
+        self::assertStringContainsString('= 1 ', $sql);
+        self::assertStringEndsWith('= 42;', $sql);
+    }
+
+    #[Test]
+    public function insertTcaRecordReturnsSqlWithQuotedValues(): void
+    {
+        /** @var RecordsHelper $recordsHelper */
+        $recordsHelper = $this->get(RecordsHelper::class);
+        $sql = $recordsHelper->insertTcaRecord(
+            new PreparedStatements(),
+            true,
+            'pages',
+            [
+                'title' => ['value' => 'It\'s ? $1 \\', 'type' => Connection::PARAM_STR],
+                'pid' => ['value' => 42, 'type' => Connection::PARAM_INT],
+            ]
+        );
+        $quotedTitle = $this->get(ConnectionPool::class)->getConnectionForTable('pages')->quote('It\'s ? $1 \\');
+        self::assertStringEndsWith('(' . $quotedTitle . ', 42);', $sql);
     }
 }
