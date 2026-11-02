@@ -52,8 +52,8 @@ final readonly class GroupFieldRelationMissing extends AbstractHealthCheck imple
     {
         $findings = [];
         foreach ($this->tcaHelper->getNextGroupFieldWithoutMm() as $groupField) {
-            $tableName = $groupField['tableName'];
-            $fieldName = $groupField['fieldName'];
+            $tableName = $groupField->tableName;
+            $fieldName = $groupField->fieldName;
             if ($tableName === 'sys_file_reference' && $fieldName === 'uid_local') {
                 // The earlier check SysFileReferenceDangling removes file references to missing files.
                 // Checking them again here costs one query per file reference, and emptying uid_local
@@ -82,7 +82,7 @@ final readonly class GroupFieldRelationMissing extends AbstractHealthCheck imple
             while ($row = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $row */
                 $fieldValue = (string)$row[$fieldName];
-                $missingRelations = $this->getMissingRelations($run, $fieldValue, $groupField['allowedTables']);
+                $missingRelations = $this->getMissingRelations($run, $fieldValue, $groupField->allowedTables);
                 if (empty($missingRelations)) {
                     continue;
                 }

@@ -25,6 +25,7 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordFieldKey;
+use Lolli\Dbdoctor\Tca\GroupMmField;
 use TYPO3\CMS\Core\Database\Connection;
 
 /**
@@ -55,21 +56,21 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
         // Findings per table they are counted for: The local table, or the MM table for MM rows of missing local records.
         $findingsByTable = [];
         foreach ($this->tcaHelper->getNextGroupFieldWithMm() as $groupField) {
-            $tableName = $groupField['tableName'];
-            $fieldName = $groupField['fieldName'];
-            $mmTableName = $groupField['mmTableName'];
+            $tableName = $groupField->tableName;
+            $fieldName = $groupField->fieldName;
+            $mmTableName = $groupField->mmTableName;
             if (!$this->tableHelper->fieldExistsInTable($tableName, $fieldName)
                 || !$this->tableHelper->fieldExistsInTable($mmTableName, 'uid_local')
                 || !$this->tableHelper->fieldExistsInTable($mmTableName, 'uid_foreign')
             ) {
                 continue;
             }
-            foreach (array_keys($groupField['matchFields']) as $matchFieldName) {
+            foreach (array_keys($groupField->matchFields) as $matchFieldName) {
                 if (!$this->tableHelper->fieldExistsInTable($mmTableName, $matchFieldName)) {
                     continue 2;
                 }
             }
-            if (empty($groupField['matchFields']) && count($this->getLocalFieldsOfMmTable($mmTableName)) > 1) {
+            if (empty($groupField->matchFields) && count($this->getLocalFieldsOfMmTable($mmTableName)) > 1) {
                 // Broken TCA, ignored: A field without match fields sharing its MM table with other fields
                 // reads the rows of these fields as its own. Core RelationHandler is broken with this as well,
                 // readMM() and writeMM() restrict queries by match fields only. Without a "tablenames" column,
@@ -83,7 +84,7 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
             if ($hasTablenamesField) {
                 $queryBuilder->addSelect('tablenames');
             }
-            foreach ($groupField['matchFields'] as $matchFieldName => $matchFieldValue) {
+            foreach ($groupField->matchFields as $matchFieldName => $matchFieldValue) {
                 $queryBuilder->andWhere(
                     $queryBuilder->expr()->eq($matchFieldName, $queryBuilder->createNamedParameter((string)$matchFieldValue))
                 );
@@ -120,7 +121,7 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
                 }
                 $tablenames = $hasTablenamesField ? (string)$mmRow['tablenames'] : null;
                 $uidForeign = (int)$mmRow['uid_foreign'];
-                $targetTableName = $this->getTargetTableName($tablenames, $groupField['allowedTables']);
+                $targetTableName = $this->getTargetTableName($tablenames, $groupField->allowedTables);
                 if ($targetTableName === '') {
                     // Not a relation of this field, as in core RelationHandler->readMM().
                     continue;
@@ -197,10 +198,8 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
 
     /**
      * All MM rows of the missing local record within the match fields of the field are removed.
-     *
-     * @param array{tableName: string, fieldName: string, mmTableName: string, allowedTables: array<int, string>, matchFields: array<string, int|string>} $groupField
      */
-    private function getMissingLocalRecordFinding(array $groupField, int $uidLocal, int $mmRowCount): Finding
+    private function getMissingLocalRecordFinding(GroupMmField $groupField, int $uidLocal, int $mmRowCount): Finding
     {
         $where = [
             'uid_local' => [
@@ -208,15 +207,15 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
                 'type' => Connection::PARAM_INT,
             ],
         ];
-        $where = array_merge($where, $this->getMatchFieldsWhere($groupField['matchFields']));
+        $where = array_merge($where, $this->getMatchFieldsWhere($groupField->matchFields));
         return new Finding(
-            new MmKey($groupField['mmTableName'], $uidLocal, $groupField['tableName'], $groupField['fieldName'], $groupField['matchFields']),
+            new MmKey($groupField->mmTableName, $uidLocal, $groupField->tableName, $groupField->fieldName, $groupField->matchFields),
             null,
-            [new RecordChange(RecordChangeType::MmDelete, $groupField['mmTableName'], null, [], $where)],
+            [new RecordChange(RecordChangeType::MmDelete, $groupField->mmTableName, null, [], $where)],
             new Reason(
                 'local-record-missing',
-                'Local record "' . $groupField['tableName'] . ':' . $uidLocal . '" does not exist',
-                ['localRecord' => $groupField['tableName'] . ':' . $uidLocal]
+                'Local record "' . $groupField->tableName . ':' . $uidLocal . '" does not exist',
+                ['localRecord' => $groupField->tableName . ':' . $uidLocal]
             ),
             ['mmRowCount' => $mmRowCount],
         );
@@ -229,13 +228,12 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
      * A DELETE may remove more MM rows than relations: Duplicates, and rows of other fields
      * of the opposite side for fields without match fields.
      *
-     * @param array{tableName: string, fieldName: string, mmTableName: string, allowedTables: array<int, string>, matchFields: array<string, int|string>} $groupField
      * @param array<string, array{tableName: string, tablenames: string|null, uids: array<int, int>}> $missingRelations
      */
-    private function getMissingRelationsFinding(HealthCheckRun $run, array $groupField, int $uidLocal, array $missingRelations): ?Finding
+    private function getMissingRelationsFinding(HealthCheckRun $run, GroupMmField $groupField, int $uidLocal, array $missingRelations): ?Finding
     {
         try {
-            $localRecord = $this->recordsHelper->getRecord($run->statements, $groupField['tableName'], ['uid', 'pid'], $uidLocal);
+            $localRecord = $this->recordsHelper->getRecord($run->statements, $groupField->tableName, ['uid', 'pid'], $uidLocal);
         } catch (NoSuchRecordException $e) {
             // Only if the local side of the MM table is ambiguous, see canHandleMissingLocalRecords():
             // The MM rows are no relation of an existing record of this table, they are kept.
@@ -264,17 +262,17 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
                         'type' => Connection::PARAM_STR,
                     ];
                 }
-                $where = array_merge($where, $this->getMatchFieldsWhere($groupField['matchFields']));
-                $changes[] = new RecordChange(RecordChangeType::MmDelete, $groupField['mmTableName'], null, [], $where);
+                $where = array_merge($where, $this->getMatchFieldsWhere($groupField->matchFields));
+                $changes[] = new RecordChange(RecordChangeType::MmDelete, $groupField->mmTableName, null, [], $where);
             }
         }
         return new Finding(
-            new RecordFieldKey($groupField['tableName'], (int)$localRecord['uid'], $groupField['fieldName']),
+            new RecordFieldKey($groupField->tableName, (int)$localRecord['uid'], $groupField->fieldName),
             (int)$localRecord['pid'],
             $changes,
             new Reason(
                 'relation-missing',
-                'Field "' . $groupField['fieldName'] . '": Missing ' . implode(', ', $missing),
+                'Field "' . $groupField->fieldName . '": Missing ' . implode(', ', $missing),
                 ['missing' => $missing]
             ),
         );
