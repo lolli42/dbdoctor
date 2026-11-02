@@ -18,6 +18,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\Helper;
  */
 use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Helper\PagesRootlineHelper;
+use Lolli\Dbdoctor\Page\RootlinePage;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -29,292 +30,85 @@ class PagesRootlineHelperTest extends AbstractFunctionalTestCase
         yield 'pid 1' => [
             'pid' => 1,
             'expected' => [
-                0 => [
-                    '_isMissing' => false,
-                    'uid' => 0,
-                    'pid' => 0,
-                    'deleted' => false,
-                    'hidden' => false,
-                    'doktype' => 0,
-                    't3ver_wsid' => 0,
-                    'title' => 'New TYPO3 site',
-                ],
-                1 => [
-                    '_isMissing' => false,
-                    'uid' => 1,
-                    'pid' => 0,
-                    'deleted' => 0,
-                    'hidden' => 0,
-                    'doktype' => 1,
-                    't3ver_wsid' => 0,
-                    'title' => 'Ok site root',
-                ],
+                0 => new RootlinePage(0, 0, false, false, false, 0, 0, 'New TYPO3 site'),
+                1 => new RootlinePage(1, 0, false, false, false, 1, 0, 'Ok site root'),
             ],
         ];
         yield 'pid 2' => [
             'pid' => 2,
             'expected' => [
-                0 => [
-                    '_isMissing' => false,
-                    'uid' => 0,
-                    'pid' => 0,
-                    'deleted' => false,
-                    'hidden' => false,
-                    'doktype' => 0,
-                    't3ver_wsid' => 0,
-                    'title' => 'New TYPO3 site',
-                ],
-                1 => [
-                    '_isMissing' => false,
-                    'uid' => 1,
-                    'pid' => 0,
-                    'deleted' => 0,
-                    'hidden' => 0,
-                    'doktype' => 1,
-                    't3ver_wsid' => 0,
-                    'title' => 'Ok site root',
-                ],
-                2 => [
-                    '_isMissing' => false,
-                    'uid' => 2,
-                    'pid' => 1,
-                    'deleted' => 0,
-                    'hidden' => 0,
-                    'doktype' => 1,
-                    't3ver_wsid' => 0,
-                    'title' => 'Ok sub page 1',
-                ],
+                0 => new RootlinePage(0, 0, false, false, false, 0, 0, 'New TYPO3 site'),
+                1 => new RootlinePage(1, 0, false, false, false, 1, 0, 'Ok site root'),
+                2 => new RootlinePage(2, 1, false, false, false, 1, 0, 'Ok sub page 1'),
             ],
         ];
         yield 'pid 3' => [
             'pid' => 3,
             'expected' => [
-                0 => [
-                    '_isMissing' => false,
-                    'uid' => 0,
-                    'pid' => 0,
-                    'deleted' => false,
-                    'hidden' => false,
-                    'doktype' => 0,
-                    't3ver_wsid' => 0,
-                    'title' => 'New TYPO3 site',
-                ],
-                1 => [
-                    '_isMissing' => false,
-                    'uid' => 1,
-                    'pid' => 0,
-                    'deleted' => 0,
-                    'hidden' => 0,
-                    'doktype' => 1,
-                    't3ver_wsid' => 0,
-                    'title' => 'Ok site root',
-                ],
-                2 => [
-                    '_isMissing' => false,
-                    'uid' => 3,
-                    'pid' => 1,
-                    'deleted' => 0,
-                    'hidden' => 0,
-                    'doktype' => 1,
-                    't3ver_wsid' => 0,
-                    'title' => 'Ok sub page 2',
-                ],
+                0 => new RootlinePage(0, 0, false, false, false, 0, 0, 'New TYPO3 site'),
+                1 => new RootlinePage(1, 0, false, false, false, 1, 0, 'Ok site root'),
+                2 => new RootlinePage(3, 1, false, false, false, 1, 0, 'Ok sub page 2'),
             ],
         ];
         yield 'pid 4' => [
             'pid' => 4,
             'expected' => [
-                0 => [
-                    '_isMissing' => true,
-                    'uid' => 4,
-                    'pid' => 0,
-                    'deleted' => true,
-                    'hidden' => false,
-                    'doktype' => 0,
-                    't3ver_wsid' => 0,
-                    'title' => 'RECORD DOES NOT EXIST',
-                ],
+                0 => new RootlinePage(4, 0, true, false, false, 0, 0, 'RECORD DOES NOT EXIST'),
             ],
         ];
         yield 'pid 5' => [
             'pid' => 5,
             'expected' => [
-                0 => [
-                    '_isMissing' => true,
-                    'uid' => 4,
-                    'pid' => 0,
-                    'deleted' => true,
-                    'hidden' => false,
-                    'doktype' => 0,
-                    't3ver_wsid' => 0,
-                    'title' => 'RECORD DOES NOT EXIST',
-                ],
-                1 => [
-                    '_isMissing' => false,
-                    'uid' => 5,
-                    'pid' => 4,
-                    'deleted' => 0,
-                    'hidden' => 0,
-                    'doktype' => 1,
-                    't3ver_wsid' => 0,
-                    'title' => 'Lost direct parent 1',
-                ],
+                0 => new RootlinePage(4, 0, true, false, false, 0, 0, 'RECORD DOES NOT EXIST'),
+                1 => new RootlinePage(5, 4, false, false, false, 1, 0, 'Lost direct parent 1'),
             ],
         ];
         yield 'pid 6' => [
             'pid' => 6,
             'expected' => [
-                0 => [
-                    '_isMissing' => true,
-                    'uid' => 4,
-                    'pid' => 0,
-                    'deleted' => true,
-                    'hidden' => false,
-                    'doktype' => 0,
-                    't3ver_wsid' => 0,
-                    'title' => 'RECORD DOES NOT EXIST',
-                ],
-                1 => [
-                    '_isMissing' => false,
-                    'uid' => 5,
-                    'pid' => 4,
-                    'deleted' => 0,
-                    'hidden' => 0,
-                    'doktype' => 1,
-                    't3ver_wsid' => 0,
-                    'title' => 'Lost direct parent 1',
-                ],
-                2 => [
-                    '_isMissing' => false,
-                    'uid' => 6,
-                    'pid' => 5,
-                    'deleted' => 0,
-                    'hidden' => 0,
-                    'doktype' => 1,
-                    't3ver_wsid' => 0,
-                    'title' => 'Sub page of not connected page',
-                ],
+                0 => new RootlinePage(4, 0, true, false, false, 0, 0, 'RECORD DOES NOT EXIST'),
+                1 => new RootlinePage(5, 4, false, false, false, 1, 0, 'Lost direct parent 1'),
+                2 => new RootlinePage(6, 5, false, false, false, 1, 0, 'Sub page of not connected page'),
             ],
         ];
         yield 'pid 7' => [
             'pid' => 7,
             'expected' => [
-                0 => [
-                    '_isMissing' => true,
-                    'uid' => 7,
-                    'pid' => 0,
-                    'deleted' => true,
-                    'hidden' => false,
-                    'doktype' => 0,
-                    't3ver_wsid' => 0,
-                    'title' => 'RECORD DOES NOT EXIST',
-                ],
+                0 => new RootlinePage(7, 0, true, false, false, 0, 0, 'RECORD DOES NOT EXIST'),
             ],
         ];
         yield 'pid 8' => [
             'pid' => 8,
             'expected' => [
-                0 => [
-                    '_isMissing' => true,
-                    'uid' => 7,
-                    'pid' => 0,
-                    'deleted' => true,
-                    'hidden' => false,
-                    'doktype' => 0,
-                    't3ver_wsid' => 0,
-                    'title' => 'RECORD DOES NOT EXIST',
-                ],
-                1 => [
-                    '_isMissing' => false,
-                    'uid' => 8,
-                    'pid' => 7,
-                    'deleted' => 0,
-                    'hidden' => 0,
-                    'doktype' => 1,
-                    't3ver_wsid' => 0,
-                    'title' => 'Lost direct parent 2',
-                ],
+                0 => new RootlinePage(7, 0, true, false, false, 0, 0, 'RECORD DOES NOT EXIST'),
+                1 => new RootlinePage(8, 7, false, false, false, 1, 0, 'Lost direct parent 2'),
             ],
         ];
         yield 'pid 9' => [
             'pid' => 9,
             'expected' => [
-                0 => [
-                    '_isMissing' => true,
-                    'uid' => 7,
-                    'pid' => 0,
-                    'deleted' => true,
-                    'hidden' => false,
-                    'doktype' => 0,
-                    't3ver_wsid' => 0,
-                    'title' => 'RECORD DOES NOT EXIST',
-                ],
-                1 => [
-                    '_isMissing' => false,
-                    'uid' => 9,
-                    'pid' => 7,
-                    'deleted' => 0,
-                    'hidden' => 0,
-                    'doktype' => 1,
-                    't3ver_wsid' => 1,
-                    'title' => 'WS page Lost direct parent',
-                ],
+                0 => new RootlinePage(7, 0, true, false, false, 0, 0, 'RECORD DOES NOT EXIST'),
+                1 => new RootlinePage(9, 7, false, false, false, 1, 1, 'WS page Lost direct parent'),
             ],
         ];
         yield 'pid 10' => [
             'pid' => 10,
             'expected' => [
-                0 => [
-                    '_isMissing' => false,
-                    'uid' => 11,
-                    'pid' => 10,
-                    'deleted' => false,
-                    'hidden' => 0,
-                    'doktype' => 1,
-                    't3ver_wsid' => 0,
-                    'title' => 'Not Ok loop to 10',
-                ],
-                1 => [
-                    '_isMissing' => false,
-                    'uid' => 10,
-                    'pid' => 11,
-                    'deleted' => 0,
-                    'hidden' => 0,
-                    'doktype' => 1,
-                    't3ver_wsid' => 0,
-                    'title' => 'Not Ok loop to 11',
-                ],
+                0 => new RootlinePage(11, 10, false, false, false, 1, 0, 'Not Ok loop to 10'),
+                1 => new RootlinePage(10, 11, false, false, false, 1, 0, 'Not Ok loop to 11'),
             ],
         ];
         yield 'pid 11' => [
             'pid' => 11,
             'expected' => [
-                0 => [
-                    '_isMissing' => false,
-                    'uid' => 10,
-                    'pid' => 11,
-                    'deleted' => 0,
-                    'hidden' => 0,
-                    'doktype' => 1,
-                    't3ver_wsid' => 0,
-                    'title' => 'Not Ok loop to 11',
-                ],
-                1 => [
-                    '_isMissing' => false,
-                    'uid' => 11,
-                    'pid' => 10,
-                    'deleted' => false,
-                    'hidden' => 0,
-                    'doktype' => 1,
-                    't3ver_wsid' => 0,
-                    'title' => 'Not Ok loop to 10',
-                ],
+                0 => new RootlinePage(10, 11, false, false, false, 1, 0, 'Not Ok loop to 11'),
+                1 => new RootlinePage(11, 10, false, false, false, 1, 0, 'Not Ok loop to 10'),
             ],
         ];
     }
 
     /**
-     * @param array<int, array<string, int|bool|string>> $expected
+     * @param list<RootlinePage> $expected
      */
     #[Test]
     #[DataProvider('getRootlineDataProvider')]

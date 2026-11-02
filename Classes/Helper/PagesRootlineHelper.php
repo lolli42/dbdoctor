@@ -19,6 +19,7 @@ namespace Lolli\Dbdoctor\Helper;
 
 use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Page\RootlinePage;
 
 final readonly class PagesRootlineHelper
 {
@@ -27,61 +28,49 @@ final readonly class PagesRootlineHelper
     ) {}
 
     /**
-     * @param array<int, array<string, int|string|bool>> $rootline
-     * @return array<int, array<string, int|string|bool>>
+     * Pages from the root with uid 0 down to the given page. A page that does not exist is
+     * the topmost entry then. Page loops (page uid 1 having pid 2, uid 2 having 1) are found
+     * and fixed by PagesBrokenTree. To not fail here or run into an endless loop, the rootline
+     * stops at the loop, without the root.
+     *
+     * @return list<RootlinePage>
      */
-    public function getRootline(PreparedStatements $statements, int $uid, array $rootline = []): array
+    public function getRootline(PreparedStatements $statements, int $uid): array
     {
-        if ($uid === 0) {
-            array_unshift($rootline, [
-                '_isMissing' => false,
-                'uid' => 0,
-                'pid' => 0,
-                'deleted' => false,
-                'hidden' => false,
-                'doktype' => 0,
-                't3ver_wsid' => 0,
-                'title' => $GLOBALS['TYPO3_CONF_VARS']['SYS']['sitename'] ?? 'Root',
-            ]);
-            return $rootline;
-        }
-        try {
-            $currentPage = $this->getPage($statements, $uid);
-            $upperPid = (int)$currentPage['pid'];
-            if (in_array($upperPid, array_column($rootline, 'pid'))) {
-                // Page loops (page uid 1 having pid 2, uid 2 having 1) are found and
-                // fixed by PagesBrokenTree. To not fail here or run into endless loop,
-                // we break this situation and return pages not connected to 0 as rootline.
-                return $rootline;
-            }
-            array_unshift($rootline, $currentPage);
-            return $this->getRootline($statements, $upperPid, $rootline);
-        } catch (NoSuchRecordException) {
-            array_unshift(
-                $rootline,
-                [
-                    '_isMissing' => true,
-                    'uid' => (int)($rootline[0]['pid'] ?? $uid),
-                    'pid' => 0,
-                    'deleted' => true,
-                    'hidden' => false,
-                    'doktype' => 0,
-                    't3ver_wsid' => 0,
-                    'title' => 'RECORD DOES NOT EXIST',
-                ]
-            );
-            return $rootline;
-        }
+        return $this->addParentPages($statements, $uid, []);
     }
 
     /**
-     * @return array<string, bool|int|string>
-     * @throws NoSuchRecordException
+     * @param list<RootlinePage> $rootline
+     * @return list<RootlinePage>
      */
-    private function getPage(PreparedStatements $statements, int $uid): array
+    private function addParentPages(PreparedStatements $statements, int $uid, array $rootline): array
     {
-        $currentPage = $this->recordsHelper->getRecord($statements, 'pages', ['uid', 'pid', 'deleted', 'hidden', 'doktype', 't3ver_wsid', 'title'], $uid);
-        $currentPage['_isMissing'] = false;
-        return $currentPage;
+        if ($uid === 0) {
+            $siteName = (string)($GLOBALS['TYPO3_CONF_VARS']['SYS']['sitename'] ?? 'Root');
+            array_unshift($rootline, new RootlinePage(0, 0, false, false, false, 0, 0, $siteName));
+            return $rootline;
+        }
+        try {
+            $page = $this->recordsHelper->getRecord($statements, 'pages', ['uid', 'pid', 'deleted', 'hidden', 'doktype', 't3ver_wsid', 'title'], $uid);
+        } catch (NoSuchRecordException) {
+            array_unshift($rootline, new RootlinePage($uid, 0, true, false, false, 0, 0, 'RECORD DOES NOT EXIST'));
+            return $rootline;
+        }
+        $upperPid = (int)$page['pid'];
+        if (in_array($upperPid, array_map(static fn(RootlinePage $rootlinePage): int => $rootlinePage->pid, $rootline), true)) {
+            return $rootline;
+        }
+        array_unshift($rootline, new RootlinePage(
+            (int)$page['uid'],
+            $upperPid,
+            false,
+            (bool)$page['deleted'],
+            (bool)$page['hidden'],
+            (int)$page['doktype'],
+            (int)$page['t3ver_wsid'],
+            (string)$page['title'],
+        ));
+        return $this->addParentPages($statements, $upperPid, $rootline);
     }
 }

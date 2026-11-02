@@ -30,6 +30,7 @@ use Lolli\Dbdoctor\HealthCheck\HealthCheckInspection;
 use Lolli\Dbdoctor\HealthCheck\InspectionStatus;
 use Lolli\Dbdoctor\Helper\PagesRootlineHelper;
 use Lolli\Dbdoctor\Helper\TcaHelper;
+use Lolli\Dbdoctor\Page\RootlinePage;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Site\SiteFinder;
@@ -285,7 +286,7 @@ final readonly class JsonReportBuilder
                     }
                     $subtreeByPid[$finding->pid] ??= in_array(
                         $options->filterSubtree,
-                        array_map(static fn(array $page): int => (int)$page['uid'], $this->pagesRootlineHelper->getRootline($statements, $finding->pid)),
+                        array_map(static fn(RootlinePage $page): int => $page->uid, $this->pagesRootlineHelper->getRootline($statements, $finding->pid)),
                         true
                     );
                     if (!$subtreeByPid[$finding->pid]) {
@@ -528,26 +529,26 @@ final readonly class JsonReportBuilder
         $rootline = [];
         $rootPageId = null;
         foreach ($this->pagesRootlineHelper->getRootline($statements, $pid) as $page) {
-            $entry = ['uid' => (int)$page['uid']];
-            if ((int)$page['uid'] > 0 && !(bool)$page['_isMissing']) {
-                $entry['doktype'] = (int)$page['doktype'];
+            $entry = ['uid' => $page->uid];
+            if ($page->uid > 0 && !$page->missing) {
+                $entry['doktype'] = $page->doktype;
             }
-            if ((bool)$page['_isMissing']) {
+            if ($page->missing) {
                 $entry['missing'] = true;
-            } elseif ((bool)$page['deleted']) {
+            } elseif ($page->deleted) {
                 $entry['deleted'] = true;
             }
-            if ((bool)$page['hidden']) {
+            if ($page->hidden) {
                 $entry['hidden'] = true;
             }
-            if (!(bool)$page['_isMissing'] && (int)$page['t3ver_wsid'] > 0) {
-                $entry['workspace'] = (int)$page['t3ver_wsid'];
+            if (!$page->missing && $page->workspaceId > 0) {
+                $entry['workspace'] = $page->workspaceId;
             }
-            if ($options->tier === ReportTier::Labels && !(bool)$page['_isMissing']) {
-                $entry['title'] = $this->recordReader->shortenLabel((string)$page['title']);
+            if ($options->tier === ReportTier::Labels && !$page->missing) {
+                $entry['title'] = $this->recordReader->shortenLabel($page->title);
             }
-            if (isset($siteRootPageIds[(int)$page['uid']])) {
-                $rootPageId = (int)$page['uid'];
+            if (isset($siteRootPageIds[$page->uid])) {
+                $rootPageId = $page->uid;
             }
             $rootline[] = $entry;
         }
