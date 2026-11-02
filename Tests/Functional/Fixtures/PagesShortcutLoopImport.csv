@@ -1,0 +1,30 @@
+"pages"
+,"uid","pid","deleted","hidden","doktype","shortcut_mode","shortcut","t3ver_wsid","t3ver_oid","t3ver_state","title"
+,1,0,0,0,1,0,0,0,0,0,"Ok - root"
+,2,1,0,0,4,0,2,0,0,0,"Not Ok - shortcut to itself"
+,3,1,0,0,4,0,4,0,0,0,"Not Ok - loop of two, lowest uid"
+,4,1,0,0,4,0,3,0,0,0,"Ok - loop of two, not lowest uid"
+,5,1,0,0,4,0,6,0,0,0,"Not Ok - loop of three, lowest uid"
+,6,1,0,0,4,0,7,0,0,0,"Ok - loop of three"
+,7,1,0,0,4,0,5,0,0,0,"Ok - loop of three"
+# Page leading into a loop is not part of it: Not changed, even though its uid is lower
+,20,1,0,0,4,0,22,0,0,0,"Ok - leads into loop"
+,21,1,0,0,4,0,22,0,0,0,"Not Ok - loop, lowest uid"
+,22,1,0,0,4,0,21,0,0,0,"Ok - loop"
+,30,1,0,0,4,0,31,0,0,0,"Ok - chain to a standard page"
+,31,1,0,0,4,0,1,0,0,0,"Ok - shortcut to a standard page"
+# Modes "first subpage" and "parent page" do not use "shortcut" as target
+,40,1,0,0,4,1,40,0,0,0,"Ok - first subpage of itself"
+,41,1,0,0,4,3,41,0,0,0,"Ok - parent page of itself"
+,42,1,0,0,4,0,0,0,0,0,"Ok - no target"
+# Hidden pages loop as soon as they are visible
+,50,1,0,1,4,0,51,0,0,0,"Not Ok - hidden, loop"
+,51,1,0,0,4,0,50,0,0,0,"Ok - loop"
+# Soft-deleted pages are not resolved by the frontend: No loop
+,60,1,0,0,4,0,61,0,0,0,"Ok - shortcut to soft-deleted page"
+,61,1,1,0,4,0,60,0,0,0,"Ok - soft-deleted"
+,62,1,1,0,4,0,62,0,0,0,"Ok - soft-deleted, shortcut to itself"
+# Workspace records are not followed
+,80,1,0,0,1,0,0,0,0,0,"Ok - live page"
+,81,1,0,0,4,0,81,1,80,0,"Ok - workspace overlay, shortcut to itself"
+,82,1,0,0,4,0,82,1,0,1,"Ok - new workspace page, shortcut to itself"
