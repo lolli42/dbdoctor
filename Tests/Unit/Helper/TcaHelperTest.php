@@ -17,6 +17,8 @@ namespace Lolli\Dbdoctor\Tests\Unit\Helper;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Helper\TcaHelper;
+use Lolli\Dbdoctor\Tca\GroupField;
+use Lolli\Dbdoctor\Tca\GroupMmField;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
@@ -1266,13 +1268,9 @@ class TcaHelperTest extends UnitTestCase
             $result[] = $item;
         }
         $expected = [
-            [
-                'tableName' => 'foo',
-                'fieldName' => 'csv',
-                'allowedTables' => ['pages', 'tt_content'],
-            ],
+            new GroupField('foo', 'csv', ['pages', 'tt_content']),
         ];
-        self::assertSame($expected, $result);
+        self::assertEquals($expected, $result);
     }
 
     #[Test]
@@ -1315,13 +1313,9 @@ class TcaHelperTest extends UnitTestCase
             ],
         ];
         $expected = [
-            [
-                'tableName' => 'child_table',
-                'fieldName' => 'related',
-                'allowedTables' => ['tt_content'],
-            ],
+            new GroupField('child_table', 'related', ['tt_content']),
         ];
-        self::assertSame($expected, iterator_to_array((new TcaHelper())->getNextGroupFieldWithoutMm(), false));
+        self::assertEquals($expected, iterator_to_array((new TcaHelper())->getNextGroupFieldWithoutMm(), false));
     }
 
     #[Test]
@@ -1345,22 +1339,10 @@ class TcaHelperTest extends UnitTestCase
             $result[] = $item;
         }
         $expected = [
-            [
-                'tableName' => 'foo',
-                'fieldName' => 'mm',
-                'mmTableName' => 'foo_mm',
-                'allowedTables' => ['*'],
-                'matchFields' => [],
-            ],
-            [
-                'tableName' => 'foo',
-                'fieldName' => 'mmMatchFields',
-                'mmTableName' => 'foo_mm',
-                'allowedTables' => ['tt_content'],
-                'matchFields' => ['fieldname' => 'mmMatchFields'],
-            ],
+            new GroupMmField('foo', 'mm', 'foo_mm', ['*'], []),
+            new GroupMmField('foo', 'mmMatchFields', 'foo_mm', ['tt_content'], ['fieldname' => 'mmMatchFields']),
         ];
-        self::assertSame($expected, $result);
+        self::assertEquals($expected, $result);
     }
 
     /**

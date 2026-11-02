@@ -17,6 +17,8 @@ namespace Lolli\Dbdoctor\Helper;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Tca\GroupField;
+use Lolli\Dbdoctor\Tca\GroupMmField;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
@@ -326,7 +328,7 @@ final readonly class TcaHelper
      * They point to the inline parent, which may be a record of a table not listed in
      * "allowed". They are handled by inline related checks.
      *
-     * @return iterable<array{tableName: string, fieldName: string, allowedTables: array<int, string>}>
+     * @return iterable<GroupField>
      */
     public function getNextGroupFieldWithoutMm(): iterable
     {
@@ -357,11 +359,11 @@ final readonly class TcaHelper
                     && $fieldName !== $this->getTranslationSourceField($tableName)
                     && !isset($inlineParentPointerFields[$tableName][$fieldName])
                 ) {
-                    yield [
-                        'tableName' => $tableName,
-                        'fieldName' => $fieldName,
-                        'allowedTables' => GeneralUtility::trimExplode(',', $columnConfig['config']['allowed'], true),
-                    ];
+                    yield new GroupField(
+                        $tableName,
+                        $fieldName,
+                        GeneralUtility::trimExplode(',', $columnConfig['config']['allowed'], true),
+                    );
                 }
             }
         }
@@ -382,7 +384,7 @@ final readonly class TcaHelper
      * relations are the MM rows of the local side. Fields with MM_table_where
      * are skipped as well: It is unclear which MM rows belong to them.
      *
-     * @return iterable<array{tableName: string, fieldName: string, mmTableName: string, allowedTables: array<int, string>, matchFields: array<string, int|string>}>
+     * @return iterable<GroupMmField>
      */
     public function getNextGroupFieldWithMm(): iterable
     {
@@ -397,13 +399,13 @@ final readonly class TcaHelper
                     && empty($columnConfig['config']['MM_table_where'])
                     && !empty($columnConfig['config']['allowed'])
                 ) {
-                    yield [
-                        'tableName' => $tableName,
-                        'fieldName' => $fieldName,
-                        'mmTableName' => $columnConfig['config']['MM'],
-                        'allowedTables' => GeneralUtility::trimExplode(',', $columnConfig['config']['allowed'], true),
-                        'matchFields' => is_array($columnConfig['config']['MM_match_fields'] ?? false) ? $columnConfig['config']['MM_match_fields'] : [],
-                    ];
+                    yield new GroupMmField(
+                        $tableName,
+                        $fieldName,
+                        $columnConfig['config']['MM'],
+                        GeneralUtility::trimExplode(',', $columnConfig['config']['allowed'], true),
+                        is_array($columnConfig['config']['MM_match_fields'] ?? false) ? $columnConfig['config']['MM_match_fields'] : [],
+                    );
                 }
             }
         }
