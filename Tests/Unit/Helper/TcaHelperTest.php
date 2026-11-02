@@ -1604,6 +1604,115 @@ class TcaHelperTest extends UnitTestCase
         self::assertEquals($expected, $result);
     }
 
+    #[Test]
+    public function getNextGroupFieldWithMmReturnsAllowedTablesByType(): void
+    {
+        $GLOBALS['TCA'] = [
+            'foo' => [
+                'ctrl' => [
+                    'type' => 'record_type',
+                ],
+                'columns' => [
+                    'mm' => [
+                        'config' => [
+                            'type' => 'group',
+                            'allowed' => 'pages',
+                            'MM' => 'foo_mm',
+                            'MM_match_fields' => [
+                                'fieldname' => 'mm',
+                            ],
+                        ],
+                    ],
+                ],
+                'types' => [
+                    'content' => [
+                        'showitem' => 'mm',
+                        'columnsOverrides' => [
+                            'mm' => ['config' => ['allowed' => 'tt_content']],
+                        ],
+                    ],
+                    'typeChanged' => [
+                        'showitem' => 'mm',
+                        'columnsOverrides' => [
+                            'mm' => ['config' => ['type' => 'input']],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        $result = iterator_to_array((new TcaHelper())->getNextGroupFieldWithMm(), false);
+        self::assertCount(1, $result);
+        self::assertSame('mm', $result[0]->fieldName);
+        self::assertSame(['pages'], $result[0]->allowedTables);
+        self::assertSame('record_type', $result[0]->typeField);
+        self::assertSame(['content' => ['tt_content'], 'typeChanged' => null], $result[0]->allowedTablesByType);
+    }
+
+    #[Test]
+    public function getNextGroupFieldWithMmSkipsFieldIfTypeChangesMmSettings(): void
+    {
+        $GLOBALS['TCA'] = [
+            'foo' => [
+                'ctrl' => [
+                    'type' => 'record_type',
+                ],
+                'columns' => [
+                    'matchFieldsChanged' => [
+                        'config' => [
+                            'type' => 'group',
+                            'allowed' => 'pages',
+                            'MM' => 'foo_mm',
+                            'MM_match_fields' => [
+                                'fieldname' => 'matchFieldsChanged',
+                            ],
+                        ],
+                    ],
+                    'mmChanged' => [
+                        'config' => [
+                            'type' => 'group',
+                            'allowed' => 'pages',
+                            'MM' => 'foo_mm',
+                            'MM_match_fields' => [
+                                'fieldname' => 'mmChanged',
+                            ],
+                        ],
+                    ],
+                    'unchanged' => [
+                        'config' => [
+                            'type' => 'group',
+                            'allowed' => 'pages',
+                            'MM' => 'foo_mm',
+                            'MM_match_fields' => [
+                                'fieldname' => 'unchanged',
+                            ],
+                        ],
+                    ],
+                ],
+                'types' => [
+                    'content' => [
+                        'showitem' => 'matchFieldsChanged, mmChanged, unchanged',
+                        'columnsOverrides' => [
+                            'matchFieldsChanged' => ['config' => ['MM_match_fields' => ['fieldname' => 'other']]],
+                            'mmChanged' => ['config' => ['MM' => 'bar_mm']],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        $expected = [
+            new GroupMmField('foo', 'unchanged', 'foo_mm', ['pages'], ['fieldname' => 'unchanged']),
+        ];
+        self::assertEquals($expected, iterator_to_array((new TcaHelper())->getNextGroupFieldWithMm(), false));
+    }
+
+    #[Test]
+    public function getAllowedTablesOfRecordTypeReturnsAllowedTablesOfTypeForMmField(): void
+    {
+        $GLOBALS['TCA'] = self::getRecordTypeTca();
+        $groupField = new GroupMmField('foo', 'mm', 'foo_mm', ['pages'], [], 'record_type', ['content' => ['tt_content']]);
+        self::assertSame(['tt_content'], (new TcaHelper())->getAllowedTablesOfRecordType($groupField, 'content'));
+    }
+
     /**
      * @return array<string, mixed>
      */

@@ -40,14 +40,27 @@ return [
                 'allowed' => 'pages',
             ],
         ],
+        'relations_mm' => [
+            'label' => 'Relations to pages, MM',
+            'config' => [
+                'type' => 'group',
+                'allowed' => 'pages',
+                'MM' => 'tx_dbdoctortestsgrouptype_fallback_mm',
+            ],
+        ],
     ],
     'types' => [
         // Type "0" is the fallback for type values without "types" entry in FormEngine and
         // core v13 DataHandler, while core v14 DataHandler uses the base config for them.
         '0' => [
-            'showitem' => 'title, record_type, relations_csv',
+            'showitem' => 'title, record_type, relations_csv, relations_mm',
             'columnsOverrides' => [
                 'relations_csv' => [
+                    'config' => [
+                        'allowed' => 'tt_content',
+                    ],
+                ],
+                'relations_mm' => [
                     'config' => [
                         'allowed' => 'tt_content',
                     ],
