@@ -46,9 +46,9 @@ final readonly class InlineForeignFieldChildrenParentMissing extends AbstractHea
     {
         $findings = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
-            $childTableName = $inlineChild['tableName'];
-            $fieldNameOfParentTableName = $inlineChild['fieldNameOfParentTableName'];
-            $fieldNameOfParentTableUid = $inlineChild['fieldNameOfParentTableUid'];
+            $childTableName = $inlineChild->tableName;
+            $fieldNameOfParentTableName = $inlineChild->fieldNameOfParentTableName;
+            $fieldNameOfParentTableUid = $inlineChild->fieldNameOfParentTableUid;
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($childTableName);
             // Consider deleted records: If the parent does not exist, they should be deleted, too.
             $queryBuilder->getRestrictions()->removeAll();
@@ -102,10 +102,10 @@ final readonly class InlineForeignFieldChildrenParentMissing extends AbstractHea
     public function getDetailDbFields(string $tableName): array
     {
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
-            if ($inlineChild['tableName'] === $tableName) {
+            if ($inlineChild->tableName === $tableName) {
                 return [
-                    $inlineChild['fieldNameOfParentTableName'],
-                    $inlineChild['fieldNameOfParentTableUid'],
+                    $inlineChild->fieldNameOfParentTableName,
+                    $inlineChild->fieldNameOfParentTableUid,
                 ];
             }
         }

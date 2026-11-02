@@ -56,19 +56,19 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentLanguage
         $deleteFindings = [];
         $tableNames = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldParent() as $inlineChild) {
-            $childTableName = $inlineChild['tableName'];
+            $childTableName = $inlineChild->tableName;
             $childTableLanguageField = $this->tcaHelper->getLanguageField($childTableName);
             if (!$childTableLanguageField) {
                 // Skip child table if it is not localizable
                 continue;
             }
-            $parentTableName = $inlineChild['parentTableName'];
+            $parentTableName = $inlineChild->parentTableName;
             $parentTableLanguageField = $this->tcaHelper->getLanguageField($parentTableName);
             if (!$parentTableLanguageField) {
                 // Skip if parent table is not localizable
                 continue;
             }
-            $fieldNameOfParentTableUid = $inlineChild['fieldNameOfParentTableUid'];
+            $fieldNameOfParentTableUid = $inlineChild->fieldNameOfParentTableUid;
             if (!$this->tableHelper->tableExistsInDatabase($parentTableName)) {
                 continue;
             }
@@ -94,7 +94,7 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentLanguage
                     $queryBuilder->expr()->gt($fieldNameOfParentTableUid, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
                 )
                 ->orderBy('uid');
-            foreach ($inlineChild['matchFields'] as $matchFieldName => $matchFieldValue) {
+            foreach ($inlineChild->matchFields as $matchFieldName => $matchFieldValue) {
                 // Child table may have multiple parent tables, consider only rows of this parent.
                 $parameter = $this->tableHelper->fieldIsInteger($childTableName, $matchFieldName)
                     ? $queryBuilder->createNamedParameter((int)$matchFieldValue, Connection::PARAM_INT)
@@ -170,10 +170,10 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentLanguage
     {
         $fields = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldParent() as $inlineChild) {
-            if ($inlineChild['tableName'] === $tableName
-                && !in_array($inlineChild['fieldNameOfParentTableUid'], $fields, true)
+            if ($inlineChild->tableName === $tableName
+                && !in_array($inlineChild->fieldNameOfParentTableUid, $fields, true)
             ) {
-                $fields[] = $inlineChild['fieldNameOfParentTableUid'];
+                $fields[] = $inlineChild->fieldNameOfParentTableUid;
             }
         }
         return $fields;

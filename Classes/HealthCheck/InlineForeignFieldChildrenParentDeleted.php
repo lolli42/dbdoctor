@@ -47,15 +47,15 @@ final readonly class InlineForeignFieldChildrenParentDeleted extends AbstractHea
     {
         $findings = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
-            $childTableName = $inlineChild['tableName'];
+            $childTableName = $inlineChild->tableName;
             if (!$this->tcaHelper->getDeletedField($childTableName)) {
                 // Skip child table if it is not soft-delete aware
                 continue;
             }
             $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($childTableName);
             $isTableWorkspaceAware = !empty($workspaceIdField);
-            $fieldNameOfParentTableName = $inlineChild['fieldNameOfParentTableName'];
-            $fieldNameOfParentTableUid = $inlineChild['fieldNameOfParentTableUid'];
+            $fieldNameOfParentTableName = $inlineChild->fieldNameOfParentTableName;
+            $fieldNameOfParentTableUid = $inlineChild->fieldNameOfParentTableUid;
 
             $selectFields = [
                 'uid',
@@ -124,10 +124,10 @@ final readonly class InlineForeignFieldChildrenParentDeleted extends AbstractHea
     public function getDetailDbFields(string $tableName): array
     {
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
-            if ($inlineChild['tableName'] === $tableName) {
+            if ($inlineChild->tableName === $tableName) {
                 return [
-                    $inlineChild['fieldNameOfParentTableName'],
-                    $inlineChild['fieldNameOfParentTableUid'],
+                    $inlineChild->fieldNameOfParentTableName,
+                    $inlineChild->fieldNameOfParentTableUid,
                 ];
             }
         }

@@ -22,6 +22,8 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
+use Lolli\Dbdoctor\Tca\InlineForeignFieldChild;
+use Lolli\Dbdoctor\Tca\InlineForeignFieldNoForeignTableFieldParent;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -56,11 +58,11 @@ final readonly class TcaTablesTranslatedParentInvalidPointer extends AbstractHea
     {
         $inlineChildTables = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChildTable) {
-            $inlineChildTables[$inlineChildTable['tableName']] = [$inlineChildTable];
+            $inlineChildTables[$inlineChildTable->tableName] = [$inlineChildTable];
         }
         $inlineChildTablesWithoutForeignTableField = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldParent() as $inlineParent) {
-            $inlineChildTablesWithoutForeignTableField[$inlineParent['tableName']][] = $inlineParent;
+            $inlineChildTablesWithoutForeignTableField[$inlineParent->tableName][] = $inlineParent;
         }
         $inlineChildTables += $inlineChildTablesWithoutForeignTableField;
 
@@ -186,38 +188,39 @@ final readonly class TcaTablesTranslatedParentInvalidPointer extends AbstractHea
      * Child tables without foreign_table_field have one entry per parent, the one with matching
      * foreign_match_fields is the parent of the child row.
      *
-     * @param array<int, array<string, mixed>> $inlineParents
+     * @param list<InlineForeignFieldChild|InlineForeignFieldNoForeignTableFieldParent> $inlineParents
      */
     private function isChildOfTranslatedRecord(HealthCheckRun $run, string $childTableName, array $inlineParents, int $uid): bool
     {
         $fields = [];
         foreach ($inlineParents as $inlineParent) {
-            $fields[] = (string)$inlineParent['fieldNameOfParentTableUid'];
-            if (isset($inlineParent['fieldNameOfParentTableName'])) {
-                $fields[] = (string)$inlineParent['fieldNameOfParentTableName'];
-            }
-            foreach (array_keys($inlineParent['matchFields'] ?? []) as $matchFieldName) {
-                $fields[] = (string)$matchFieldName;
+            $fields[] = $inlineParent->fieldNameOfParentTableUid;
+            if ($inlineParent instanceof InlineForeignFieldChild) {
+                $fields[] = $inlineParent->fieldNameOfParentTableName;
+            } else {
+                foreach (array_keys($inlineParent->matchFields) as $matchFieldName) {
+                    $fields[] = (string)$matchFieldName;
+                }
             }
         }
         $childRow = $this->recordsHelper->getRecord($run->statements, $childTableName, array_values(array_unique($fields)), $uid);
         foreach ($inlineParents as $inlineParent) {
-            if (isset($inlineParent['fieldNameOfParentTableName'])) {
-                $parentTableName = (string)$childRow[$inlineParent['fieldNameOfParentTableName']];
+            if ($inlineParent instanceof InlineForeignFieldChild) {
+                $parentTableName = (string)$childRow[$inlineParent->fieldNameOfParentTableName];
             } else {
-                foreach ($inlineParent['matchFields'] as $matchFieldName => $matchFieldValue) {
+                foreach ($inlineParent->matchFields as $matchFieldName => $matchFieldValue) {
                     if ((string)$childRow[$matchFieldName] !== (string)$matchFieldValue) {
                         continue 2;
                     }
                 }
-                $parentTableName = (string)$inlineParent['parentTableName'];
+                $parentTableName = $inlineParent->parentTableName;
             }
             $parentLanguageField = $this->tcaHelper->getLanguageField($parentTableName);
             if ($parentLanguageField === null) {
                 return false;
             }
             try {
-                $parentRow = $this->recordsHelper->getRecord($run->statements, $parentTableName, [$parentLanguageField], (int)$childRow[$inlineParent['fieldNameOfParentTableUid']]);
+                $parentRow = $this->recordsHelper->getRecord($run->statements, $parentTableName, [$parentLanguageField], (int)$childRow[$inlineParent->fieldNameOfParentTableUid]);
             } catch (NoSuchRecordException $e) {
                 // Missing inline parent: Handled by later inline checks.
                 return false;
