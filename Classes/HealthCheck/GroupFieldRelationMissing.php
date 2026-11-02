@@ -43,7 +43,8 @@ final readonly class GroupFieldRelationMissing extends AbstractHealthCheck imple
                 '"Insert records". This check finds relations to records that do not exist',
                 'and removes them from the list. Relations to soft-deleted records are kept:',
                 'The backend does not remove them when a record is deleted, and they are',
-                'needed when a record is restored using the recycler.',
+                'needed when a record is restored using the recycler. Record types that change',
+                'the allowed tables of a field with "columnsOverrides" are taken into account.',
             ],
         );
     }
@@ -68,6 +69,11 @@ final readonly class GroupFieldRelationMissing extends AbstractHealthCheck imple
             // Handle deleted=1 records, too.
             $queryBuilder->getRestrictions()->removeAll();
             $queryBuilder->select('uid', 'pid', $fieldName)->from($tableName);
+            $typeField = $groupField->typeField;
+            if ($typeField !== null) {
+                // Some record types change "allowed" of this field, see TcaHelper->getAllowedTablesByType().
+                $queryBuilder->addSelect($typeField);
+            }
             if ($isIntegerField) {
                 $queryBuilder->where(
                     $queryBuilder->expr()->neq($fieldName, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT))
@@ -80,9 +86,17 @@ final readonly class GroupFieldRelationMissing extends AbstractHealthCheck imple
             }
             $result = $queryBuilder->orderBy('uid')->executeQuery();
             while ($row = $result->fetchAssociative()) {
-                /** @var array<string, int|string> $row */
+                /** @var array<string, int|string|null> $row */
                 $fieldValue = (string)$row[$fieldName];
-                $missingRelations = $this->getMissingRelations($run, $fieldValue, $groupField->allowedTables);
+                $allowedTables = $this->tcaHelper->getAllowedTablesOfRecordType(
+                    $groupField,
+                    $typeField !== null && $row[$typeField] !== null ? (string)$row[$typeField] : null
+                );
+                if ($allowedTables === null) {
+                    // Relations of this record are ambiguous, they are left alone.
+                    continue;
+                }
+                $missingRelations = $this->getMissingRelations($run, $fieldValue, $allowedTables);
                 if (empty($missingRelations)) {
                     continue;
                 }
@@ -118,8 +132,8 @@ final readonly class GroupFieldRelationMissing extends AbstractHealthCheck imple
      * Parse a comma separated list of a group field like core RelationHandler->readList() does,
      * and return the items that point to a not existing record. Items like "tt_content_42"
      * point to a record of the given table, items like "42" point to a record of the first
-     * allowed table. Items that can not be resolved to an allowed table and a positive uid,
-     * or that point to a table that does not exist, are ignored and kept.
+     * allowed table of the record type. Items that can not be resolved to an allowed table
+     * and a positive uid, or that point to a table that does not exist, are ignored and kept.
      *
      * @param array<int, string> $allowedTables
      * @return array<string, string> Key is "tableName:uid", value is the item as stored in the list

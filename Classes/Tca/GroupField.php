@@ -24,11 +24,20 @@ namespace Lolli\Dbdoctor\Tca;
 final readonly class GroupField
 {
     /**
+     * Record types may change "allowed" of the field with TCA "columnsOverrides", see
+     * TcaHelper->getAllowedTablesByType(). $typeField is only set if they do, then
+     * $allowedTablesByType has the allowed tables of these types, null for types whose
+     * relations are left alone. Keys are type values, numeric ones are integers.
+     * Use TcaHelper->getAllowedTablesOfRecordType() for a record.
+     *
      * @param array<int, string> $allowedTables Tables of TCA "allowed", "*" for any table
+     * @param array<array-key, array<int, string>|null> $allowedTablesByType
      */
     public function __construct(
         public string $tableName,
         public string $fieldName,
         public array $allowedTables,
+        public ?string $typeField = null,
+        public array $allowedTablesByType = [],
     ) {}
 }
