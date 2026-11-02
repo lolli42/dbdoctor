@@ -18,6 +18,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Helper\MmRelationHelper;
+use Lolli\Dbdoctor\Helper\RelationProblem;
 
 /**
  * Relations in TCA type 'inline' fields with MM table must point to existing child records.
@@ -49,6 +50,6 @@ final readonly class InlineFieldMmRelationMissing extends AbstractHealthCheck im
 
     public function detect(HealthCheckRun $run): array
     {
-        return $this->mmRelationHelper->getFindings($run, $this->tcaHelper->getNextInlineFieldWithMm());
+        return $this->mmRelationHelper->getFindings($run, $this->tcaHelper->getNextInlineFieldWithMm(), RelationProblem::Missing);
     }
 }

@@ -424,12 +424,19 @@ services:
         identifier: 'dbdoctor-inline-field-mm-relation-missing'
         after: 'dbdoctor-inline-field-uid-list-relation-missing'
 
+  # After the relation missing checks: Relations to overlays are found once relations to missing records are gone
+  Lolli\Dbdoctor\HealthCheck\TcaTablesRelationToWorkspaceOverlay:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-tca-tables-relation-to-workspace-overlay'
+        after: 'dbdoctor-inline-field-mm-relation-missing'
+
   # Late in the chain: Inline children of duplicate parent translations must have been handled before
   Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedLanguageParentDuplicates:
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-tca-tables-translated-language-parent-duplicates'
-        after: 'dbdoctor-inline-field-mm-relation-missing'
+        after: 'dbdoctor-tca-tables-relation-to-workspace-overlay'
 
   Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedWithAllowLanguageSynchronization:
     tags:
