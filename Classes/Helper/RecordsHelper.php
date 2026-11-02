@@ -129,7 +129,7 @@ final readonly class RecordsHelper
             $affectedRows = $statement->executeStatement();
             if ($affectedRows !== 1) {
                 throw new UnexpectedNumberOfAffectedRowsException(
-                    'Delete query "' . $sqlString . '" had "' . $affectedRows . '" affected rows, 1 expected.',
+                    'Update query "' . $sqlString . '" had "' . $affectedRows . '" affected rows, 1 expected.',
                     1646228188
                 );
             }
