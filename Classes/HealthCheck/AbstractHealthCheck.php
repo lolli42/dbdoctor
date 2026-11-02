@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Finding\FieldValue;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
@@ -100,10 +101,7 @@ abstract readonly class AbstractHealthCheck
             $tableName,
             (int)$row['uid'],
             [
-                $deleteField => [
-                    'value' => 1,
-                    'type' => Connection::PARAM_INT,
-                ],
+                $deleteField => new FieldValue(1, Connection::PARAM_INT),
             ]
         );
     }

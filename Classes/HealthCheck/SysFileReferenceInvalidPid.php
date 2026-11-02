@@ -19,6 +19,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
 use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
+use Lolli\Dbdoctor\Finding\FieldValue;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
@@ -84,10 +85,7 @@ final readonly class SysFileReferenceInvalidPid extends AbstractHealthCheck impl
                 (int)$row['pid'],
                 [
                     new RecordChange(RecordChangeType::Update, 'sys_file_reference', (int)$row['uid'], [
-                        'pid' => [
-                            'value' => $parentPid,
-                            'type' => Connection::PARAM_INT,
-                        ],
+                        'pid' => new FieldValue($parentPid, Connection::PARAM_INT),
                     ]),
                 ],
                 new Reason(

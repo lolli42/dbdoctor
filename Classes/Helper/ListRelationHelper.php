@@ -18,6 +18,7 @@ namespace Lolli\Dbdoctor\Helper;
  */
 
 use Lolli\Dbdoctor\Database\PreparedStatements;
+use Lolli\Dbdoctor\Finding\FieldValue;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
@@ -116,9 +117,9 @@ final readonly class ListRelationHelper
                     }
                 }
                 if (empty($remainingItems) && $isIntegerField) {
-                    $newValue = ['value' => 0, 'type' => Connection::PARAM_INT];
+                    $newValue = new FieldValue(0, Connection::PARAM_INT);
                 } else {
-                    $newValue = ['value' => implode(',', $remainingItems), 'type' => Connection::PARAM_STR];
+                    $newValue = new FieldValue(implode(',', $remainingItems), Connection::PARAM_STR);
                 }
                 $findings[] = new Finding(
                     new RecordFieldKey($tableName, (int)$row['uid'], $fieldName),

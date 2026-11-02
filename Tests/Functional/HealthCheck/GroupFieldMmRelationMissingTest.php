@@ -16,12 +16,14 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Finding\FieldValueList;
 use Lolli\Dbdoctor\HealthCheck\GroupFieldMmRelationMissing;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckMode;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
 class GroupFieldMmRelationMissingTest extends AbstractFunctionalTestCase
@@ -64,9 +66,9 @@ class GroupFieldMmRelationMissingTest extends AbstractFunctionalTestCase
         self::assertNotNull($findings[0]->reason);
         self::assertCount(250, (array)$findings[0]->reason->parameters['missing']);
         self::assertCount(3, $findings[0]->changes);
-        self::assertSame(range(1000, 1099), $findings[0]->changes[0]->where['uid_foreign']['value']);
-        self::assertSame(range(1100, 1199), $findings[0]->changes[1]->where['uid_foreign']['value']);
-        self::assertSame(range(1200, 1249), $findings[0]->changes[2]->where['uid_foreign']['value']);
+        self::assertEquals(new FieldValueList(range(1000, 1099), Connection::PARAM_INT), $findings[0]->changes[0]->where['uid_foreign']);
+        self::assertEquals(new FieldValueList(range(1100, 1199), Connection::PARAM_INT), $findings[0]->changes[1]->where['uid_foreign']);
+        self::assertEquals(new FieldValueList(range(1200, 1249), Connection::PARAM_INT), $findings[0]->changes[2]->where['uid_foreign']);
         $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckMode::Execute, '');
         self::assertSame(0, $this->get(ConnectionPool::class)->getConnectionForTable('sys_category_record_mm')->count('*', 'sys_category_record_mm', []));
     }

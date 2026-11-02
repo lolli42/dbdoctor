@@ -18,6 +18,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\FieldValue;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
@@ -75,10 +76,7 @@ final readonly class TcaTablesTranslationSourceExists extends AbstractHealthChec
                         (int)$row['pid'],
                         [
                             new RecordChange(RecordChangeType::Update, $tableName, (int)$row['uid'], [
-                                $translationSourceField => [
-                                    'value' => max((int)$row[$translationParentField], 0),
-                                    'type' => Connection::PARAM_INT,
-                                ],
+                                $translationSourceField => new FieldValue(max((int)$row[$translationParentField], 0), Connection::PARAM_INT),
                             ]),
                         ],
                         new Reason('source-missing', 'Translation source "' . $translationSourceUid . '" does not exist', ['translationSource' => $translationSourceUid]),

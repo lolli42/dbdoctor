@@ -17,9 +17,10 @@ namespace Lolli\Dbdoctor\Helper;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Doctrine\DBAL\ParameterType;
 use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\FieldValue;
+use Lolli\Dbdoctor\Finding\FieldValueList;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\MmKey;
 use Lolli\Dbdoctor\Finding\Reason;
@@ -260,10 +261,7 @@ final readonly class MmRelationHelper
     private function getMissingLocalRecordFinding(MmField $mmField, int $uidLocal, int $mmRowCount): Finding
     {
         $where = [
-            'uid_local' => [
-                'value' => $uidLocal,
-                'type' => Connection::PARAM_INT,
-            ],
+            'uid_local' => new FieldValue($uidLocal, Connection::PARAM_INT),
         ];
         $where = array_merge($where, $this->getMatchFieldsWhere($mmField->matchFields));
         return new Finding(
@@ -305,20 +303,11 @@ final readonly class MmRelationHelper
             }
             foreach (array_chunk(array_values($missingRelation['uids']), 100) as $uidsForeign) {
                 $where = [
-                    'uid_local' => [
-                        'value' => $uidLocal,
-                        'type' => Connection::PARAM_INT,
-                    ],
-                    'uid_foreign' => [
-                        'value' => $uidsForeign,
-                        'type' => Connection::PARAM_INT,
-                    ],
+                    'uid_local' => new FieldValue($uidLocal, Connection::PARAM_INT),
+                    'uid_foreign' => new FieldValueList($uidsForeign, Connection::PARAM_INT),
                 ];
                 if ($missingRelation['tablenames'] !== null) {
-                    $where['tablenames'] = [
-                        'value' => $missingRelation['tablenames'],
-                        'type' => Connection::PARAM_STR,
-                    ];
+                    $where['tablenames'] = new FieldValue($missingRelation['tablenames'], Connection::PARAM_STR);
                 }
                 $where = array_merge($where, $this->getMatchFieldsWhere($mmField->matchFields));
                 $changes[] = new RecordChange(RecordChangeType::MmDelete, $mmField->mmTableName, null, [], $where);
@@ -334,16 +323,13 @@ final readonly class MmRelationHelper
 
     /**
      * @param array<string, int|string> $matchFields
-     * @return array<string, array{value: string, type: ParameterType}>
+     * @return array<string, FieldValue>
      */
     private function getMatchFieldsWhere(array $matchFields): array
     {
         $where = [];
         foreach ($matchFields as $matchFieldName => $matchFieldValue) {
-            $where[$matchFieldName] = [
-                'value' => (string)$matchFieldValue,
-                'type' => Connection::PARAM_STR,
-            ];
+            $where[$matchFieldName] = new FieldValue((string)$matchFieldValue, Connection::PARAM_STR);
         }
         return $where;
     }

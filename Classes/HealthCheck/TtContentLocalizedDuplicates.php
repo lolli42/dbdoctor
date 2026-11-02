@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Database\PreparedStatements;
+use Lolli\Dbdoctor\Finding\FieldValue;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
@@ -113,10 +114,7 @@ final readonly class TtContentLocalizedDuplicates extends AbstractHealthCheck im
                             $localization['pid'],
                             [
                                 new RecordChange(RecordChangeType::SoftDelete, 'tt_content', $localization['uid'], [
-                                    'deleted' => [
-                                        'value' => 1,
-                                        'type' => Connection::PARAM_INT,
-                                    ],
+                                    'deleted' => new FieldValue(1, Connection::PARAM_INT),
                                 ]),
                             ],
                             new Reason('duplicate', 'Duplicate of kept record "' . $keepUid . '"', ['kept' => $keepUid]),

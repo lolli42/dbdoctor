@@ -18,6 +18,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\FieldValue;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
@@ -152,10 +153,7 @@ final readonly class TcaTablesTranslatedParentInvalidPointer extends AbstractHea
                     (int)$localizedRow['pid'],
                     [
                         new RecordChange(RecordChangeType::Update, $tableName, $uid, [
-                            $translationParentField => [
-                                'value' => $newParent,
-                                'type' => Connection::PARAM_INT,
-                            ],
+                            $translationParentField => new FieldValue($newParent, Connection::PARAM_INT),
                         ]),
                     ],
                     $isChildOfTranslatedRecord

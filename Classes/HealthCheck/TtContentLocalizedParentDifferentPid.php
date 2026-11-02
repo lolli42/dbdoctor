@@ -19,6 +19,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
 use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\FieldValue;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
@@ -104,10 +105,7 @@ final readonly class TtContentLocalizedParentDifferentPid extends AbstractHealth
     private function getChange(array $row, int $parentPid): RecordChange
     {
         $moveToParentPid = new RecordChange(RecordChangeType::Update, 'tt_content', (int)$row['uid'], [
-            'pid' => [
-                'value' => $parentPid,
-                'type' => Connection::PARAM_INT,
-            ],
+            'pid' => new FieldValue($parentPid, Connection::PARAM_INT),
         ]);
         $delete = new RecordChange(RecordChangeType::Delete, 'tt_content', (int)$row['uid']);
         if ((int)$row['t3ver_wsid'] === 0) {

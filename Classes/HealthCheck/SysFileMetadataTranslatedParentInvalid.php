@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Database\PreparedStatements;
+use Lolli\Dbdoctor\Finding\FieldValue;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
@@ -96,10 +97,7 @@ final readonly class SysFileMetadataTranslatedParentInvalid extends AbstractHeal
                     (int)$row['pid'],
                     [
                         new RecordChange(RecordChangeType::Update, 'sys_file_metadata', (int)$row['uid'], [
-                            'l10n_parent' => [
-                                'value' => $defaultUid,
-                                'type' => Connection::PARAM_INT,
-                            ],
+                            'l10n_parent' => new FieldValue($defaultUid, Connection::PARAM_INT),
                         ]),
                     ],
                     new Reason('parent-not-default', 'l10n_parent should be ' . $defaultUid, ['defaultUid' => $defaultUid]),
