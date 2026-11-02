@@ -46,7 +46,8 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
                 'kept: The backend does not remove them when a record is deleted, and they are',
                 'needed when a record is restored using the recycler. The number of relations in',
                 'the field of the local record is not updated: dbdoctor ignores these count',
-                'fields, see README.md.',
+                'fields, see README.md. Record types that change the allowed tables of a field',
+                'with "columnsOverrides" are taken into account.',
             ],
         );
     }
@@ -80,16 +81,25 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
             }
             $hasTablenamesField = $this->tableHelper->fieldExistsInTable($mmTableName, 'tablenames');
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($mmTableName);
-            $queryBuilder->select('uid_local', 'uid_foreign')->from($mmTableName);
+            $queryBuilder->getRestrictions()->removeAll();
+            $queryBuilder->select('mm.uid_local AS uid_local', 'mm.uid_foreign AS uid_foreign')->from($mmTableName, 'mm');
             if ($hasTablenamesField) {
-                $queryBuilder->addSelect('tablenames');
+                $queryBuilder->addSelect('mm.tablenames AS tablenames');
+            }
+            $typeField = $groupField->typeField;
+            if ($typeField !== null) {
+                // Some record types change "allowed" of this field, see TcaHelper->getAllowedTablesByType().
+                // The type of the local record is joined, instead of a query per local record.
+                $queryBuilder
+                    ->addSelect('local.' . $typeField . ' AS local_record_type')
+                    ->leftJoin('mm', $tableName, 'local', $queryBuilder->expr()->eq('local.uid', $queryBuilder->quoteIdentifier('mm.uid_local')));
             }
             foreach ($groupField->matchFields as $matchFieldName => $matchFieldValue) {
                 $queryBuilder->andWhere(
-                    $queryBuilder->expr()->eq($matchFieldName, $queryBuilder->createNamedParameter((string)$matchFieldValue))
+                    $queryBuilder->expr()->eq('mm.' . $matchFieldName, $queryBuilder->createNamedParameter((string)$matchFieldValue))
                 );
             }
-            $result = $queryBuilder->orderBy('uid_local')->addOrderBy('uid_foreign')->executeQuery();
+            $result = $queryBuilder->orderBy('mm.uid_local')->addOrderBy('mm.uid_foreign')->executeQuery();
             $canHandleMissingLocalRecords = $this->canHandleMissingLocalRecords($mmTableName);
             // MM rows are sorted by uid_local: Collect relations of one local record,
             // and handle them when the next local record starts.
@@ -119,9 +129,17 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
                     $mmRowCount++;
                     continue;
                 }
+                $allowedTables = $this->tcaHelper->getAllowedTablesOfRecordType(
+                    $groupField,
+                    $typeField !== null && $mmRow['local_record_type'] !== null ? (string)$mmRow['local_record_type'] : null
+                );
+                if ($allowedTables === null) {
+                    // Relations of this record are ambiguous, they are left alone.
+                    continue;
+                }
                 $tablenames = $hasTablenamesField ? (string)$mmRow['tablenames'] : null;
                 $uidForeign = (int)$mmRow['uid_foreign'];
-                $targetTableName = $this->getTargetTableName($tablenames, $groupField->allowedTables);
+                $targetTableName = $this->getTargetTableName($tablenames, $allowedTables);
                 if ($targetTableName === '') {
                     // Not a relation of this field, as in core RelationHandler->readMM().
                     continue;
@@ -295,8 +313,8 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
     }
 
     /**
-     * Table of an MM row, as in core RelationHandler->readMM(): "tablenames" if
-     * set, else the first allowed table. Empty string if the table is not allowed.
+     * Table of an MM row, as in core RelationHandler->readMM(): "tablenames" if set, else
+     * the first allowed table of the record type. Empty string if the table is not allowed.
      *
      * @param array<int, string> $allowedTables
      */

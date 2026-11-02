@@ -1,0 +1,45 @@
+"pages"
+,"uid","pid","title"
+,1,0,"Ok"
+,2,0,"Ok"
+"tt_content"
+,"uid","pid","CType","header"
+,2,1,"text","Ok"
+,3,1,"text","Ok"
+"tx_dbdoctortestsgrouptype_item"
+,"uid","pid","record_type","title","relations_mm","relations_mm_changed"
+,1,1,"0","Not Ok - base config, relation to missing page",2,0
+,2,1,"content","Not Ok - relation to missing tt_content, page 1 does not matter",3,0
+,3,1,"removed","Not Ok - unknown type, relation to missing page",2,0
+,4,1,"type_changed","Ok - not a group field",1,0
+,5,1,"content","Ok - type changes MM settings, field not touched",0,1
+"tx_dbdoctortestsgrouptype_item_mm"
+,"uid_local","uid_foreign","fieldname"
+# Base config: No tablenames, relations to pages
+,1,1,"relations_mm"
+,1,3,"relations_mm"
+# Type "content" changes allowed to tt_content: Relations to tt_content
+,2,3,"relations_mm"
+,2,1,"relations_mm"
+# Type without "types" entry: Base config, the fallback type "0" does not change allowed
+,3,1,"relations_mm"
+,3,3,"relations_mm"
+# Type "type_changed" turns the field into an input field: Not touched
+,4,3,"relations_mm"
+# Type "content" changes MM_match_fields of relations_mm_changed: Not touched
+,5,99,"relations_mm_changed"
+,5,99,"relations_mm_content"
+# Local record does not exist: Removed
+,9,1,"relations_mm"
+"tx_dbdoctortestsgrouptype_fallback"
+,"uid","pid","record_type","title","relations_mm"
+# Type "0" changes allowed to tt_content
+,1,1,"0","Not Ok - relation to missing tt_content",2
+# Type without "types" entry: Ambiguous, since type "0" changes allowed. Not touched
+,2,1,"removed","Ok - unknown type",2
+"tx_dbdoctortestsgrouptype_fallback_mm"
+,"uid_local","uid_foreign"
+,1,3
+,1,1
+,2,3
+,2,1

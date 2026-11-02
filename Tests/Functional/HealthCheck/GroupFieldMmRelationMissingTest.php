@@ -29,6 +29,7 @@ class GroupFieldMmRelationMissingTest extends AbstractFunctionalTestCase
     protected array $testExtensionsToLoad = [
         'lolli/dbdoctor',
         __DIR__ . '/../FixtureExtensions/tx_dbdoctortestsgroup',
+        __DIR__ . '/../FixtureExtensions/tx_dbdoctortestsgrouptype',
     ];
 
     #[Test]
@@ -111,5 +112,15 @@ class GroupFieldMmRelationMissingTest extends AbstractFunctionalTestCase
         $subject = $this->get(GroupFieldMmRelationMissing::class);
         $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckMode::Execute, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldMmRelationMissingSharedFixed.csv');
+    }
+
+    #[Test]
+    public function allowedTablesOfRecordTypeAreRespected(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldMmRelationMissingRecordTypeImport.csv');
+        /** @var GroupFieldMmRelationMissing $subject */
+        $subject = $this->get(GroupFieldMmRelationMissing::class);
+        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckMode::Execute, '');
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldMmRelationMissingRecordTypeFixed.csv');
     }
 }

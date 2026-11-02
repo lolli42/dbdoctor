@@ -405,12 +405,18 @@ final readonly class TcaHelper
                     && empty($columnConfig['config']['MM_table_where'])
                     && !empty($columnConfig['config']['allowed'])
                 ) {
+                    $allowedTablesByType = $this->getAllowedTablesByType($tableName, $fieldName, $columnConfig);
+                    if ($allowedTablesByType === null) {
+                        continue;
+                    }
                     yield new GroupMmField(
                         $tableName,
                         $fieldName,
                         $columnConfig['config']['MM'],
                         GeneralUtility::trimExplode(',', $columnConfig['config']['allowed'], true),
                         is_array($columnConfig['config']['MM_match_fields'] ?? false) ? $columnConfig['config']['MM_match_fields'] : [],
+                        $allowedTablesByType === [] ? null : $this->getTypeField($tableName),
+                        $allowedTablesByType,
                     );
                 }
             }
@@ -419,8 +425,8 @@ final readonly class TcaHelper
 
     /**
      * Allowed tables of a group field for a record of the given type, with a group field
-     * from getNextGroupFieldWithoutMm(). Null if the relations of the record can not be
-     * resolved unambiguously, and must be left alone.
+     * from getNextGroupFieldWithoutMm() or getNextGroupFieldWithMm(). Null if the relations
+     * of the record can not be resolved unambiguously, and must be left alone.
      *
      * A type value that is not a key of TCA "types", for instance a CType of a removed
      * extension, is resolved differently by the core: FormEngine and core v13 DataHandler
@@ -431,7 +437,7 @@ final readonly class TcaHelper
      *
      * @return array<int, string>|null
      */
-    public function getAllowedTablesOfRecordType(GroupField $groupField, ?string $recordType): ?array
+    public function getAllowedTablesOfRecordType(GroupField|GroupMmField $groupField, ?string $recordType): ?array
     {
         if ($groupField->typeField === null) {
             return $groupField->allowedTables;
@@ -477,6 +483,10 @@ final readonly class TcaHelper
      *   such fields end up as relations to the wrong table in sys_refindex.
      * - FormEngine merges "columnsOverrides" of the type even for fields not in "showitem",
      *   those are not rendered.
+     * - The database schema of MM tables is derived from the base config: The columns "tablenames"
+     *   and "fieldname" are only added for fields allowing multiple tables. A type allowing multiple
+     *   tables for a field with a single allowed table makes the DataHandler write "tablenames"
+     *   into an MM table that may not have this column.
      * - Type values without "types" entry are resolved differently, see getAllowedTablesOfRecordType().
      *
      * Rules of dbdoctor:

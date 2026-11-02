@@ -44,23 +44,58 @@ return [
                 'allowed' => 'pages',
             ],
         ],
+        'relations_mm' => [
+            'label' => 'Relations to pages, MM',
+            'config' => [
+                'type' => 'group',
+                'allowed' => 'pages',
+                'MM' => 'tx_dbdoctortestsgrouptype_item_mm',
+                'MM_match_fields' => [
+                    'fieldname' => 'relations_mm',
+                ],
+            ],
+        ],
+        'relations_mm_changed' => [
+            'label' => 'Relations to pages, MM, type "content" changes MM settings',
+            'config' => [
+                'type' => 'group',
+                'allowed' => 'pages',
+                'MM' => 'tx_dbdoctortestsgrouptype_item_mm',
+                'MM_match_fields' => [
+                    'fieldname' => 'relations_mm_changed',
+                ],
+            ],
+        ],
     ],
     'palettes' => [
         'relations' => [
-            'showitem' => 'relations_csv',
+            'showitem' => 'relations_csv, relations_mm',
         ],
     ],
     'types' => [
         '0' => [
-            'showitem' => 'title, record_type, relations_csv',
+            'showitem' => 'title, record_type, relations_csv, relations_mm, relations_mm_changed',
         ],
         // Field in a palette, relations to tt_content
         'content' => [
-            'showitem' => 'title, record_type, --palette--;;relations',
+            'showitem' => 'title, record_type, --palette--;;relations, relations_mm_changed',
             'columnsOverrides' => [
                 'relations_csv' => [
                     'config' => [
                         'allowed' => 'tt_content',
+                    ],
+                ],
+                'relations_mm' => [
+                    'config' => [
+                        'allowed' => 'tt_content',
+                    ],
+                ],
+                // MM rows can not be assigned to a type: The whole field is not touched
+                'relations_mm_changed' => [
+                    'config' => [
+                        'MM_match_fields' => [
+                            'fieldname' => 'relations_mm_content',
+                        ],
                     ],
                 ],
             ],
@@ -89,9 +124,14 @@ return [
         ],
         // Not a group field in this type: Not touched
         'type_changed' => [
-            'showitem' => 'title, record_type, relations_csv',
+            'showitem' => 'title, record_type, relations_csv, relations_mm',
             'columnsOverrides' => [
                 'relations_csv' => [
+                    'config' => [
+                        'type' => 'input',
+                    ],
+                ],
+                'relations_mm' => [
                     'config' => [
                         'type' => 'input',
                     ],
