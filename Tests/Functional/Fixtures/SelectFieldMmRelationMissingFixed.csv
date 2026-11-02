@@ -1,0 +1,20 @@
+"pages"
+,"uid","pid","deleted","title"
+,1,0,0,"Ok"
+,2,0,1,"Ok - soft-deleted"
+"tt_content"
+,"uid","pid","deleted","header"
+,1,1,0,"Ok"
+"tx_dbdoctortestsselect_item"
+,"uid","pid","deleted","title","record_type","relations_mm"
+# Count field "relations_mm" is not updated
+,1,1,0,"Ok - relations to existing and soft-deleted page","0",2
+,2,1,0,"Not Ok - relation to missing page","0",2
+,3,1,0,"Not Ok - type content, relation to missing content element","content",2
+,4,1,1,"Not Ok - soft-deleted with relation to missing page","0",1
+"tx_dbdoctortestsselect_item_mm"
+,"uid_local","uid_foreign"
+,1,1
+,1,2
+,2,1
+,3,1

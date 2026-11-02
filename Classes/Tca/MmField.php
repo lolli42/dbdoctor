@@ -18,19 +18,20 @@ namespace Lolli\Dbdoctor\Tca;
  */
 
 /**
- * A TCA field of type "group" that stores its relations in an MM table, as
- * local side of the relation. See TcaHelper->getNextGroupFieldWithMm().
+ * A TCA field of type "group", "select" or "inline" that stores its relations in an
+ * MM table, as local side of the relation. See TcaHelper->getNextGroupFieldWithMm(),
+ * getNextSelectFieldWithMm() and getNextInlineFieldWithMm().
  */
-final readonly class GroupMmField
+final readonly class MmField
 {
     /**
-     * Record types may change "allowed" of the field with TCA "columnsOverrides", see
+     * Record types may change "allowed" or "foreign_table" of the field with TCA "columnsOverrides", see
      * TcaHelper->getAllowedTablesByType(). $typeField is only set if they do, then
      * $allowedTablesByType has the allowed tables of these types, null for types whose
      * relations are left alone. Keys are type values, numeric ones are integers.
      * Use TcaHelper->getAllowedTablesOfRecordType() for a record.
      *
-     * @param array<int, string> $allowedTables Tables of TCA "allowed", "*" for any table
+     * @param array<int, string> $allowedTables Tables of TCA "allowed", "*" for any table, or the table of "foreign_table"
      * @param array<string, int|string> $matchFields TCA "MM_match_fields"
      * @param array<array-key, array<int, string>|null> $allowedTablesByType
      */

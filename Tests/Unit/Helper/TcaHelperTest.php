@@ -17,12 +17,12 @@ namespace Lolli\Dbdoctor\Tests\Unit\Helper;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Helper\TcaHelper;
+use Lolli\Dbdoctor\Tca\ForeignTableListField;
 use Lolli\Dbdoctor\Tca\GroupField;
-use Lolli\Dbdoctor\Tca\GroupMmField;
 use Lolli\Dbdoctor\Tca\InlineForeignFieldChild;
 use Lolli\Dbdoctor\Tca\InlineForeignFieldNoForeignTableFieldChild;
 use Lolli\Dbdoctor\Tca\InlineForeignFieldNoForeignTableFieldParent;
-use Lolli\Dbdoctor\Tca\SelectField;
+use Lolli\Dbdoctor\Tca\MmField;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
@@ -1529,8 +1529,8 @@ class TcaHelperTest extends UnitTestCase
             $result[] = $item;
         }
         $expected = [
-            new GroupMmField('foo', 'mm', 'foo_mm', ['*'], []),
-            new GroupMmField('foo', 'mmMatchFields', 'foo_mm', ['tt_content'], ['fieldname' => 'mmMatchFields']),
+            new MmField('foo', 'mm', 'foo_mm', ['*'], []),
+            new MmField('foo', 'mmMatchFields', 'foo_mm', ['tt_content'], ['fieldname' => 'mmMatchFields']),
         ];
         self::assertEquals($expected, $result);
     }
@@ -1631,7 +1631,7 @@ class TcaHelperTest extends UnitTestCase
             ],
         ];
         $expected = [
-            new GroupMmField('foo', 'unchanged', 'foo_mm', ['pages'], ['fieldname' => 'unchanged']),
+            new MmField('foo', 'unchanged', 'foo_mm', ['pages'], ['fieldname' => 'unchanged']),
         ];
         self::assertEquals($expected, iterator_to_array((new TcaHelper())->getNextGroupFieldWithMm(), false));
     }
@@ -1640,7 +1640,7 @@ class TcaHelperTest extends UnitTestCase
     public function getAllowedTablesOfRecordTypeReturnsAllowedTablesOfTypeForMmField(): void
     {
         $GLOBALS['TCA'] = self::getRecordTypeTca();
-        $groupField = new GroupMmField('foo', 'mm', 'foo_mm', ['pages'], [], 'record_type', ['content' => ['tt_content']]);
+        $groupField = new MmField('foo', 'mm', 'foo_mm', ['pages'], [], 'record_type', ['content' => ['tt_content']]);
         self::assertSame(['tt_content'], (new TcaHelper())->getAllowedTablesOfRecordType($groupField, 'content'));
     }
 
@@ -1810,8 +1810,8 @@ class TcaHelperTest extends UnitTestCase
             ],
         ];
         $expected = [
-            new SelectField('foo', 'select', ['fe_groups'], ['-1', '--div--', '5']),
-            new SelectField('foo', 'category', ['sys_category']),
+            new ForeignTableListField('foo', 'select', ['fe_groups'], ['-1', '--div--', '5']),
+            new ForeignTableListField('foo', 'category', ['sys_category']),
         ];
         self::assertEquals($expected, iterator_to_array((new TcaHelper())->getNextSelectFieldWithoutMm(), false));
     }
@@ -1849,7 +1849,7 @@ class TcaHelperTest extends UnitTestCase
             ],
         ];
         $expected = [
-            new SelectField('child_table', 'related', ['tt_content']),
+            new ForeignTableListField('child_table', 'related', ['tt_content']),
         ];
         self::assertEquals($expected, iterator_to_array((new TcaHelper())->getNextSelectFieldWithoutMm(), false));
     }
@@ -1916,7 +1916,7 @@ class TcaHelperTest extends UnitTestCase
             ],
         ];
         $expected = [
-            new SelectField(
+            new ForeignTableListField(
                 'foo',
                 'select',
                 ['pages'],
@@ -1930,6 +1930,150 @@ class TcaHelperTest extends UnitTestCase
             ),
         ];
         self::assertEquals($expected, iterator_to_array((new TcaHelper())->getNextSelectFieldWithoutMm(), false));
+    }
+
+    #[Test]
+    public function getNextSelectFieldWithMmReturnsSelectFieldsWithMm(): void
+    {
+        $GLOBALS['TCA'] = [
+            'foo' => [
+                'columns' => [
+                    'group' => [
+                        'config' => [
+                            'type' => 'group',
+                            'allowed' => 'pages',
+                            'MM' => 'foo_mm',
+                        ],
+                    ],
+                    'selectWithoutMm' => [
+                        'config' => [
+                            'type' => 'select',
+                            'foreign_table' => 'pages',
+                        ],
+                    ],
+                    'selectWithoutForeignTable' => [
+                        'config' => [
+                            'type' => 'select',
+                            'MM' => 'foo_mm',
+                        ],
+                    ],
+                    'selectOppositeField' => [
+                        'config' => [
+                            'type' => 'select',
+                            'foreign_table' => 'bar',
+                            'MM' => 'bar_mm',
+                            'MM_opposite_field' => 'foos',
+                        ],
+                    ],
+                    'category' => [
+                        'config' => [
+                            'type' => 'category',
+                            'foreign_table' => 'sys_category',
+                            'MM' => 'sys_category_record_mm',
+                        ],
+                    ],
+                    'select' => [
+                        'config' => [
+                            'type' => 'select',
+                            'foreign_table' => 'pages',
+                            'MM' => 'foo_mm',
+                            'MM_match_fields' => [
+                                'fieldname' => 'select',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        $expected = [
+            new MmField('foo', 'select', 'foo_mm', ['pages'], ['fieldname' => 'select']),
+        ];
+        self::assertEquals($expected, iterator_to_array((new TcaHelper())->getNextSelectFieldWithMm(), false));
+    }
+
+    #[Test]
+    public function getNextInlineFieldWithMmReturnsInlineFieldsWithMm(): void
+    {
+        $GLOBALS['TCA'] = [
+            'foo' => [
+                'columns' => [
+                    'inlineWithoutMm' => [
+                        'config' => [
+                            'type' => 'inline',
+                            'foreign_table' => 'bar',
+                        ],
+                    ],
+                    'inlineWithForeignField' => [
+                        'config' => [
+                            'type' => 'inline',
+                            'foreign_table' => 'bar',
+                            'foreign_field' => 'parent',
+                            'MM' => 'foo_mm',
+                        ],
+                    ],
+                    'inlineTableWhere' => [
+                        'config' => [
+                            'type' => 'inline',
+                            'foreign_table' => 'bar',
+                            'MM' => 'foo_mm',
+                            'MM_table_where' => 'AND {#foo_mm}.{#uid_local} = ###THIS_UID###',
+                        ],
+                    ],
+                    'inline' => [
+                        'config' => [
+                            'type' => 'inline',
+                            'foreign_table' => 'bar',
+                            'MM' => 'foo_mm',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        $expected = [
+            new MmField('foo', 'inline', 'foo_mm', ['bar'], []),
+        ];
+        self::assertEquals($expected, iterator_to_array((new TcaHelper())->getNextInlineFieldWithMm(), false));
+    }
+
+    #[Test]
+    public function getNextInlineFieldWithUidListReturnsInlineFieldsWithoutForeignFieldAndMm(): void
+    {
+        $GLOBALS['TCA'] = [
+            'foo' => [
+                'columns' => [
+                    'inlineWithForeignField' => [
+                        'config' => [
+                            'type' => 'inline',
+                            'foreign_table' => 'bar',
+                            'foreign_field' => 'parent',
+                        ],
+                    ],
+                    'inlineWithMm' => [
+                        'config' => [
+                            'type' => 'inline',
+                            'foreign_table' => 'bar',
+                            'MM' => 'foo_mm',
+                        ],
+                    ],
+                    'file' => [
+                        'config' => [
+                            'type' => 'file',
+                            'foreign_table' => 'sys_file_reference',
+                        ],
+                    ],
+                    'inline' => [
+                        'config' => [
+                            'type' => 'inline',
+                            'foreign_table' => 'bar',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        $expected = [
+            new ForeignTableListField('foo', 'inline', ['bar']),
+        ];
+        self::assertEquals($expected, iterator_to_array((new TcaHelper())->getNextInlineFieldWithUidList(), false));
     }
 
     /**

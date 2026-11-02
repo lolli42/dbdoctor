@@ -1,0 +1,13 @@
+"tx_dbdoctortestsinline_child"
+,"uid","pid","deleted","title"
+,1,1,0,"Ok"
+,2,1,1,"Ok - soft-deleted"
+"tx_dbdoctortestsinline_parent"
+,"uid","pid","deleted","title","children_list"
+,1,1,0,"Ok - existing and soft-deleted child","1,2"
+,2,1,0,"Not Ok - missing child, twice","1,99,99"
+# Items with the child table name are handled, items with another table name, invalid items and uid zero are not touched
+,3,1,0,"Not Ok - missing child with table name","tx_dbdoctortestsinline_child_98,pages_97,foo,0"
+# Soft-deleted records are handled as well
+,4,1,1,"Not Ok - soft-deleted with missing child","96"
+,5,1,0,"Ok - empty",""

@@ -70,5 +70,8 @@ OK  InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent
 OK  GroupFieldRelationMissing
 OK  GroupFieldMmRelationMissing
 OK  SelectFieldRelationMissing
+OK  SelectFieldMmRelationMissing
+OK  InlineFieldUidListRelationMissing
+OK  InlineFieldMmRelationMissing
 OK  TcaTablesTranslatedLanguageParentDuplicates
 OK  TcaTablesTranslatedWithAllowLanguageSynchronization

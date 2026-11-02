@@ -18,11 +18,12 @@ namespace Lolli\Dbdoctor\Tca;
  */
 
 /**
- * A TCA field of type "select" with "foreign_table", or of type "category", that stores
- * its relations as comma separated list in the field itself, without MM table.
- * See TcaHelper->getNextSelectFieldWithoutMm().
+ * A TCA field that stores relations to records of its "foreign_table" as comma separated
+ * uid list in the field itself, without MM table: Type "select" with "foreign_table", type
+ * "category", and type "inline" without "foreign_field". See TcaHelper->getNextSelectFieldWithoutMm()
+ * and getNextInlineFieldWithUidList().
  */
-final readonly class SelectField
+final readonly class ForeignTableListField
 {
     /**
      * $allowedTables has the single table of TCA "foreign_table". Record types may change it
@@ -30,7 +31,7 @@ final readonly class SelectField
      * for a record.
      *
      * @param array<int, string> $allowedTables The table of TCA "foreign_table"
-     * @param array<int, string> $staticItemValues Values of TCA "items", of all record types
+     * @param array<int, string> $staticItemValues Values of TCA "items" of select fields, of all record types
      * @param array<array-key, array<int, string>|null> $allowedTablesByType
      */
     public function __construct(

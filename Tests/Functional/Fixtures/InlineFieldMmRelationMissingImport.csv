@@ -1,0 +1,20 @@
+"tx_dbdoctortestsinline_child"
+,"uid","pid","deleted","title"
+,1,1,0,"Ok"
+,2,1,1,"Ok - soft-deleted"
+"tx_dbdoctortestsinline_parent"
+,"uid","pid","deleted","title","children_mm"
+,1,1,0,"Ok - existing and soft-deleted child",2
+,2,1,0,"Not Ok - missing child",2
+# Soft-deleted records are handled as well
+,3,1,1,"Not Ok - soft-deleted with missing child",1
+"tx_dbdoctortestsinline_parent_mm"
+,"uid_local","uid_foreign"
+,1,1
+,1,2
+,2,1
+,2,99
+,3,98
+# Parent record does not exist: All its rows are removed, also those to existing children
+,11,1
+,11,97
