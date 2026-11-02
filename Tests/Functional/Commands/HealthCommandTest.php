@@ -155,4 +155,31 @@ class HealthCommandTest extends AbstractFunctionalTestCase
         self::assertStringNotContainsString('referenceindex:update', $this->getNormalizedDisplay($commandTester));
         self::assertFileDoesNotExist($file);
     }
+
+    #[Test]
+    public function interactiveModeShowsHelpReloadsAndAborts(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingImport.csv');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $commandTester->setInputs(['?', 'r', 'a']);
+        $result = $commandTester->execute([]);
+        self::assertSame(HealthCheckResult::Abort->value, $result);
+        $display = $this->getNormalizedDisplay($commandTester);
+        self::assertStringContainsString('s - SIMULATE suggested changes, no execution', $display);
+        self::assertStringContainsString('Aborting ...', $display);
+        self::assertStringNotContainsString('referenceindex:update', $display);
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingImport.csv');
+    }
+
+    #[Test]
+    public function interactiveModeExecutesChanges(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingImport.csv');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $commandTester->setInputs(['e']);
+        $result = $commandTester->execute([]);
+        self::assertSame(HealthCheckResult::Broken->value, $result);
+        self::assertStringContainsString('referenceindex:update', $this->getNormalizedDisplay($commandTester));
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingFixed.csv');
+    }
 }
