@@ -143,6 +143,13 @@ services:
         identifier: 'dbdoctor-pages-translated-language-parent-duplicates'
         after: 'dbdoctor-pages-translated-language-parent-different-pid'
 
+  # After the page tree and page translation checks: Loops are followed per language via l10n_parent
+  Lolli\Dbdoctor\HealthCheck\PagesShortcutLoop:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-pages-shortcut-loop'
+        after: 'dbdoctor-pages-translated-language-parent-duplicates'
+
   # sys_file_metadata is a bit special due to its cross dependency with sys_file: Each sys_file needs
   # exactly one default language metadata record, and translations must point to the one of their file.
   # Metadata of missing files and duplicate default records are removed first. The last two run before
@@ -152,7 +159,7 @@ services:
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-sys-file-metadata-file-missing'
-        after: 'dbdoctor-pages-translated-language-parent-duplicates'
+        after: 'dbdoctor-pages-shortcut-loop'
 
   Lolli\Dbdoctor\HealthCheck\SysFileMetadataDefaultDuplicates:
     tags:

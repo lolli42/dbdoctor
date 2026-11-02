@@ -30,6 +30,7 @@ OK  PagesTranslatedLanguageParentMissing
 OK  PagesTranslatedLanguageParentDeleted
 OK  PagesTranslatedLanguageParentDifferentPid
 OK  PagesTranslatedLanguageParentDuplicates
+OK  PagesShortcutLoop
 OK  SysFileMetadataFileMissing
 OK  SysFileMetadataDefaultDuplicates
 OK  SysFileMetadataMissing

@@ -1,0 +1,23 @@
+"pages"
+,"uid","pid","deleted","doktype","shortcut_mode","shortcut","sys_language_uid","l10n_parent","title"
+,1,0,0,1,0,0,0,0,"Ok - root"
+# Translation pointing to its own default language page: The frontend overlays the target with this translation again
+,100,1,0,1,0,0,0,0,"Ok - standard page"
+,101,1,0,4,1,0,1,100,"Not Ok - translation, shortcut to its own default language page"
+,102,1,0,4,0,1,2,100,"Ok - translation, shortcut to root"
+# Loop in language 1 only: 110 has no translation, the default language page is used
+,110,1,0,4,0,111,0,0,"Ok - shortcut to standard page in default language"
+,111,1,0,1,0,0,0,0,"Ok - standard page in default language"
+,112,1,0,4,1,0,1,111,"Not Ok - translation, shortcut back to 110"
+# Loop in default language and between the translations: Both are changed
+,120,1,0,4,1,0,0,0,"Not Ok - loop in default language, lowest uid"
+,121,1,0,4,0,120,0,0,"Ok - loop in default language"
+,122,1,0,4,1,0,1,120,"Not Ok - loop of translations, lowest default language uid"
+,123,1,0,4,0,120,1,121,"Ok - loop of translations"
+# Loop in default language without translations: Changed in default language only
+,130,1,0,4,1,0,0,0,"Not Ok - loop in default language, lowest uid"
+,131,1,0,4,0,130,0,0,"Ok - loop in default language"
+# Translation being no shortcut ends the chain in its language
+,140,1,0,4,1,0,0,0,"Not Ok - loop in default language, lowest uid"
+,141,1,0,4,0,140,0,0,"Ok - loop in default language"
+,142,1,0,1,0,0,1,141,"Ok - translation, standard page"

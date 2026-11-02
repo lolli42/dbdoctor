@@ -1,0 +1,5 @@
+"pages"
+,"uid","pid","deleted","doktype","shortcut_mode","shortcut","title"
+,1,0,0,1,0,0,"Ok - root"
+# Mode 2 "random subpage": Core v13 picks a random subpage, core v14 removed the mode and resolves "shortcut"
+,2,1,0,4,2,2,"Shortcut to itself in core v14 only"
