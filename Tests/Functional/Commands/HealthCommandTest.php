@@ -21,7 +21,10 @@ use Lolli\Dbdoctor\HealthCheck\TcaTablesPidMissing;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\DependencyInjection\Container;
 use TYPO3\CMS\Core\Console\CommandRegistry;
+use TYPO3\CMS\Core\Database\Event\AlterTableDefinitionStatementsEvent;
+use TYPO3\CMS\Core\EventDispatcher\ListenerProvider;
 
 class HealthCommandTest extends AbstractFunctionalTestCase
 {
@@ -181,5 +184,25 @@ class HealthCommandTest extends AbstractFunctionalTestCase
         self::assertSame(HealthCheckResult::Broken->value, $result);
         self::assertStringContainsString('referenceindex:update', $this->getNormalizedDisplay($commandTester));
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingFixed.csv');
+    }
+
+    #[Test]
+    public function reportsErrorIfDatabaseSchemaIsNotInSyncAndRunsNoCheck(): void
+    {
+        // A column defined but missing in the database
+        /** @var Container $container */
+        $container = $this->get('service_container');
+        $container->set(
+            'health-command-test-schema',
+            static function (AlterTableDefinitionStatementsEvent $event): void {
+                $event->addSqlData('CREATE TABLE pages (some_field VARCHAR(10) DEFAULT \'\' NOT NULL);');
+            }
+        );
+        $container->get(ListenerProvider::class)->addListener(AlterTableDefinitionStatementsEvent::class, 'health-command-test-schema');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $result = $commandTester->execute(['--mode' => 'check']);
+        self::assertSame(HealthCheckResult::Error->value, $result);
+        self::assertStringContainsString('Current database schema is not in sync with TCA', $this->getNormalizedDisplay($commandTester));
+        self::assertStringNotContainsString('OK  ', $commandTester->getDisplay());
     }
 }
