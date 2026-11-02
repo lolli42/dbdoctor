@@ -17,6 +17,7 @@
 # handled by "missing" check - and kept there
 ,5,1,0,0,0,0,0,0,"Ok - tt_content 0 missing"
 ,6,1,1,0,0,0,0,0,"Ok - tt_content 0 missing"
+,7,1,0,0,0,0,0,42,"Ok - tt_content 42 does not exist"
 "tx_dbdoctortestsforeignfield_items"
 ,"uid","pid","deleted","hidden","sorting","sys_language_uid","l18n_parent","parentid","parenttable","parentfield","title"
 ,1,1,0,0,0,0,0,1,"pages","tx_dbdoctortestsforeignfield_items","Ok page 1"
