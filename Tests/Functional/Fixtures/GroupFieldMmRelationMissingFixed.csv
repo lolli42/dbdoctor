@@ -12,6 +12,7 @@
 ,2,1,0,"Ok - relation to soft-deleted record",1,0
 # Soft-deleted records are handled as well
 ,3,1,1,"Not Ok - soft-deleted with relation to missing record",1,0
+,5,1,0,"Ok - MM rows sorted after those of missing record 4",1,0
 "tx_dbdoctortestsgroup_item_mm"
 ,"uid_local","uid_foreign","tablenames","fieldname"
 ,1,1,"pages","relations_mm"
@@ -23,6 +24,8 @@
 ,2,2,"tt_content","relations_mm"
 # Local record is soft-deleted: Kept
 ,3,1,"pages","relations_mm"
+# Rows of the next local record: The rows of missing record 4 are handled before
+,5,1,"pages","relations_mm"
 "sys_category"
 ,"uid","pid","deleted","title","items"
 # Count field "items" is not updated
