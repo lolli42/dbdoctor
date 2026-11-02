@@ -18,6 +18,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Helper\MmRelationHelper;
+use Lolli\Dbdoctor\Helper\RelationProblem;
 
 /**
  * Relations in TCA type 'select' fields with foreign_table and MM table must point to existing records.
@@ -49,6 +50,6 @@ final readonly class SelectFieldMmRelationMissing extends AbstractHealthCheck im
 
     public function detect(HealthCheckRun $run): array
     {
-        return $this->mmRelationHelper->getFindings($run, $this->tcaHelper->getNextSelectFieldWithMm());
+        return $this->mmRelationHelper->getFindings($run, $this->tcaHelper->getNextSelectFieldWithMm(), RelationProblem::Missing);
     }
 }

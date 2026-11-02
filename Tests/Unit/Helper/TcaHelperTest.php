@@ -2077,6 +2077,43 @@ class TcaHelperTest extends UnitTestCase
     }
 
     #[Test]
+    public function hasWorkspaceAwareTargetTableReturnsTrueForWorkspaceAwareAllowedTable(): void
+    {
+        $GLOBALS['TCA'] = [
+            'foo' => ['ctrl' => []],
+            'bar' => ['ctrl' => ['versioningWS' => true]],
+        ];
+        self::assertTrue((new TcaHelper())->hasWorkspaceAwareTargetTable(new GroupField('baz', 'csv', ['foo', 'bar'])));
+    }
+
+    #[Test]
+    public function hasWorkspaceAwareTargetTableReturnsFalseWithoutWorkspaceAwareAllowedTable(): void
+    {
+        $GLOBALS['TCA'] = [
+            'foo' => ['ctrl' => []],
+        ];
+        self::assertFalse((new TcaHelper())->hasWorkspaceAwareTargetTable(new ForeignTableListField('baz', 'select', ['foo'])));
+    }
+
+    #[Test]
+    public function hasWorkspaceAwareTargetTableReturnsTrueForAnyTable(): void
+    {
+        $GLOBALS['TCA'] = [];
+        self::assertTrue((new TcaHelper())->hasWorkspaceAwareTargetTable(new MmField('baz', 'mm', 'baz_mm', ['*'], [])));
+    }
+
+    #[Test]
+    public function hasWorkspaceAwareTargetTableReturnsTrueForWorkspaceAwareTableOfRecordType(): void
+    {
+        $GLOBALS['TCA'] = [
+            'foo' => ['ctrl' => []],
+            'bar' => ['ctrl' => ['versioningWS' => true]],
+        ];
+        $field = new GroupField('baz', 'csv', ['foo'], 'record_type', ['content' => ['bar'], 'ignored' => null]);
+        self::assertTrue((new TcaHelper())->hasWorkspaceAwareTargetTable($field));
+    }
+
+    #[Test]
     public function getFieldNameByCtrlNameReturnsName(): void
     {
         $GLOBALS['TCA']['foo']['ctrl']['bar'] = 'baz';

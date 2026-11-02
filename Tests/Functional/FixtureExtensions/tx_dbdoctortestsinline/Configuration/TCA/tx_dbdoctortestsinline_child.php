@@ -9,6 +9,7 @@ return [
         'tstamp' => 'tstamp',
         'crdate' => 'crdate',
         'delete' => 'deleted',
+        'versioningWS' => true,
         'iconfile' => 'EXT:tx_dbdoctortestsinline/Resources/Public/Icons/Extension.svg',
         'security' => [
             'ignorePageTypeRestriction' => true,
