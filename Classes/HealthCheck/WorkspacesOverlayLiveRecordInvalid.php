@@ -22,6 +22,7 @@ use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
 use TYPO3\CMS\Core\Database\Connection;
+use TYPO3\CMS\Core\Versioning\VersionState;
 
 /**
  * Workspace overlays (t3ver_wsid>0, t3ver_oid>0) point to their live record with t3ver_oid. This holds for
@@ -70,7 +71,7 @@ final readonly class WorkspacesOverlayLiveRecordInvalid extends AbstractHealthCh
                     $expr->gt('overlay.t3ver_wsid', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
                     $expr->gt('overlay.t3ver_oid', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
                     // New records with t3ver_oid!=0 are not overlays, see https://github.com/lolli42/dbdoctor/issues/283
-                    $expr->neq('overlay.t3ver_state', $queryBuilder->createNamedParameter(1, Connection::PARAM_INT)),
+                    $expr->neq('overlay.t3ver_state', $queryBuilder->createNamedParameter(VersionState::NEW_PLACEHOLDER->value, Connection::PARAM_INT)),
                 )
                 ->orderBy('overlay.uid');
             $invalidLiveConstraints = [
