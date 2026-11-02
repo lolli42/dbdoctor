@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckMode;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedLanguageParentDifferentPid;
@@ -76,5 +77,16 @@ class TcaTablesTranslatedLanguageParentDifferentPidTest extends AbstractFunction
         $subject = $this->get(TcaTablesTranslatedLanguageParentDifferentPid::class);
         $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckMode::Execute, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidTtContentNotHiddenNotDeleteAwareFixed.csv');
+    }
+
+    #[Test]
+    public function executeModeThrowsIfEarlierCheckDidNotFix(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidEarlierCheckNotFixedImport.csv');
+        /** @var TcaTablesTranslatedLanguageParentDifferentPid $subject */
+        $subject = $this->get(TcaTablesTranslatedLanguageParentDifferentPid::class);
+        $this->expectException(EarlierCheckNotFixedException::class);
+        $this->expectExceptionCode(1648031986);
+        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckMode::Execute, '');
     }
 }
