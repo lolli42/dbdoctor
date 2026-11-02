@@ -786,19 +786,6 @@ final readonly class TcaHelper
     }
 
     /**
-     * Determine if a TCA table has at least one type='flex' field.
-     */
-    public function hasFlexField(string $tableName): bool
-    {
-        foreach (($GLOBALS['TCA'][$tableName]['columns'] ?? []) as $config) {
-            if (trim($config['config']['type'] ?? '') === 'flex') {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
      * All inline and file fields of all tables having the given table as children: The full
      * relation map of a child table, also of child tables having multiple parent tables.
      *
