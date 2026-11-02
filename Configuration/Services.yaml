@@ -392,12 +392,30 @@ services:
         identifier: 'dbdoctor-select-field-relation-missing'
         after: 'dbdoctor-group-field-mm-relation-missing'
 
+  Lolli\Dbdoctor\HealthCheck\SelectFieldMmRelationMissing:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-select-field-mm-relation-missing'
+        after: 'dbdoctor-select-field-relation-missing'
+
+  Lolli\Dbdoctor\HealthCheck\InlineFieldUidListRelationMissing:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-inline-field-uid-list-relation-missing'
+        after: 'dbdoctor-select-field-mm-relation-missing'
+
+  Lolli\Dbdoctor\HealthCheck\InlineFieldMmRelationMissing:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-inline-field-mm-relation-missing'
+        after: 'dbdoctor-inline-field-uid-list-relation-missing'
+
   # Late in the chain: Inline children of duplicate parent translations must have been handled before
   Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedLanguageParentDuplicates:
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-tca-tables-translated-language-parent-duplicates'
-        after: 'dbdoctor-select-field-relation-missing'
+        after: 'dbdoctor-inline-field-mm-relation-missing'
 
   Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedWithAllowLanguageSynchronization:
     tags:

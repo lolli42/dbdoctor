@@ -1,0 +1,15 @@
+"tx_dbdoctortestsinline_child"
+,"uid","pid","deleted","title"
+,1,1,0,"Ok"
+,2,1,1,"Ok - soft-deleted"
+"tx_dbdoctortestsinline_parent"
+,"uid","pid","deleted","title","children_mm"
+# Count field "children_mm" is not updated
+,1,1,0,"Ok - existing and soft-deleted child",2
+,2,1,0,"Not Ok - missing child",2
+,3,1,1,"Not Ok - soft-deleted with missing child",1
+"tx_dbdoctortestsinline_parent_mm"
+,"uid_local","uid_foreign"
+,1,1
+,1,2
+,2,1

@@ -48,6 +48,15 @@ return [
                 ],
             ],
         ],
+        'relations_mm' => [
+            'label' => 'Relations to pages, MM',
+            'config' => [
+                'type' => 'select',
+                'renderType' => 'selectMultipleSideBySide',
+                'foreign_table' => 'pages',
+                'MM' => 'tx_dbdoctortestsselect_item_mm',
+            ],
+        ],
         'relation_single' => [
             'label' => 'Relation to pages, single uid',
             'config' => [
@@ -77,13 +86,18 @@ return [
     ],
     'types' => [
         '0' => [
-            'showitem' => 'title, record_type, relations, relation_single, category_single, category_multi',
+            'showitem' => 'title, record_type, relations, relations_mm, relation_single, category_single, category_multi',
         ],
         // Relations to tt_content
         'content' => [
-            'showitem' => 'title, record_type, relations',
+            'showitem' => 'title, record_type, relations, relations_mm',
             'columnsOverrides' => [
                 'relations' => [
+                    'config' => [
+                        'foreign_table' => 'tt_content',
+                    ],
+                ],
+                'relations_mm' => [
                     'config' => [
                         'foreign_table' => 'tt_content',
                     ],

@@ -17,12 +17,12 @@ namespace Lolli\Dbdoctor\Helper;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Tca\ForeignTableListField;
 use Lolli\Dbdoctor\Tca\GroupField;
-use Lolli\Dbdoctor\Tca\GroupMmField;
 use Lolli\Dbdoctor\Tca\InlineForeignFieldChild;
 use Lolli\Dbdoctor\Tca\InlineForeignFieldNoForeignTableFieldChild;
 use Lolli\Dbdoctor\Tca\InlineForeignFieldNoForeignTableFieldParent;
-use Lolli\Dbdoctor\Tca\SelectField;
+use Lolli\Dbdoctor\Tca\MmField;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
@@ -384,7 +384,7 @@ final readonly class TcaHelper
      * Language pointer fields and fields pointing to an inline parent are skipped,
      * as in getNextGroupFieldWithoutMm().
      *
-     * @return iterable<SelectField>
+     * @return iterable<ForeignTableListField>
      */
     public function getNextSelectFieldWithoutMm(): iterable
     {
@@ -405,11 +405,51 @@ final readonly class TcaHelper
                     if ($allowedTablesByType === null) {
                         continue;
                     }
-                    yield new SelectField(
+                    yield new ForeignTableListField(
                         $tableName,
                         $fieldName,
                         [$columnConfig['config']['foreign_table']],
                         $this->getStaticItemValues($tableName, $fieldName, $columnConfig),
+                        $allowedTablesByType === [] ? null : $this->getTypeField($tableName),
+                        $allowedTablesByType,
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * Fields of type 'inline' without foreign_field and without MM table: They store
+     * the uids of their children as comma separated list in the field itself.
+     *
+     * 'config' => [
+     *     'type' => 'inline',
+     *     'foreign_table' => 'tx_ext_child',
+     * ],
+     *
+     * @return iterable<ForeignTableListField>
+     */
+    public function getNextInlineFieldWithUidList(): iterable
+    {
+        $this->verifyTcaIsArray();
+        foreach ($GLOBALS['TCA'] as $tableName => $config) {
+            foreach (($config['columns'] ?? []) as $fieldName => $columnConfig) {
+                if (is_array($columnConfig['config'] ?? false)
+                    && ($columnConfig['config']['type'] ?? '') === 'inline'
+                    && empty($columnConfig['config']['MM'])
+                    && empty($columnConfig['config']['foreign_field'])
+                    && is_string($columnConfig['config']['foreign_table'] ?? false)
+                    && $columnConfig['config']['foreign_table'] !== ''
+                ) {
+                    $allowedTablesByType = $this->getAllowedTablesByType($tableName, $fieldName, $columnConfig);
+                    if ($allowedTablesByType === null) {
+                        continue;
+                    }
+                    yield new ForeignTableListField(
+                        $tableName,
+                        $fieldName,
+                        [$columnConfig['config']['foreign_table']],
+                        [],
                         $allowedTablesByType === [] ? null : $this->getTypeField($tableName),
                         $allowedTablesByType,
                     );
@@ -485,42 +525,105 @@ final readonly class TcaHelper
      * relations are the MM rows of the local side. Fields with MM_table_where
      * are skipped as well: It is unclear which MM rows belong to them.
      *
-     * @return iterable<GroupMmField>
+     * @return iterable<MmField>
      */
     public function getNextGroupFieldWithMm(): iterable
+    {
+        return $this->getNextMmField('group');
+    }
+
+    /**
+     * Fields of type 'select' with a foreign_table that store their relations in an
+     * MM table, as local side, like getNextGroupFieldWithMm(). The core reads and writes
+     * them as group fields with the foreign_table as single allowed table.
+     *
+     * 'config' => [
+     *     'type' => 'select',
+     *     'foreign_table' => 'tx_ext_tag',
+     *     'MM' => 'tx_ext_item_tag_mm',
+     * ],
+     *
+     * Fields of type 'category' are not included: The core sets MM_opposite_field for those
+     * with MM table, their relations are the MM rows of sys_category field "items".
+     *
+     * @return iterable<MmField>
+     */
+    public function getNextSelectFieldWithMm(): iterable
+    {
+        return $this->getNextMmField('select');
+    }
+
+    /**
+     * Fields of type 'inline' that store their child relations in an MM table, as
+     * local side, like getNextGroupFieldWithMm(). The core reads and writes them as
+     * select fields with MM.
+     *
+     * 'config' => [
+     *     'type' => 'inline',
+     *     'foreign_table' => 'tx_ext_child',
+     *     'MM' => 'tx_ext_parent_child_mm',
+     * ],
+     *
+     * Fields with MM table and foreign_field are skipped. This is broken TCA, but core
+     * v13 and v14 do not reject it, and do not agree which of both is used:
+     * - DataHandler->checkValue_inline_processDBdata() writes the children with foreign_field,
+     *   it checks foreign_field before MM.
+     * - RelationHandler->start() reads the children from the MM table, it checks MM before
+     *   foreign_field. Backend and frontend do not see the children the DataHandler writes.
+     * - TcaSchema RelationshipType::fromTcaConfiguration() returns ManyToMany for MM before
+     *   looking at foreign_field.
+     * - FormEngine TcaInline accepts either: $parentConfig['MM'] ?? $parentConfig['foreign_field'].
+     * It is unclear which relations of such a field are valid.
+     *
+     * @return iterable<MmField>
+     */
+    public function getNextInlineFieldWithMm(): iterable
+    {
+        return $this->getNextMmField('inline');
+    }
+
+    /**
+     * @return iterable<MmField>
+     */
+    private function getNextMmField(string $type): iterable
     {
         $this->verifyTcaIsArray();
         foreach ($GLOBALS['TCA'] as $tableName => $config) {
             foreach (($config['columns'] ?? []) as $fieldName => $columnConfig) {
-                if (is_array($columnConfig['config'] ?? false)
-                    && ($columnConfig['config']['type'] ?? '') === 'group'
-                    && !empty($columnConfig['config']['MM'])
-                    && is_string($columnConfig['config']['MM'])
-                    && empty($columnConfig['config']['MM_opposite_field'])
-                    && empty($columnConfig['config']['MM_table_where'])
-                    && !empty($columnConfig['config']['allowed'])
+                if (!is_array($columnConfig['config'] ?? false)
+                    || ($columnConfig['config']['type'] ?? '') !== $type
+                    || empty($columnConfig['config']['MM'])
+                    || !is_string($columnConfig['config']['MM'])
+                    || !empty($columnConfig['config']['MM_opposite_field'])
+                    || !empty($columnConfig['config']['MM_table_where'])
+                    || ($type === 'inline' && !empty($columnConfig['config']['foreign_field']))
                 ) {
-                    $allowedTablesByType = $this->getAllowedTablesByType($tableName, $fieldName, $columnConfig);
-                    if ($allowedTablesByType === null) {
-                        continue;
-                    }
-                    yield new GroupMmField(
-                        $tableName,
-                        $fieldName,
-                        $columnConfig['config']['MM'],
-                        GeneralUtility::trimExplode(',', $columnConfig['config']['allowed'], true),
-                        is_array($columnConfig['config']['MM_match_fields'] ?? false) ? $columnConfig['config']['MM_match_fields'] : [],
-                        $allowedTablesByType === [] ? null : $this->getTypeField($tableName),
-                        $allowedTablesByType,
-                    );
+                    continue;
                 }
+                $allowedTables = $this->getRelationTablesOfConfig($columnConfig['config']);
+                if ($allowedTables === []) {
+                    continue;
+                }
+                $allowedTablesByType = $this->getAllowedTablesByType($tableName, $fieldName, $columnConfig);
+                if ($allowedTablesByType === null) {
+                    continue;
+                }
+                yield new MmField(
+                    $tableName,
+                    $fieldName,
+                    $columnConfig['config']['MM'],
+                    $allowedTables,
+                    is_array($columnConfig['config']['MM_match_fields'] ?? false) ? $columnConfig['config']['MM_match_fields'] : [],
+                    $allowedTablesByType === [] ? null : $this->getTypeField($tableName),
+                    $allowedTablesByType,
+                );
             }
         }
     }
 
     /**
-     * Allowed tables of a group or select field for a record of the given type, with a field from
-     * getNextGroupFieldWithoutMm(), getNextGroupFieldWithMm() or getNextSelectFieldWithoutMm(). Null if the relations
+     * Allowed tables of a relation field for a record of the given type, with a field from one of the
+     * getNext*FieldWith*() methods. Null if the relations
      * of the record can not be resolved unambiguously, and must be left alone.
      *
      * A type value that is not a key of TCA "types", for instance a CType of a removed
@@ -532,7 +635,7 @@ final readonly class TcaHelper
      *
      * @return array<int, string>|null
      */
-    public function getAllowedTablesOfRecordType(GroupField|GroupMmField|SelectField $groupField, ?string $recordType): ?array
+    public function getAllowedTablesOfRecordType(GroupField|MmField|ForeignTableListField $groupField, ?string $recordType): ?array
     {
         if ($groupField->typeField === null) {
             return $groupField->allowedTables;
@@ -551,8 +654,8 @@ final readonly class TcaHelper
 
     /**
      * Record types can change the config of a field with TCA "columnsOverrides". This returns
-     * the allowed tables of a group or select field per type, for types that change them: TCA
-     * "allowed" of group fields, "foreign_table" of select and category fields. Empty array if
+     * the allowed tables of a relation field per type, for types that change them: TCA "allowed"
+     * of group fields, "foreign_table" of select, category and inline fields. Empty array if
      * no type changes them, the normal case. A type maps to null if its records of this field
      * must be left alone. Null if the whole field must be left alone.
      *
@@ -646,7 +749,7 @@ final readonly class TcaHelper
     }
 
     /**
-     * Tables a group field ("allowed") or a select or category field ("foreign_table") relates to.
+     * Tables a group field ("allowed") or a select, category or inline field ("foreign_table") relates to.
      *
      * @param array<string, mixed> $config
      * @return array<int, string>
