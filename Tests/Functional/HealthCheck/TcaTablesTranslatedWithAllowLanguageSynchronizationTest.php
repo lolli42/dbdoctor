@@ -25,15 +25,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class TcaTablesTranslatedWithAllowLanguageSynchronizationTest extends AbstractFunctionalTestCase
 {
-    protected array $coreExtensionsToLoad = [
-        'workspaces',
-    ];
-
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-        __DIR__ . '/../FixtureExtensions/tx_dbdoctortestssync',
-    ];
-
     #[Test]
     public function showDetails(): void
     {

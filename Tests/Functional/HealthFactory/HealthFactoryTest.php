@@ -27,14 +27,6 @@ use TYPO3\CMS\Core\EventDispatcher\ListenerProvider;
 
 class HealthFactoryTest extends AbstractFunctionalTestCase
 {
-    protected array $coreExtensionsToLoad = [
-        'workspaces',
-    ];
-
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-    ];
-
     /**
      * @return list<class-string>
      */

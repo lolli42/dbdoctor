@@ -26,10 +26,6 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 
 class RecordsHelperTest extends AbstractFunctionalTestCase
 {
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-    ];
-
     #[Test]
     public function getRecordThrowsExceptionWithEmptyFields(): void
     {

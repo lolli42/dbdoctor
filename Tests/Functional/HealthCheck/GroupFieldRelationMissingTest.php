@@ -25,13 +25,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class GroupFieldRelationMissingTest extends AbstractFunctionalTestCase
 {
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-        __DIR__ . '/../FixtureExtensions/tx_dbdoctortestsgroup',
-        __DIR__ . '/../FixtureExtensions/tx_dbdoctortestsforeignfield',
-        __DIR__ . '/../FixtureExtensions/tx_dbdoctortestsgrouptype',
-    ];
-
     #[Test]
     public function showDetails(): void
     {

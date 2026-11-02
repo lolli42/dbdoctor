@@ -13,10 +13,6 @@ use TYPO3\CMS\Core\EventDispatcher\ListenerProvider;
 
 final class DatabaseSchemaCheckerTest extends AbstractFunctionalTestCase
 {
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-    ];
-
     private bool $addSqlDataDispatched = false;
 
     protected function tearDown(): void

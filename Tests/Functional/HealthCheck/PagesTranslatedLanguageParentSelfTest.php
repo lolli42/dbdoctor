@@ -25,14 +25,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class PagesTranslatedLanguageParentSelfTest extends AbstractFunctionalTestCase
 {
-    protected array $coreExtensionsToLoad = [
-        'workspaces',
-    ];
-
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-    ];
-
     #[Test]
     public function showDetails(): void
     {

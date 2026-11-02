@@ -23,11 +23,6 @@ use TYPO3\CMS\Core\Console\CommandRegistry;
 
 class HealthCommandJsonMmTest extends AbstractFunctionalTestCase
 {
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-        __DIR__ . '/../FixtureExtensions/tx_dbdoctortestsgroup',
-    ];
-
     #[Test]
     public function reportsMmFindingsWithWhereFields(): void
     {

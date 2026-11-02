@@ -31,14 +31,6 @@ class SysFileMetadataMissingTest extends AbstractFunctionalTestCase
      */
     private const IMAGE = 'iVBORw0KGgoAAAANSUhEUgAAAAMAAAACCAIAAAASFvFNAAAAEElEQVR4nGP4z8AAQQxwFgBB0gX7h/C5SAAAAABJRU5ErkJggg==';
 
-    protected array $coreExtensionsToLoad = [
-        'workspaces',
-    ];
-
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-    ];
-
     protected function setUp(): void
     {
         parent::setUp();

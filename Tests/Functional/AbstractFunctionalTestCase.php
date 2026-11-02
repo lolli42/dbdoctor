@@ -66,6 +66,14 @@ use TYPO3\TestingFramework\Core\Testbase;
  * - mariadb 10.3:  50.0s -> 9.7s, factor 5.2
  * - postgres 10:   69.5s -> 22.9s, factor 3.0
  *
+ * Each distinct setup still costs ~1s, mostly for building the dependency
+ * injection container of the fresh instance. This class thus defines one
+ * default setup for all test case classes: The core extensions and all
+ * fixture extensions any test needs. Test case classes should not declare
+ * $coreExtensionsToLoad or $testExtensionsToLoad, unless a test needs a
+ * different setup, for instance to verify a check without workspaces loaded.
+ * More tables in the instance are cheap compared to another setup.
+ *
  * Second hack: initializeTestDatabaseAndTruncateTables() truncates only
  * tables a previous test changed on postgres, see there. It overrides an
  * @internal method of testing-framework as well. If it breaks, remove it
@@ -73,6 +81,25 @@ use TYPO3\TestingFramework\Core\Testbase;
  */
 abstract class AbstractFunctionalTestCase extends FunctionalTestCase
 {
+    /**
+     * Default setup shared by most test case classes, see class comment.
+     */
+    protected array $coreExtensionsToLoad = [
+        'impexp',
+        'redirects',
+        'workspaces',
+    ];
+
+    protected array $testExtensionsToLoad = [
+        'lolli/dbdoctor',
+        __DIR__ . '/FixtureExtensions/tx_dbdoctortestsforeignfield',
+        __DIR__ . '/FixtureExtensions/tx_dbdoctortestsgroup',
+        __DIR__ . '/FixtureExtensions/tx_dbdoctortestsgrouptype',
+        __DIR__ . '/FixtureExtensions/tx_dbdoctortestsinline',
+        __DIR__ . '/FixtureExtensions/tx_dbdoctortestsselect',
+        __DIR__ . '/FixtureExtensions/tx_dbdoctortestssync',
+    ];
+
     /**
      * @var array<string, true> Identifiers of instances set up in this run
      */

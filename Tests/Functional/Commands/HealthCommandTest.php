@@ -28,14 +28,6 @@ use TYPO3\CMS\Core\EventDispatcher\ListenerProvider;
 
 class HealthCommandTest extends AbstractFunctionalTestCase
 {
-    protected array $coreExtensionsToLoad = [
-        'workspaces',
-    ];
-
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-    ];
-
     protected function tearDown(): void
     {
         @unlink($this->instancePath . '/dbdoctor-file');

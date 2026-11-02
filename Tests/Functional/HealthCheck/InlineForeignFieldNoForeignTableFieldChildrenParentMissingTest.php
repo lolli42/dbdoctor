@@ -25,11 +25,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class InlineForeignFieldNoForeignTableFieldChildrenParentMissingTest extends AbstractFunctionalTestCase
 {
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-        __DIR__ . '/../FixtureExtensions/tx_dbdoctortestsforeignfield',
-    ];
-
     #[Test]
     public function showDetails(): void
     {

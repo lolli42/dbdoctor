@@ -28,14 +28,6 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 
 class WorkspacesPidNegativeTest extends AbstractFunctionalTestCase
 {
-    protected array $coreExtensionsToLoad = [
-        'workspaces',
-    ];
-
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-    ];
-
     protected function setUp(): void
     {
         parent::setUp();

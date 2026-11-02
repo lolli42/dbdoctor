@@ -26,11 +26,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class InlineFieldMmRelationMissingTest extends AbstractFunctionalTestCase
 {
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-        __DIR__ . '/../FixtureExtensions/tx_dbdoctortestsinline',
-    ];
-
     #[Test]
     public function showDetails(): void
     {

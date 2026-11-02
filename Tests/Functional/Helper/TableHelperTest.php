@@ -22,10 +22,6 @@ use PHPUnit\Framework\Attributes\Test;
 
 class TableHelperTest extends AbstractFunctionalTestCase
 {
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-    ];
-
     #[Test]
     public function tableExistsInDatabaseReturnTrueForExistingTable(): void
     {

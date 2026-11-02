@@ -26,18 +26,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class TcaTablesRelationToWorkspaceOverlayTest extends AbstractFunctionalTestCase
 {
-    protected array $coreExtensionsToLoad = [
-        'workspaces',
-    ];
-
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-        __DIR__ . '/../FixtureExtensions/tx_dbdoctortestsgroup',
-        __DIR__ . '/../FixtureExtensions/tx_dbdoctortestsselect',
-        __DIR__ . '/../FixtureExtensions/tx_dbdoctortestsinline',
-        __DIR__ . '/../FixtureExtensions/tx_dbdoctortestsforeignfield',
-    ];
-
     #[Test]
     public function showDetails(): void
     {

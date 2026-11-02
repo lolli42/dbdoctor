@@ -26,11 +26,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class SelectFieldRelationMissingTest extends AbstractFunctionalTestCase
 {
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-        __DIR__ . '/../FixtureExtensions/tx_dbdoctortestsselect',
-    ];
-
     #[Test]
     public function showDetails(): void
     {
