@@ -108,11 +108,6 @@ final readonly class SysFileMetadataTranslatedParentInvalid extends AbstractHeal
         return $findings;
     }
 
-    public function getDetailCtrlFields(string $tableName): array
-    {
-        return ['languageField', 'transOrigPointerField'];
-    }
-
     public function getDetailDbFields(string $tableName): array
     {
         return ['file'];

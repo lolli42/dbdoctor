@@ -42,9 +42,10 @@ class FindingsRendererTest extends AbstractFunctionalTestCase
         $display = $output->fetch();
         // Records per page: Two records on the missing page 3
         self::assertMatchesRegularExpression('/^  2 +\\[3\\|missing\\] *$/m', $display);
-        // Details: Reason, missing pid, timestamp in UTC, missing language parent and source, live workspace
+        // Details: Reason, missing pid, language and missing language parent after pid, timestamp in UTC,
+        // missing translation source, live workspace
         self::assertMatchesRegularExpression(
-            '/^  Page "3" does not exist +3 +\\[3\\|missing\\] +0 +2023-11-14 22:13 UTC +1 +\\[99\\|missing\\] +\\[98\\|missing\\] +\\[0\\]Live .* Not ok live translation on not existing page/m',
+            '/^  Page "3" does not exist +3 +\\[3\\|missing\\] +1 +\\[99\\|missing\\] +0 +2023-11-14 22:13 UTC +\\[98\\|missing\\] +\\[0\\]Live .* Not ok live translation on not existing page/m',
             $display
         );
         // Details: Timestamp 0 is kept, existing workspace with its title

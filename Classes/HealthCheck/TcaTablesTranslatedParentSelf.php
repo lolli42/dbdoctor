@@ -80,9 +80,4 @@ final readonly class TcaTablesTranslatedParentSelf extends AbstractHealthCheck i
         }
         return $findings;
     }
-
-    public function getDetailCtrlFields(string $tableName): array
-    {
-        return ['languageField', 'transOrigPointerField'];
-    }
 }

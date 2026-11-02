@@ -176,11 +176,6 @@ final readonly class TcaTablesTranslatedParentInvalidPointer extends AbstractHea
         return $findings;
     }
 
-    public function getDetailCtrlFields(string $tableName): array
-    {
-        return ['languageField', 'transOrigPointerField'];
-    }
-
     /**
      * True if the inline parent record of a child is a translated record (TCA "languageField" > 0).
      *

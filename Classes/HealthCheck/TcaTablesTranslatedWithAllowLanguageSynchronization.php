@@ -180,11 +180,6 @@ final readonly class TcaTablesTranslatedWithAllowLanguageSynchronization extends
         return $findings;
     }
 
-    public function getDetailCtrlFields(string $tableName): array
-    {
-        return ['languageField', 'transOrigPointerField'];
-    }
-
     public function getDetailDbFields(string $tableName): array
     {
         return ['l10n_state'];

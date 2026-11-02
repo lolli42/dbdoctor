@@ -1969,21 +1969,6 @@ class TcaHelperTest extends UnitTestCase
     }
 
     #[Test]
-    public function getFieldNameByCtrlNameReturnsName(): void
-    {
-        $GLOBALS['TCA']['foo']['ctrl']['bar'] = 'baz';
-        self::assertSame('baz', (new TcaHelper())->getFieldNameByCtrlName('foo', 'bar'));
-    }
-
-    #[Test]
-    public function getFieldNameByCtrlNameThrows(): void
-    {
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionCode(1646162580);
-        (new TcaHelper())->getFieldNameByCtrlName('foo', 'bar');
-    }
-
-    #[Test]
     public function getDeletedFieldReturnsField(): void
     {
         $GLOBALS['TCA']['foo']['ctrl']['delete'] = 'deletedField';

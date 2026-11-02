@@ -173,11 +173,6 @@ final readonly class PagesShortcutLoop extends AbstractHealthCheck implements He
         return ['doktype', 'shortcut', 'shortcut_mode'];
     }
 
-    public function getDetailCtrlFields(string $tableName): array
-    {
-        return ['languageField', 'transOrigPointerField'];
-    }
-
     /**
      * Target page uid of a shortcut page if it is selected explicitly, as core PageRepository->getPageShortcut()
      * resolves it: Not for "first subpage" and "parent page", in core v13 also not for "random subpage".

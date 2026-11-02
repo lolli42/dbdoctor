@@ -34,14 +34,6 @@ interface HealthCheckInterface
     public function detect(HealthCheckRun $run): array;
 
     /**
-     * Ctrl fields like "transOrigPointerField" shown in record details of findings of a table,
-     * additionally to the default fields.
-     *
-     * @return list<string>
-     */
-    public function getDetailCtrlFields(string $tableName): array;
-
-    /**
      * Database fields shown in record details of findings of a table, additionally to the default
      * fields. Fields of RecordFieldKey findings are added automatically.
      *

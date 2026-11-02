@@ -89,11 +89,6 @@ final readonly class SysFileMetadataDefaultDuplicates extends AbstractHealthChec
         return $findings;
     }
 
-    public function getDetailCtrlFields(string $tableName): array
-    {
-        return ['languageField'];
-    }
-
     public function getDetailDbFields(string $tableName): array
     {
         return ['file'];
