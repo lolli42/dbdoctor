@@ -26,6 +26,7 @@ use Lolli\Dbdoctor\Finding\RecordKey;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Versioning\VersionState;
 
 /**
  * Tables with record translations must have their pid set to the same pid the default language record points to.
@@ -110,7 +111,7 @@ final readonly class TcaTablesTranslatedLanguageParentDifferentPid extends Abstr
                     // Ignore "workspace moved" translations due to the odd l10n_parent behavior, as
                     // shown with the tests from https://review.typo3.org/c/Packages/TYPO3.CMS/+/89803
                     // @todo: This could be optimized when the underlying core question has been decided.
-                    || ($isTableWorkspaceAware && (int)$localizedRow[$workspaceIdField] > 0 && (int)$localizedRow['t3ver_state'] === 4)
+                    || ($isTableWorkspaceAware && (int)$localizedRow[$workspaceIdField] > 0 && (int)$localizedRow['t3ver_state'] === VersionState::MOVE_POINTER->value)
                 ) {
                     continue;
                 }

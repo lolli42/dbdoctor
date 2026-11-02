@@ -21,6 +21,7 @@ use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
 use TYPO3\CMS\Core\Database\Connection;
+use TYPO3\CMS\Core\Versioning\VersionState;
 
 /**
  * Live records should never have t3ver_state!=0. Find and change those,
@@ -69,7 +70,7 @@ final readonly class WorkspacesT3verStateNotZeroInLive extends AbstractHealthChe
             $result = $queryBuilder->select(...$selectFields)->from($tableName)
                 ->where(
                     $queryBuilder->expr()->eq('t3ver_wsid', 0),
-                    $queryBuilder->expr()->neq('t3ver_state', 0),
+                    $queryBuilder->expr()->neq('t3ver_state', VersionState::DEFAULT_STATE->value),
                 )
                 ->orderBy('uid')
                 ->executeQuery();
@@ -84,7 +85,7 @@ final readonly class WorkspacesT3verStateNotZeroInLive extends AbstractHealthChe
                     // SHOWN in FE - we update to t3ver_state=0 and keep them.
                     $change = new RecordChange(RecordChangeType::Update, $tableName, $uid, [
                         't3ver_state' => [
-                            'value' => 0,
+                            'value' => VersionState::DEFAULT_STATE->value,
                             'type' => Connection::PARAM_INT,
                         ],
                     ]);
@@ -97,7 +98,7 @@ final readonly class WorkspacesT3verStateNotZeroInLive extends AbstractHealthChe
                             'type' => Connection::PARAM_INT,
                         ],
                         't3ver_state' => [
-                            'value' => 0,
+                            'value' => VersionState::DEFAULT_STATE->value,
                             'type' => Connection::PARAM_INT,
                         ],
                     ]);

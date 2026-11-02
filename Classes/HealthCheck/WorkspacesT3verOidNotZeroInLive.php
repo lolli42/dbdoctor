@@ -22,6 +22,7 @@ use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
 use TYPO3\CMS\Core\Database\Connection;
+use TYPO3\CMS\Core\Versioning\VersionState;
 
 /**
  * Live records (t3ver_wsid=0) with t3ver_oid>0 are overlays that do not belong to any workspace.
@@ -62,7 +63,7 @@ final readonly class WorkspacesT3verOidNotZeroInLive extends AbstractHealthCheck
             $result = $queryBuilder->select('uid', 'pid', 't3ver_oid')->from($tableName)
                 ->where(
                     $queryBuilder->expr()->eq('t3ver_wsid', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
-                    $queryBuilder->expr()->eq('t3ver_state', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
+                    $queryBuilder->expr()->eq('t3ver_state', $queryBuilder->createNamedParameter(VersionState::DEFAULT_STATE->value, Connection::PARAM_INT)),
                     $queryBuilder->expr()->neq('t3ver_oid', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
                 )
                 ->orderBy('uid')

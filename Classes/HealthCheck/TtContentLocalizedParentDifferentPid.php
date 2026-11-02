@@ -26,6 +26,7 @@ use Lolli\Dbdoctor\Finding\RecordKey;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Versioning\VersionState;
 
 /**
  * Localized tt_content records must point to a sys_language_uid=0 parent that
@@ -78,7 +79,7 @@ final readonly class TtContentLocalizedParentDifferentPid extends AbstractHealth
                 // Ignore "workspace moved" translations due to the odd l10n_parent behavior, as
                 // shown with the tests from https://review.typo3.org/c/Packages/TYPO3.CMS/+/89803
                 // @todo: This could be optimized when the underlying core question has been decided.
-                || ((int)$row['t3ver_wsid'] > 0 && (int)$row['t3ver_state'] === 4)
+                || ((int)$row['t3ver_wsid'] > 0 && (int)$row['t3ver_state'] === VersionState::MOVE_POINTER->value)
             ) {
                 continue;
             }
@@ -112,7 +113,7 @@ final readonly class TtContentLocalizedParentDifferentPid extends AbstractHealth
             // Live record: Move localized element to correct pid
             return $moveToParentPid;
         }
-        if ((int)$row['t3ver_state'] === 0) {
+        if ((int)$row['t3ver_state'] === VersionState::DEFAULT_STATE->value) {
             // We have a "workspace changed" record that is not on the same pid as the
             // default language record. We move this as well, since ws preview shows this,
             // even if on wrong pid. Note if default lang record is *moved*, the "changed"
@@ -120,7 +121,7 @@ final readonly class TtContentLocalizedParentDifferentPid extends AbstractHealth
             // with this scenario here.
             return $moveToParentPid;
         }
-        if ((int)$row['t3ver_state'] === 1) {
+        if ((int)$row['t3ver_state'] === VersionState::NEW_PLACEHOLDER->value) {
             // We have a "workspace new" record that is not on the same pid as the default
             // language record. Those are *not* shown in ws preview! We remove those.
             // Second scenario: First, new localize a record in workspace, then move the default
@@ -133,7 +134,7 @@ final readonly class TtContentLocalizedParentDifferentPid extends AbstractHealth
             // @todo: Fine-tune this case when core bugs with "first add, then move" have been fixed.
             return $delete;
         }
-        if ((int)$row['t3ver_state'] === 2) {
+        if ((int)$row['t3ver_state'] === VersionState::DELETE_PLACEHOLDER->value) {
             // We have "delete placeholder" record that is not on the same pid as the default
             // language record. This works: The "delete placeholder" kicks in on preview, the record
             // is not shown. We move such records to the correct pid.
@@ -152,12 +153,12 @@ final readonly class TtContentLocalizedParentDifferentPid extends AbstractHealth
             $defaultLangMovePlaceholder = $queryBuilder->where(
                 $queryBuilder->expr()->eq('sys_language_uid', 0),
                 $queryBuilder->expr()->eq('t3ver_wsid', (int)$row['t3ver_wsid']),
-                $queryBuilder->expr()->eq('t3ver_state', 4),
+                $queryBuilder->expr()->eq('t3ver_state', VersionState::MOVE_POINTER->value),
                 $queryBuilder->expr()->eq('t3ver_oid', (int)$row['l18n_parent'])
             )->executeQuery()->fetchAllAssociative();
             return empty($defaultLangMovePlaceholder) ? $moveToParentPid : $delete;
         }
-        if ((int)$row['t3ver_state'] === 4) {
+        if ((int)$row['t3ver_state'] === VersionState::MOVE_POINTER->value) {
             // "workspace move" record: A localized content element can only be moved around in workspaces
             // when the parent is moved. So, when a move placeholder of a localized content element exists,
             // there should be a "move placeholder" of the default language content element as well that

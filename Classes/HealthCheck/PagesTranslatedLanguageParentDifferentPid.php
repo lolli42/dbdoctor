@@ -24,6 +24,7 @@ use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
 use TYPO3\CMS\Core\Database\Connection;
+use TYPO3\CMS\Core\Versioning\VersionState;
 
 /**
  * Find translated pages that are on a different pid than their no sys_language_uid=0 parent.
@@ -63,7 +64,7 @@ final readonly class PagesTranslatedLanguageParentDifferentPid extends AbstractH
                     // Ignore "workspace moved" translations due to the odd l10n_parent behavior, as
                     // shown with the tests from https://review.typo3.org/c/Packages/TYPO3.CMS/+/89803
                     // @todo: This could be optimized when the underlying core question has been decided.
-                    && !((int)$row['t3ver_wsid'] > 0 && (int)$row['t3ver_state'] === 4)
+                    && !((int)$row['t3ver_wsid'] > 0 && (int)$row['t3ver_state'] === VersionState::MOVE_POINTER->value)
                 ) {
                     $findings[] = new Finding(
                         new RecordKey('pages', (int)$row['uid']),
