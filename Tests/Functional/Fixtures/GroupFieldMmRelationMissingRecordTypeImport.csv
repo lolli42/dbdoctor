@@ -7,12 +7,15 @@
 ,2,1,"text","Ok"
 ,3,1,"text","Ok"
 "tx_dbdoctortestsgrouptype_item"
-,"uid","pid","record_type","title","relations_mm","relations_mm_changed"
-,1,1,"0","Not Ok - base config, relation to missing page",2,0
-,2,1,"content","Not Ok - relation to missing tt_content, page 1 does not matter",3,0
-,3,1,"removed","Not Ok - unknown type, relation to missing page",2,0
-,4,1,"type_changed","Ok - not a group field",1,0
-,5,1,"content","Ok - type changes MM settings, field not touched",0,1
+,"uid","pid","record_type","title","relations_mm","relations_mm_changed","t3ver_wsid","t3ver_oid"
+,1,1,"0","Not Ok - base config, relation to missing page",2,0,0,0
+,2,1,"content","Not Ok - relation to missing tt_content, page 1 does not matter",3,0,0,0
+,3,1,"removed","Not Ok - unknown type, relation to missing page",2,0,0,0
+,4,1,"type_changed","Ok - not a group field",1,0,0,0
+,5,1,"content","Ok - type changes MM settings, field not touched",0,1,0,0
+# Workspace version with another type than its live record: Each row uses its own type
+,7,1,"0","Not Ok - live record, relation to missing page",2,0,0,0
+,8,1,"content","Not Ok - workspace version of 7, relation to missing tt_content",2,0,1,7
 "tx_dbdoctortestsgrouptype_item_mm"
 ,"uid_local","uid_foreign","tablenames","fieldname"
 # Base config: No tablenames, relations to pages
@@ -38,6 +41,11 @@
 ,2,1,"","relations_mm_multi"
 # Table pages is not allowed for type "content": Not a relation of this field, not touched
 ,2,99,"pages","relations_mm_multi"
+# Workspace version 8 of live record 7 has type "content": Relations to tt_content
+,7,1,"","relations_mm"
+,7,3,"","relations_mm"
+,8,3,"","relations_mm"
+,8,1,"","relations_mm"
 # Local record does not exist: Removed
 ,9,1,"","relations_mm"
 "tx_dbdoctortestsgrouptype_fallback"

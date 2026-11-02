@@ -18,6 +18,9 @@
 ,2,3,"","relations_mm_multi"
 # Table pages is not allowed for type "content": Not a relation of this field, not touched
 ,2,99,"pages","relations_mm_multi"
+# Workspace version 8 of live record 7 has type "content": Relations to tt_content
+,7,1,"","relations_mm"
+,8,3,"","relations_mm"
 "tx_dbdoctortestsgrouptype_fallback_mm"
 ,"uid_local","uid_foreign"
 ,1,3

@@ -10,6 +10,7 @@ return [
         'crdate' => 'crdate',
         'delete' => 'deleted',
         'type' => 'record_type',
+        'versioningWS' => true,
         'iconfile' => 'EXT:tx_dbdoctortestsgrouptype/Resources/Public/Icons/Extension.svg',
         'security' => [
             'ignorePageTypeRestriction' => true,
