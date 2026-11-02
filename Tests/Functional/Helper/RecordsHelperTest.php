@@ -80,6 +80,17 @@ class RecordsHelperTest extends AbstractFunctionalTestCase
     }
 
     #[Test]
+    public function updateTcaRecordThrowsExceptionIfNoRowIsUpdated(): void
+    {
+        $this->expectException(UnexpectedNumberOfAffectedRowsException::class);
+        $this->expectExceptionCode(1646228188);
+        $this->expectExceptionMessageMatches('/^Update query /');
+        /** @var RecordsHelper $recordsHelper */
+        $recordsHelper = $this->get(RecordsHelper::class);
+        $recordsHelper->updateTcaRecord(new PreparedStatements(), false, 'pages', 42, ['hidden' => ['value' => 1, 'type' => Connection::PARAM_INT]]);
+    }
+
+    #[Test]
     public function updateTcaRecordReturnsSqlWithQuotedValues(): void
     {
         /** @var RecordsHelper $recordsHelper */
