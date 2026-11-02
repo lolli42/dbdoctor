@@ -193,7 +193,7 @@ final readonly class SysFileMetadataMissing extends AbstractHealthCheck implemen
             // sys_file record has been removed meanwhile
             return [0, 0];
         } catch (InvalidPathException) {
-            // Identifier with ".." or "//"
+            // Identifier with control characters, ".." and "//" are resolved by PathUtility::getCanonicalPath()
             return [0, 0];
         }
         if (!is_file($filePath)) {

@@ -12,7 +12,7 @@
 ,5,0,1,"/workspace-only.pdf","workspace-only.pdf",0,5,"application/pdf","pdf"
 ,6,0,1,"/dbdoctor-image.png","dbdoctor-image.png",0,2,"image/png","png"
 ,7,0,1,"/not-in-storage.png","not-in-storage.png",0,2,"image/png","png"
-,8,0,1,"/../invalid.png","invalid.png",0,2,"image/png","png"
+,8,0,1,"/in	valid.png","invalid.png",0,2,"image/png","png"
 ,9,0,2,"/dbdoctor-image.png","dbdoctor-image.png",0,2,"image/png","png"
 ,10,0,3,"/dbdoctor-image.png","dbdoctor-image.png",0,2,"image/png","png"
 ,11,0,4,"/dbdoctor-image.png","dbdoctor-image.png",0,2,"image/png","png"

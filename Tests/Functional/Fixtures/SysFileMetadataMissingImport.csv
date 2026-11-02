@@ -18,8 +18,8 @@
 ,6,0,1,"/dbdoctor-image.png","dbdoctor-image.png",0,2,"image/png","png"
 # Should get a metadata record without dimensions - file does not exist in storage
 ,7,0,1,"/not-in-storage.png","not-in-storage.png",0,2,"image/png","png"
-# Should get a metadata record without dimensions - invalid identifier
-,8,0,1,"/../invalid.png","invalid.png",0,2,"image/png","png"
+# Should get a metadata record without dimensions - invalid identifier with a tab, ".." and "//" are resolved by core
+,8,0,1,"/in	valid.png","invalid.png",0,2,"image/png","png"
 # Should get a metadata record without dimensions - storage is soft-deleted
 ,9,0,2,"/dbdoctor-image.png","dbdoctor-image.png",0,2,"image/png","png"
 # Should get a metadata record without dimensions - storage driver is not registered
