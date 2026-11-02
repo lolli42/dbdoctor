@@ -359,10 +359,16 @@ final readonly class TcaHelper
                     && $fieldName !== $this->getTranslationSourceField($tableName)
                     && !isset($inlineParentPointerFields[$tableName][$fieldName])
                 ) {
+                    $allowedTablesByType = $this->getAllowedTablesByType($tableName, $fieldName, $columnConfig);
+                    if ($allowedTablesByType === null) {
+                        continue;
+                    }
                     yield new GroupField(
                         $tableName,
                         $fieldName,
                         GeneralUtility::trimExplode(',', $columnConfig['config']['allowed'], true),
+                        $allowedTablesByType === [] ? null : $this->getTypeField($tableName),
+                        $allowedTablesByType,
                     );
                 }
             }
@@ -409,6 +415,153 @@ final readonly class TcaHelper
                 }
             }
         }
+    }
+
+    /**
+     * Allowed tables of a group field for a record of the given type, with a group field
+     * from getNextGroupFieldWithoutMm(). Null if the relations of the record can not be
+     * resolved unambiguously, and must be left alone.
+     *
+     * A type value that is not a key of TCA "types", for instance a CType of a removed
+     * extension, is resolved differently by the core: FormEngine and core v13 DataHandler
+     * fall back to type "0", or "1" if "0" does not exist, and use the field config of that
+     * type. Core v14 DataHandler (BackendUtility::getTCAtypeValue() with $skipFallback) and
+     * the Record API use the base config of the field. If the fallback type changes "allowed",
+     * the relations are ambiguous.
+     *
+     * @return array<int, string>|null
+     */
+    public function getAllowedTablesOfRecordType(GroupField $groupField, ?string $recordType): ?array
+    {
+        if ($groupField->typeField === null) {
+            return $groupField->allowedTables;
+        }
+        if ($recordType !== null && isset($GLOBALS['TCA'][$groupField->tableName]['types'][$recordType])) {
+            return array_key_exists($recordType, $groupField->allowedTablesByType)
+                ? $groupField->allowedTablesByType[$recordType]
+                : $groupField->allowedTables;
+        }
+        $fallbackType = isset($GLOBALS['TCA'][$groupField->tableName]['types']['0']) ? '0' : '1';
+        if (array_key_exists($fallbackType, $groupField->allowedTablesByType)) {
+            return null;
+        }
+        return $groupField->allowedTables;
+    }
+
+    /**
+     * Record types can change the config of a field with TCA "columnsOverrides". This returns
+     * the allowed tables of a group field per type, for types that change them. Empty array if
+     * no type changes them, the normal case. A type maps to null if its records of this field
+     * must be left alone. Null if the whole field must be left alone.
+     *
+     * dbdoctor follows the core DataHandler when it writes a record (checkValue()): It decides
+     * which relations end up in the database. The DataHandler uses the field config of the record
+     * type, with "columnsOverrides" merged into the base config of "columns", but only if the
+     * field is shown by the type: It must be listed in "showitem" of the type, directly or in a
+     * palette. Otherwise the base config is used, even if "columnsOverrides" changes it. This is
+     * the "sub schema" of core TcaSchema, rebuilt here on the TCA array since dbdoctor does not use
+     * TcaSchema, see README.md. A list item without table prefix, like "42", is a record of the
+     * first allowed table. The DataHandler writes items without prefix if there is only one
+     * allowed table, and MM rows without "tablenames".
+     *
+     * Core and its documentation do not agree on this: The TCA reference documentation states
+     * "columnsOverrides" is for display options only, is ignored by the DataHandler, and must not
+     * change "type". The core does not prevent any of it. Overriding "allowed" works in the backend,
+     * but the core itself is not consistent:
+     * - Core v13 DataHandler uses "columnsOverrides" in checkValue() only, when a record is
+     *   written. Copy, localize and delete use the base config.
+     * - Core v14 DataHandler uses it in checkValue(), copy, localize, move and delete. Remapping
+     *   relations after copy or localize, undelete, and discarding or publishing MM relations in
+     *   workspaces use the base config.
+     * - The reference index and the relation map of TcaSchema use the base config only: Items of
+     *   such fields end up as relations to the wrong table in sys_refindex.
+     * - FormEngine merges "columnsOverrides" of the type even for fields not in "showitem",
+     *   those are not rendered.
+     * - Type values without "types" entry are resolved differently, see getAllowedTablesOfRecordType().
+     *
+     * Rules of dbdoctor:
+     * - Only "allowed" may differ per type. The relations of a type that changes the field "type"
+     *   ("columnsOverrides" turning a group field into something else) or adds an MM table to a
+     *   field without, are left alone.
+     * - A type that changes the MM settings of a field with MM table (MM, MM_match_fields,
+     *   MM_opposite_field, MM_table_where) makes the whole field left alone: Its MM rows can not
+     *   be assigned to a type, and the core reads and writes them with different configs itself.
+     * - If the type of a record is defined in another table (TCA ctrl "type" like "uid_local:type",
+     *   as in sys_file_reference), resolving it would need a query per record: Such a field is
+     *   left alone if a type changes "allowed", and handled with the base config otherwise.
+     *
+     * @param array<string, mixed> $columnConfig
+     * @return array<array-key, array<int, string>|null>|null
+     */
+    private function getAllowedTablesByType(string $tableName, string $fieldName, array $columnConfig): ?array
+    {
+        $typeConfiguration = $GLOBALS['TCA'][$tableName]['ctrl']['type'] ?? '';
+        if (!is_string($typeConfiguration) || $typeConfiguration === '') {
+            // No record types: The core uses the base config.
+            return [];
+        }
+        $baseConfig = $columnConfig['config'];
+        $baseAllowedTables = GeneralUtility::trimExplode(',', (string)$baseConfig['allowed'], true);
+        $hasMm = !empty($baseConfig['MM']);
+        $allowedTablesByType = [];
+        foreach (($GLOBALS['TCA'][$tableName]['types'] ?? []) as $recordType => $typeConfig) {
+            $recordType = (string)$recordType;
+            if (!is_array($typeConfig['columnsOverrides'][$fieldName] ?? null)
+                || !$this->isFieldShownInType($tableName, $recordType, $fieldName)
+            ) {
+                continue;
+            }
+            $config = array_replace_recursive($columnConfig, $typeConfig['columnsOverrides'][$fieldName])['config'] ?? null;
+            if (!is_array($config)) {
+                $allowedTablesByType[$recordType] = null;
+                continue;
+            }
+            if ($hasMm) {
+                foreach (['MM', 'MM_match_fields', 'MM_opposite_field', 'MM_table_where'] as $mmConfigName) {
+                    if (($config[$mmConfigName] ?? null) !== ($baseConfig[$mmConfigName] ?? null)) {
+                        return null;
+                    }
+                }
+            }
+            if (($config['type'] ?? '') !== 'group' || (!$hasMm && !empty($config['MM']))) {
+                $allowedTablesByType[$recordType] = null;
+                continue;
+            }
+            $allowedTables = is_string($config['allowed'] ?? null) ? GeneralUtility::trimExplode(',', $config['allowed'], true) : [];
+            if ($allowedTables === $baseAllowedTables) {
+                continue;
+            }
+            $allowedTablesByType[$recordType] = $allowedTables === [] ? null : $allowedTables;
+        }
+        if ($allowedTablesByType !== [] && str_contains($typeConfiguration, ':')) {
+            return null;
+        }
+        return $allowedTablesByType;
+    }
+
+    /**
+     * True if a field is shown by a record type: Listed in its "showitem", directly or
+     * in a palette referenced there. As core TcaSchemaBuilder->findRelevantFieldsForSubSchema().
+     */
+    private function isFieldShownInType(string $tableName, string $recordType, string $fieldName): bool
+    {
+        $showItem = $GLOBALS['TCA'][$tableName]['types'][$recordType]['showitem'] ?? '';
+        foreach (GeneralUtility::trimExplode(',', is_string($showItem) ? $showItem : '', true) as $showItemEntry) {
+            [$entryName, , $paletteName] = GeneralUtility::trimExplode(';', $showItemEntry . ';;;');
+            if ($entryName === $fieldName) {
+                return true;
+            }
+            if ($entryName !== '--palette--' || $paletteName === '') {
+                continue;
+            }
+            $paletteShowItem = $GLOBALS['TCA'][$tableName]['palettes'][$paletteName]['showitem'] ?? '';
+            foreach (GeneralUtility::trimExplode(',', is_string($paletteShowItem) ? $paletteShowItem : '', true) as $paletteEntry) {
+                if (GeneralUtility::trimExplode(';', $paletteEntry . ';')[0] === $fieldName) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

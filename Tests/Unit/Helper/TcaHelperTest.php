@@ -1319,6 +1319,265 @@ class TcaHelperTest extends UnitTestCase
     }
 
     #[Test]
+    public function getNextGroupFieldWithoutMmReturnsAllowedTablesByType(): void
+    {
+        $GLOBALS['TCA'] = [
+            'foo' => [
+                'ctrl' => [
+                    'type' => 'record_type',
+                ],
+                'columns' => [
+                    'record_type' => [
+                        'config' => [
+                            'type' => 'select',
+                        ],
+                    ],
+                    'csv' => [
+                        'config' => [
+                            'type' => 'group',
+                            'allowed' => 'pages',
+                        ],
+                    ],
+                ],
+                'palettes' => [
+                    'relations' => [
+                        'showitem' => 'record_type, --linebreak--, csv;Label',
+                    ],
+                ],
+                'types' => [
+                    'noOverride' => [
+                        'showitem' => 'record_type, csv',
+                    ],
+                    'shown' => [
+                        'showitem' => 'record_type, csv',
+                        'columnsOverrides' => [
+                            'csv' => ['config' => ['allowed' => 'tt_content, pages']],
+                        ],
+                    ],
+                    'shownWithLabel' => [
+                        'showitem' => '--div--;Tab, record_type, csv;Label',
+                        'columnsOverrides' => [
+                            'csv' => ['config' => ['allowed' => 'tt_content']],
+                        ],
+                    ],
+                    'shownInPalette' => [
+                        'showitem' => '--palette--;Label;relations',
+                        'columnsOverrides' => [
+                            'csv' => ['config' => ['allowed' => 'sys_category']],
+                        ],
+                    ],
+                    'notShown' => [
+                        'showitem' => 'record_type',
+                        'columnsOverrides' => [
+                            'csv' => ['config' => ['allowed' => 'tt_content']],
+                        ],
+                    ],
+                    'sameAllowed' => [
+                        'showitem' => 'record_type, csv',
+                        'columnsOverrides' => [
+                            'csv' => ['config' => ['allowed' => 'pages', 'size' => 5]],
+                        ],
+                    ],
+                    'labelOnly' => [
+                        'showitem' => 'record_type, csv',
+                        'columnsOverrides' => [
+                            'csv' => ['label' => 'Label'],
+                        ],
+                    ],
+                    'emptyAllowed' => [
+                        'showitem' => 'record_type, csv',
+                        'columnsOverrides' => [
+                            'csv' => ['config' => ['allowed' => '']],
+                        ],
+                    ],
+                    'typeChanged' => [
+                        'showitem' => 'record_type, csv',
+                        'columnsOverrides' => [
+                            'csv' => ['config' => ['type' => 'input']],
+                        ],
+                    ],
+                    'mmAdded' => [
+                        'showitem' => 'record_type, csv',
+                        'columnsOverrides' => [
+                            'csv' => ['config' => ['MM' => 'foo_mm']],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        $result = iterator_to_array((new TcaHelper())->getNextGroupFieldWithoutMm(), false);
+        self::assertCount(1, $result);
+        self::assertSame('foo', $result[0]->tableName);
+        self::assertSame('csv', $result[0]->fieldName);
+        self::assertSame(['pages'], $result[0]->allowedTables);
+        self::assertSame('record_type', $result[0]->typeField);
+        $expectedAllowedTablesByType = [
+            'shown' => ['tt_content', 'pages'],
+            'shownWithLabel' => ['tt_content'],
+            'shownInPalette' => ['sys_category'],
+            'emptyAllowed' => null,
+            'typeChanged' => null,
+            'mmAdded' => null,
+        ];
+        self::assertSame($expectedAllowedTablesByType, $result[0]->allowedTablesByType);
+    }
+
+    #[Test]
+    public function getNextGroupFieldWithoutMmIgnoresColumnsOverridesWithoutTypeField(): void
+    {
+        $GLOBALS['TCA'] = [
+            'foo' => [
+                'columns' => [
+                    'csv' => [
+                        'config' => [
+                            'type' => 'group',
+                            'allowed' => 'pages',
+                        ],
+                    ],
+                ],
+                'types' => [
+                    '0' => [
+                        'showitem' => 'csv',
+                        'columnsOverrides' => [
+                            'csv' => ['config' => ['allowed' => 'tt_content']],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        $expected = [
+            new GroupField('foo', 'csv', ['pages']),
+        ];
+        self::assertEquals($expected, iterator_to_array((new TcaHelper())->getNextGroupFieldWithoutMm(), false));
+    }
+
+    #[Test]
+    public function getNextGroupFieldWithoutMmSkipsFieldWithChangedAllowedIfTypeIsDefinedInForeignTable(): void
+    {
+        $GLOBALS['TCA'] = [
+            'foo' => [
+                'ctrl' => [
+                    'type' => 'parent:record_type',
+                ],
+                'columns' => [
+                    'csv' => [
+                        'config' => [
+                            'type' => 'group',
+                            'allowed' => 'pages',
+                        ],
+                    ],
+                    'unchanged' => [
+                        'config' => [
+                            'type' => 'group',
+                            'allowed' => 'pages',
+                        ],
+                    ],
+                ],
+                'types' => [
+                    'content' => [
+                        'showitem' => 'csv, unchanged',
+                        'columnsOverrides' => [
+                            'csv' => ['config' => ['allowed' => 'tt_content']],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        $expected = [
+            new GroupField('foo', 'unchanged', ['pages']),
+        ];
+        self::assertEquals($expected, iterator_to_array((new TcaHelper())->getNextGroupFieldWithoutMm(), false));
+    }
+
+    #[Test]
+    public function getAllowedTablesOfRecordTypeReturnsAllowedTablesWithoutTypeField(): void
+    {
+        $GLOBALS['TCA'] = self::getRecordTypeTca();
+        $groupField = new GroupField('foo', 'csv', ['pages']);
+        self::assertSame(['pages'], (new TcaHelper())->getAllowedTablesOfRecordType($groupField, 'content'));
+    }
+
+    #[Test]
+    public function getAllowedTablesOfRecordTypeReturnsAllowedTablesOfType(): void
+    {
+        $GLOBALS['TCA'] = self::getRecordTypeTca();
+        self::assertSame(['tt_content'], (new TcaHelper())->getAllowedTablesOfRecordType(self::getRecordTypeGroupField(), 'content'));
+    }
+
+    #[Test]
+    public function getAllowedTablesOfRecordTypeReturnsNullForTypeWithIgnoredRelations(): void
+    {
+        $GLOBALS['TCA'] = self::getRecordTypeTca();
+        self::assertNull((new TcaHelper())->getAllowedTablesOfRecordType(self::getRecordTypeGroupField(), 'typeChanged'));
+    }
+
+    #[Test]
+    public function getAllowedTablesOfRecordTypeReturnsAllowedTablesForTypeWithoutChange(): void
+    {
+        $GLOBALS['TCA'] = self::getRecordTypeTca();
+        self::assertSame(['pages'], (new TcaHelper())->getAllowedTablesOfRecordType(self::getRecordTypeGroupField(), '0'));
+    }
+
+    #[Test]
+    public function getAllowedTablesOfRecordTypeReturnsAllowedTablesForUnknownTypeIfFallbackTypeHasNoChange(): void
+    {
+        $GLOBALS['TCA'] = self::getRecordTypeTca();
+        self::assertSame(['pages'], (new TcaHelper())->getAllowedTablesOfRecordType(self::getRecordTypeGroupField(), 'removed'));
+    }
+
+    #[Test]
+    public function getAllowedTablesOfRecordTypeReturnsAllowedTablesForNullType(): void
+    {
+        $GLOBALS['TCA'] = self::getRecordTypeTca();
+        self::assertSame(['pages'], (new TcaHelper())->getAllowedTablesOfRecordType(self::getRecordTypeGroupField(), null));
+    }
+
+    #[Test]
+    public function getAllowedTablesOfRecordTypeReturnsNullForUnknownTypeIfFallbackTypeZeroHasChange(): void
+    {
+        $GLOBALS['TCA'] = self::getRecordTypeTca();
+        $groupField = new GroupField('foo', 'csv', ['pages'], 'record_type', ['0' => ['tt_content']]);
+        self::assertNull((new TcaHelper())->getAllowedTablesOfRecordType($groupField, 'removed'));
+    }
+
+    #[Test]
+    public function getAllowedTablesOfRecordTypeReturnsNullForUnknownTypeIfFallbackTypeOneHasChange(): void
+    {
+        $GLOBALS['TCA'] = self::getRecordTypeTca();
+        unset($GLOBALS['TCA']['foo']['types']['0']);
+        $groupField = new GroupField('foo', 'csv', ['pages'], 'record_type', ['1' => ['tt_content']]);
+        self::assertNull((new TcaHelper())->getAllowedTablesOfRecordType($groupField, 'removed'));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function getRecordTypeTca(): array
+    {
+        return [
+            'foo' => [
+                'ctrl' => [
+                    'type' => 'record_type',
+                ],
+                'types' => [
+                    '0' => ['showitem' => 'csv'],
+                    '1' => ['showitem' => 'csv'],
+                    'content' => ['showitem' => 'csv'],
+                    'typeChanged' => ['showitem' => 'csv'],
+                ],
+            ],
+        ];
+    }
+
+    private static function getRecordTypeGroupField(): GroupField
+    {
+        return new GroupField('foo', 'csv', ['pages'], 'record_type', [
+            'content' => ['tt_content'],
+            'typeChanged' => null,
+        ]);
+    }
+
+    #[Test]
     public function getNextGroupFieldWithMmThrowsExceptionIfTcaIsNotAnArray(): void
     {
         $this->expectException(\RuntimeException::class);
