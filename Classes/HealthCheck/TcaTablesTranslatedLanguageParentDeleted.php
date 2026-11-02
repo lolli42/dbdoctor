@@ -104,7 +104,7 @@ final readonly class TcaTablesTranslatedLanguageParentDeleted extends AbstractHe
                             new Reason(
                                 'parent-deleted',
                                 'Language parent "' . $localizedRow[$translationParentField] . '" is soft-deleted',
-                                [$translationParentField => (int)$localizedRow[$translationParentField]]
+                                ['parent' => (int)$localizedRow[$translationParentField]]
                             ),
                         );
                     }

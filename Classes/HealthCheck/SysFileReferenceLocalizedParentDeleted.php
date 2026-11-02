@@ -78,7 +78,7 @@ final readonly class SysFileReferenceLocalizedParentDeleted extends AbstractHeal
                     new RecordKey('sys_file_reference', (int)$row['uid']),
                     (int)$row['pid'],
                     [$this->softOrHardDeleteChange('sys_file_reference', $row)],
-                    new Reason('parent-deleted', 'Language parent "' . $row['l10n_parent'] . '" is soft-deleted', ['l10n_parent' => (int)$row['l10n_parent']]),
+                    new Reason('parent-deleted', 'Language parent "' . $row['l10n_parent'] . '" is soft-deleted', ['parent' => (int)$row['l10n_parent']]),
                 );
             }
         }

@@ -83,7 +83,7 @@ final readonly class SysFileReferenceLocalizedFieldSync extends AbstractHealthCh
                         'Language parent "' . $row['l10n_parent'] . '" has tablenames "' . $languageParentRecord['tablenames'] . '"'
                         . ' and fieldname "' . $languageParentRecord['fieldname'] . '"',
                         [
-                            'l10n_parent' => (int)$row['l10n_parent'],
+                            'parent' => (int)$row['l10n_parent'],
                             'parentTablenames' => (string)$languageParentRecord['tablenames'],
                             'parentFieldname' => (string)$languageParentRecord['fieldname'],
                         ]
