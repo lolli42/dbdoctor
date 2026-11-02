@@ -19,6 +19,7 @@ OK  WorkspacesT3verStateMinusOne
 OK  WorkspacesT3verStateThree
 OK  WorkspacesT3verOidNotZeroInLive
 OK  WorkspacesOverlayLiveRecordInvalid
+OK  WorkspacesNewRecordT3verOidNotZero
 OK  SysRedirectInvalidPid
 OK  TcaTablesLanguageLessThanOneHasZeroLanguageParent
 OK  TcaTablesLanguageLessThanOneHasZeroLanguageSource

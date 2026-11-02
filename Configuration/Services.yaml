@@ -75,13 +75,20 @@ services:
         identifier: 'dbdoctor-workspaces-overlay-live-record-invalid'
         after: 'dbdoctor-workspaces-t3ver-oid-not-zero-in-live'
 
+  # After WorkspacesOverlayLiveRecordInvalid: New records pointing to an invalid live record are removed there
+  Lolli\Dbdoctor\HealthCheck\WorkspacesNewRecordT3verOidNotZero:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-workspaces-new-record-t3ver-oid-not-zero'
+        after: 'dbdoctor-workspaces-overlay-live-record-invalid'
+
   # "move sys_redirects" before PagesBrokenTree for a better chance to move records to the correct pid
   Lolli\Dbdoctor\HealthCheck\SysRedirectInvalidPid:
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-sys-redirect-invalid-pid'
         before: 'dbdoctor-pages-broken-tree'
-        after: 'dbdoctor-workspaces-overlay-live-record-invalid'
+        after: 'dbdoctor-workspaces-new-record-t3ver-oid-not-zero'
 
   Lolli\Dbdoctor\HealthCheck\TcaTablesLanguageLessThanOneHasZeroLanguageParent:
     tags:
