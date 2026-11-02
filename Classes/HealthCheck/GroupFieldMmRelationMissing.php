@@ -18,6 +18,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Helper\MmRelationHelper;
+use Lolli\Dbdoctor\Helper\RelationProblem;
 
 /**
  * Relations in TCA type 'group' fields with MM table must point to existing records.
@@ -49,6 +50,6 @@ final readonly class GroupFieldMmRelationMissing extends AbstractHealthCheck imp
 
     public function detect(HealthCheckRun $run): array
     {
-        return $this->mmRelationHelper->getFindings($run, $this->tcaHelper->getNextGroupFieldWithMm());
+        return $this->mmRelationHelper->getFindings($run, $this->tcaHelper->getNextGroupFieldWithMm(), RelationProblem::Missing);
     }
 }

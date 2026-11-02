@@ -653,6 +653,24 @@ final readonly class TcaHelper
     }
 
     /**
+     * True if a relation field may point to a record of a workspace aware table, with the
+     * allowed tables of all record types. "*" allows any table.
+     */
+    public function hasWorkspaceAwareTargetTable(GroupField|MmField|ForeignTableListField $field): bool
+    {
+        $tableNames = $field->allowedTables;
+        foreach ($field->allowedTablesByType as $allowedTablesOfType) {
+            $tableNames = array_merge($tableNames, $allowedTablesOfType ?? []);
+        }
+        foreach ($tableNames as $tableName) {
+            if ($tableName === '*' || $this->getWorkspaceIdField($tableName) !== null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Record types can change the config of a field with TCA "columnsOverrides". This returns
      * the allowed tables of a relation field per type, for types that change them: TCA "allowed"
      * of group fields, "foreign_table" of select, category and inline fields. Empty array if

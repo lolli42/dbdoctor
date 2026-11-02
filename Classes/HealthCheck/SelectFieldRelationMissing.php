@@ -17,7 +17,8 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbdoctor\Helper\ForeignTableListRelationHelper;
+use Lolli\Dbdoctor\Helper\ListRelationHelper;
+use Lolli\Dbdoctor\Helper\RelationProblem;
 use Lolli\Dbdoctor\Tca\ForeignTableListField;
 
 /**
@@ -27,7 +28,7 @@ use Lolli\Dbdoctor\Tca\ForeignTableListField;
 final readonly class SelectFieldRelationMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function __construct(
-        private ForeignTableListRelationHelper $foreignTableListRelationHelper,
+        private ListRelationHelper $listRelationHelper,
     ) {}
 
     public function getDescription(): HealthCheckDescription
@@ -49,7 +50,7 @@ final readonly class SelectFieldRelationMissing extends AbstractHealthCheck impl
 
     public function detect(HealthCheckRun $run): array
     {
-        return $this->foreignTableListRelationHelper->getFindings($run, $this->getSelectFields());
+        return $this->listRelationHelper->getFindings($run, $this->getSelectFields(), RelationProblem::Missing);
     }
 
     /**
