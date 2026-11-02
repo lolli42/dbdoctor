@@ -104,4 +104,26 @@ class HealthCommandTest extends AbstractFunctionalTestCase
         self::assertSame(HealthCheckResult::Error->value, $result);
         self::assertStringContainsString('Option "--file" with valid file path is mandatory when using "--mode execute".', $this->getNormalizedDisplay($commandTester));
     }
+
+    #[Test]
+    public function checkModeReturnsOkWithoutFindings(): void
+    {
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $result = $commandTester->execute(['--mode' => 'check']);
+        self::assertSame(HealthCheckResult::Ok->value, $result);
+        self::assertStringContainsString('OK  TcaTablesPidMissing', $commandTester->getDisplay());
+        self::assertStringNotContainsString('referenceindex:update', $this->getNormalizedDisplay($commandTester));
+    }
+
+    #[Test]
+    public function checkModeReturnsBrokenWithFindingsAndChangesNothing(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingImport.csv');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $result = $commandTester->execute(['--mode' => 'check']);
+        self::assertSame(HealthCheckResult::Broken->value, $result);
+        self::assertStringNotContainsString('OK  TcaTablesPidMissing', $commandTester->getDisplay());
+        self::assertStringNotContainsString('referenceindex:update', $this->getNormalizedDisplay($commandTester));
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingImport.csv');
+    }
 }
