@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Exception\NoSuchTableException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
@@ -61,7 +60,7 @@ final readonly class TtContentDeletedLocalizedParentExists extends AbstractHealt
             /** @var array<string, int|string> $row */
             try {
                 $this->recordsHelper->getRecord($run->statements, 'tt_content', ['uid'], (int)$row['l18n_parent']);
-            } catch (NoSuchRecordException|NoSuchTableException $e) {
+            } catch (NoSuchRecordException $e) {
                 // Match if parent does not exist at all
                 $findings[] = new Finding(
                     new RecordKey('tt_content', (int)$row['uid']),

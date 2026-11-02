@@ -57,7 +57,7 @@ final readonly class SysFileReferenceDangling extends AbstractHealthCheck implem
             $reason = null;
             try {
                 $this->recordsHelper->getRecord($run->statements, 'sys_file', ['uid'], (int)$row['uid_local']);
-            } catch (NoSuchRecordException|NoSuchTableException $e) {
+            } catch (NoSuchRecordException $e) {
                 $reason = new Reason('file-missing', 'File "' . $row['uid_local'] . '" does not exist', ['uidLocal' => (int)$row['uid_local']]);
             }
             if ($reason === null) {

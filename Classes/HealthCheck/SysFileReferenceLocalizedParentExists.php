@@ -17,7 +17,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Exception\NoSuchTableException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
@@ -67,7 +66,7 @@ final readonly class SysFileReferenceLocalizedParentExists extends AbstractHealt
             /** @var array<string, int|string> $row */
             try {
                 $this->recordsHelper->getRecord($run->statements, 'sys_file_reference', ['uid'], (int)$row['l10n_parent']);
-            } catch (NoSuchRecordException|NoSuchTableException $e) {
+            } catch (NoSuchRecordException $e) {
                 // @todo: Possible improvement. We could try to look at the uid_foreign/tablesnames inline parent record,
                 //        see if is "connected mode", has a sys_language_uid=0 l10n_parent on the same pid, look up the
                 //        sys_file_reference children attached to the same fieldname (which must not be a flexform field),
