@@ -13,6 +13,7 @@
 ,5,1,0,0,0,0,1,0,"tt_content","Ok - tt_content 0 can not exist"
 ,6,1,0,0,0,0,1,0,"","Ok - empty uid, empty table"
 ,7,1,0,0,0,0,1,0,,"Ok - empty uid, empty table"
+,8,1,0,0,0,0,1,42,"tt_content","Ok - tt_content 42 does not exist"
 "tt_content"
 ,"uid","pid","deleted"
 ,1,1,0
