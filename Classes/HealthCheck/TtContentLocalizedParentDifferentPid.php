@@ -157,17 +157,8 @@ final readonly class TtContentLocalizedParentDifferentPid extends AbstractHealth
             )->executeQuery()->fetchAllAssociative();
             return empty($defaultLangMovePlaceholder) ? $moveToParentPid : $delete;
         }
-        if ((int)$row['t3ver_state'] === VersionState::MOVE_POINTER->value) {
-            // "workspace move" record: A localized content element can only be moved around in workspaces
-            // when the parent is moved. So, when a move placeholder of a localized content element exists,
-            // there should be a "move placeholder" of the default language content element as well that
-            // is on the same pid. If that record was published already, the pids of live default lang record
-            // and localized "move placeholder" are identical and not found here.
-            // As such, having a "move placeholder" of a localized content element alone indicates a bug,
-            // so we remove the record.
-            return $delete;
-        }
         // t3ver_state -1 and 3 are from old core versions, earlier workspace checks remove them.
+        // Workspace move pointers (4) do not get here, detect() skips them.
         throw new EarlierCheckNotFixedException(
             'tt_content record with uid="' . $row['uid'] . '" has t3ver_state="' . $row['t3ver_state'] . '".'
             . ' The earlier checks WorkspacesT3verStateMinusOne and WorkspacesT3verStateThree find and fix this.',
