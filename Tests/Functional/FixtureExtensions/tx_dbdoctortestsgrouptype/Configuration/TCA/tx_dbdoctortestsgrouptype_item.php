@@ -55,6 +55,17 @@ return [
                 ],
             ],
         ],
+        'relations_mm_multi' => [
+            'label' => 'Relations to pages and tt_content, MM, type "content" allows tt_content only',
+            'config' => [
+                'type' => 'group',
+                'allowed' => 'pages, tt_content',
+                'MM' => 'tx_dbdoctortestsgrouptype_item_mm',
+                'MM_match_fields' => [
+                    'fieldname' => 'relations_mm_multi',
+                ],
+            ],
+        ],
         'relations_mm_changed' => [
             'label' => 'Relations to pages, MM, type "content" changes MM settings',
             'config' => [
@@ -74,11 +85,11 @@ return [
     ],
     'types' => [
         '0' => [
-            'showitem' => 'title, record_type, relations_csv, relations_mm, relations_mm_changed',
+            'showitem' => 'title, record_type, relations_csv, relations_mm, relations_mm_multi, relations_mm_changed',
         ],
         // Field in a palette, relations to tt_content
         'content' => [
-            'showitem' => 'title, record_type, --palette--;;relations, relations_mm_changed',
+            'showitem' => 'title, record_type, --palette--;;relations, relations_mm_multi, relations_mm_changed',
             'columnsOverrides' => [
                 'relations_csv' => [
                     'config' => [
@@ -86,6 +97,11 @@ return [
                     ],
                 ],
                 'relations_mm' => [
+                    'config' => [
+                        'allowed' => 'tt_content',
+                    ],
+                ],
+                'relations_mm_multi' => [
                     'config' => [
                         'allowed' => 'tt_content',
                     ],
