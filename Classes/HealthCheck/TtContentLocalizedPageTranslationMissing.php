@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
@@ -54,7 +55,7 @@ final readonly class TtContentLocalizedPageTranslationMissing extends AbstractHe
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         // Records are sorted by pid: Only the page of the current pid is kept.
         $currentPid = null;
@@ -79,7 +80,7 @@ final readonly class TtContentLocalizedPageTranslationMissing extends AbstractHe
             $pid = (int)$row['pid'];
             if ($currentPid !== $pid) {
                 try {
-                    $pageRow = $this->recordsHelper->getRecord($run->statements, 'pages', ['uid', 'doktype', 'sys_language_uid'], $pid);
+                    $pageRow = $this->recordsHelper->getRecord($statements, 'pages', ['uid', 'doktype', 'sys_language_uid'], $pid);
                 } catch (NoSuchRecordException $e) {
                     // Earlier test should have fixed this.
                     throw new EarlierCheckNotFixedException(

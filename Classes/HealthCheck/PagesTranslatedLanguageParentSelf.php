@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordKey;
 use TYPO3\CMS\Core\Database\Connection;
@@ -42,7 +43,7 @@ final readonly class PagesTranslatedLanguageParentSelf extends AbstractHealthChe
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         // Do not consider page translation records that have been set to deleted already.

@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
@@ -52,7 +53,7 @@ final readonly class TcaTablesTranslatedLanguageParentDifferentPid extends Abstr
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         $findings = [];
         // @todo: sys_file_reference is excluded due to https://github.com/lolli42/dbdoctor/issues/30, see comment below, too.
@@ -96,7 +97,7 @@ final readonly class TcaTablesTranslatedLanguageParentDifferentPid extends Abstr
             while ($localizedRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $localizedRow */
                 try {
-                    $parentRow = $this->recordsHelper->getRecord($run->statements, $tableName, ['uid', 'pid'], (int)$localizedRow[$translationParentField]);
+                    $parentRow = $this->recordsHelper->getRecord($statements, $tableName, ['uid', 'pid'], (int)$localizedRow[$translationParentField]);
                 } catch (NoSuchRecordException $e) {
                     // Earlier test should have fixed this.
                     throw new EarlierCheckNotFixedException(

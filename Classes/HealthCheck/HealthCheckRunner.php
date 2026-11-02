@@ -22,8 +22,6 @@ use Lolli\Dbdoctor\Database\RecordChangeExecutor;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Renderer\FindingsRenderer;
-use Symfony\Component\Console\Input\ArrayInput;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -55,15 +53,15 @@ final readonly class HealthCheckRunner
     {
         memory_reset_peak_usage();
         $start = hrtime(true);
-        $run = new HealthCheckRun(new SymfonyStyle(new ArrayInput([]), new NullOutput()), '', new PreparedStatements());
+        $statements = new PreparedStatements();
         $findings = [];
         $skipReason = null;
         try {
-            $findings = $check->detect($run);
+            $findings = $check->detect($statements);
         } catch (EarlierCheckNotFixedException $e) {
             $skipReason = $e->getMessage();
         } finally {
-            $run->statements->release();
+            $statements->release();
         }
         $status = InspectionStatus::Ok;
         if ($skipReason !== null) {
@@ -85,7 +83,7 @@ final readonly class HealthCheckRunner
     {
         $io = $run->io;
         try {
-            return $this->handleFindings($check, $run, $mode, $check->detect($run));
+            return $this->handleFindings($check, $run, $mode, $check->detect($run->statements));
         } catch (EarlierCheckNotFixedException $e) {
             // Thrown by detection. Interactive and execute mode detect again later, but
             // only check mode turns this into a skip.
@@ -130,7 +128,7 @@ final readonly class HealthCheckRunner
                     // since detection, for instance by editors. Detect again, and when the findings
                     // differ, show them instead of executing. Findings are data objects, == compares
                     // them with all their properties.
-                    $currentFindings = $check->detect($run);
+                    $currentFindings = $check->detect($run->statements);
                     if ($currentFindings != $findings) {
                         $findings = $currentFindings;
                         $this->findingsRenderer->reloaded($io);
@@ -143,7 +141,7 @@ final readonly class HealthCheckRunner
                     // Then detect again to show what is left.
                     $this->writeSqlDumpFileHeader($check, $run);
                     $this->recordChangeExecutor->execute($run, false, $findings);
-                    $findings = $check->detect($run);
+                    $findings = $check->detect($run->statements);
                     $this->findingsRenderer->summary($io, $findings);
                     if (empty($findings)) {
                         return HealthCheckResult::Broken;
@@ -156,7 +154,7 @@ final readonly class HealthCheckRunner
                 case 'a':
                     return HealthCheckResult::Abort;
                 case 'r':
-                    $findings = $check->detect($run);
+                    $findings = $check->detect($run->statements);
                     $this->findingsRenderer->summary($io, $findings);
                     if (empty($findings)) {
                         return HealthCheckResult::Ok;

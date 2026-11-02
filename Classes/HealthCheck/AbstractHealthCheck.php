@@ -30,7 +30,7 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
  * A check implements HealthCheckInterface detect(): It returns findings, each with the changes
  * fixing it. HealthCheckRunner shows, simulates and executes them.
  *
- * Health checks are stateless: State of a single run is in HealthCheckRun. Services
+ * Health checks are stateless: Prepared statements of a single run are handed to detect(). Services
  * are set by inject*() methods instead of a constructor, to keep constructors of checks free
  * for their own services. Checks extending this class must be readonly classes, too.
  */

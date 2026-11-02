@@ -18,6 +18,7 @@ namespace Lolli\Dbdoctor\Helper;
  */
 
 use Doctrine\DBAL\ParameterType;
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\MmKey;
@@ -25,7 +26,6 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordFieldKey;
-use Lolli\Dbdoctor\HealthCheck\HealthCheckRun;
 use Lolli\Dbdoctor\Tca\MmField;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
@@ -55,7 +55,7 @@ final readonly class MmRelationHelper
      * @param iterable<MmField> $mmFields
      * @return list<Finding>
      */
-    public function getFindings(HealthCheckRun $run, iterable $mmFields, RelationProblem $problem): array
+    public function getFindings(PreparedStatements $statements, iterable $mmFields, RelationProblem $problem): array
     {
         // Findings per table they are counted for: The local table, or the MM table for MM rows of missing local records.
         $findingsByTable = [];
@@ -130,14 +130,14 @@ final readonly class MmRelationHelper
                     if ($currentUidLocal !== null && $isLocalRecordMissing) {
                         $findingsByTable[$mmTableName][] = $this->getMissingLocalRecordFinding($mmField, $currentUidLocal, $mmRowCount);
                     } elseif ($currentUidLocal !== null && !empty($relations)) {
-                        $finding = $this->getRelationsFinding($run, $problem, $mmField, $currentUidLocal, $relations);
+                        $finding = $this->getRelationsFinding($statements, $problem, $mmField, $currentUidLocal, $relations);
                         if ($finding !== null) {
                             $findingsByTable[$tableName][] = $finding;
                         }
                     }
                     $currentUidLocal = (int)$mmRow['uid_local'];
                     $isLocalRecordMissing = $canHandleMissingLocalRecords
-                        && $this->relationTargetHelper->hasProblem($run, RelationProblem::Missing, $tableName, $currentUidLocal);
+                        && $this->relationTargetHelper->hasProblem($statements, RelationProblem::Missing, $tableName, $currentUidLocal);
                     $mmRowCount = 0;
                     $relations = [];
                 }
@@ -166,7 +166,7 @@ final readonly class MmRelationHelper
                     // for sys_category "items": A workspace overlay of the target owns the MM rows pointing to it.
                     continue;
                 }
-                if ($uidForeign > 0 && $this->relationTargetHelper->hasProblem($run, $problem, $targetTableName, $uidForeign)) {
+                if ($uidForeign > 0 && $this->relationTargetHelper->hasProblem($statements, $problem, $targetTableName, $uidForeign)) {
                     // Grouped by "tablenames", a DELETE condition of its own. Once per uid_foreign: Fields without
                     // match fields, like sys_category "items", read rows of all fields of the opposite side, one
                     // DELETE removes all of them.
@@ -181,7 +181,7 @@ final readonly class MmRelationHelper
             if ($currentUidLocal !== null && $isLocalRecordMissing) {
                 $findingsByTable[$mmTableName][] = $this->getMissingLocalRecordFinding($mmField, $currentUidLocal, $mmRowCount);
             } elseif ($currentUidLocal !== null && !empty($relations)) {
-                $finding = $this->getRelationsFinding($run, $problem, $mmField, $currentUidLocal, $relations);
+                $finding = $this->getRelationsFinding($statements, $problem, $mmField, $currentUidLocal, $relations);
                 if ($finding !== null) {
                     $findingsByTable[$tableName][] = $finding;
                 }
@@ -288,10 +288,10 @@ final readonly class MmRelationHelper
      *
      * @param array<string, array{tableName: string, tablenames: string|null, uids: array<int, int>}> $relations
      */
-    private function getRelationsFinding(HealthCheckRun $run, RelationProblem $problem, MmField $mmField, int $uidLocal, array $relations): ?Finding
+    private function getRelationsFinding(PreparedStatements $statements, RelationProblem $problem, MmField $mmField, int $uidLocal, array $relations): ?Finding
     {
         try {
-            $localRecord = $this->recordsHelper->getRecord($run->statements, $mmField->tableName, ['uid', 'pid'], $uidLocal);
+            $localRecord = $this->recordsHelper->getRecord($statements, $mmField->tableName, ['uid', 'pid'], $uidLocal);
         } catch (NoSuchRecordException $e) {
             // Only if the local side of the MM table is ambiguous, see canHandleMissingLocalRecords():
             // The MM rows are no relation of an existing record of this table, they are kept.

@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
@@ -45,7 +46,7 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentDeleted 
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         $findingsByTable = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldParent() as $inlineChild) {
@@ -96,7 +97,7 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentDeleted 
             while ($inlineChildRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $inlineChildRow */
                 try {
-                    $parentRow = $this->recordsHelper->getRecord($run->statements, $parentTableName, ['uid', $parentTableDeleteField], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
+                    $parentRow = $this->recordsHelper->getRecord($statements, $parentTableName, ['uid', $parentTableDeleteField], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
                     if ((bool)$parentRow[$parentTableDeleteField]) {
                         $parentUid = (int)$inlineChildRow[$fieldNameOfParentTableUid];
                         // Keyed by uid: Two parent fields of the same parent table may select the same row.

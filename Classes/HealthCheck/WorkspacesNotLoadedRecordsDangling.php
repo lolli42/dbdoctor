@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
@@ -47,7 +48,7 @@ final readonly class WorkspacesNotLoadedRecordsDangling extends AbstractHealthCh
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         if (ExtensionManagementUtility::isLoaded('workspaces')) {
             // Nothing to do when ext:workspaces is loaded

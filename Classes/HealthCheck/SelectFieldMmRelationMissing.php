@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Helper\MmRelationHelper;
 use Lolli\Dbdoctor\Helper\RelationProblem;
 
@@ -48,8 +49,8 @@ final readonly class SelectFieldMmRelationMissing extends AbstractHealthCheck im
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
-        return $this->mmRelationHelper->getFindings($run, $this->tcaHelper->getNextSelectFieldWithMm(), RelationProblem::Missing);
+        return $this->mmRelationHelper->getFindings($statements, $this->tcaHelper->getNextSelectFieldWithMm(), RelationProblem::Missing);
     }
 }

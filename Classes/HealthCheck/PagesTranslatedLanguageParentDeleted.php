@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
@@ -44,7 +45,7 @@ final readonly class PagesTranslatedLanguageParentDeleted extends AbstractHealth
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         // Do not consider page translation records that have been set to deleted already.
@@ -58,7 +59,7 @@ final readonly class PagesTranslatedLanguageParentDeleted extends AbstractHealth
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
-                $parentRecord = $this->recordsHelper->getRecord($run->statements, 'pages', ['uid', 'deleted'], (int)$row['l10n_parent']);
+                $parentRecord = $this->recordsHelper->getRecord($statements, 'pages', ['uid', 'deleted'], (int)$row['l10n_parent']);
                 if ((bool)$parentRecord['deleted']) {
                     $findings[] = new Finding(
                         new RecordKey('pages', (int)$row['uid']),

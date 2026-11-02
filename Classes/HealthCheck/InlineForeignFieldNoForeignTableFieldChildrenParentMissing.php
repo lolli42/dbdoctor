@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
@@ -42,7 +43,7 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentMissing 
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         $findingsByTable = [];
 
@@ -73,7 +74,7 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentMissing 
             while ($inlineChildRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $inlineChildRow */
                 try {
-                    $this->recordsHelper->getRecord($run->statements, $parentTableName, ['uid'], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
+                    $this->recordsHelper->getRecord($statements, $parentTableName, ['uid'], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
                 } catch (NoSuchRecordException $e) {
                     // Keyed by uid: Two parent fields of the same parent table may select the same row.
                     $findingsByTable[$childTableName][(int)$inlineChildRow['uid']] = new Finding(

@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
@@ -47,7 +48,7 @@ final readonly class InlineForeignFieldChildrenParentLanguageDifferent extends A
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         // Per table: Updates of children with language -1 first, then soft or hard deletes of the others.
         $updateFindings = [];
@@ -106,7 +107,7 @@ final readonly class InlineForeignFieldChildrenParentLanguageDifferent extends A
                     continue;
                 }
                 try {
-                    $parentRow = $this->recordsHelper->getRecord($run->statements, (string)$inlineChildRow[$fieldNameOfParentTableName], ['uid', $parentTableLanguageField], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
+                    $parentRow = $this->recordsHelper->getRecord($statements, (string)$inlineChildRow[$fieldNameOfParentTableName], ['uid', $parentTableLanguageField], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
                     $parentRowLanguage = (int)$parentRow[$parentTableLanguageField];
                     $childRowLanguage = (int)$inlineChildRow[$childTableLanguageField];
                     // @todo: We may need to think about l10n_parent field here as well?

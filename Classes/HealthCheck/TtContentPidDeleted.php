@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
@@ -50,7 +51,7 @@ final readonly class TtContentPidDeleted extends AbstractHealthCheck implements 
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         // Do not consider deleted records, soft-deleted records on soft-deleted page are ok.
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
@@ -63,7 +64,7 @@ final readonly class TtContentPidDeleted extends AbstractHealthCheck implements 
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
-                $pageRow = $this->recordsHelper->getRecord($run->statements, 'pages', ['uid', 'deleted'], (int)$row['pid']);
+                $pageRow = $this->recordsHelper->getRecord($statements, 'pages', ['uid', 'deleted'], (int)$row['pid']);
                 if ((int)$pageRow['deleted'] === 1) {
                     $findings[] = new Finding(
                         new RecordKey('tt_content', (int)$row['uid']),

@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
@@ -48,7 +49,7 @@ final readonly class TcaTablesTranslationSourceLogicWithParent extends AbstractH
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         $findings = [];
         foreach ($this->tcaHelper->getNextLanguageSourceAwareTcaTable() as $tableName) {
@@ -72,7 +73,7 @@ final readonly class TcaTablesTranslationSourceLogicWithParent extends AbstractH
             while ($row = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $row */
                 try {
-                    $translationSourceRecord = $this->recordsHelper->getRecord($run->statements, $tableName, ['uid', $translationParentField], (int)$row[$translationSourceField]);
+                    $translationSourceRecord = $this->recordsHelper->getRecord($statements, $tableName, ['uid', $translationParentField], (int)$row[$translationSourceField]);
                 } catch (NoSuchRecordException) {
                     // Not existing translation source is handled by TcaTablesTranslationSourceExists,
                     // the record is found in the next run if that check only simulated.

@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
@@ -43,7 +44,7 @@ final readonly class TcaTablesPidDeleted extends AbstractHealthCheck implements 
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         $findings = [];
         // Iterate all TCA tables, but ignore pages table
@@ -73,7 +74,7 @@ final readonly class TcaTablesPidDeleted extends AbstractHealthCheck implements 
                 /** @var array<string, int|string> $row */
                 // Records pointing to pid 0 are ok, check all others.
                 try {
-                    $pageRow = $this->recordsHelper->getRecord($run->statements, 'pages', ['uid', 'deleted'], (int)$row['pid']);
+                    $pageRow = $this->recordsHelper->getRecord($statements, 'pages', ['uid', 'deleted'], (int)$row['pid']);
                     if ((int)$pageRow['deleted'] === 1) {
                         $findings[] = new Finding(
                             new RecordKey($tableName, (int)$row['uid']),

@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Finding\Finding;
 
 interface HealthCheckInterface
@@ -27,11 +28,12 @@ interface HealthCheckInterface
     public function getDescription(): HealthCheckDescription;
 
     /**
-     * Find broken things, each with the changes that fix it. Detection does not change records.
+     * Find broken things, each with the changes that fix it. Detection does not change records
+     * and has no output. Prepared statements are released by the caller when the check ends.
      *
      * @return list<Finding>
      */
-    public function detect(HealthCheckRun $run): array;
+    public function detect(PreparedStatements $statements): array;
 
     /**
      * Database fields shown in record details of findings of a table, additionally to the default

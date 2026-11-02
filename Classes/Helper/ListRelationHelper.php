@@ -17,11 +17,11 @@ namespace Lolli\Dbdoctor\Helper;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordFieldKey;
-use Lolli\Dbdoctor\HealthCheck\HealthCheckRun;
 use Lolli\Dbdoctor\Tca\ForeignTableListField;
 use Lolli\Dbdoctor\Tca\GroupField;
 use TYPO3\CMS\Core\Database\Connection;
@@ -55,7 +55,7 @@ final readonly class ListRelationHelper
      * @param iterable<GroupField|ForeignTableListField> $listFields
      * @return list<Finding>
      */
-    public function getFindings(HealthCheckRun $run, iterable $listFields, RelationProblem $problem): array
+    public function getFindings(PreparedStatements $statements, iterable $listFields, RelationProblem $problem): array
     {
         $findings = [];
         foreach ($listFields as $listField) {
@@ -105,7 +105,7 @@ final readonly class ListRelationHelper
                     // Relations of this record are ambiguous, they are left alone.
                     continue;
                 }
-                $relations = $this->getRelationsWithProblem($run, $problem, $fieldValue, $allowedTables, $staticItemValues);
+                $relations = $this->getRelationsWithProblem($statements, $problem, $fieldValue, $allowedTables, $staticItemValues);
                 if (empty($relations)) {
                     continue;
                 }
@@ -144,7 +144,7 @@ final readonly class ListRelationHelper
      * @param array<int, string> $staticItemValues
      * @return array<string, string> Key is "tableName:uid", value is the item as stored in the list
      */
-    private function getRelationsWithProblem(HealthCheckRun $run, RelationProblem $problem, string $fieldValue, array $allowedTables, array $staticItemValues): array
+    private function getRelationsWithProblem(PreparedStatements $statements, RelationProblem $problem, string $fieldValue, array $allowedTables, array $staticItemValues): array
     {
         $isAnyTableAllowed = in_array('*', $allowedTables, true);
         $firstTable = $isAnyTableAllowed ? '' : ($allowedTables[0] ?? '');
@@ -166,7 +166,7 @@ final readonly class ListRelationHelper
             ) {
                 continue;
             }
-            if ($this->relationTargetHelper->hasProblem($run, $problem, $targetTableName, (int)$uid)) {
+            if ($this->relationTargetHelper->hasProblem($statements, $problem, $targetTableName, (int)$uid)) {
                 $relations[$targetTableName . ':' . (int)$uid] = $item;
             }
         }

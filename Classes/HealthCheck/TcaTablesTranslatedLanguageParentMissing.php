@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
@@ -46,7 +47,7 @@ final readonly class TcaTablesTranslatedLanguageParentMissing extends AbstractHe
         );
     }
 
-    public function detect(HealthCheckRun $run): array
+    public function detect(PreparedStatements $statements): array
     {
         $findings = [];
         foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {
@@ -71,7 +72,7 @@ final readonly class TcaTablesTranslatedLanguageParentMissing extends AbstractHe
             while ($localizedRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $localizedRow */
                 try {
-                    $this->recordsHelper->getRecord($run->statements, $tableName, ['uid'], (int)$localizedRow[$translationParentField]);
+                    $this->recordsHelper->getRecord($statements, $tableName, ['uid'], (int)$localizedRow[$translationParentField]);
                 } catch (NoSuchRecordException $e) {
                     $findings[] = new Finding(
                         new RecordKey($tableName, (int)$localizedRow['uid']),
