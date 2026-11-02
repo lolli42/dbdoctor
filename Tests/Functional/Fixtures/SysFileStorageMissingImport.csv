@@ -1,0 +1,13 @@
+"sys_file_storage"
+,"uid","pid","deleted","name"
+,1,0,0,"Ok - storage"
+,2,0,1,"Ok - soft-deleted storage"
+"sys_file"
+,"uid","pid","storage","identifier"
+,1,0,1,"/ok.jpg"
+# Storage 0 is the core fallback storage, it has no record
+,2,0,0,"/fallback-storage-ok.jpg"
+# Files of soft-deleted storages are kept for the recycler
+,3,0,2,"/soft-deleted-storage-ok.jpg"
+,4,0,9,"/storage-missing.jpg"
+,5,0,9,"/storage-missing-2.jpg"

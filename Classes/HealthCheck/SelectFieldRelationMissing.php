@@ -66,6 +66,7 @@ final readonly class SelectFieldRelationMissing extends AbstractHealthCheck impl
             if ($selectField->tableName === 'sys_file' && $selectField->fieldName === 'storage') {
                 // Core v13 has a foreign_table for this field. Storage 0 is the core fallback storage
                 // for files outside a configured storage: Setting it would move files to that storage.
+                // The earlier check SysFileStorageMissing removes files of missing storages.
                 continue;
             }
             yield $selectField;

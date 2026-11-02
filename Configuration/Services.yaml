@@ -150,6 +150,13 @@ services:
         identifier: 'dbdoctor-pages-shortcut-loop'
         after: 'dbdoctor-pages-translated-language-parent-duplicates'
 
+  # Before the sys_file_metadata and sys_file_reference checks: They remove metadata and references of removed files
+  Lolli\Dbdoctor\HealthCheck\SysFileStorageMissing:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-sys-file-storage-missing'
+        after: 'dbdoctor-pages-shortcut-loop'
+
   # sys_file_metadata is a bit special due to its cross dependency with sys_file: Each sys_file needs
   # exactly one default language metadata record, and translations must point to the one of their file.
   # Metadata of missing files and duplicate default records are removed first. The last two run before
@@ -159,7 +166,7 @@ services:
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-sys-file-metadata-file-missing'
-        after: 'dbdoctor-pages-shortcut-loop'
+        after: 'dbdoctor-sys-file-storage-missing'
 
   Lolli\Dbdoctor\HealthCheck\SysFileMetadataDefaultDuplicates:
     tags:

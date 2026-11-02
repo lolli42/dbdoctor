@@ -31,6 +31,7 @@ OK  PagesTranslatedLanguageParentDeleted
 OK  PagesTranslatedLanguageParentDifferentPid
 OK  PagesTranslatedLanguageParentDuplicates
 OK  PagesShortcutLoop
+OK  SysFileStorageMissing
 OK  SysFileMetadataFileMissing
 OK  SysFileMetadataDefaultDuplicates
 OK  SysFileMetadataMissing
