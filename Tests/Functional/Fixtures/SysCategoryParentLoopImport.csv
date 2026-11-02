@@ -1,0 +1,22 @@
+"sys_category"
+,"uid","pid","deleted","hidden","sys_language_uid","t3ver_wsid","t3ver_oid","t3ver_state","parent","title"
+,1,0,0,0,0,0,0,0,0,"Ok - root category"
+,2,0,0,0,0,0,0,0,1,"Ok - child of 1"
+,3,0,0,0,0,0,0,0,3,"Not Ok - own parent"
+,4,0,0,0,0,0,0,0,5,"Not Ok - loop of two, lowest uid"
+,5,0,0,0,0,0,0,0,4,"Ok - loop of two"
+,6,0,0,0,0,0,0,0,8,"Not Ok - loop of three, lowest uid"
+,7,0,0,0,0,0,0,0,6,"Ok - loop of three"
+,8,0,0,0,0,0,0,0,7,"Ok - loop of three"
+# Child of a loop category is no part of the loop: Not changed, even though its uid is lower
+,9,0,0,0,0,0,0,0,11,"Ok - child of a loop category"
+,10,0,0,0,0,0,0,0,11,"Not Ok - loop, lowest uid"
+,11,0,0,0,0,0,0,0,10,"Ok - loop"
+# Hidden categories are shown in the backend category tree
+,12,0,0,1,0,0,0,0,12,"Not Ok - hidden, own parent"
+# Soft-deleted categories are not shown in the tree: No loop. A child of a soft-deleted category is kept for the recycler
+,13,0,1,0,0,0,0,0,14,"Ok - soft-deleted"
+,14,0,0,0,0,0,0,0,13,"Ok - child of soft-deleted category"
+# Translations and workspace records are not shown in the category tree
+,15,0,0,0,1,0,0,0,15,"Ok - translation, own parent"
+,16,0,0,0,0,1,0,1,16,"Ok - new workspace record, own parent"
