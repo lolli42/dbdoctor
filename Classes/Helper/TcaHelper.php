@@ -22,6 +22,7 @@ use Lolli\Dbdoctor\Tca\GroupMmField;
 use Lolli\Dbdoctor\Tca\InlineForeignFieldChild;
 use Lolli\Dbdoctor\Tca\InlineForeignFieldNoForeignTableFieldChild;
 use Lolli\Dbdoctor\Tca\InlineForeignFieldNoForeignTableFieldParent;
+use Lolli\Dbdoctor\Tca\SelectField;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
@@ -341,22 +342,7 @@ final readonly class TcaHelper
     public function getNextGroupFieldWithoutMm(): iterable
     {
         $this->verifyTcaIsArray();
-        // Fields of inline children pointing to their parent, by child table
-        $inlineParentPointerFields = [];
-        foreach ($GLOBALS['TCA'] as $config) {
-            foreach (($config['columns'] ?? []) as $columnConfig) {
-                if (is_array($columnConfig['config'] ?? false)
-                    && in_array(($columnConfig['config']['type'] ?? ''), ['inline', 'file'], true)
-                    && is_string($columnConfig['config']['foreign_table'] ?? false)
-                ) {
-                    foreach (['foreign_field', 'foreign_table_field'] as $pointerConfigName) {
-                        if (is_string($columnConfig['config'][$pointerConfigName] ?? false)) {
-                            $inlineParentPointerFields[$columnConfig['config']['foreign_table']][$columnConfig['config'][$pointerConfigName]] = true;
-                        }
-                    }
-                }
-            }
-        }
+        $inlineParentPointerFields = $this->getInlineParentPointerFields();
         foreach ($GLOBALS['TCA'] as $tableName => $config) {
             foreach (($config['columns'] ?? []) as $fieldName => $columnConfig) {
                 if (is_array($columnConfig['config'] ?? false)
@@ -381,6 +367,107 @@ final readonly class TcaHelper
                 }
             }
         }
+    }
+
+    /**
+     * Fields of type 'select' with a foreign_table, and fields of type 'category',
+     * that store their relations as comma separated list in the field itself,
+     * without MM table:
+     *
+     * 'config' => [
+     *     'type' => 'select',
+     *     'foreign_table' => 'fe_groups',
+     * ],
+     *
+     * The core sets foreign_table "sys_category" for all fields of type 'category'
+     * in TcaPreparation, and an MM table for those with relationship "manyToMany".
+     * Language pointer fields and fields pointing to an inline parent are skipped,
+     * as in getNextGroupFieldWithoutMm().
+     *
+     * @return iterable<SelectField>
+     */
+    public function getNextSelectFieldWithoutMm(): iterable
+    {
+        $this->verifyTcaIsArray();
+        $inlineParentPointerFields = $this->getInlineParentPointerFields();
+        foreach ($GLOBALS['TCA'] as $tableName => $config) {
+            foreach (($config['columns'] ?? []) as $fieldName => $columnConfig) {
+                if (is_array($columnConfig['config'] ?? false)
+                    && in_array(($columnConfig['config']['type'] ?? ''), ['select', 'category'], true)
+                    && empty($columnConfig['config']['MM'])
+                    && is_string($columnConfig['config']['foreign_table'] ?? false)
+                    && $columnConfig['config']['foreign_table'] !== ''
+                    && $fieldName !== $this->getTranslationParentField($tableName)
+                    && $fieldName !== $this->getTranslationSourceField($tableName)
+                    && !isset($inlineParentPointerFields[$tableName][$fieldName])
+                ) {
+                    $allowedTablesByType = $this->getAllowedTablesByType($tableName, $fieldName, $columnConfig);
+                    if ($allowedTablesByType === null) {
+                        continue;
+                    }
+                    yield new SelectField(
+                        $tableName,
+                        $fieldName,
+                        [$columnConfig['config']['foreign_table']],
+                        $this->getStaticItemValues($tableName, $fieldName, $columnConfig),
+                        $allowedTablesByType === [] ? null : $this->getTypeField($tableName),
+                        $allowedTablesByType,
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * Values of the static "items" of a select field, of the base config and of all record
+     * types changing them with "columnsOverrides". A value may be a static item of one type
+     * and a relation of another: Such values are never handled as relation.
+     *
+     * @param array<string, mixed> $columnConfig
+     * @return array<int, string>
+     */
+    private function getStaticItemValues(string $tableName, string $fieldName, array $columnConfig): array
+    {
+        $itemLists = [$columnConfig['config']['items'] ?? null];
+        foreach (($GLOBALS['TCA'][$tableName]['types'] ?? []) as $typeConfig) {
+            $itemLists[] = $typeConfig['columnsOverrides'][$fieldName]['config']['items'] ?? null;
+        }
+        $values = [];
+        foreach ($itemLists as $items) {
+            foreach (is_array($items) ? $items : [] as $item) {
+                if (is_array($item) && (is_int($item['value'] ?? null) || is_string($item['value'] ?? null))) {
+                    $values[] = (string)$item['value'];
+                }
+            }
+        }
+        return array_values(array_unique($values));
+    }
+
+    /**
+     * Fields of inline children pointing to their parent, by child table: foreign_field
+     * and foreign_table_field of inline and file fields. They point to the inline parent,
+     * which may be a record of another table than their TCA says.
+     *
+     * @return array<string, array<string, true>>
+     */
+    private function getInlineParentPointerFields(): array
+    {
+        $inlineParentPointerFields = [];
+        foreach ($GLOBALS['TCA'] as $config) {
+            foreach (($config['columns'] ?? []) as $columnConfig) {
+                if (is_array($columnConfig['config'] ?? false)
+                    && in_array(($columnConfig['config']['type'] ?? ''), ['inline', 'file'], true)
+                    && is_string($columnConfig['config']['foreign_table'] ?? false)
+                ) {
+                    foreach (['foreign_field', 'foreign_table_field'] as $pointerConfigName) {
+                        if (is_string($columnConfig['config'][$pointerConfigName] ?? false)) {
+                            $inlineParentPointerFields[$columnConfig['config']['foreign_table']][$columnConfig['config'][$pointerConfigName]] = true;
+                        }
+                    }
+                }
+            }
+        }
+        return $inlineParentPointerFields;
     }
 
     /**
@@ -432,8 +519,8 @@ final readonly class TcaHelper
     }
 
     /**
-     * Allowed tables of a group field for a record of the given type, with a group field
-     * from getNextGroupFieldWithoutMm() or getNextGroupFieldWithMm(). Null if the relations
+     * Allowed tables of a group or select field for a record of the given type, with a field from
+     * getNextGroupFieldWithoutMm(), getNextGroupFieldWithMm() or getNextSelectFieldWithoutMm(). Null if the relations
      * of the record can not be resolved unambiguously, and must be left alone.
      *
      * A type value that is not a key of TCA "types", for instance a CType of a removed
@@ -445,7 +532,7 @@ final readonly class TcaHelper
      *
      * @return array<int, string>|null
      */
-    public function getAllowedTablesOfRecordType(GroupField|GroupMmField $groupField, ?string $recordType): ?array
+    public function getAllowedTablesOfRecordType(GroupField|GroupMmField|SelectField $groupField, ?string $recordType): ?array
     {
         if ($groupField->typeField === null) {
             return $groupField->allowedTables;
@@ -464,7 +551,8 @@ final readonly class TcaHelper
 
     /**
      * Record types can change the config of a field with TCA "columnsOverrides". This returns
-     * the allowed tables of a group field per type, for types that change them. Empty array if
+     * the allowed tables of a group or select field per type, for types that change them: TCA
+     * "allowed" of group fields, "foreign_table" of select and category fields. Empty array if
      * no type changes them, the normal case. A type maps to null if its records of this field
      * must be left alone. Null if the whole field must be left alone.
      *
@@ -498,15 +586,15 @@ final readonly class TcaHelper
      * - Type values without "types" entry are resolved differently, see getAllowedTablesOfRecordType().
      *
      * Rules of dbdoctor:
-     * - Only "allowed" may differ per type. The relations of a type that changes the field "type"
-     *   ("columnsOverrides" turning a group field into something else) or adds an MM table to a
-     *   field without, are left alone.
+     * - Only "allowed" or "foreign_table" may differ per type. The relations of a type that changes
+     *   the field "type" ("columnsOverrides" turning a group field into something else) or adds an
+     *   MM table to a field without, are left alone.
      * - A type that changes the MM settings of a field with MM table (MM, MM_match_fields,
      *   MM_opposite_field, MM_table_where) makes the whole field left alone: Its MM rows can not
      *   be assigned to a type, and the core reads and writes them with different configs itself.
      * - If the type of a record is defined in another table (TCA ctrl "type" like "uid_local:type",
      *   as in sys_file_reference), resolving it would need a query per record: Such a field is
-     *   left alone if a type changes "allowed", and handled with the base config otherwise.
+     *   left alone if a type changes its tables, and handled with the base config otherwise.
      *
      * @param array<string, mixed> $columnConfig
      * @return array<array-key, array<int, string>|null>|null
@@ -519,7 +607,7 @@ final readonly class TcaHelper
             return [];
         }
         $baseConfig = $columnConfig['config'];
-        $baseAllowedTables = GeneralUtility::trimExplode(',', (string)$baseConfig['allowed'], true);
+        $baseAllowedTables = $this->getRelationTablesOfConfig($baseConfig);
         $hasMm = !empty($baseConfig['MM']);
         $allowedTablesByType = [];
         foreach (($GLOBALS['TCA'][$tableName]['types'] ?? []) as $recordType => $typeConfig) {
@@ -541,11 +629,11 @@ final readonly class TcaHelper
                     }
                 }
             }
-            if (($config['type'] ?? '') !== 'group' || (!$hasMm && !empty($config['MM']))) {
+            if (($config['type'] ?? '') !== $baseConfig['type'] || (!$hasMm && !empty($config['MM']))) {
                 $allowedTablesByType[$recordType] = null;
                 continue;
             }
-            $allowedTables = is_string($config['allowed'] ?? null) ? GeneralUtility::trimExplode(',', $config['allowed'], true) : [];
+            $allowedTables = $this->getRelationTablesOfConfig($config);
             if ($allowedTables === $baseAllowedTables) {
                 continue;
             }
@@ -555,6 +643,18 @@ final readonly class TcaHelper
             return null;
         }
         return $allowedTablesByType;
+    }
+
+    /**
+     * Tables a group field ("allowed") or a select or category field ("foreign_table") relates to.
+     *
+     * @param array<string, mixed> $config
+     * @return array<int, string>
+     */
+    private function getRelationTablesOfConfig(array $config): array
+    {
+        $tables = ($config['type'] ?? '') === 'group' ? ($config['allowed'] ?? null) : ($config['foreign_table'] ?? null);
+        return is_string($tables) ? GeneralUtility::trimExplode(',', $tables, true) : [];
     }
 
     /**

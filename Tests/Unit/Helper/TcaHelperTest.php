@@ -22,6 +22,7 @@ use Lolli\Dbdoctor\Tca\GroupMmField;
 use Lolli\Dbdoctor\Tca\InlineForeignFieldChild;
 use Lolli\Dbdoctor\Tca\InlineForeignFieldNoForeignTableFieldChild;
 use Lolli\Dbdoctor\Tca\InlineForeignFieldNoForeignTableFieldParent;
+use Lolli\Dbdoctor\Tca\SelectField;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
@@ -1721,6 +1722,214 @@ class TcaHelperTest extends UnitTestCase
                 ],
             ],
         ];
+    }
+
+    #[Test]
+    public function getNextSelectFieldWithoutMmThrowsExceptionIfTcaIsNotAnArray(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionCode(1688203176);
+        $GLOBALS['TCA'] = null;
+        $subject = new TcaHelper();
+        foreach ($subject->getNextSelectFieldWithoutMm() as $item) {
+            // Trigger iterable
+        }
+    }
+
+    #[Test]
+    public function getNextSelectFieldWithoutMmReturnsSelectAndCategoryFields(): void
+    {
+        $GLOBALS['TCA'] = [
+            'foo' => [
+                'ctrl' => [
+                    'transOrigPointerField' => 'l10n_parent',
+                    'translationSource' => 'l10n_source',
+                ],
+                'columns' => [
+                    'noConfig' => [],
+                    'notSelect' => [
+                        'config' => [
+                            'type' => 'group',
+                            'allowed' => 'pages',
+                        ],
+                    ],
+                    'noForeignTable' => [
+                        'config' => [
+                            'type' => 'select',
+                            'items' => [
+                                ['label' => 'One', 'value' => 1],
+                            ],
+                        ],
+                    ],
+                    'l10n_parent' => [
+                        'config' => [
+                            'type' => 'select',
+                            'foreign_table' => 'foo',
+                        ],
+                    ],
+                    'l10n_source' => [
+                        'config' => [
+                            'type' => 'select',
+                            'foreign_table' => 'foo',
+                        ],
+                    ],
+                    'select' => [
+                        'config' => [
+                            'type' => 'select',
+                            'foreign_table' => 'fe_groups',
+                            'items' => [
+                                ['label' => 'Hide at login', 'value' => -1],
+                                ['label' => 'Groups', 'value' => '--div--'],
+                                ['label' => 'Static', 'value' => 5],
+                            ],
+                        ],
+                    ],
+                    'selectMm' => [
+                        'config' => [
+                            'type' => 'select',
+                            'foreign_table' => 'pages',
+                            'MM' => 'foo_mm',
+                        ],
+                    ],
+                    'category' => [
+                        'config' => [
+                            'type' => 'category',
+                            'relationship' => 'oneToMany',
+                            'foreign_table' => 'sys_category',
+                        ],
+                    ],
+                    'categoryMm' => [
+                        'config' => [
+                            'type' => 'category',
+                            'relationship' => 'manyToMany',
+                            'foreign_table' => 'sys_category',
+                            'MM' => 'sys_category_record_mm',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        $expected = [
+            new SelectField('foo', 'select', ['fe_groups'], ['-1', '--div--', '5']),
+            new SelectField('foo', 'category', ['sys_category']),
+        ];
+        self::assertEquals($expected, iterator_to_array((new TcaHelper())->getNextSelectFieldWithoutMm(), false));
+    }
+
+    #[Test]
+    public function getNextSelectFieldWithoutMmSkipsFieldsPointingToInlineParent(): void
+    {
+        $GLOBALS['TCA'] = [
+            'parent_table' => [
+                'columns' => [
+                    'children' => [
+                        'config' => [
+                            'type' => 'inline',
+                            'foreign_table' => 'child_table',
+                            'foreign_field' => 'parent_uid',
+                        ],
+                    ],
+                ],
+            ],
+            'child_table' => [
+                'columns' => [
+                    'parent_uid' => [
+                        'config' => [
+                            'type' => 'select',
+                            'foreign_table' => 'parent_table',
+                        ],
+                    ],
+                    'related' => [
+                        'config' => [
+                            'type' => 'select',
+                            'foreign_table' => 'tt_content',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        $expected = [
+            new SelectField('child_table', 'related', ['tt_content']),
+        ];
+        self::assertEquals($expected, iterator_to_array((new TcaHelper())->getNextSelectFieldWithoutMm(), false));
+    }
+
+    #[Test]
+    public function getNextSelectFieldWithoutMmReturnsForeignTableByTypeAndStaticItemsOfAllTypes(): void
+    {
+        $GLOBALS['TCA'] = [
+            'foo' => [
+                'ctrl' => [
+                    'type' => 'record_type',
+                ],
+                'columns' => [
+                    'record_type' => [
+                        'config' => [
+                            'type' => 'select',
+                        ],
+                    ],
+                    'select' => [
+                        'config' => [
+                            'type' => 'select',
+                            'foreign_table' => 'pages',
+                            'items' => [
+                                ['label' => 'Static', 'value' => -1],
+                            ],
+                        ],
+                    ],
+                ],
+                'types' => [
+                    'noOverride' => [
+                        'showitem' => 'record_type, select',
+                    ],
+                    'content' => [
+                        'showitem' => 'record_type, select',
+                        'columnsOverrides' => [
+                            'select' => ['config' => ['foreign_table' => 'tt_content']],
+                        ],
+                    ],
+                    'notShown' => [
+                        'showitem' => 'record_type',
+                        'columnsOverrides' => [
+                            'select' => ['config' => ['foreign_table' => 'tt_content', 'items' => [['label' => 'Not shown', 'value' => 7]]]],
+                        ],
+                    ],
+                    'otherItems' => [
+                        'showitem' => 'record_type, select',
+                        'columnsOverrides' => [
+                            'select' => ['config' => ['items' => [['label' => 'Other', 'value' => 3]]]],
+                        ],
+                    ],
+                    'typeChanged' => [
+                        'showitem' => 'record_type, select',
+                        'columnsOverrides' => [
+                            'select' => ['config' => ['type' => 'input']],
+                        ],
+                    ],
+                    'mmAdded' => [
+                        'showitem' => 'record_type, select',
+                        'columnsOverrides' => [
+                            'select' => ['config' => ['MM' => 'foo_mm']],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        $expected = [
+            new SelectField(
+                'foo',
+                'select',
+                ['pages'],
+                ['-1', '7', '3'],
+                'record_type',
+                [
+                    'content' => ['tt_content'],
+                    'typeChanged' => null,
+                    'mmAdded' => null,
+                ],
+            ),
+        ];
+        self::assertEquals($expected, iterator_to_array((new TcaHelper())->getNextSelectFieldWithoutMm(), false));
     }
 
     /**

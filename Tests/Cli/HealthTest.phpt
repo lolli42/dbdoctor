@@ -69,5 +69,6 @@ OK  InlineForeignFieldChildrenParentLanguageDifferent
 OK  InlineForeignFieldNoForeignTableFieldChildrenParentLanguageDifferent
 OK  GroupFieldRelationMissing
 OK  GroupFieldMmRelationMissing
+OK  SelectFieldRelationMissing
 OK  TcaTablesTranslatedLanguageParentDuplicates
 OK  TcaTablesTranslatedWithAllowLanguageSynchronization
