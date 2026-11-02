@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\Helper;
  * The TYPO3 project - inspiring people to share!
  */
 use Doctrine\DBAL\ParameterType;
+use Doctrine\DBAL\Statement;
 use Lolli\Dbdoctor\Database\PreparedStatement;
 use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
@@ -88,9 +89,7 @@ final readonly class RecordsHelper
             $preparedStatement = $statements->add($statementKey, new PreparedStatement($queryBuilder->prepare(), $queryBuilder->getSQL()));
         }
         $statement = $preparedStatement->statement;
-        $sqlString = $preparedStatement->sqlString;
-        $sqlString = str_replace('= ?', '= ' . $uid, $sqlString);
-        $sqlString .= ';';
+        $sqlString = $this->renderSql($tableName, $preparedStatement->sqlString, [['value' => $uid, 'type' => Connection::PARAM_INT]]);
         if (!$simulate) {
             $statement->bindValue(1, $uid, Connection::PARAM_INT);
             $affectedRows = $statement->executeStatement();
@@ -123,24 +122,10 @@ final readonly class RecordsHelper
             $preparedStatement = $statements->add($statementKey, new PreparedStatement($queryBuilder->prepare(), $queryBuilder->getSQL()));
         }
         $statement = $preparedStatement->statement;
-        $sqlString = $preparedStatement->sqlString;
-        $currentParam = 1;
-        foreach ($fields as $valueAndType) {
-            if ($valueAndType['type'] === Connection::PARAM_STR) {
-                $sqlValue = '\'' . $valueAndType['value'] . '\'';
-            } else {
-                $sqlValue = (string)$valueAndType['value'];
-            }
-            $sqlString = $this->strReplaceFirst('= ?', '= ' . $sqlValue, $sqlString);
-            if (!$simulate) {
-                $statement->bindValue($currentParam, $valueAndType['value'], $valueAndType['type']);
-            }
-            $currentParam++;
-        }
-        $sqlString = $this->strReplaceFirst('= ?', '= ' . $uid, $sqlString);
-        $sqlString .= ';';
+        $parameters = [...array_values($fields), ['value' => $uid, 'type' => Connection::PARAM_INT]];
+        $sqlString = $this->renderSql($tableName, $preparedStatement->sqlString, $parameters);
         if (!$simulate) {
-            $statement->bindValue($currentParam, $uid, Connection::PARAM_INT);
+            $this->bindParameters($statement, $parameters);
             $affectedRows = $statement->executeStatement();
             if ($affectedRows !== 1) {
                 throw new UnexpectedNumberOfAffectedRowsException(
@@ -168,22 +153,10 @@ final readonly class RecordsHelper
             $preparedStatement = $statements->add($statementKey, new PreparedStatement($queryBuilder->prepare(), $queryBuilder->getSQL()));
         }
         $statement = $preparedStatement->statement;
-        $sqlString = $preparedStatement->sqlString;
-        $currentParam = 1;
-        foreach ($fields as $valueAndType) {
-            if ($valueAndType['type'] === Connection::PARAM_STR || $valueAndType['type'] === Connection::PARAM_LOB) {
-                $sqlValue = '\'' . $valueAndType['value'] . '\'';
-            } else {
-                $sqlValue = (string)$valueAndType['value'];
-            }
-            $sqlString = $this->strReplaceFirst('?', $sqlValue, $sqlString);
-            if (!$simulate) {
-                $statement->bindValue($currentParam, $valueAndType['value'], $valueAndType['type']);
-            }
-            $currentParam++;
-        }
-        $sqlString .= ';';
+        $parameters = array_values($fields);
+        $sqlString = $this->renderSql($tableName, $preparedStatement->sqlString, $parameters);
         if (!$simulate) {
+            $this->bindParameters($statement, $parameters);
             $affectedRows = $statement->executeStatement();
             if ($affectedRows !== 1) {
                 throw new UnexpectedNumberOfAffectedRowsException(
@@ -229,33 +202,19 @@ final readonly class RecordsHelper
             $preparedStatement = $statements->add($statementKey, new PreparedStatement($queryBuilder->prepare(), $queryBuilder->getSQL()));
         }
         $statement = $preparedStatement->statement;
-        $sqlString = $preparedStatement->sqlString;
-        $currentParam = 1;
+        $parameters = [];
         foreach ($whereFields as $valueAndType) {
             if (is_array($valueAndType['value'])) {
-                $placeholders = implode(', ', array_fill(0, count($valueAndType['value']), '?'));
-                $sqlString = $this->strReplaceFirst('IN (' . $placeholders . ')', 'IN (' . implode(', ', $valueAndType['value']) . ')', $sqlString);
                 foreach ($valueAndType['value'] as $value) {
-                    if (!$simulate) {
-                        $statement->bindValue($currentParam, $value, $valueAndType['type']);
-                    }
-                    $currentParam++;
+                    $parameters[] = ['value' => $value, 'type' => $valueAndType['type']];
                 }
                 continue;
             }
-            if ($valueAndType['type'] === Connection::PARAM_STR) {
-                $sqlValue = '\'' . $valueAndType['value'] . '\'';
-            } else {
-                $sqlValue = (string)$valueAndType['value'];
-            }
-            $sqlString = $this->strReplaceFirst('= ?', '= ' . $sqlValue, $sqlString);
-            if (!$simulate) {
-                $statement->bindValue($currentParam, $valueAndType['value'], $valueAndType['type']);
-            }
-            $currentParam++;
+            $parameters[] = $valueAndType;
         }
-        $sqlString .= ';';
+        $sqlString = $this->renderSql($mmTableName, $preparedStatement->sqlString, $parameters);
         if (!$simulate) {
+            $this->bindParameters($statement, $parameters);
             $affectedRows = $statement->executeStatement();
             if ($affectedRows < 1) {
                 throw new UnexpectedNumberOfAffectedRowsException(
@@ -267,9 +226,39 @@ final readonly class RecordsHelper
         return $sqlString;
     }
 
-    private function strReplaceFirst(string $search, string $replace, string $subject): string
+    /**
+     * SQL of a prepared statement with its "?" placeholders replaced by the quoted values, for output
+     * and the dump file. The prepared SQL has values only as placeholders, so each "?" is one. The SQL
+     * is split at the placeholders first: A value is never searched again, even if it contains "?".
+     *
+     * @param list<array{value: int|string, type: ParameterType}> $parameters
+     */
+    private function renderSql(string $tableName, string $preparedSql, array $parameters): string
     {
-        $search = '/' . preg_quote($search, '/') . '/';
-        return (string)preg_replace($search, $replace, $subject, 1);
+        $connection = $this->connectionPool->getConnectionForTable($tableName);
+        $sqlValues = [];
+        foreach ($parameters as $parameter) {
+            if ($parameter['type'] === Connection::PARAM_STR || $parameter['type'] === Connection::PARAM_LOB) {
+                $sqlValues[] = $connection->quote((string)$parameter['value']);
+            } else {
+                $sqlValues[] = (string)$parameter['value'];
+            }
+        }
+        $sqlParts = explode('?', $preparedSql);
+        $sqlString = array_shift($sqlParts);
+        foreach ($sqlParts as $index => $sqlPart) {
+            $sqlString .= $sqlValues[$index] . $sqlPart;
+        }
+        return $sqlString . ';';
+    }
+
+    /**
+     * @param list<array{value: int|string, type: ParameterType}> $parameters
+     */
+    private function bindParameters(Statement $statement, array $parameters): void
+    {
+        foreach ($parameters as $index => $parameter) {
+            $statement->bindValue($index + 1, $parameter['value'], $parameter['type']);
+        }
     }
 }
