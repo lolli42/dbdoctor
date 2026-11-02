@@ -25,15 +25,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class InlineForeignFieldChildrenParentDeletedTest extends AbstractFunctionalTestCase
 {
-    protected array $coreExtensionsToLoad = [
-        // Fixture uses ws fields, so it must be loaded
-        'workspaces',
-    ];
-
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-    ];
-
     #[Test]
     public function showDetails(): void
     {

@@ -25,10 +25,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class SysFileReferenceLocalizedParentExistsTest extends AbstractFunctionalTestCase
 {
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-    ];
-
     #[Test]
     public function showDetails(): void
     {

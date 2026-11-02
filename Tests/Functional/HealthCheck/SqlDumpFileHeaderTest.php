@@ -27,14 +27,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class SqlDumpFileHeaderTest extends AbstractFunctionalTestCase
 {
-    protected array $coreExtensionsToLoad = [
-        'workspaces',
-    ];
-
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-    ];
-
     protected function tearDown(): void
     {
         @unlink($this->instancePath . '/dbdoctor-dump.sql');

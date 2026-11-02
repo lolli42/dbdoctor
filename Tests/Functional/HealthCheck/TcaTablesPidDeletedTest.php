@@ -25,14 +25,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class TcaTablesPidDeletedTest extends AbstractFunctionalTestCase
 {
-    protected array $coreExtensionsToLoad = [
-        'impexp',
-    ];
-
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-    ];
-
     #[Test]
     public function showDetails(): void
     {

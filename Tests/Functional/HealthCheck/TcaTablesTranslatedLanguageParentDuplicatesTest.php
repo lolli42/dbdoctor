@@ -25,15 +25,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class TcaTablesTranslatedLanguageParentDuplicatesTest extends AbstractFunctionalTestCase
 {
-    protected array $coreExtensionsToLoad = [
-        'workspaces',
-    ];
-
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-        __DIR__ . '/../FixtureExtensions/tx_dbdoctortestsforeignfield',
-    ];
-
     #[Test]
     public function showDetails(): void
     {

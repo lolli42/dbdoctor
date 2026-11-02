@@ -25,14 +25,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class TcaTablesLanguageLessThanOneHasZeroLanguageParentTest extends AbstractFunctionalTestCase
 {
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-    ];
-
-    protected array $coreExtensionsToLoad = [
-        'workspaces',
-    ];
-
     #[Test]
     public function showDetails(): void
     {

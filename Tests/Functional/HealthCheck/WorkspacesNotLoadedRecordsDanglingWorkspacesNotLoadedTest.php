@@ -25,6 +25,9 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class WorkspacesNotLoadedRecordsDanglingWorkspacesNotLoadedTest extends AbstractFunctionalTestCase
 {
+    // Own setup: The check must run without workspaces loaded.
+    protected array $coreExtensionsToLoad = [];
+
     protected array $testExtensionsToLoad = [
         'lolli/dbdoctor',
     ];

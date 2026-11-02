@@ -26,14 +26,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class HealthCommandJsonTest extends AbstractFunctionalTestCase
 {
-    protected array $coreExtensionsToLoad = [
-        'workspaces',
-    ];
-
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-    ];
-
     protected function tearDown(): void
     {
         GeneralUtility::rmdir($this->instancePath . '/dbdoctor-report', true);

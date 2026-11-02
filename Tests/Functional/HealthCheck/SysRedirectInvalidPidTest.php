@@ -27,14 +27,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class SysRedirectInvalidPidTest extends AbstractFunctionalTestCase
 {
-    protected array $coreExtensionsToLoad = [
-        'redirects',
-    ];
-
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-    ];
-
     #[Test]
     public function showDetails(): void
     {

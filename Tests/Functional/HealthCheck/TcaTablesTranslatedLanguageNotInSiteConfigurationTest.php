@@ -26,14 +26,6 @@ use TYPO3\CMS\Core\Configuration\SiteWriter;
 
 class TcaTablesTranslatedLanguageNotInSiteConfigurationTest extends AbstractFunctionalTestCase
 {
-    protected array $coreExtensionsToLoad = [
-        'workspaces',
-    ];
-
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-    ];
-
     protected function setUp(): void
     {
         parent::setUp();

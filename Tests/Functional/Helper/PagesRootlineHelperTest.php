@@ -24,10 +24,6 @@ use PHPUnit\Framework\Attributes\Test;
 
 class PagesRootlineHelperTest extends AbstractFunctionalTestCase
 {
-    protected array $testExtensionsToLoad = [
-        'lolli/dbdoctor',
-    ];
-
     public static function getRootlineDataProvider(): \Generator
     {
         yield 'pid 1' => [
