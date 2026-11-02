@@ -5,3 +5,5 @@
 ,"uid_local","uid_foreign","tablenames","fieldname"
 # Local record does not exist, but the MM table is used by fields of two tables: Kept
 ,4,1,"pages","relations_mm"
+# Kept as well, although page 42 does not exist: The rows are no relations of an existing record
+,4,42,"pages","relations_mm"
