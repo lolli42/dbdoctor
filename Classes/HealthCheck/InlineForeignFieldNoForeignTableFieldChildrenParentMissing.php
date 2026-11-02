@@ -47,12 +47,12 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentMissing 
         $findingsByTable = [];
 
         foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldParent() as $inlineChild) {
-            $childTableName = $inlineChild['tableName'];
-            $parentTableName = $inlineChild['parentTableName'];
+            $childTableName = $inlineChild->tableName;
+            $parentTableName = $inlineChild->parentTableName;
             if (!$this->tableHelper->tableExistsInDatabase($parentTableName)) {
                 continue;
             }
-            $fieldNameOfParentTableUid = $inlineChild['fieldNameOfParentTableUid'];
+            $fieldNameOfParentTableUid = $inlineChild->fieldNameOfParentTableUid;
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($childTableName);
             // Consider deleted records: If the parent does not exist, they should be deleted, too.
             $queryBuilder->getRestrictions()->removeAll();
@@ -62,7 +62,7 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentMissing 
                     $queryBuilder->expr()->gt($fieldNameOfParentTableUid, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
                 )
                 ->orderBy('uid');
-            foreach ($inlineChild['matchFields'] as $matchFieldName => $matchFieldValue) {
+            foreach ($inlineChild->matchFields as $matchFieldName => $matchFieldValue) {
                 // Child table may have multiple parent tables, consider only rows of this parent.
                 $parameter = $this->tableHelper->fieldIsInteger($childTableName, $matchFieldName)
                     ? $queryBuilder->createNamedParameter((int)$matchFieldValue, Connection::PARAM_INT)
@@ -101,10 +101,10 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentMissing 
     {
         $fields = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldParent() as $inlineChild) {
-            if ($inlineChild['tableName'] === $tableName
-                && !in_array($inlineChild['fieldNameOfParentTableUid'], $fields, true)
+            if ($inlineChild->tableName === $tableName
+                && !in_array($inlineChild->fieldNameOfParentTableUid, $fields, true)
             ) {
-                $fields[] = $inlineChild['fieldNameOfParentTableUid'];
+                $fields[] = $inlineChild->fieldNameOfParentTableUid;
             }
         }
         return $fields;

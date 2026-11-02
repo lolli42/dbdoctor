@@ -19,6 +19,9 @@ namespace Lolli\Dbdoctor\Tests\Unit\Helper;
 use Lolli\Dbdoctor\Helper\TcaHelper;
 use Lolli\Dbdoctor\Tca\GroupField;
 use Lolli\Dbdoctor\Tca\GroupMmField;
+use Lolli\Dbdoctor\Tca\InlineForeignFieldChild;
+use Lolli\Dbdoctor\Tca\InlineForeignFieldNoForeignTableFieldChild;
+use Lolli\Dbdoctor\Tca\InlineForeignFieldNoForeignTableFieldParent;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
@@ -462,11 +465,7 @@ class TcaHelperTest extends UnitTestCase
                 ],
             ],
             [
-                [
-                    'tableName' => 'child_table',
-                    'fieldNameOfParentTableUid' => 'parent_uid',
-                    'fieldNameOfParentTableName' => 'parent_table_name_field',
-                ],
+                new InlineForeignFieldChild('child_table', 'parent_uid', 'parent_table_name_field'),
             ],
             [],
         ];
@@ -523,16 +522,8 @@ class TcaHelperTest extends UnitTestCase
                 ],
             ],
             [
-                [
-                    'tableName' => 'child_table_1',
-                    'fieldNameOfParentTableUid' => 'parent_uid',
-                    'fieldNameOfParentTableName' => 'parent_table_name_field',
-                ],
-                [
-                    'tableName' => 'child_table_2',
-                    'fieldNameOfParentTableUid' => 'parent_uid',
-                    'fieldNameOfParentTableName' => 'parent_table_name_field',
-                ],
+                new InlineForeignFieldChild('child_table_1', 'parent_uid', 'parent_table_name_field'),
+                new InlineForeignFieldChild('child_table_2', 'parent_uid', 'parent_table_name_field'),
             ],
             [],
         ];
@@ -589,11 +580,7 @@ class TcaHelperTest extends UnitTestCase
                 ],
             ],
             [
-                [
-                    'tableName' => 'child_table_2',
-                    'fieldNameOfParentTableUid' => 'parent_uid',
-                    'fieldNameOfParentTableName' => 'parent_table_name_field',
-                ],
+                new InlineForeignFieldChild('child_table_2', 'parent_uid', 'parent_table_name_field'),
             ],
             ['child_table_1'],
         ];
@@ -636,11 +623,7 @@ class TcaHelperTest extends UnitTestCase
                 ],
             ],
             [
-                [
-                    'tableName' => 'child_table_1',
-                    'fieldNameOfParentTableUid' => 'parent_uid',
-                    'fieldNameOfParentTableName' => 'parent_table_name_field',
-                ],
+                new InlineForeignFieldChild('child_table_1', 'parent_uid', 'parent_table_name_field'),
             ],
             [],
         ];
@@ -687,11 +670,7 @@ class TcaHelperTest extends UnitTestCase
                 ],
             ],
             [
-                [
-                    'tableName' => 'child_table_1',
-                    'fieldNameOfParentTableUid' => 'parent_uid',
-                    'fieldNameOfParentTableName' => 'parent_table_name_field',
-                ],
+                new InlineForeignFieldChild('child_table_1', 'parent_uid', 'parent_table_name_field'),
             ],
             [],
         ];
@@ -712,7 +691,7 @@ class TcaHelperTest extends UnitTestCase
         foreach ($subject->getNextInlineForeignFieldChildTcaTable($ignoredTables) as $item) {
             $result[] = $item;
         }
-        self::assertSame($expected, $result);
+        self::assertEquals($expected, $result);
     }
 
     /**
@@ -798,11 +777,7 @@ class TcaHelperTest extends UnitTestCase
                 ],
             ],
             [
-                [
-                    'tableName' => 'child_table',
-                    'parentTableName' => 'parent_table',
-                    'fieldNameOfParentTableUid' => 'parent_uid',
-                ],
+                new InlineForeignFieldNoForeignTableFieldChild('child_table', 'parent_table', 'parent_uid'),
             ],
             [],
         ];
@@ -847,16 +822,8 @@ class TcaHelperTest extends UnitTestCase
                 ],
             ],
             [
-                [
-                    'tableName' => 'child_table_1',
-                    'parentTableName' => 'parent_table',
-                    'fieldNameOfParentTableUid' => 'parent_uid',
-                ],
-                [
-                    'tableName' => 'child_table_2',
-                    'parentTableName' => 'parent_table',
-                    'fieldNameOfParentTableUid' => 'parent_uid',
-                ],
+                new InlineForeignFieldNoForeignTableFieldChild('child_table_1', 'parent_table', 'parent_uid'),
+                new InlineForeignFieldNoForeignTableFieldChild('child_table_2', 'parent_table', 'parent_uid'),
             ],
             [],
         ];
@@ -901,11 +868,7 @@ class TcaHelperTest extends UnitTestCase
                 ],
             ],
             [
-                [
-                    'tableName' => 'child_table_2',
-                    'parentTableName' => 'parent_table',
-                    'fieldNameOfParentTableUid' => 'parent_uid',
-                ],
+                new InlineForeignFieldNoForeignTableFieldChild('child_table_2', 'parent_table', 'parent_uid'),
             ],
             ['child_table_1'],
         ];
@@ -941,11 +904,7 @@ class TcaHelperTest extends UnitTestCase
                 ],
             ],
             [
-                [
-                    'tableName' => 'child_table_1',
-                    'parentTableName' => 'parent_table',
-                    'fieldNameOfParentTableUid' => 'parent_uid',
-                ],
+                new InlineForeignFieldNoForeignTableFieldChild('child_table_1', 'parent_table', 'parent_uid'),
             ],
             [],
         ];
@@ -985,11 +944,7 @@ class TcaHelperTest extends UnitTestCase
                 ],
             ],
             [
-                [
-                    'tableName' => 'child_table_1',
-                    'parentTableName' => 'parent_table_1',
-                    'fieldNameOfParentTableUid' => 'parent_uid',
-                ],
+                new InlineForeignFieldNoForeignTableFieldChild('child_table_1', 'parent_table_1', 'parent_uid'),
             ],
             [],
         ];
@@ -1010,7 +965,7 @@ class TcaHelperTest extends UnitTestCase
         foreach ($subject->getNextInlineForeignFieldNoForeignTableFieldChildTcaTable($ignoredTables) as $item) {
             $result[] = $item;
         }
-        self::assertSame($expected, $result);
+        self::assertEquals($expected, $result);
     }
 
     #[Test]
@@ -1034,14 +989,9 @@ class TcaHelperTest extends UnitTestCase
             'child_table' => self::getInlineChildTca(),
         ];
         $expected = [
-            [
-                'tableName' => 'child_table',
-                'parentTableName' => 'parent_table',
-                'fieldNameOfParentTableUid' => 'parent_uid',
-                'matchFields' => [],
-            ],
+            new InlineForeignFieldNoForeignTableFieldParent('child_table', 'parent_table', 'parent_uid', []),
         ];
-        self::assertSame($expected, iterator_to_array((new TcaHelper())->getNextInlineForeignFieldNoForeignTableFieldParent(), false));
+        self::assertEquals($expected, iterator_to_array((new TcaHelper())->getNextInlineForeignFieldNoForeignTableFieldParent(), false));
     }
 
     #[Test]
@@ -1057,14 +1007,9 @@ class TcaHelperTest extends UnitTestCase
             'child_table' => self::getInlineChildTca(),
         ];
         $expected = [
-            [
-                'tableName' => 'child_table',
-                'parentTableName' => 'parent_table',
-                'fieldNameOfParentTableUid' => 'parent_uid',
-                'matchFields' => [],
-            ],
+            new InlineForeignFieldNoForeignTableFieldParent('child_table', 'parent_table', 'parent_uid', []),
         ];
-        self::assertSame($expected, iterator_to_array((new TcaHelper())->getNextInlineForeignFieldNoForeignTableFieldParent(), false));
+        self::assertEquals($expected, iterator_to_array((new TcaHelper())->getNextInlineForeignFieldNoForeignTableFieldParent(), false));
     }
 
     #[Test]
@@ -1122,20 +1067,10 @@ class TcaHelperTest extends UnitTestCase
             'child_table' => self::getInlineChildTca(),
         ];
         $expected = [
-            [
-                'tableName' => 'child_table',
-                'parentTableName' => 'parent_table_1',
-                'fieldNameOfParentTableUid' => 'parent_uid',
-                'matchFields' => ['parent_table' => 'parent_table_1', 'parent_field' => 'children'],
-            ],
-            [
-                'tableName' => 'child_table',
-                'parentTableName' => 'parent_table_2',
-                'fieldNameOfParentTableUid' => 'parent_uid',
-                'matchFields' => ['parent_table' => 'parent_table_2'],
-            ],
+            new InlineForeignFieldNoForeignTableFieldParent('child_table', 'parent_table_1', 'parent_uid', ['parent_table' => 'parent_table_1', 'parent_field' => 'children']),
+            new InlineForeignFieldNoForeignTableFieldParent('child_table', 'parent_table_2', 'parent_uid', ['parent_table' => 'parent_table_2']),
         ];
-        self::assertSame($expected, iterator_to_array((new TcaHelper())->getNextInlineForeignFieldNoForeignTableFieldParent(), false));
+        self::assertEquals($expected, iterator_to_array((new TcaHelper())->getNextInlineForeignFieldNoForeignTableFieldParent(), false));
     }
 
     #[Test]
@@ -1157,14 +1092,9 @@ class TcaHelperTest extends UnitTestCase
             'child_table' => self::getInlineChildTca(),
         ];
         $expected = [
-            [
-                'tableName' => 'child_table',
-                'parentTableName' => 'parent_table_2',
-                'fieldNameOfParentTableUid' => 'parent_uid',
-                'matchFields' => ['parent_table' => 'parent_table_2'],
-            ],
+            new InlineForeignFieldNoForeignTableFieldParent('child_table', 'parent_table_2', 'parent_uid', ['parent_table' => 'parent_table_2']),
         ];
-        self::assertSame($expected, iterator_to_array((new TcaHelper())->getNextInlineForeignFieldNoForeignTableFieldParent(), false));
+        self::assertEquals($expected, iterator_to_array((new TcaHelper())->getNextInlineForeignFieldNoForeignTableFieldParent(), false));
     }
 
     #[Test]

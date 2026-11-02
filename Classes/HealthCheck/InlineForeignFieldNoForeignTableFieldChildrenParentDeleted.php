@@ -49,12 +49,12 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentDeleted 
     {
         $findingsByTable = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldParent() as $inlineChild) {
-            $childTableName = $inlineChild['tableName'];
+            $childTableName = $inlineChild->tableName;
             if (!$this->tcaHelper->getDeletedField($childTableName)) {
                 // Skip child table if it is not soft-delete aware
                 continue;
             }
-            $parentTableName = $inlineChild['parentTableName'];
+            $parentTableName = $inlineChild->parentTableName;
             $parentTableDeleteField = $this->tcaHelper->getDeletedField($parentTableName);
             if (!$parentTableDeleteField) {
                 // Skip if parent table is not soft-delete aware
@@ -65,7 +65,7 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentDeleted 
             }
             $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($childTableName);
             $isTableWorkspaceAware = !empty($workspaceIdField);
-            $fieldNameOfParentTableUid = $inlineChild['fieldNameOfParentTableUid'];
+            $fieldNameOfParentTableUid = $inlineChild->fieldNameOfParentTableUid;
 
             $selectFields = [
                 'uid',
@@ -85,7 +85,7 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentDeleted 
                     $queryBuilder->expr()->gt($fieldNameOfParentTableUid, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)),
                 )
                 ->orderBy('uid');
-            foreach ($inlineChild['matchFields'] as $matchFieldName => $matchFieldValue) {
+            foreach ($inlineChild->matchFields as $matchFieldName => $matchFieldValue) {
                 // Child table may have multiple parent tables, consider only rows of this parent.
                 $parameter = $this->tableHelper->fieldIsInteger($childTableName, $matchFieldName)
                     ? $queryBuilder->createNamedParameter((int)$matchFieldValue, Connection::PARAM_INT)
@@ -130,10 +130,10 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentDeleted 
     {
         $fields = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldParent() as $inlineChild) {
-            if ($inlineChild['tableName'] === $tableName
-                && !in_array($inlineChild['fieldNameOfParentTableUid'], $fields, true)
+            if ($inlineChild->tableName === $tableName
+                && !in_array($inlineChild->fieldNameOfParentTableUid, $fields, true)
             ) {
-                $fields[] = $inlineChild['fieldNameOfParentTableUid'];
+                $fields[] = $inlineChild->fieldNameOfParentTableUid;
             }
         }
         return $fields;

@@ -19,6 +19,9 @@ namespace Lolli\Dbdoctor\Helper;
 
 use Lolli\Dbdoctor\Tca\GroupField;
 use Lolli\Dbdoctor\Tca\GroupMmField;
+use Lolli\Dbdoctor\Tca\InlineForeignFieldChild;
+use Lolli\Dbdoctor\Tca\InlineForeignFieldNoForeignTableFieldChild;
+use Lolli\Dbdoctor\Tca\InlineForeignFieldNoForeignTableFieldParent;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
@@ -126,7 +129,7 @@ final readonly class TcaHelper
      * ],
      *
      * @param array<int, string> $ignoreTables
-     * @return iterable<array<string, string>>
+     * @return iterable<InlineForeignFieldChild>
      */
     public function getNextInlineForeignFieldChildTcaTable(array $ignoreTables = []): iterable
     {
@@ -151,11 +154,11 @@ final readonly class TcaHelper
                     // Not ignored
                     && !in_array($columnConfig['config']['foreign_table'], $ignoreTables, true)
                 ) {
-                    $inlineChildTables[$columnConfig['config']['foreign_table']] = [
-                        'tableName' => $columnConfig['config']['foreign_table'],
-                        'fieldNameOfParentTableUid' => $columnConfig['config']['foreign_field'],
-                        'fieldNameOfParentTableName' => $columnConfig['config']['foreign_table_field'],
-                    ];
+                    $inlineChildTables[$columnConfig['config']['foreign_table']] = new InlineForeignFieldChild(
+                        $columnConfig['config']['foreign_table'],
+                        $columnConfig['config']['foreign_field'],
+                        $columnConfig['config']['foreign_table_field'],
+                    );
                 }
             }
         }
@@ -175,7 +178,7 @@ final readonly class TcaHelper
      *  ],
      *
      * @param array<int, string> $ignoreTables
-     * @return iterable<array<string, string>>
+     * @return iterable<InlineForeignFieldNoForeignTableFieldChild>
      */
     public function getNextInlineForeignFieldNoForeignTableFieldChildTcaTable(array $ignoreTables = []): iterable
     {
@@ -199,11 +202,11 @@ final readonly class TcaHelper
                     // Not ignored
                     && !in_array($columnConfig['config']['foreign_table'], $ignoreTables, true)
                 ) {
-                    $inlineChildTables[$columnConfig['config']['foreign_table']] = [
-                        'tableName' => $columnConfig['config']['foreign_table'],
-                        'parentTableName' => $tableName,
-                        'fieldNameOfParentTableUid' => $columnConfig['config']['foreign_field'],
-                    ];
+                    $inlineChildTables[$columnConfig['config']['foreign_table']] = new InlineForeignFieldNoForeignTableFieldChild(
+                        $columnConfig['config']['foreign_table'],
+                        $tableName,
+                        $columnConfig['config']['foreign_field'],
+                    );
                 }
             }
         }
@@ -232,7 +235,7 @@ final readonly class TcaHelper
      * told apart from another parent table are skipped: It is unclear which parent table
      * their rows belong to.
      *
-     * @return iterable<array{tableName: string, parentTableName: string, fieldNameOfParentTableUid: string, matchFields: array<string, int|string>}>
+     * @return iterable<InlineForeignFieldNoForeignTableFieldParent>
      */
     public function getNextInlineForeignFieldNoForeignTableFieldParent(): iterable
     {
@@ -293,7 +296,12 @@ final readonly class TcaHelper
             }
         }
         foreach ($entries as $entry) {
-            yield $entry;
+            yield new InlineForeignFieldNoForeignTableFieldParent(
+                $entry['tableName'],
+                $entry['parentTableName'],
+                $entry['fieldNameOfParentTableUid'],
+                $entry['matchFields'],
+            );
         }
     }
 

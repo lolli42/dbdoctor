@@ -54,14 +54,14 @@ final readonly class InlineForeignFieldChildrenParentLanguageDifferent extends A
         $deleteFindings = [];
         $tableNames = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
-            $childTableName = $inlineChild['tableName'];
+            $childTableName = $inlineChild->tableName;
             $childTableLanguageField = $this->tcaHelper->getLanguageField($childTableName);
             if (!$childTableLanguageField) {
                 // Skip child table if it is not localizable
                 continue;
             }
-            $fieldNameOfParentTableName = $inlineChild['fieldNameOfParentTableName'];
-            $fieldNameOfParentTableUid = $inlineChild['fieldNameOfParentTableUid'];
+            $fieldNameOfParentTableName = $inlineChild->fieldNameOfParentTableName;
+            $fieldNameOfParentTableUid = $inlineChild->fieldNameOfParentTableUid;
             $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($childTableName);
             $isTableWorkspaceAware = !empty($workspaceIdField);
 
@@ -161,10 +161,10 @@ final readonly class InlineForeignFieldChildrenParentLanguageDifferent extends A
     public function getDetailDbFields(string $tableName): array
     {
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChild) {
-            if ($inlineChild['tableName'] === $tableName) {
+            if ($inlineChild->tableName === $tableName) {
                 return [
-                    $inlineChild['fieldNameOfParentTableName'],
-                    $inlineChild['fieldNameOfParentTableUid'],
+                    $inlineChild->fieldNameOfParentTableName,
+                    $inlineChild->fieldNameOfParentTableUid,
                 ];
             }
         }

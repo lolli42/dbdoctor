@@ -58,10 +58,10 @@ final readonly class TcaTablesTranslatedLanguageParentDuplicates extends Abstrac
         // Fields pointing to the inline parent of inline child tables
         $inlineParentFields = [];
         foreach ($this->tcaHelper->getNextInlineForeignFieldChildTcaTable() as $inlineChildTable) {
-            $inlineParentFields[$inlineChildTable['tableName']] = [$inlineChildTable['fieldNameOfParentTableUid'], $inlineChildTable['fieldNameOfParentTableName']];
+            $inlineParentFields[$inlineChildTable->tableName] = [$inlineChildTable->fieldNameOfParentTableUid, $inlineChildTable->fieldNameOfParentTableName];
         }
         foreach ($this->tcaHelper->getNextInlineForeignFieldNoForeignTableFieldChildTcaTable() as $inlineChildTable) {
-            $inlineParentFields[$inlineChildTable['tableName']] ??= [$inlineChildTable['fieldNameOfParentTableUid']];
+            $inlineParentFields[$inlineChildTable->tableName] ??= [$inlineChildTable->fieldNameOfParentTableUid];
         }
 
         $findings = [];
