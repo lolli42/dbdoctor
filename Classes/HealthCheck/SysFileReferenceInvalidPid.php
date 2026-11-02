@@ -92,7 +92,7 @@ final readonly class SysFileReferenceInvalidPid extends AbstractHealthCheck impl
                 new Reason(
                     'parent-different-pid',
                     'Parent "' . $row['tablenames'] . ':' . $row['uid_foreign'] . '" is on pid "' . $parentPid . '"',
-                    ['parent' => $row['tablenames'] . ':' . $row['uid_foreign'], 'parentPid' => $parentPid]
+                    ['parentTable' => (string)$row['tablenames'], 'parentUid' => (int)$row['uid_foreign'], 'parentPid' => $parentPid]
                 ),
             );
         }
