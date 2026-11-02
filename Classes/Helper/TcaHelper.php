@@ -104,17 +104,15 @@ final readonly class TcaHelper
      * all three of them does not make too much sense and is more a TCA bug
      * than anything else and not handled.
      *
-     * @param array<int, string> $ignoreTables
      * @return iterable<string>
      */
-    public function getNextLanguageSourceAwareTcaTable(array $ignoreTables = []): iterable
+    public function getNextLanguageSourceAwareTcaTable(): iterable
     {
         $this->verifyTcaIsArray();
         foreach ($GLOBALS['TCA'] as $tableName => $config) {
             if (($config['ctrl']['languageField'] ?? false)
                 && ($config['ctrl']['transOrigPointerField'] ?? false)
                 && ($config['ctrl']['translationSource'] ?? false)
-                && !in_array($tableName, $ignoreTables, true)
             ) {
                 yield $tableName;
             }
@@ -129,10 +127,9 @@ final readonly class TcaHelper
      *      'foreign_table_field' => 'parent_table_name',
      * ],
      *
-     * @param array<int, string> $ignoreTables
      * @return iterable<InlineForeignFieldChild>
      */
-    public function getNextInlineForeignFieldChildTcaTable(array $ignoreTables = []): iterable
+    public function getNextInlineForeignFieldChildTcaTable(): iterable
     {
         $this->verifyTcaIsArray();
         $inlineChildTables = [];
@@ -152,8 +149,6 @@ final readonly class TcaHelper
                     // Note we're not handling the case "two different parents use different foreign_field / foreign_table_field of child":
                     // It's unsure if that works at all. If that happens, first one wins for now.
                     && (!isset($inlineChildTables[$columnConfig['config']['foreign_table']]))
-                    // Not ignored
-                    && !in_array($columnConfig['config']['foreign_table'], $ignoreTables, true)
                 ) {
                     $inlineChildTables[$columnConfig['config']['foreign_table']] = new InlineForeignFieldChild(
                         $columnConfig['config']['foreign_table'],
@@ -178,10 +173,9 @@ final readonly class TcaHelper
      *       'foreign_field' => 'parent_uid',
      *  ],
      *
-     * @param array<int, string> $ignoreTables
      * @return iterable<InlineForeignFieldNoForeignTableFieldChild>
      */
-    public function getNextInlineForeignFieldNoForeignTableFieldChildTcaTable(array $ignoreTables = []): iterable
+    public function getNextInlineForeignFieldNoForeignTableFieldChildTcaTable(): iterable
     {
         $this->verifyTcaIsArray();
         $inlineChildTables = [];
@@ -200,8 +194,6 @@ final readonly class TcaHelper
                     // no foreign_table_field, If that happens, first one wins for now.
                     // @todo: Core should probably except in TcaPreparation or something?!
                     && (!isset($inlineChildTables[$columnConfig['config']['foreign_table']]))
-                    // Not ignored
-                    && !in_array($columnConfig['config']['foreign_table'], $ignoreTables, true)
                 ) {
                     $inlineChildTables[$columnConfig['config']['foreign_table']] = new InlineForeignFieldNoForeignTableFieldChild(
                         $columnConfig['config']['foreign_table'],
