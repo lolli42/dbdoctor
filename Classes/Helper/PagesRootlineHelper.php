@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\Helper;
  */
 
 use Lolli\Dbdoctor\Database\PreparedStatements;
-use Lolli\Dbdoctor\Exception\NoSuchPageException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 
 final readonly class PagesRootlineHelper
@@ -57,7 +56,7 @@ final readonly class PagesRootlineHelper
             }
             array_unshift($rootline, $currentPage);
             return $this->getRootline($statements, $upperPid, $rootline);
-        } catch (NoSuchPageException $e) {
+        } catch (NoSuchRecordException) {
             array_unshift(
                 $rootline,
                 [
@@ -77,14 +76,11 @@ final readonly class PagesRootlineHelper
 
     /**
      * @return array<string, bool|int|string>
+     * @throws NoSuchRecordException
      */
     private function getPage(PreparedStatements $statements, int $uid): array
     {
-        try {
-            $currentPage = $this->recordsHelper->getRecord($statements, 'pages', ['uid', 'pid', 'deleted', 'hidden', 'doktype', 't3ver_wsid', 'title'], $uid);
-        } catch (NoSuchRecordException) {
-            throw new NoSuchPageException('record with uid "' . $uid . '" in table "pages" not found', 1646121409);
-        }
+        $currentPage = $this->recordsHelper->getRecord($statements, 'pages', ['uid', 'pid', 'deleted', 'hidden', 'doktype', 't3ver_wsid', 'title'], $uid);
         $currentPage['_isMissing'] = false;
         return $currentPage;
     }
