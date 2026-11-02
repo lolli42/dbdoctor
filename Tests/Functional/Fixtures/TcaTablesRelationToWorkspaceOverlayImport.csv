@@ -14,6 +14,8 @@
 ,12,1,0,1,0,1,"shortcut","Ok - new workspace record, relation to overlay","2"
 # Soft-deleted live records are handled as well
 ,13,1,1,0,0,0,"shortcut","Not Ok - soft-deleted, relation to overlay without table name","2"
+# Relations to missing records are handled by the earlier GroupFieldRelationMissing
+,14,1,0,0,0,0,"shortcut","Ok - relation to missing record","tt_content_42"
 "tx_dbdoctortestsgroup_item"
 ,"uid","pid","deleted","title","relations_csv"
 ,1,1,0,"Not Ok - relations to overlays of two tables","pages_2,pages_3,tt_content_2"
