@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckMode;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckResult;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
@@ -66,5 +67,16 @@ class TtContentLocalizedParentDifferentPidTest extends AbstractFunctionalTestCas
         $subject = $this->get(TtContentLocalizedParentDifferentPid::class);
         $result = $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckMode::Check, '');
         self::assertSame(HealthCheckResult::Broken, $result);
+    }
+
+    #[Test]
+    public function executeModeThrowsIfEarlierCheckDidNotFix(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizedParentDifferentPidEarlierCheckNotFixedImport.csv');
+        /** @var TtContentLocalizedParentDifferentPid $subject */
+        $subject = $this->get(TtContentLocalizedParentDifferentPid::class);
+        $this->expectException(EarlierCheckNotFixedException::class);
+        $this->expectExceptionCode(1689066707);
+        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckMode::Execute, '');
     }
 }

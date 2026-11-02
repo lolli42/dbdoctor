@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckMode;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\HealthCheck\TtContentLocalizedParentSoftDeleted;
@@ -53,5 +54,16 @@ class TtContentLocalizedParentSoftDeletedTest extends AbstractFunctionalTestCase
         $subject = $this->get(TtContentLocalizedParentSoftDeleted::class);
         $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckMode::Execute, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizedParentSoftDeletedFixed.csv');
+    }
+
+    #[Test]
+    public function executeModeThrowsIfEarlierCheckDidNotFix(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizedParentSoftDeletedEarlierCheckNotFixedImport.csv');
+        /** @var TtContentLocalizedParentSoftDeleted $subject */
+        $subject = $this->get(TtContentLocalizedParentSoftDeleted::class);
+        $this->expectException(EarlierCheckNotFixedException::class);
+        $this->expectExceptionCode(1689065382);
+        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckMode::Execute, '');
     }
 }
