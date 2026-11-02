@@ -22,7 +22,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * Data of a single run of a health check. Created by HealthCheckRunner->handle()
- * and handed down, so the health check services themselves stay stateless.
+ * and handed to renderer and executor, detection gets the prepared statements only.
  */
 final readonly class HealthCheckRun
 {
