@@ -18,6 +18,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Database\PreparedStatements;
+use Lolli\Dbdoctor\Finding\FieldValue;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
@@ -207,8 +208,8 @@ final readonly class PagesShortcutLoop extends AbstractHealthCheck implements He
             $pid,
             [
                 new RecordChange(RecordChangeType::Update, 'pages', $uid, [
-                    'shortcut_mode' => ['value' => PageRepository::SHORTCUT_MODE_FIRST_SUBPAGE, 'type' => Connection::PARAM_INT],
-                    'shortcut' => ['value' => 0, 'type' => Connection::PARAM_INT],
+                    'shortcut_mode' => new FieldValue(PageRepository::SHORTCUT_MODE_FIRST_SUBPAGE, Connection::PARAM_INT),
+                    'shortcut' => new FieldValue(0, Connection::PARAM_INT),
                 ]),
             ],
             new Reason(

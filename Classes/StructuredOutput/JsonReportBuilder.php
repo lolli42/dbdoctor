@@ -18,6 +18,8 @@ namespace Lolli\Dbdoctor\StructuredOutput;
  */
 
 use Lolli\Dbdoctor\Database\PreparedStatements;
+use Lolli\Dbdoctor\Finding\FieldValue;
+use Lolli\Dbdoctor\Finding\FieldValueList;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\MmKey;
 use Lolli\Dbdoctor\Finding\RecordChange;
@@ -617,12 +619,12 @@ final readonly class JsonReportBuilder
             $patterns = [['operation' => $operation, 'table' => $change->tableName]];
             if ($change->type === RecordChangeType::Update || $change->type === RecordChangeType::SoftDelete) {
                 $patterns = [];
-                foreach ($change->values as $field => $valueAndType) {
+                foreach ($change->values as $field => $fieldValue) {
                     $patterns[] = [
                         'operation' => $operation,
                         'table' => $change->tableName,
                         'field' => $field,
-                        'value' => $this->getValueClass($valueAndType['value'], $record),
+                        'value' => $this->getValueClass($fieldValue->value, $record),
                     ];
                 }
             }
@@ -699,19 +701,19 @@ final readonly class JsonReportBuilder
                     $target = $this->recordReader->read($statements, $change->tableName, (int)$change->uid, array_keys($change->values), $options->tier);
                 }
                 $set = [];
-                foreach ($change->values as $field => $valueAndType) {
+                foreach ($change->values as $field => $fieldValue) {
                     $set[$field] = [
                         'old' => $target['fields'][$field] ?? null,
-                        'new' => $valueAndType['value'],
+                        'new' => $fieldValue->value,
                     ];
                 }
                 $write['set'] = $set;
                 break;
             case RecordChangeType::Insert:
-                $write['values'] = array_map(static fn(array $valueAndType): int|string => $valueAndType['value'], $change->values);
+                $write['values'] = array_map(static fn(FieldValue $fieldValue): int|string => $fieldValue->value, $change->values);
                 break;
             case RecordChangeType::MmDelete:
-                $write['where'] = array_map(static fn(array $valueAndType): int|string|array => $valueAndType['value'], $change->where);
+                $write['where'] = array_map(static fn(FieldValue|FieldValueList $whereField): int|string|array => $whereField instanceof FieldValueList ? $whereField->values : $whereField->value, $change->where);
                 break;
             case RecordChangeType::Delete:
                 break;

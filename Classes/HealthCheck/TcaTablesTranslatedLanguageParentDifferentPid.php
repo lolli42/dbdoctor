@@ -19,6 +19,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
 use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
+use Lolli\Dbdoctor\Finding\FieldValue;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
@@ -154,14 +155,8 @@ final readonly class TcaTablesTranslatedLanguageParentDifferentPid extends Abstr
         $isTableWorkspaceAware = !empty($workspaceIdField);
         $isWorkspaceRecord = $isTableWorkspaceAware && (int)$localizedRow[$workspaceIdField] > 0;
         $uid = (int)$localizedRow['uid'];
-        $pidValue = [
-            'value' => $parentPid,
-            'type' => Connection::PARAM_INT,
-        ];
-        $flagValue = [
-            'value' => 1,
-            'type' => Connection::PARAM_INT,
-        ];
+        $pidValue = new FieldValue($parentPid, Connection::PARAM_INT);
+        $flagValue = new FieldValue(1, Connection::PARAM_INT);
 
         if ($this->hasTranslationOnTargetPid($languageAwareTable, $localizedRow, $parentPid, $movedTranslations)) {
             // If there is a localized row already, we set the wrong-pid row to correct pid and set deleted=1 for delete-aware tables, or remove it

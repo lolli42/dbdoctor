@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Database\PreparedStatements;
+use Lolli\Dbdoctor\Finding\FieldValue;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
@@ -85,23 +86,14 @@ final readonly class WorkspacesT3verStateNotZeroInLive extends AbstractHealthChe
                     // t3ver_state < 0 lead to exceptions in the BE page module, but are
                     // SHOWN in FE - we update to t3ver_state=0 and keep them.
                     $change = new RecordChange(RecordChangeType::Update, $tableName, $uid, [
-                        't3ver_state' => [
-                            'value' => VersionState::DEFAULT_STATE->value,
-                            'type' => Connection::PARAM_INT,
-                        ],
+                        't3ver_state' => new FieldValue(VersionState::DEFAULT_STATE->value, Connection::PARAM_INT),
                     ]);
                 } elseif ($isTableDeleteAware) {
                     // t3ver_state > 0 are never shown in FE and may lead to exceptions in the BE page module.
                     // If the table is soft-delete aware, we set those records deleted=1 and t3ver_state=0
                     $change = new RecordChange(RecordChangeType::Update, $tableName, $uid, [
-                        $deleteField => [
-                            'value' => 1,
-                            'type' => Connection::PARAM_INT,
-                        ],
-                        't3ver_state' => [
-                            'value' => VersionState::DEFAULT_STATE->value,
-                            'type' => Connection::PARAM_INT,
-                        ],
+                        $deleteField => new FieldValue(1, Connection::PARAM_INT),
+                        't3ver_state' => new FieldValue(VersionState::DEFAULT_STATE->value, Connection::PARAM_INT),
                     ]);
                 } else {
                     // t3ver_state > 0 are never shown in FE and may lead to exceptions in the BE page module.

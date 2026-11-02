@@ -16,13 +16,14 @@ namespace Lolli\Dbdoctor\Helper;
  *
  * The TYPO3 project - inspiring people to share!
  */
-use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Statement;
 use Lolli\Dbdoctor\Database\PreparedStatement;
 use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Exception\NoSuchTableException;
 use Lolli\Dbdoctor\Exception\UnexpectedNumberOfAffectedRowsException;
+use Lolli\Dbdoctor\Finding\FieldValue;
+use Lolli\Dbdoctor\Finding\FieldValueList;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
@@ -89,7 +90,7 @@ final readonly class RecordsHelper
             $preparedStatement = $statements->add($statementKey, new PreparedStatement($queryBuilder->prepare(), $queryBuilder->getSQL()));
         }
         $statement = $preparedStatement->statement;
-        $sqlString = $this->renderSql($tableName, $preparedStatement->sqlString, [['value' => $uid, 'type' => Connection::PARAM_INT]]);
+        $sqlString = $this->renderSql($tableName, $preparedStatement->sqlString, [new FieldValue($uid, Connection::PARAM_INT)]);
         if (!$simulate) {
             $statement->bindValue(1, $uid, Connection::PARAM_INT);
             $affectedRows = $statement->executeStatement();
@@ -104,7 +105,7 @@ final readonly class RecordsHelper
     }
 
     /**
-     * @param array<string, array{value: int|string, type: ParameterType}> $fields
+     * @param array<string, FieldValue> $fields
      */
     public function updateTcaRecord(PreparedStatements $statements, bool $simulate, string $tableName, int $uid, array $fields): string
     {
@@ -113,7 +114,7 @@ final readonly class RecordsHelper
         if ($preparedStatement === null) {
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             $queryBuilder->update($tableName);
-            foreach ($fields as $fieldName => $valueAndType) {
+            foreach (array_keys($fields) as $fieldName) {
                 $queryBuilder->set($fieldName, '?', false);
             }
             $queryBuilder->where(
@@ -122,7 +123,7 @@ final readonly class RecordsHelper
             $preparedStatement = $statements->add($statementKey, new PreparedStatement($queryBuilder->prepare(), $queryBuilder->getSQL()));
         }
         $statement = $preparedStatement->statement;
-        $parameters = [...array_values($fields), ['value' => $uid, 'type' => Connection::PARAM_INT]];
+        $parameters = [...array_values($fields), new FieldValue($uid, Connection::PARAM_INT)];
         $sqlString = $this->renderSql($tableName, $preparedStatement->sqlString, $parameters);
         if (!$simulate) {
             $this->bindParameters($statement, $parameters);
@@ -138,7 +139,7 @@ final readonly class RecordsHelper
     }
 
     /**
-     * @param array<string, array{value: int|string, type: ParameterType}> $fields
+     * @param array<string, FieldValue> $fields
      */
     public function insertTcaRecord(PreparedStatements $statements, bool $simulate, string $tableName, array $fields): string
     {
@@ -147,7 +148,7 @@ final readonly class RecordsHelper
         if ($preparedStatement === null) {
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             $queryBuilder->insert($tableName);
-            foreach ($fields as $fieldName => $valueAndType) {
+            foreach (array_keys($fields) as $fieldName) {
                 $queryBuilder->setValue($fieldName, '?', false);
             }
             $preparedStatement = $statements->add($statementKey, new PreparedStatement($queryBuilder->prepare(), $queryBuilder->getSQL()));
@@ -172,11 +173,11 @@ final readonly class RecordsHelper
      * DELETE rows of an MM table. MM tables are no TCA tables, they have a uid
      * column only for fields with "multiple": Rows are identified by all given
      * fields. There may be duplicate rows, so at least one affected row is expected.
-     * A field with a list of integers is restricted by IN(), the type is the type
+     * A field with a FieldValueList is restricted by IN(), the type is the type
      * of each value. Callers keep the list short: Platforms limit the number of
      * bound parameters of a statement.
      *
-     * @param array<string, array{value: int|string|list<int>, type: ParameterType}> $whereFields
+     * @param array<string, FieldValue|FieldValueList> $whereFields
      */
     public function deleteMmRows(PreparedStatements $statements, bool $simulate, string $mmTableName, array $whereFields): string
     {
@@ -184,17 +185,17 @@ final readonly class RecordsHelper
             throw new \RuntimeException('Must restrict MM rows to delete by at least one field.', 1791484210);
         }
         $statementKeyParts = [];
-        foreach ($whereFields as $fieldName => $valueAndType) {
-            $statementKeyParts[] = $fieldName . (is_array($valueAndType['value']) ? ':' . count($valueAndType['value']) : '');
+        foreach ($whereFields as $fieldName => $whereField) {
+            $statementKeyParts[] = $fieldName . ($whereField instanceof FieldValueList ? ':' . count($whereField->values) : '');
         }
         $statementKey = 'deleteMm-' . $mmTableName . '-' . implode(',', $statementKeyParts);
         $preparedStatement = $statements->get($statementKey);
         if ($preparedStatement === null) {
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($mmTableName);
             $queryBuilder->delete($mmTableName);
-            foreach ($whereFields as $fieldName => $valueAndType) {
-                if (is_array($valueAndType['value'])) {
-                    $queryBuilder->andWhere($queryBuilder->expr()->in($fieldName, array_fill(0, count($valueAndType['value']), '?')));
+            foreach ($whereFields as $fieldName => $whereField) {
+                if ($whereField instanceof FieldValueList) {
+                    $queryBuilder->andWhere($queryBuilder->expr()->in($fieldName, array_fill(0, count($whereField->values), '?')));
                 } else {
                     $queryBuilder->andWhere($queryBuilder->expr()->eq($fieldName, '?'));
                 }
@@ -203,14 +204,14 @@ final readonly class RecordsHelper
         }
         $statement = $preparedStatement->statement;
         $parameters = [];
-        foreach ($whereFields as $valueAndType) {
-            if (is_array($valueAndType['value'])) {
-                foreach ($valueAndType['value'] as $value) {
-                    $parameters[] = ['value' => $value, 'type' => $valueAndType['type']];
+        foreach ($whereFields as $whereField) {
+            if ($whereField instanceof FieldValueList) {
+                foreach ($whereField->values as $value) {
+                    $parameters[] = new FieldValue($value, $whereField->type);
                 }
                 continue;
             }
-            $parameters[] = $valueAndType;
+            $parameters[] = $whereField;
         }
         $sqlString = $this->renderSql($mmTableName, $preparedStatement->sqlString, $parameters);
         if (!$simulate) {
@@ -231,17 +232,17 @@ final readonly class RecordsHelper
      * and the dump file. The prepared SQL has values only as placeholders, so each "?" is one. The SQL
      * is split at the placeholders first: A value is never searched again, even if it contains "?".
      *
-     * @param list<array{value: int|string, type: ParameterType}> $parameters
+     * @param list<FieldValue> $parameters
      */
     private function renderSql(string $tableName, string $preparedSql, array $parameters): string
     {
         $connection = $this->connectionPool->getConnectionForTable($tableName);
         $sqlValues = [];
         foreach ($parameters as $parameter) {
-            if ($parameter['type'] === Connection::PARAM_STR || $parameter['type'] === Connection::PARAM_LOB) {
-                $sqlValues[] = $connection->quote((string)$parameter['value']);
+            if ($parameter->type === Connection::PARAM_STR || $parameter->type === Connection::PARAM_LOB) {
+                $sqlValues[] = $connection->quote((string)$parameter->value);
             } else {
-                $sqlValues[] = (string)$parameter['value'];
+                $sqlValues[] = (string)$parameter->value;
             }
         }
         $sqlParts = explode('?', $preparedSql);
@@ -253,12 +254,12 @@ final readonly class RecordsHelper
     }
 
     /**
-     * @param list<array{value: int|string, type: ParameterType}> $parameters
+     * @param list<FieldValue> $parameters
      */
     private function bindParameters(Statement $statement, array $parameters): void
     {
         foreach ($parameters as $index => $parameter) {
-            $statement->bindValue($index + 1, $parameter['value'], $parameter['type']);
+            $statement->bindValue($index + 1, $parameter->value, $parameter->type);
         }
     }
 }

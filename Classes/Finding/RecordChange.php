@@ -17,8 +17,6 @@ namespace Lolli\Dbdoctor\Finding;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Doctrine\DBAL\ParameterType;
-
 /**
  * A single change of a finding: One statement. Created by health checks while
  * detecting, executed or rendered by RecordChangeExecutor.
@@ -27,8 +25,8 @@ final readonly class RecordChange
 {
     /**
      * @param int|null $uid Record to update or delete, null for insert and mm-delete
-     * @param array<string, array{value: int|string, type: ParameterType}> $values Fields to set for update, soft-delete and insert
-     * @param array<string, array{value: int|string|list<int>, type: ParameterType}> $where Fields identifying the rows of mm-delete, a list of values is IN()
+     * @param array<string, FieldValue> $values Fields to set for update, soft-delete and insert
+     * @param array<string, FieldValue|FieldValueList> $where Fields identifying the rows of mm-delete, a list of values is IN()
      */
     public function __construct(
         public RecordChangeType $type,

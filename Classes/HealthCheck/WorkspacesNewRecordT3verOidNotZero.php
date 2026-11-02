@@ -18,6 +18,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Database\PreparedStatements;
+use Lolli\Dbdoctor\Finding\FieldValue;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
@@ -75,7 +76,7 @@ final readonly class WorkspacesNewRecordT3verOidNotZero extends AbstractHealthCh
                 $findings[] = new Finding(
                     new RecordKey($tableName, (int)$row['uid']),
                     (int)$row['pid'],
-                    [new RecordChange(RecordChangeType::Update, $tableName, (int)$row['uid'], ['t3ver_oid' => ['value' => 0, 'type' => Connection::PARAM_INT]])],
+                    [new RecordChange(RecordChangeType::Update, $tableName, (int)$row['uid'], ['t3ver_oid' => new FieldValue(0, Connection::PARAM_INT)])],
                     new Reason('new-record-with-oid', 'New workspace record with t3ver_oid "' . $row['t3ver_oid'] . '"', ['liveUid' => (int)$row['t3ver_oid']]),
                 );
             }
