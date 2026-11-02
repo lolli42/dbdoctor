@@ -310,7 +310,7 @@ final class HealthCommand extends Command
                 if (!$isReported) {
                     continue;
                 }
-                $checks[] = $this->jsonReportBuilder->buildCheckWithoutInspection($position, $healthInstance::class, 'not-run');
+                $checks[] = $this->jsonReportBuilder->buildCheckWithoutInspection($position, $healthInstance::class);
                 continue;
             }
             $inspection = $this->healthCheckRunner->inspect($healthInstance);
