@@ -31,7 +31,7 @@ use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
 /**
- * Stateless service detecting MM relations to missing records, for the checks of
+ * Stateless service detecting MM relations with a RelationProblem, for the checks of
  * group, select and inline fields with MM table. The core RelationHandler reads and
  * writes the MM rows of all three the same way.
  */
@@ -42,15 +42,20 @@ final readonly class MmRelationHelper
         private TcaHelper $tcaHelper,
         private RecordsHelper $recordsHelper,
         private TableHelper $tableHelper,
+        private RelationTargetHelper $relationTargetHelper,
     ) {}
 
     /**
-     * Findings of MM rows pointing to missing records, and of MM rows of missing local records.
+     * Findings of MM rows pointing to records with the given problem. With RelationProblem::Missing
+     * also MM rows of missing local records. With RelationProblem::WorkspaceOverlay, only MM rows of
+     * live local records are looked at: The core writes MM rows of workspace records pointing to
+     * records of their workspace on purpose. MM rows pointing to an overlay of a table editing the
+     * relation from the opposite side are skipped as well, see hasOppositeField().
      *
      * @param iterable<MmField> $mmFields
      * @return list<Finding>
      */
-    public function getFindings(HealthCheckRun $run, iterable $mmFields): array
+    public function getFindings(HealthCheckRun $run, iterable $mmFields, RelationProblem $problem): array
     {
         // Findings per table they are counted for: The local table, or the MM table for MM rows of missing local records.
         $findingsByTable = [];
@@ -61,6 +66,7 @@ final readonly class MmRelationHelper
             if (!$this->tableHelper->fieldExistsInTable($tableName, $fieldName)
                 || !$this->tableHelper->fieldExistsInTable($mmTableName, 'uid_local')
                 || !$this->tableHelper->fieldExistsInTable($mmTableName, 'uid_foreign')
+                || ($problem === RelationProblem::WorkspaceOverlay && !$this->tcaHelper->hasWorkspaceAwareTargetTable($mmField))
             ) {
                 continue;
             }
@@ -85,12 +91,25 @@ final readonly class MmRelationHelper
                 $queryBuilder->addSelect('mm.tablenames AS tablenames');
             }
             $typeField = $mmField->typeField;
+            $localWorkspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
+            $isLiveLocalRecordRequired = $problem === RelationProblem::WorkspaceOverlay && $localWorkspaceIdField !== null;
             if ($typeField !== null) {
                 // Some record types change the allowed tables of this field, see TcaHelper->getAllowedTablesByType().
                 // The type of the local record is joined, instead of a query per local record.
-                $queryBuilder
-                    ->addSelect('local.' . $typeField . ' AS local_record_type')
-                    ->leftJoin('mm', $tableName, 'local', $queryBuilder->expr()->eq('local.uid', $queryBuilder->quoteIdentifier('mm.uid_local')));
+                $queryBuilder->addSelect('local.' . $typeField . ' AS local_record_type');
+            }
+            if ($isLiveLocalRecordRequired) {
+                $queryBuilder->join(
+                    'mm',
+                    $tableName,
+                    'local',
+                    (string)$queryBuilder->expr()->and(
+                        $queryBuilder->expr()->eq('local.uid', $queryBuilder->quoteIdentifier('mm.uid_local')),
+                        $queryBuilder->expr()->eq('local.' . $localWorkspaceIdField, $queryBuilder->createNamedParameter(0, Connection::PARAM_INT))
+                    )
+                );
+            } elseif ($typeField !== null) {
+                $queryBuilder->leftJoin('mm', $tableName, 'local', $queryBuilder->expr()->eq('local.uid', $queryBuilder->quoteIdentifier('mm.uid_local')));
             }
             foreach ($mmField->matchFields as $matchFieldName => $matchFieldValue) {
                 $queryBuilder->andWhere(
@@ -98,29 +117,29 @@ final readonly class MmRelationHelper
                 );
             }
             $result = $queryBuilder->orderBy('mm.uid_local')->addOrderBy('mm.uid_foreign')->executeQuery();
-            $canHandleMissingLocalRecords = $this->canHandleMissingLocalRecords($mmTableName);
+            $canHandleMissingLocalRecords = $problem === RelationProblem::Missing && $this->canHandleMissingLocalRecords($mmTableName);
             // MM rows are sorted by uid_local: Collect relations of one local record,
             // and handle them when the next local record starts.
             $currentUidLocal = null;
             $isLocalRecordMissing = false;
             $mmRowCount = 0;
-            $missingRelations = [];
+            $relations = [];
             while ($mmRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string|null> $mmRow */
                 if ($currentUidLocal !== (int)$mmRow['uid_local']) {
                     if ($currentUidLocal !== null && $isLocalRecordMissing) {
                         $findingsByTable[$mmTableName][] = $this->getMissingLocalRecordFinding($mmField, $currentUidLocal, $mmRowCount);
-                    } elseif ($currentUidLocal !== null && !empty($missingRelations)) {
-                        $finding = $this->getMissingRelationsFinding($run, $mmField, $currentUidLocal, $missingRelations);
+                    } elseif ($currentUidLocal !== null && !empty($relations)) {
+                        $finding = $this->getRelationsFinding($run, $problem, $mmField, $currentUidLocal, $relations);
                         if ($finding !== null) {
                             $findingsByTable[$tableName][] = $finding;
                         }
                     }
                     $currentUidLocal = (int)$mmRow['uid_local'];
                     $isLocalRecordMissing = $canHandleMissingLocalRecords
-                        && $this->isRecordMissing($run, $tableName, $currentUidLocal);
+                        && $this->relationTargetHelper->hasProblem($run, RelationProblem::Missing, $tableName, $currentUidLocal);
                     $mmRowCount = 0;
-                    $missingRelations = [];
+                    $relations = [];
                 }
                 if ($isLocalRecordMissing) {
                     // All MM rows of a missing local record are removed, foreign records do not matter.
@@ -142,22 +161,27 @@ final readonly class MmRelationHelper
                     // Not a relation of this field, as in core RelationHandler->readMM().
                     continue;
                 }
-                if ($uidForeign > 0 && $this->isRecordMissing($run, $targetTableName, $uidForeign)) {
+                if ($problem === RelationProblem::WorkspaceOverlay && $this->hasOppositeField($mmTableName, $targetTableName)) {
+                    // The target table edits the relation from the opposite side, like the "categories" field of pages
+                    // for sys_category "items": A workspace overlay of the target owns the MM rows pointing to it.
+                    continue;
+                }
+                if ($uidForeign > 0 && $this->relationTargetHelper->hasProblem($run, $problem, $targetTableName, $uidForeign)) {
                     // Grouped by "tablenames", a DELETE condition of its own. Once per uid_foreign: Fields without
                     // match fields, like sys_category "items", read rows of all fields of the opposite side, one
                     // DELETE removes all of them.
-                    $missingRelations[$tablenames ?? ''] ??= [
+                    $relations[$tablenames ?? ''] ??= [
                         'tableName' => $targetTableName,
                         'tablenames' => $tablenames,
                         'uids' => [],
                     ];
-                    $missingRelations[$tablenames ?? '']['uids'][$uidForeign] = $uidForeign;
+                    $relations[$tablenames ?? '']['uids'][$uidForeign] = $uidForeign;
                 }
             }
             if ($currentUidLocal !== null && $isLocalRecordMissing) {
                 $findingsByTable[$mmTableName][] = $this->getMissingLocalRecordFinding($mmField, $currentUidLocal, $mmRowCount);
-            } elseif ($currentUidLocal !== null && !empty($missingRelations)) {
-                $finding = $this->getMissingRelationsFinding($run, $mmField, $currentUidLocal, $missingRelations);
+            } elseif ($currentUidLocal !== null && !empty($relations)) {
+                $finding = $this->getRelationsFinding($run, $problem, $mmField, $currentUidLocal, $relations);
                 if ($finding !== null) {
                     $findingsByTable[$tableName][] = $finding;
                 }
@@ -171,6 +195,24 @@ final readonly class MmRelationHelper
             }
         }
         return array_merge(...array_values($findingsByMmTable));
+    }
+
+    /**
+     * True if the table has a field using this MM table from the opposite side (MM_opposite_field). Such
+     * relations can be edited from both sides: The DataHandler writes the MM rows of a workspace overlay of
+     * the opposite side with the live record on the local side and the overlay in uid_foreign. These rows
+     * belong to the workspace, the reference index adds them for the workspace (core 13.4 and 14.3).
+     */
+    private function hasOppositeField(string $mmTableName, string $tableName): bool
+    {
+        foreach (($GLOBALS['TCA'][$tableName]['columns'] ?? []) as $columnConfig) {
+            if (($columnConfig['config']['MM'] ?? '') === $mmTableName
+                && !empty($columnConfig['config']['MM_opposite_field'])
+            ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -238,15 +280,15 @@ final readonly class MmRelationHelper
     }
 
     /**
-     * One DELETE per up to 100 missing relations to one table: Many missing relations, for
+     * One DELETE per up to 100 relations with the problem to one table: Many relations, for
      * instance of a category assigned to many records deleted meanwhile, need few changes and
      * little memory, and IN() stays below the limits of bound parameters of the platforms.
      * A DELETE may remove more MM rows than relations: Duplicates, and rows of other fields
      * of the opposite side for fields without match fields.
      *
-     * @param array<string, array{tableName: string, tablenames: string|null, uids: array<int, int>}> $missingRelations
+     * @param array<string, array{tableName: string, tablenames: string|null, uids: array<int, int>}> $relations
      */
-    private function getMissingRelationsFinding(HealthCheckRun $run, MmField $mmField, int $uidLocal, array $missingRelations): ?Finding
+    private function getRelationsFinding(HealthCheckRun $run, RelationProblem $problem, MmField $mmField, int $uidLocal, array $relations): ?Finding
     {
         try {
             $localRecord = $this->recordsHelper->getRecord($run->statements, $mmField->tableName, ['uid', 'pid'], $uidLocal);
@@ -257,7 +299,7 @@ final readonly class MmRelationHelper
         }
         $missing = [];
         $changes = [];
-        foreach ($missingRelations as $missingRelation) {
+        foreach ($relations as $missingRelation) {
             foreach ($missingRelation['uids'] as $uidForeign) {
                 $missing[] = $missingRelation['tableName'] . ':' . $uidForeign;
             }
@@ -286,11 +328,7 @@ final readonly class MmRelationHelper
             new RecordFieldKey($mmField->tableName, (int)$localRecord['uid'], $mmField->fieldName),
             (int)$localRecord['pid'],
             $changes,
-            new Reason(
-                'relation-missing',
-                'Field "' . $mmField->fieldName . '": Missing ' . implode(', ', $missing),
-                ['missing' => $missing]
-            ),
+            $this->relationTargetHelper->getReason($problem, $mmField->fieldName, $missing),
         );
     }
 
@@ -332,19 +370,5 @@ final readonly class MmRelationHelper
             return '';
         }
         return $targetTableName;
-    }
-
-    private function isRecordMissing(HealthCheckRun $run, string $tableName, int $uid): bool
-    {
-        if (!$this->tableHelper->tableExistsInDatabase($tableName)) {
-            // Not our business, the relation can not be checked.
-            return false;
-        }
-        try {
-            $this->recordsHelper->getRecord($run->statements, $tableName, ['uid'], $uid);
-        } catch (NoSuchRecordException $e) {
-            return true;
-        }
-        return false;
     }
 }

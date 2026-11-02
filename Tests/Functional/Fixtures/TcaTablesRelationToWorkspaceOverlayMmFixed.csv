@@ -1,0 +1,44 @@
+"pages"
+,"uid","pid","deleted","t3ver_wsid","t3ver_oid","t3ver_state","title"
+,1,0,0,0,0,0,"Ok - root"
+,2,1,0,0,0,0,"Ok - live page"
+,3,1,0,1,2,0,"Ok - overlay of page 2 in workspace 1"
+"tt_content"
+,"uid","pid","deleted","t3ver_wsid","t3ver_oid","t3ver_state","header"
+,1,1,0,0,0,0,"Ok - live"
+,2,1,0,1,1,0,"Ok - overlay of 1 in workspace 1"
+"sys_category"
+,"uid","pid","deleted","t3ver_wsid","t3ver_oid","t3ver_state","title","items"
+# Count fields are not updated
+,1,0,0,0,0,0,"Ok - live category, assigned to content overlay from the opposite side",2
+,2,0,0,1,1,0,"Ok - overlay of category 1, relation to content overlay",1
+"sys_category_record_mm"
+,"uid_local","uid_foreign","tablenames","fieldname"
+,1,1,"tt_content","categories"
+# Category assignment of the content overlay: tt_content "categories" edits the relation from the opposite side,
+# the overlay owns the MM rows pointing to it
+,1,2,"tt_content","categories"
+# MM rows of a workspace record point to records of its workspace on purpose
+,2,2,"tt_content","categories"
+"tx_dbdoctortestsgroup_item"
+,"uid","pid","deleted","title","relations_mm"
+,1,1,0,"Not Ok - relation to content overlay",2
+"tx_dbdoctortestsgroup_item_mm"
+,"uid_local","uid_foreign","tablenames","fieldname"
+,1,1,"tt_content","relations_mm"
+"tx_dbdoctortestsselect_item"
+,"uid","pid","deleted","title","record_type","relations_mm"
+,1,1,0,"Not Ok - relation to page overlay","0",2
+"tx_dbdoctortestsselect_item_mm"
+,"uid_local","uid_foreign"
+,1,2
+"tx_dbdoctortestsinline_child"
+,"uid","pid","deleted","t3ver_wsid","t3ver_oid","t3ver_state","title"
+,1,1,0,0,0,0,"Ok - live"
+,2,1,0,1,1,0,"Ok - overlay of 1 in workspace 1"
+"tx_dbdoctortestsinline_parent"
+,"uid","pid","deleted","title","children_mm"
+,1,1,0,"Not Ok - relation to child overlay",2
+"tx_dbdoctortestsinline_parent_mm"
+,"uid_local","uid_foreign"
+,1,1

@@ -17,7 +17,8 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbdoctor\Helper\ForeignTableListRelationHelper;
+use Lolli\Dbdoctor\Helper\ListRelationHelper;
+use Lolli\Dbdoctor\Helper\RelationProblem;
 
 /**
  * Relations in TCA type 'inline' fields without foreign_field and without MM table must
@@ -26,7 +27,7 @@ use Lolli\Dbdoctor\Helper\ForeignTableListRelationHelper;
 final readonly class InlineFieldUidListRelationMissing extends AbstractHealthCheck implements HealthCheckInterface
 {
     public function __construct(
-        private ForeignTableListRelationHelper $foreignTableListRelationHelper,
+        private ListRelationHelper $listRelationHelper,
     ) {}
 
     public function getDescription(): HealthCheckDescription
@@ -48,6 +49,6 @@ final readonly class InlineFieldUidListRelationMissing extends AbstractHealthChe
 
     public function detect(HealthCheckRun $run): array
     {
-        return $this->foreignTableListRelationHelper->getFindings($run, $this->tcaHelper->getNextInlineFieldWithUidList());
+        return $this->listRelationHelper->getFindings($run, $this->tcaHelper->getNextInlineFieldWithUidList(), RelationProblem::Missing);
     }
 }
