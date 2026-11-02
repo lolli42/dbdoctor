@@ -17,9 +17,11 @@ namespace Lolli\Dbdoctor\Tests\Functional;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
+use TYPO3\TestingFramework\Core\Testbase;
 
 /**
  * HACK: Base class of all dbdoctor functional tests, working around the
@@ -63,6 +65,11 @@ use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
  * - sqlite:        47.1s -> 7.7s, factor 6.1
  * - mariadb 10.3:  50.0s -> 9.7s, factor 5.2
  * - postgres 10:   69.5s -> 22.9s, factor 3.0
+ *
+ * Second hack: initializeTestDatabaseAndTruncateTables() truncates only
+ * tables a previous test changed on postgres, see there. It overrides an
+ * @internal method of testing-framework as well. If it breaks, remove it
+ * to fall back to truncating all tables.
  */
 abstract class AbstractFunctionalTestCase extends FunctionalTestCase
 {
@@ -112,5 +119,55 @@ abstract class AbstractFunctionalTestCase extends FunctionalTestCase
         parent::setUp();
         self::$setUpInstances[$identifier] = true;
         self::$lastIdentifier = $identifier;
+    }
+
+    /**
+     * Truncate only tables a previous test changed on postgres.
+     *
+     * testing-framework truncates all tables of the instance before each
+     * subsequent test on postgres, with one TRUNCATE statement over all
+     * tables, which costs ~25ms per test. On mysql, it truncates only tables
+     * with rows or a changed auto increment value. This does the same on
+     * postgres: Truncate tables with rows, and tables with a sequence that
+     * has been used since it was reset. RESTART IDENTITY resets a sequence to
+     * "not called", pg_sequences.last_value is NULL then, so the next test
+     * starts with uid 1 again.
+     */
+    protected function initializeTestDatabaseAndTruncateTables(Testbase $testbase, bool $initializeDatabase, string $dbPathSqlite, string $dbPathSqliteEmpty): void
+    {
+        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionByName(ConnectionPool::DEFAULT_CONNECTION_NAME);
+        if (!$initializeDatabase || !$connection->getDatabasePlatform() instanceof PostgreSQLPlatform) {
+            parent::initializeTestDatabaseAndTruncateTables($testbase, $initializeDatabase, $dbPathSqlite, $dbPathSqliteEmpty);
+            return;
+        }
+        $tableNames = $connection->executeQuery(
+            'SELECT c.relname FROM pg_class c'
+            . ' JOIN pg_namespace n ON n.oid = c.relnamespace'
+            . " WHERE c.relkind = 'r' AND n.nspname = current_schema()"
+        )->fetchFirstColumn();
+        if ($tableNames === []) {
+            return;
+        }
+        $tablesWithRowsQueries = [];
+        foreach ($tableNames as $tableName) {
+            $tablesWithRowsQueries[] = 'SELECT ' . $connection->quote($tableName) . ' AS table_name'
+                . ' WHERE EXISTS (SELECT 1 FROM ' . $connection->quoteIdentifier($tableName) . ')';
+        }
+        $tablesWithRows = $connection->executeQuery(implode(' UNION ALL ', $tablesWithRowsQueries))->fetchFirstColumn();
+        $tablesWithUsedSequence = $connection->executeQuery(
+            'SELECT t.relname FROM pg_sequences ps'
+            . ' JOIN pg_namespace n ON n.nspname = ps.schemaname'
+            . ' JOIN pg_class s ON s.relname = ps.sequencename AND s.relnamespace = n.oid'
+            . " JOIN pg_depend d ON d.objid = s.oid AND d.classid = 'pg_class'::regclass AND d.deptype IN ('a', 'i')"
+            . ' JOIN pg_class t ON t.oid = d.refobjid'
+            . ' WHERE ps.schemaname = current_schema() AND ps.last_value IS NOT NULL'
+        )->fetchFirstColumn();
+        $tablesToTruncate = array_unique(array_merge($tablesWithRows, $tablesWithUsedSequence));
+        if ($tablesToTruncate === []) {
+            return;
+        }
+        $connection->executeStatement(
+            'TRUNCATE TABLE ' . implode(', ', array_map($connection->quoteIdentifier(...), $tablesToTruncate)) . ' RESTART IDENTITY CASCADE'
+        );
     }
 }
