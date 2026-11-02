@@ -64,7 +64,7 @@ final readonly class PagesTranslatedLanguageParentDeleted extends AbstractHealth
                         new RecordKey('pages', (int)$row['uid']),
                         (int)$row['pid'],
                         [$this->softOrHardDeleteChange('pages', $row)],
-                        new Reason('parent-deleted', 'Language parent "' . $row['l10n_parent'] . '" is soft-deleted', ['l10n_parent' => (int)$row['l10n_parent']]),
+                        new Reason('parent-deleted', 'Language parent "' . $row['l10n_parent'] . '" is soft-deleted', ['parent' => (int)$row['l10n_parent']]),
                     );
                 }
             } catch (NoSuchRecordException $e) {

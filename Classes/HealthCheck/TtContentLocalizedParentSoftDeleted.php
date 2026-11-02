@@ -67,7 +67,7 @@ final readonly class TtContentLocalizedParentSoftDeleted extends AbstractHealthC
                         new RecordKey('tt_content', (int)$row['uid']),
                         (int)$row['pid'],
                         [$this->softOrHardDeleteChange('tt_content', $row)],
-                        new Reason('parent-deleted', 'Language parent "' . $row['l18n_parent'] . '" is soft-deleted', ['l18n_parent' => (int)$row['l18n_parent']]),
+                        new Reason('parent-deleted', 'Language parent "' . $row['l18n_parent'] . '" is soft-deleted', ['parent' => (int)$row['l18n_parent']]),
                     );
                 }
             } catch (NoSuchRecordException $e) {
