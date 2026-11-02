@@ -22,6 +22,8 @@ use Lolli\Dbdoctor\Tca\GroupField;
 use Lolli\Dbdoctor\Tca\InlineForeignFieldChild;
 use Lolli\Dbdoctor\Tca\InlineForeignFieldNoForeignTableFieldChild;
 use Lolli\Dbdoctor\Tca\InlineForeignFieldNoForeignTableFieldParent;
+use Lolli\Dbdoctor\Tca\LanguageAwareTable;
+use Lolli\Dbdoctor\Tca\LanguageSourceAwareTable;
 use Lolli\Dbdoctor\Tca\MmField;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -234,10 +236,10 @@ class TcaHelperTest extends UnitTestCase
             $result[] = $table;
         }
         $expected = [
-            'languageAware1',
-            'languageAware2',
+            new LanguageAwareTable('languageAware1', 'sys_language_uid', 'l18n_parent'),
+            new LanguageAwareTable('languageAware2', 'sys_language_uid', 'l18n_parent'),
         ];
-        self::assertSame($expected, $result);
+        self::assertEquals($expected, $result);
     }
 
     #[Test]
@@ -262,7 +264,7 @@ class TcaHelperTest extends UnitTestCase
         foreach ($subject->getNextLanguageAwareTcaTable(['foo']) as $item) {
             $tables[] = $item;
         }
-        self::assertSame(['bar'], $tables);
+        self::assertEquals([new LanguageAwareTable('bar', 'sys_language_uid', 'l18n_parent')], $tables);
     }
 
     #[Test]
@@ -326,9 +328,9 @@ class TcaHelperTest extends UnitTestCase
             $result[] = $table;
         }
         $expected = [
-            'languageAware1',
+            new LanguageSourceAwareTable('languageAware1', 'sys_language_uid', 'l18n_parent', 'l10n_source'),
         ];
-        self::assertSame($expected, $result);
+        self::assertEquals($expected, $result);
     }
 
     #[Test]

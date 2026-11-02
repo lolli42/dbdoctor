@@ -51,17 +51,16 @@ final readonly class TcaTablesTranslatedLanguageParentDeleted extends AbstractHe
     public function detect(PreparedStatements $statements): array
     {
         $findings = [];
-        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {
+        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $languageAwareTable) {
+            $tableName = $languageAwareTable->tableName;
             $deletedField = $this->tcaHelper->getDeletedField($tableName);
             if (!$deletedField) {
                 // Ignore tables without delete field.
                 continue;
             }
 
-            /** @var string $languageField */
-            $languageField = $this->tcaHelper->getLanguageField($tableName);
-            /** @var string $translationParentField */
-            $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
+            $languageField = $languageAwareTable->languageField;
+            $translationParentField = $languageAwareTable->translationParentField;
             $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
             $isTableWorkspaceAware = !empty($workspaceIdField);
 

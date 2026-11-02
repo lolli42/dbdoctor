@@ -66,11 +66,10 @@ final readonly class TcaTablesTranslatedLanguageParentDuplicates extends Abstrac
         }
 
         $findings = [];
-        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages', 'tt_content']) as $tableName) {
-            /** @var string $languageField */
-            $languageField = $this->tcaHelper->getLanguageField($tableName);
-            /** @var string $translationParentField */
-            $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
+        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages', 'tt_content']) as $languageAwareTable) {
+            $tableName = $languageAwareTable->tableName;
+            $languageField = $languageAwareTable->languageField;
+            $translationParentField = $languageAwareTable->translationParentField;
             $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
             $parentFields = $inlineParentFields[$tableName] ?? [];
 

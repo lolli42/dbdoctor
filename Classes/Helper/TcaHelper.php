@@ -22,6 +22,8 @@ use Lolli\Dbdoctor\Tca\GroupField;
 use Lolli\Dbdoctor\Tca\InlineForeignFieldChild;
 use Lolli\Dbdoctor\Tca\InlineForeignFieldNoForeignTableFieldChild;
 use Lolli\Dbdoctor\Tca\InlineForeignFieldNoForeignTableFieldParent;
+use Lolli\Dbdoctor\Tca\LanguageAwareTable;
+use Lolli\Dbdoctor\Tca\LanguageSourceAwareTable;
 use Lolli\Dbdoctor\Tca\MmField;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -82,17 +84,19 @@ final readonly class TcaHelper
      * than anything else and not handled.
      *
      * @param array<int, string> $ignoreTables
-     * @return iterable<string>
+     * @return iterable<LanguageAwareTable>
      */
     public function getNextLanguageAwareTcaTable(array $ignoreTables = []): iterable
     {
         $this->verifyTcaIsArray();
         foreach ($GLOBALS['TCA'] as $tableName => $config) {
-            if (($config['ctrl']['languageField'] ?? false)
-                && ($config['ctrl']['transOrigPointerField'] ?? false)
+            $languageField = $config['ctrl']['languageField'] ?? null;
+            $translationParentField = $config['ctrl']['transOrigPointerField'] ?? null;
+            if (is_string($languageField) && $languageField !== ''
+                && is_string($translationParentField) && $translationParentField !== ''
                 && !in_array($tableName, $ignoreTables, true)
             ) {
-                yield $tableName;
+                yield new LanguageAwareTable($tableName, $languageField, $translationParentField);
             }
         }
     }
@@ -104,17 +108,20 @@ final readonly class TcaHelper
      * all three of them does not make too much sense and is more a TCA bug
      * than anything else and not handled.
      *
-     * @return iterable<string>
+     * @return iterable<LanguageSourceAwareTable>
      */
     public function getNextLanguageSourceAwareTcaTable(): iterable
     {
         $this->verifyTcaIsArray();
         foreach ($GLOBALS['TCA'] as $tableName => $config) {
-            if (($config['ctrl']['languageField'] ?? false)
-                && ($config['ctrl']['transOrigPointerField'] ?? false)
-                && ($config['ctrl']['translationSource'] ?? false)
+            $languageField = $config['ctrl']['languageField'] ?? null;
+            $translationParentField = $config['ctrl']['transOrigPointerField'] ?? null;
+            $translationSourceField = $config['ctrl']['translationSource'] ?? null;
+            if (is_string($languageField) && $languageField !== ''
+                && is_string($translationParentField) && $translationParentField !== ''
+                && is_string($translationSourceField) && $translationSourceField !== ''
             ) {
-                yield $tableName;
+                yield new LanguageSourceAwareTable($tableName, $languageField, $translationParentField, $translationSourceField);
             }
         }
     }

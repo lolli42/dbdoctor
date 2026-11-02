@@ -44,15 +44,10 @@ final readonly class TcaTablesLanguageLessThanOneHasZeroLanguageParent extends A
     public function detect(PreparedStatements $statements): array
     {
         $findings = [];
-        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable() as $tableName) {
-            $sysLanguageField = $this->tcaHelper->getLanguageField($tableName);
-            $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
-            if ($sysLanguageField === null || $translationParentField === null) {
-                throw new \RuntimeException(
-                    'TCA ctrl languageField or transOrigPointerField null, indicates bug in getNextLanguageAwareTcaTable()',
-                    1688571126
-                );
-            }
+        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable() as $languageAwareTable) {
+            $tableName = $languageAwareTable->tableName;
+            $sysLanguageField = $languageAwareTable->languageField;
+            $translationParentField = $languageAwareTable->translationParentField;
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             // Let's deal with deleted=1 records here as well.
             $queryBuilder->getRestrictions()->removeAll();
