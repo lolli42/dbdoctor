@@ -7,6 +7,8 @@
 ,5,1,0,1,2,"tt_content","Not ok tt_content"
 ,6,2,-1,1,2,"pages","Not ok pages lang -1"
 ,7,1,-1,1,2,"tt_content","Not ok tt_content lang -1"
+,8,1,0,1,42,"tt_content","Ok - tt_content 42 does not exist, handled by SysFileReferenceDangling"
+,9,1,0,1,1,"tx_not_existing","Ok - table does not exist, handled by SysFileReferenceDangling"
 "pages"
 ,"uid","pid","title"
 ,1,0,"page 1"

@@ -66,8 +66,8 @@ final readonly class SysFileReferenceInvalidPid extends AbstractHealthCheck impl
                 try {
                     $referencingRecord = $this->recordsHelper->getRecord($run->statements, (string)$row['tablenames'], ['pid'], (int)$row['uid_foreign']);
                 } catch (NoSuchRecordException|NoSuchTableException $e) {
-                    // Table and record existence has been checked by SysFileReferenceDangling already.
-                    // This can only happen if such a broken record has been added meanwhile, ignore it now.
+                    // Missing parents and tables are handled by the earlier SysFileReferenceDangling.
+                    // They are still there in check mode, where earlier checks change nothing.
                     continue;
                 }
                 // The pid of the parent as it is now: A parent that is a sys_file_reference
