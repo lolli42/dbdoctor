@@ -332,33 +332,6 @@ class TcaHelperTest extends UnitTestCase
     }
 
     #[Test]
-    public function getNextLanguageSourceAwareTcaTableIgnoresTable(): void
-    {
-        $GLOBALS['TCA'] = [
-            'foo' => [
-                'ctrl' => [
-                    'languageField' => 'sys_language_uid',
-                    'transOrigPointerField' => 'l18n_parent',
-                    'translationSource' => 'l10n_source',
-                ],
-            ],
-            'bar' => [
-                'ctrl' => [
-                    'languageField' => 'sys_language_uid',
-                    'transOrigPointerField' => 'l18n_parent',
-                    'translationSource' => 'l10n_source',
-                ],
-            ],
-        ];
-        $subject = new TcaHelper();
-        $tables = [];
-        foreach ($subject->getNextLanguageSourceAwareTcaTable(['foo']) as $item) {
-            $tables[] = $item;
-        }
-        self::assertSame(['bar'], $tables);
-    }
-
-    #[Test]
     public function getNextInlineForeignFieldChildTcaTableThrowsExceptionIfTcaIsNotAnArray(): void
     {
         $this->expectException(\RuntimeException::class);
@@ -376,7 +349,6 @@ class TcaHelperTest extends UnitTestCase
     public static function getNextInlineForeignFieldChildTcaTableDataProvider(): iterable
     {
         yield 'empty' => [
-            [],
             [],
             [],
         ];
@@ -405,7 +377,6 @@ class TcaHelperTest extends UnitTestCase
                 ],
             ],
             [],
-            [],
         ];
 
         yield 'one child, incomplete child' => [
@@ -432,7 +403,6 @@ class TcaHelperTest extends UnitTestCase
                     ],
                 ],
             ],
-            [],
             [],
         ];
 
@@ -468,7 +438,6 @@ class TcaHelperTest extends UnitTestCase
             [
                 new InlineForeignFieldChild('child_table', 'parent_uid', 'parent_table_name_field'),
             ],
-            [],
         ];
 
         yield 'two children' => [
@@ -526,64 +495,6 @@ class TcaHelperTest extends UnitTestCase
                 new InlineForeignFieldChild('child_table_1', 'parent_uid', 'parent_table_name_field'),
                 new InlineForeignFieldChild('child_table_2', 'parent_uid', 'parent_table_name_field'),
             ],
-            [],
-        ];
-
-        yield 'two children, one ignored' => [
-            [
-                'parent_table' => [
-                    'columns' => [
-                        'inline_parent_1' => [
-                            'config' => [
-                                'type' => 'inline',
-                                'foreign_table' => 'child_table_1',
-                                'foreign_field' => 'parent_uid',
-                                'foreign_table_field' => 'parent_table_name_field',
-                            ],
-                        ],
-                        'inline_parent_2' => [
-                            'config' => [
-                                'type' => 'inline',
-                                'foreign_table' => 'child_table_2',
-                                'foreign_field' => 'parent_uid',
-                                'foreign_table_field' => 'parent_table_name_field',
-                            ],
-                        ],
-                    ],
-                ],
-                'child_table_1' => [
-                    'columns' => [
-                        'parent_uid' => [
-                            'config' => [
-                                'type' => 'passthrough',
-                            ],
-                        ],
-                        'parent_table_name_field' => [
-                            'config' => [
-                                'type' => 'passthrough',
-                            ],
-                        ],
-                    ],
-                ],
-                'child_table_2' => [
-                    'columns' => [
-                        'parent_uid' => [
-                            'config' => [
-                                'type' => 'passthrough',
-                            ],
-                        ],
-                        'parent_table_name_field' => [
-                            'config' => [
-                                'type' => 'passthrough',
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-            [
-                new InlineForeignFieldChild('child_table_2', 'parent_uid', 'parent_table_name_field'),
-            ],
-            ['child_table_1'],
         ];
 
         yield 'one child, referenced twice from same parent table' => [
@@ -626,7 +537,6 @@ class TcaHelperTest extends UnitTestCase
             [
                 new InlineForeignFieldChild('child_table_1', 'parent_uid', 'parent_table_name_field'),
             ],
-            [],
         ];
 
         yield 'one child, referenced twice from different parent tables' => [
@@ -673,23 +583,21 @@ class TcaHelperTest extends UnitTestCase
             [
                 new InlineForeignFieldChild('child_table_1', 'parent_uid', 'parent_table_name_field'),
             ],
-            [],
         ];
     }
 
     /**
      * @param array<mixed> $tca
      * @param array<mixed> $expected
-     * @param array<int, string> $ignoredTables
      */
     #[DataProvider('getNextInlineForeignFieldChildTcaTableDataProvider')]
     #[Test]
-    public function getNextInlineForeignFieldChildTcaTable(array $tca, array $expected, array $ignoredTables): void
+    public function getNextInlineForeignFieldChildTcaTable(array $tca, array $expected): void
     {
         $GLOBALS['TCA'] = $tca;
         $subject = new TcaHelper();
         $result = [];
-        foreach ($subject->getNextInlineForeignFieldChildTcaTable($ignoredTables) as $item) {
+        foreach ($subject->getNextInlineForeignFieldChildTcaTable() as $item) {
             $result[] = $item;
         }
         self::assertEquals($expected, $result);
@@ -701,7 +609,6 @@ class TcaHelperTest extends UnitTestCase
     public static function getNextInlineForeignFieldNoForeignTableFieldChildTcaTableDataProvider(): iterable
     {
         yield 'empty' => [
-            [],
             [],
             [],
         ];
@@ -729,7 +636,6 @@ class TcaHelperTest extends UnitTestCase
                 ],
             ],
             [],
-            [],
         ];
 
         yield 'one child, incomplete child' => [
@@ -750,7 +656,6 @@ class TcaHelperTest extends UnitTestCase
                     ],
                 ],
             ],
-            [],
             [],
         ];
 
@@ -780,7 +685,6 @@ class TcaHelperTest extends UnitTestCase
             [
                 new InlineForeignFieldNoForeignTableFieldChild('child_table', 'parent_table', 'parent_uid'),
             ],
-            [],
         ];
 
         yield 'two children' => [
@@ -826,52 +730,6 @@ class TcaHelperTest extends UnitTestCase
                 new InlineForeignFieldNoForeignTableFieldChild('child_table_1', 'parent_table', 'parent_uid'),
                 new InlineForeignFieldNoForeignTableFieldChild('child_table_2', 'parent_table', 'parent_uid'),
             ],
-            [],
-        ];
-
-        yield 'two children, one ignored' => [
-            [
-                'parent_table' => [
-                    'columns' => [
-                        'inline_parent_1' => [
-                            'config' => [
-                                'type' => 'inline',
-                                'foreign_table' => 'child_table_1',
-                                'foreign_field' => 'parent_uid',
-                            ],
-                        ],
-                        'inline_parent_2' => [
-                            'config' => [
-                                'type' => 'inline',
-                                'foreign_table' => 'child_table_2',
-                                'foreign_field' => 'parent_uid',
-                            ],
-                        ],
-                    ],
-                ],
-                'child_table_1' => [
-                    'columns' => [
-                        'parent_uid' => [
-                            'config' => [
-                                'type' => 'passthrough',
-                            ],
-                        ],
-                    ],
-                ],
-                'child_table_2' => [
-                    'columns' => [
-                        'parent_uid' => [
-                            'config' => [
-                                'type' => 'passthrough',
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-            [
-                new InlineForeignFieldNoForeignTableFieldChild('child_table_2', 'parent_table', 'parent_uid'),
-            ],
-            ['child_table_1'],
         ];
 
         yield 'one child, referenced twice from same parent table' => [
@@ -907,7 +765,6 @@ class TcaHelperTest extends UnitTestCase
             [
                 new InlineForeignFieldNoForeignTableFieldChild('child_table_1', 'parent_table', 'parent_uid'),
             ],
-            [],
         ];
 
         yield 'one child, referenced twice from different parent tables' => [
@@ -947,23 +804,21 @@ class TcaHelperTest extends UnitTestCase
             [
                 new InlineForeignFieldNoForeignTableFieldChild('child_table_1', 'parent_table_1', 'parent_uid'),
             ],
-            [],
         ];
     }
 
     /**
      * @param array<mixed> $tca
      * @param array<mixed> $expected
-     * @param array<int, string> $ignoredTables
      */
     #[DataProvider('getNextInlineForeignFieldNoForeignTableFieldChildTcaTableDataProvider')]
     #[Test]
-    public function getNextInlineForeignFieldNoForeignTableFieldChildTcaTable(array $tca, array $expected, array $ignoredTables): void
+    public function getNextInlineForeignFieldNoForeignTableFieldChildTcaTable(array $tca, array $expected): void
     {
         $GLOBALS['TCA'] = $tca;
         $subject = new TcaHelper();
         $result = [];
-        foreach ($subject->getNextInlineForeignFieldNoForeignTableFieldChildTcaTable($ignoredTables) as $item) {
+        foreach ($subject->getNextInlineForeignFieldNoForeignTableFieldChildTcaTable() as $item) {
             $result[] = $item;
         }
         self::assertEquals($expected, $result);
