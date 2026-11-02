@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\Commands;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\HealthCheck\HealthCheckResult;
+use Lolli\Dbdoctor\HealthCheck\TcaTablesPidMissing;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -125,5 +126,33 @@ class HealthCommandTest extends AbstractFunctionalTestCase
         self::assertStringNotContainsString('OK  TcaTablesPidMissing', $commandTester->getDisplay());
         self::assertStringNotContainsString('referenceindex:update', $this->getNormalizedDisplay($commandTester));
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingImport.csv');
+    }
+
+    #[Test]
+    public function executeModeFixesRecordsAndWritesFile(): void
+    {
+        $file = $this->instancePath . '/dbdoctor-file';
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingImport.csv');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $result = $commandTester->execute(['--mode' => 'execute', '--file' => $file]);
+        self::assertSame(HealthCheckResult::Broken->value, $result);
+        self::assertStringContainsString('referenceindex:update', $this->getNormalizedDisplay($commandTester));
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesPidMissingFixed.csv');
+        // SQL quoting differs per DBMS, the header line is checked exactly.
+        $lines = file($file, FILE_IGNORE_NEW_LINES);
+        self::assertIsArray($lines);
+        self::assertCount(2, $lines);
+        self::assertSame('# Triggered by ' . TcaTablesPidMissing::class, $lines[0]);
+    }
+
+    #[Test]
+    public function executeModeRemovesEmptyFileWithoutFindings(): void
+    {
+        $file = $this->instancePath . '/dbdoctor-file';
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $result = $commandTester->execute(['--mode' => 'execute', '--file' => $file]);
+        self::assertSame(HealthCheckResult::Ok->value, $result);
+        self::assertStringNotContainsString('referenceindex:update', $this->getNormalizedDisplay($commandTester));
+        self::assertFileDoesNotExist($file);
     }
 }
