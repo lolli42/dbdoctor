@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Exception\NoSuchTableException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
@@ -61,7 +60,7 @@ final readonly class SysFileReferenceDeletedLocalizedParentExists extends Abstra
             /** @var array<string, int|string> $row */
             try {
                 $this->recordsHelper->getRecord($run->statements, 'sys_file_reference', ['uid'], (int)$row['l10n_parent']);
-            } catch (NoSuchRecordException|NoSuchTableException $e) {
+            } catch (NoSuchRecordException $e) {
                 // Match if parent does not exist at all
                 $findings[] = new Finding(
                     new RecordKey('sys_file_reference', (int)$row['uid']),

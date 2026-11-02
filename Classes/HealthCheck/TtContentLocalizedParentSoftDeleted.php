@@ -19,7 +19,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
 
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Exception\NoSuchTableException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordKey;
@@ -71,7 +70,7 @@ final readonly class TtContentLocalizedParentSoftDeleted extends AbstractHealthC
                         new Reason('parent-deleted', 'Language parent "' . $row['l18n_parent'] . '" is soft-deleted', ['l18n_parent' => (int)$row['l18n_parent']]),
                     );
                 }
-            } catch (NoSuchRecordException|NoSuchTableException $e) {
+            } catch (NoSuchRecordException $e) {
                 throw new EarlierCheckNotFixedException(
                     'tt_content record with uid="' . $row['uid'] . '" has l18n_parent="' . $row['l18n_parent'] . '",'
                     . ' but that record does not exist. The earlier check TtContentLocalizedParentExists finds and fixes this.',

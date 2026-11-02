@@ -19,7 +19,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
 
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Exception\NoSuchTableException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
@@ -73,7 +72,7 @@ final readonly class TtContentDeletedLocalizedParentDifferentPid extends Abstrac
                         new Reason('parent-different-pid', 'Language parent "' . $row['l18n_parent'] . '" is on pid "' . $languageParent['pid'] . '"', ['parent' => (int)$row['l18n_parent'], 'parentPid' => (int)$languageParent['pid']]),
                     );
                 }
-            } catch (NoSuchRecordException|NoSuchTableException $e) {
+            } catch (NoSuchRecordException $e) {
                 throw new EarlierCheckNotFixedException(
                     'tt_content record with uid="' . $row['uid'] . '" has l18n_parent="' . $row['l18n_parent'] . '",'
                     . ' but that record does not exist. The earlier check TtContentDeletedLocalizedParentExists finds and fixes this.',

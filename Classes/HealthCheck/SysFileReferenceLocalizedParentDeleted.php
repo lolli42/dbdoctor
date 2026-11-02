@@ -17,7 +17,6 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
-use Lolli\Dbdoctor\Exception\NoSuchTableException;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordKey;
@@ -68,7 +67,7 @@ final readonly class SysFileReferenceLocalizedParentDeleted extends AbstractHeal
             /** @var array<string, int|string> $row */
             try {
                 $languageParentRecord = $this->recordsHelper->getRecord($run->statements, 'sys_file_reference', ['uid', 'deleted'], (int)$row['l10n_parent']);
-            } catch (NoSuchRecordException|NoSuchTableException $e) {
+            } catch (NoSuchRecordException $e) {
                 // Record existence has been checked by SysFileReferenceLocalizedParentExists already.
                 // This can only happen if such a broken record has been added meanwhile, ignore it now.
                 continue;
