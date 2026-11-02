@@ -76,5 +76,6 @@ OK  SelectFieldMmRelationMissing
 OK  InlineFieldUidListRelationMissing
 OK  InlineFieldMmRelationMissing
 OK  TcaTablesRelationToWorkspaceOverlay
+OK  SysCategoryParentLoop
 OK  TcaTablesTranslatedLanguageParentDuplicates
 OK  TcaTablesTranslatedWithAllowLanguageSynchronization

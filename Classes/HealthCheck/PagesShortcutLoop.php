@@ -22,6 +22,7 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
+use Lolli\Dbdoctor\Helper\LoopHelper;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Domain\Repository\PageRepository;
@@ -64,6 +65,10 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 final readonly class PagesShortcutLoop extends AbstractHealthCheck implements HealthCheckInterface
 {
+    public function __construct(
+        private LoopHelper $loopHelper,
+    ) {}
+
     public function getDescription(): HealthCheckDescription
     {
         return new HealthCheckDescription(
@@ -131,7 +136,7 @@ final readonly class PagesShortcutLoop extends AbstractHealthCheck implements He
         $findings = [];
         $defaultNodes = array_keys($defaultTargets);
         $defaultNext = static fn(int $uid): ?int => $defaultTargets[$uid] ?? null;
-        foreach ($this->getLoops($defaultNodes, $defaultNext) as $loop) {
+        foreach ($this->loopHelper->getLoops($defaultNodes, $defaultNext) as $loop) {
             $uid = min($loop);
             $findings[] = $this->getFinding($uid, $defaultPids[$uid], 0, $loop);
         }
@@ -145,7 +150,7 @@ final readonly class PagesShortcutLoop extends AbstractHealthCheck implements He
                 }
                 return $defaultTargets[$uid] ?? null;
             };
-            foreach ($this->getLoops($nodes, $next) as $loop) {
+            foreach ($this->loopHelper->getLoops($nodes, $next) as $loop) {
                 $translatedUids = array_values(array_filter($loop, static fn(int $uid): bool => isset($languageTranslations[$uid])));
                 if ($translatedUids === []) {
                     // A loop of default language pages, handled in the default language.
@@ -193,41 +198,6 @@ final readonly class PagesShortcutLoop extends AbstractHealthCheck implements He
             return null;
         }
         return $target;
-    }
-
-    /**
-     * Loops of a graph where each node has at most one successor, in order of their first node.
-     * Each loop starts with the node it was entered with.
-     *
-     * @param array<int, int> $nodes Sorted
-     * @param \Closure(int): ?int $next
-     * @return list<non-empty-list<int>>
-     */
-    private function getLoops(array $nodes, \Closure $next): array
-    {
-        $isDone = [];
-        $loops = [];
-        foreach ($nodes as $startUid) {
-            if (isset($isDone[$startUid])) {
-                continue;
-            }
-            // Walk until a page without successor, a page done before, or a page of this walk.
-            $path = [];
-            $positionInPath = [];
-            $uid = $startUid;
-            while ($uid !== null && !isset($isDone[$uid]) && !isset($positionInPath[$uid])) {
-                $positionInPath[$uid] = count($path);
-                $path[] = $uid;
-                $uid = $next($uid);
-            }
-            if ($uid !== null && isset($positionInPath[$uid])) {
-                $loops[] = [$uid, ...array_slice($path, $positionInPath[$uid] + 1)];
-            }
-            foreach ($path as $pathUid) {
-                $isDone[$pathUid] = true;
-            }
-        }
-        return $loops;
     }
 
     /**

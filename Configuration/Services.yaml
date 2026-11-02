@@ -431,12 +431,19 @@ services:
         identifier: 'dbdoctor-tca-tables-relation-to-workspace-overlay'
         after: 'dbdoctor-inline-field-mm-relation-missing'
 
+  # After SelectFieldRelationMissing: Parents that do not exist are set to 0 there
+  Lolli\Dbdoctor\HealthCheck\SysCategoryParentLoop:
+    tags:
+      - name: 'lolli.dbdoctor.health'
+        identifier: 'dbdoctor-sys-category-parent-loop'
+        after: 'dbdoctor-tca-tables-relation-to-workspace-overlay'
+
   # Late in the chain: Inline children of duplicate parent translations must have been handled before
   Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedLanguageParentDuplicates:
     tags:
       - name: 'lolli.dbdoctor.health'
         identifier: 'dbdoctor-tca-tables-translated-language-parent-duplicates'
-        after: 'dbdoctor-tca-tables-relation-to-workspace-overlay'
+        after: 'dbdoctor-sys-category-parent-loop'
 
   Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedWithAllowLanguageSynchronization:
     tags:
