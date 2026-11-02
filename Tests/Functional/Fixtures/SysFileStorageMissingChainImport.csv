@@ -1,0 +1,25 @@
+"pages"
+,"uid","pid","deleted","title"
+,1,0,0,"Ok"
+"tt_content"
+,"uid","pid","deleted","header","image"
+,1,1,0,"Ok",3
+"sys_file_storage"
+,"uid","pid","deleted","name"
+,1,0,0,"Ok - storage"
+,2,0,1,"Ok - soft-deleted storage"
+"sys_file"
+,"uid","pid","storage","identifier"
+,1,0,1,"/ok.jpg"
+,2,0,2,"/soft-deleted-storage-ok.jpg"
+,3,0,9,"/storage-missing.jpg"
+"sys_file_metadata"
+,"uid","pid","file","sys_language_uid","l10n_parent"
+,1,0,1,0,0
+,2,0,2,0,0
+,3,0,3,0,0
+"sys_file_reference"
+,"uid","pid","deleted","uid_local","uid_foreign","tablenames","fieldname"
+,1,1,0,1,1,"tt_content","image"
+,2,1,0,2,1,"tt_content","image"
+,3,1,0,3,1,"tt_content","image"
