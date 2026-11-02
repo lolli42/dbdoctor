@@ -38,3 +38,5 @@
 ,20,2,0,1,19,0,0,0,"Content 6 localized for sub page 1"
 ,21,3,0,1,19,1,4,20,"Content 6 localized changed then moved for sub page 1"
 ,22,3,0,0,0,1,4,19,"Content 6 changed then moved for sub page 1"
+# new localized record in workspace, parent is on pid 2 - 23 should be removed
+,23,3,0,1,2,1,1,0,"Not ok new localized record ws-1"
