@@ -54,7 +54,8 @@ final readonly class TcaTablesTranslatedWithAllowLanguageSynchronization extends
     public function detect(PreparedStatements $statements): array
     {
         $findings = [];
-        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable() as $tableName) {
+        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable() as $languageAwareTable) {
+            $tableName = $languageAwareTable->tableName;
             $fieldNames = State::getFieldNames($tableName);
             if ($fieldNames === []
                 || !$this->tableHelper->tableExistsInDatabase($tableName)
@@ -82,10 +83,8 @@ final readonly class TcaTablesTranslatedWithAllowLanguageSynchronization extends
                 $fieldNames,
                 fn(string $fieldName): bool => $this->isRelationField($tableName, $fieldName)
             ));
-            /** @var string $languageField */
-            $languageField = $this->tcaHelper->getLanguageField($tableName);
-            /** @var string $translationParentField */
-            $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
+            $languageField = $languageAwareTable->languageField;
+            $translationParentField = $languageAwareTable->translationParentField;
             $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
 
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);

@@ -24,6 +24,7 @@ use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
 use Lolli\Dbdoctor\Finding\RecordKey;
+use Lolli\Dbdoctor\Tca\LanguageAwareTable;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -57,11 +58,10 @@ final readonly class TcaTablesTranslatedLanguageParentDifferentPid extends Abstr
     {
         $findings = [];
         // @todo: sys_file_reference is excluded due to https://github.com/lolli42/dbdoctor/issues/30, see comment below, too.
-        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages', 'sys_file_reference']) as $tableName) {
-            /** @var string $languageField */
-            $languageField = $this->tcaHelper->getLanguageField($tableName);
-            /** @var string $translationParentField */
-            $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
+        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages', 'sys_file_reference']) as $languageAwareTable) {
+            $tableName = $languageAwareTable->tableName;
+            $languageField = $languageAwareTable->languageField;
+            $translationParentField = $languageAwareTable->translationParentField;
             $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
             $isTableWorkspaceAware = !empty($workspaceIdField);
             $hiddenField = $this->tcaHelper->getHiddenField($tableName);
@@ -116,7 +116,7 @@ final readonly class TcaTablesTranslatedLanguageParentDifferentPid extends Abstr
                 ) {
                     continue;
                 }
-                $change = $this->getChange($tableName, $localizedRow, $parentPid, $movedTranslations);
+                $change = $this->getChange($languageAwareTable, $localizedRow, $parentPid, $movedTranslations);
                 if ($hiddenField !== null && isset($change->values[$hiddenField])) {
                     // Moved and hidden, it is a not deleted translation on the target pid now.
                     $workspaceId = $isTableWorkspaceAware ? (int)$localizedRow[$workspaceIdField] : 0;
@@ -144,15 +144,12 @@ final readonly class TcaTablesTranslatedLanguageParentDifferentPid extends Abstr
      * @param array<string, int|string> $localizedRow
      * @param array<int, array<int, array<int, list<int>>>> $movedTranslations
      */
-    private function getChange(string $tableName, array $localizedRow, int $parentPid, array $movedTranslations): RecordChange
+    private function getChange(LanguageAwareTable $languageAwareTable, array $localizedRow, int $parentPid, array $movedTranslations): RecordChange
     {
+        $tableName = $languageAwareTable->tableName;
         $deleteField = $this->tcaHelper->getDeletedField($tableName);
         $isTableSoftDeleteAware = !empty($deleteField);
         $hiddenField = $this->tcaHelper->getHiddenField($tableName);
-        /** @var string $languageField */
-        $languageField = $this->tcaHelper->getLanguageField($tableName);
-        /** @var string $translationParentField */
-        $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
         $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
         $isTableWorkspaceAware = !empty($workspaceIdField);
         $isWorkspaceRecord = $isTableWorkspaceAware && (int)$localizedRow[$workspaceIdField] > 0;
@@ -166,7 +163,7 @@ final readonly class TcaTablesTranslatedLanguageParentDifferentPid extends Abstr
             'type' => Connection::PARAM_INT,
         ];
 
-        if ($this->hasTranslationOnTargetPid($tableName, $localizedRow, $parentPid, $movedTranslations)) {
+        if ($this->hasTranslationOnTargetPid($languageAwareTable, $localizedRow, $parentPid, $movedTranslations)) {
             // If there is a localized row already, we set the wrong-pid row to correct pid and set deleted=1 for delete-aware tables, or remove it
             if (!$isTableSoftDeleteAware || $isWorkspaceRecord) {
                 return new RecordChange(RecordChangeType::Delete, $tableName, $uid);
@@ -197,12 +194,11 @@ final readonly class TcaTablesTranslatedLanguageParentDifferentPid extends Abstr
      * @param array<string, int|string> $localizedRow
      * @param array<int, array<int, array<int, list<int>>>> $movedTranslations
      */
-    private function hasTranslationOnTargetPid(string $tableName, array $localizedRow, int $parentPid, array $movedTranslations): bool
+    private function hasTranslationOnTargetPid(LanguageAwareTable $languageAwareTable, array $localizedRow, int $parentPid, array $movedTranslations): bool
     {
-        /** @var string $languageField */
-        $languageField = $this->tcaHelper->getLanguageField($tableName);
-        /** @var string $translationParentField */
-        $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
+        $tableName = $languageAwareTable->tableName;
+        $languageField = $languageAwareTable->languageField;
+        $translationParentField = $languageAwareTable->translationParentField;
         $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
         $isTableWorkspaceAware = !empty($workspaceIdField);
         $workspaceId = $isTableWorkspaceAware ? (int)$localizedRow[$workspaceIdField] : 0;
