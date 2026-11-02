@@ -131,18 +131,18 @@ final readonly class JsonReportBuilder
     }
 
     /**
-     * A check that was not run, or that does not support structured output.
+     * A check that was not run.
      *
      * @param class-string $className
      * @return array<string, mixed>
      */
-    public function buildCheckWithoutInspection(int $position, string $className, string $status): array
+    public function buildCheckWithoutInspection(int $position, string $className): array
     {
         return [
             'position' => $position,
             'class' => (new \ReflectionClass($className))->getShortName(),
             'className' => $className,
-            'status' => $status,
+            'status' => 'not-run',
         ];
     }
 
