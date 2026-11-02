@@ -62,16 +62,6 @@ abstract readonly class AbstractHealthCheck
     }
 
     /**
-     * No additional ctrl fields in record details by default.
-     *
-     * @return list<string>
-     */
-    public function getDetailCtrlFields(string $tableName): array
-    {
-        return [];
-    }
-
-    /**
      * No additional database fields in record details by default.
      *
      * @return list<string>

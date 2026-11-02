@@ -159,11 +159,10 @@ final readonly class FindingsRenderer
                 $rows = array_map(static fn(array $row): array => $row + ['_reasonBroken' => ''], $rows);
             }
             $reasonField = $hasReason ? '_reasonBroken' : '';
-            $extraCtrlFields = $check->getDetailCtrlFields($tableName);
             $run->io->note('Table "' . $tableName . '":');
             $run->io->table(
-                $this->recordsRenderer->getHeader($tableName, $reasonField, $extraCtrlFields, $extraDbFields),
-                $this->recordsRenderer->getRows($run->statements, $tableName, $rows, $reasonField, $extraCtrlFields, $extraDbFields)
+                $this->recordsRenderer->getHeader($tableName, $reasonField, $extraDbFields),
+                $this->recordsRenderer->getRows($run->statements, $tableName, $rows, $reasonField, $extraDbFields)
             );
         }
     }

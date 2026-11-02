@@ -84,9 +84,4 @@ final readonly class TcaTablesTranslatedLanguageParentMissing extends AbstractHe
         }
         return $findings;
     }
-
-    public function getDetailCtrlFields(string $tableName): array
-    {
-        return ['transOrigPointerField'];
-    }
 }

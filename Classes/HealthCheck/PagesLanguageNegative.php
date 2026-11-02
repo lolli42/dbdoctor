@@ -62,9 +62,4 @@ final readonly class PagesLanguageNegative extends AbstractHealthCheck implement
         }
         return $findings;
     }
-
-    public function getDetailCtrlFields(string $tableName): array
-    {
-        return ['languageField'];
-    }
 }

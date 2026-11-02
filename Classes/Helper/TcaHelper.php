@@ -827,17 +827,6 @@ final readonly class TcaHelper
         return $parents;
     }
 
-    public function getFieldNameByCtrlName(string $tableName, string $ctrlName): string
-    {
-        if (empty($GLOBALS['TCA'][$tableName]['ctrl'][$ctrlName])) {
-            throw new \RuntimeException(
-                'Name "' . $ctrlName . '" in TCA ctrl of table "' . $tableName . '" not found',
-                1646162580
-            );
-        }
-        return $GLOBALS['TCA'][$tableName]['ctrl'][$ctrlName];
-    }
-
     public function getDeletedField(string $tableName): ?string
     {
         return ($GLOBALS['TCA'][$tableName]['ctrl']['delete'] ?? null) ?: null;

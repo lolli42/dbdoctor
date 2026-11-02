@@ -136,11 +136,6 @@ final readonly class TcaTablesTranslatedLanguageParentDifferentPid extends Abstr
         return $findings;
     }
 
-    public function getDetailCtrlFields(string $tableName): array
-    {
-        return ['transOrigPointerField'];
-    }
-
     /**
      * Move the translation to the pid of its language parent. Moving may show it in frontend, it is
      * hidden then. If a translation exists on the target pid already, the moved one is deleted.

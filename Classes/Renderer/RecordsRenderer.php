@@ -33,17 +33,15 @@ final readonly class RecordsRenderer
     ) {}
 
     /**
-     * @param array<int, string> $extraCtrlFields
      * @param array<int, string> $extraDbFields
      * @return string[]
      */
     public function getHeader(
         string $tableName,
         string $reasonField = '',
-        array $extraCtrlFields = [],
         array $extraDbFields = []
     ): array {
-        $fields = $this->getRelevantFieldNames($tableName, $extraCtrlFields, $extraDbFields);
+        $fields = $this->getRelevantFieldNames($tableName, $extraDbFields);
         if ($reasonField) {
             $fields = array_merge(['reason'], $fields);
         }
@@ -52,7 +50,6 @@ final readonly class RecordsRenderer
 
     /**
      * @param array<int, array<string, int|string>> $incomingRows
-     * @param array<int, string> $extraCtrlFields
      * @param array<int, string> $extraDbFields
      * @return array<int, array<string, int|string>>
      */
@@ -61,10 +58,9 @@ final readonly class RecordsRenderer
         string $tableName,
         array $incomingRows,
         string $reasonField = '',
-        array $extraCtrlFields = [],
         array $extraDbFields = []
     ): array {
-        $fields = $this->getRelevantFieldNames($tableName, $extraCtrlFields, $extraDbFields);
+        $fields = $this->getRelevantFieldNames($tableName, $extraDbFields);
         $rows = [];
         foreach ($incomingRows as $incomingRow) {
             $row = $this->recordsHelper->getRecord($statements, $tableName, $fields, (int)$incomingRow['uid']);
@@ -95,25 +91,22 @@ final readonly class RecordsRenderer
     }
 
     /**
-     * @param array<int, string> $extraCtrlFields
+     * Language field and translation parent directly after uid and pid: The language state
+     * is what most checks are about.
+     *
      * @param array<int, string> $extraDbFields
      * @return string[]
      */
-    private function getRelevantFieldNames(string $tableName, array $extraCtrlFields, array $extraDbFields): array
+    private function getRelevantFieldNames(string $tableName, array $extraDbFields): array
     {
         $fields = $this->addField([], 'uid');
         $fields = $this->addField($fields, 'pid');
-        if (!empty($extraCtrlFields)) {
-            foreach ($extraCtrlFields as $extraField) {
-                $fields = $this->addField($fields, $this->tcaHelper->getFieldNameByCtrlName($tableName, $extraField));
-            }
-        }
+        $fields = $this->addField($fields, $this->tcaHelper->getLanguageField($tableName));
+        $fields = $this->addField($fields, $this->tcaHelper->getTranslationParentField($tableName));
         $fields = $this->addFields($fields, $extraDbFields);
         $fields = $this->addField($fields, $this->tcaHelper->getDeletedField($tableName));
         $fields = $this->addField($fields, $this->tcaHelper->getCreateUserIdField($tableName));
         $fields = $this->addField($fields, $this->tcaHelper->getTimestampField($tableName));
-        $fields = $this->addField($fields, $this->tcaHelper->getLanguageField($tableName));
-        $fields = $this->addField($fields, $this->tcaHelper->getTranslationParentField($tableName));
         $fields = $this->addField($fields, $this->tcaHelper->getTranslationSourceField($tableName));
         $fields = $this->addField($fields, $this->tcaHelper->getWorkspaceIdField($tableName));
         $fields = $this->addField($fields, $this->tcaHelper->getTypeField($tableName));

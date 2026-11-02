@@ -154,11 +154,6 @@ final readonly class TcaTablesTranslatedLanguageNotInSiteConfiguration extends A
         return $findings;
     }
 
-    public function getDetailCtrlFields(string $tableName): array
-    {
-        return ['languageField', 'transOrigPointerField'];
-    }
-
     /**
      * @return array<int, true>
      */

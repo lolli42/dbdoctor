@@ -68,9 +68,4 @@ final readonly class PagesTranslatedLanguageParentMissing extends AbstractHealth
         }
         return $findings;
     }
-
-    public function getDetailCtrlFields(string $tableName): array
-    {
-        return ['transOrigPointerField'];
-    }
 }

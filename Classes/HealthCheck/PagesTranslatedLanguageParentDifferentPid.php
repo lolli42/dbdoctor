@@ -85,9 +85,4 @@ final readonly class PagesTranslatedLanguageParentDifferentPid extends AbstractH
         }
         return $findings;
     }
-
-    public function getDetailCtrlFields(string $tableName): array
-    {
-        return ['transOrigPointerField'];
-    }
 }

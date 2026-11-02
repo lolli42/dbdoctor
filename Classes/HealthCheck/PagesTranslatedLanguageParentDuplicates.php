@@ -113,9 +113,4 @@ final readonly class PagesTranslatedLanguageParentDuplicates extends AbstractHea
         }
         return $findings;
     }
-
-    public function getDetailCtrlFields(string $tableName): array
-    {
-        return ['transOrigPointerField'];
-    }
 }

@@ -145,9 +145,4 @@ final readonly class TcaTablesTranslatedLanguageParentDuplicates extends Abstrac
         }
         return $findings;
     }
-
-    public function getDetailCtrlFields(string $tableName): array
-    {
-        return ['transOrigPointerField'];
-    }
 }

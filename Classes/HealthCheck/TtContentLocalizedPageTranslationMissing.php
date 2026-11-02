@@ -119,11 +119,6 @@ final readonly class TtContentLocalizedPageTranslationMissing extends AbstractHe
         return $findings;
     }
 
-    public function getDetailCtrlFields(string $tableName): array
-    {
-        return ['languageField', 'transOrigPointerField'];
-    }
-
     /**
      * Languages of not deleted page translations of a page, with the workspaces they exist in.
      *
