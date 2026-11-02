@@ -86,16 +86,15 @@ final readonly class TcaTablesTranslatedLanguageNotInSiteConfiguration extends A
         $sysFolderUids = $this->getLiveSysFolderUids();
 
         $findings = [];
-        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable() as $tableName) {
+        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable() as $languageAwareTable) {
+            $tableName = $languageAwareTable->tableName;
             if (!$this->tableHelper->tableExistsInDatabase($tableName)) {
                 // TCA may define tables not yet present in database schema.
                 continue;
             }
 
-            /** @var string $languageField */
-            $languageField = $this->tcaHelper->getLanguageField($tableName);
-            /** @var string $translationParentField */
-            $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
+            $languageField = $languageAwareTable->languageField;
+            $translationParentField = $languageAwareTable->translationParentField;
             $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
 
             $selectFields = [

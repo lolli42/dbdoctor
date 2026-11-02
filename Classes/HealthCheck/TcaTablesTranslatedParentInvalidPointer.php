@@ -68,11 +68,10 @@ final readonly class TcaTablesTranslatedParentInvalidPointer extends AbstractHea
         $inlineChildTables += $inlineChildTablesWithoutForeignTableField;
 
         $findings = [];
-        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {
-            /** @var string $languageField */
-            $languageField = $this->tcaHelper->getLanguageField($tableName);
-            /** @var string $translationParentField */
-            $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
+        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $languageAwareTable) {
+            $tableName = $languageAwareTable->tableName;
+            $languageField = $languageAwareTable->languageField;
+            $translationParentField = $languageAwareTable->translationParentField;
             $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
             $selectFields = ['uid', 'pid', $translationParentField];
             if ($workspaceIdField) {

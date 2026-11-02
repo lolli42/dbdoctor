@@ -48,11 +48,10 @@ final readonly class TcaTablesTranslatedParentSelf extends AbstractHealthCheck i
     public function detect(PreparedStatements $statements): array
     {
         $findings = [];
-        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {
-            /** @var string $languageField */
-            $languageField = $this->tcaHelper->getLanguageField($tableName);
-            /** @var string $translationParentField */
-            $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
+        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $languageAwareTable) {
+            $tableName = $languageAwareTable->tableName;
+            $languageField = $languageAwareTable->languageField;
+            $translationParentField = $languageAwareTable->translationParentField;
             $workspaceIdField = $this->tcaHelper->getWorkspaceIdField($tableName);
             $isTableWorkspaceAware = !empty($workspaceIdField);
             $selectFields = ['uid', 'pid', $languageField, $translationParentField];

@@ -50,11 +50,10 @@ final readonly class TcaTablesTranslatedLanguageParentMissing extends AbstractHe
     public function detect(PreparedStatements $statements): array
     {
         $findings = [];
-        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $tableName) {
-            /** @var string $languageField */
-            $languageField = $this->tcaHelper->getLanguageField($tableName);
-            /** @var string $translationParentField */
-            $translationParentField = $this->tcaHelper->getTranslationParentField($tableName);
+        foreach ($this->tcaHelper->getNextLanguageAwareTcaTable(['pages']) as $languageAwareTable) {
+            $tableName = $languageAwareTable->tableName;
+            $languageField = $languageAwareTable->languageField;
+            $translationParentField = $languageAwareTable->translationParentField;
 
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             // Handle deleted=1 records too: If their language parent is gone, they shouldn't exist anymore, too.
