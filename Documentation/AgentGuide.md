@@ -72,8 +72,9 @@ Keep them out of public folders, and remove the directory when done.
    cover all findings.
 3. **Samples**: The `findingsFile` has all findings of the check, one JSON object per line.
    Each group names a few finding ids as `samples`: `grep '"id":"0123456789abcdef"'
-   checks/55-…findings.jsonl`. Search for other findings by table, uid or reason code, for
-   example `grep -m 5 '"code":"parent-missing"' checks/55-…findings.jsonl` or
+   checks/<position>-<class>.findings.jsonl`. Search for other findings by table, uid or
+   reason code, for example `grep -m 5 '"code":"parent-missing"'
+   checks/<position>-<class>.findings.jsonl` or
    `grep '"table":"tt_content","uid":123,' checks/*.findings.jsonl`. A findings file of a
    few findings is quickest read completely; do not read a large one completely.
    `pages.jsonl` has the rootline of each page with findings, one page per line:
@@ -237,15 +238,15 @@ tool works. jq is very useful when installed, for example in a report directory:
 # Checks that are not ok, with their number of findings
 jq -c '.checks[] | select(.status != "ok") | {position, class, status, preliminary, findings: .counts.findings}' index.json
 # Key, reason code and changes of each finding of a check
-jq -c '{key, reason: .reason.code, writes: [.writes[] | {operation, table, uid, set}]}' checks/55-GroupFieldRelationMissing.findings.jsonl
+jq -c '{key, reason: .reason.code, writes: [.writes[] | {operation, table, uid, set}]}' checks/*-GroupFieldRelationMissing.findings.jsonl
 # Findings on live records only
-jq -c 'select(.record != null and (.record.deleted // 0) == 0 and (.record.workspace.id // 0) == 0) | .key' checks/55-GroupFieldRelationMissing.findings.jsonl
+jq -c 'select(.record != null and (.record.deleted // 0) == 0 and (.record.workspace.id // 0) == 0) | .key' checks/*-GroupFieldRelationMissing.findings.jsonl
 # Findings per page
-jq -r '.pid' checks/55-GroupFieldRelationMissing.findings.jsonl | sort | uniq -c | sort -rn | head
+jq -r '.pid' checks/*-GroupFieldRelationMissing.findings.jsonl | sort | uniq -c | sort -rn | head
 ```
 
 PHP is always available on a TYPO3 host and works as fallback:
 
 ```bash
-php -r 'foreach (file($argv[1]) as $line) { $f = json_decode($line, true); if (($f["record"]["deleted"] ?? 0) === 0) { echo json_encode($f["key"]), PHP_EOL; } }' checks/55-GroupFieldRelationMissing.findings.jsonl
+php -r 'foreach (file($argv[1]) as $line) { $f = json_decode($line, true); if (($f["record"]["deleted"] ?? 0) === 0) { echo json_encode($f["key"]), PHP_EOL; } }' checks/*-GroupFieldRelationMissing.findings.jsonl
 ```
