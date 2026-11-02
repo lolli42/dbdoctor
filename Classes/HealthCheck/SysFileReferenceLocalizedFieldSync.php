@@ -67,8 +67,8 @@ final readonly class SysFileReferenceLocalizedFieldSync extends AbstractHealthCh
             try {
                 $languageParentRecord = $this->recordsHelper->getRecord($run->statements, 'sys_file_reference', ['uid', 'tablenames', 'fieldname'], (int)$row['l10n_parent']);
             } catch (NoSuchRecordException $e) {
-                // Record existence has been checked by SysFileReferenceLocalizedParentExists already.
-                // This can only happen if such a broken record has been added meanwhile, ignore it now.
+                // Missing language parents are handled by the earlier SysFileReferenceLocalizedParentExists.
+                // They are still there in check mode, where earlier checks change nothing.
                 continue;
             }
             if ($row['tablenames'] !== $languageParentRecord['tablenames']
