@@ -112,8 +112,8 @@ final readonly class InlineForeignFieldChildrenParentDeleted extends AbstractHea
                         );
                     }
                 } catch (NoSuchRecordException $e) {
-                    // Record existence has been checked by InlineForeignFieldChildrenParentMissing already.
-                    // This can only happen if such a broken record has been added meanwhile, ignore it now.
+                    // Missing parents are handled by the earlier InlineForeignFieldChildrenParentMissing.
+                    // They are still there in check mode, where earlier checks change nothing.
                     continue;
                 }
             }
