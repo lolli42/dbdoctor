@@ -1,0 +1,41 @@
+"pages"
+,"uid","pid","deleted","title"
+,1,0,0,"Ok"
+,2,0,1,"Ok - soft-deleted"
+"tt_content"
+,"uid","pid","deleted","sys_language_uid","l18n_parent","header","fe_group"
+,1,1,0,0,0,"Ok",""
+,2,1,0,0,0,"Ok - static items of fe_group","-1"
+,3,1,0,0,0,"Not Ok - relation to missing frontend group next to static item","-2,99"
+# Language parent fields are handled by language related checks
+,4,1,0,1,99,"Ok - language parent missing, not handled here",""
+"fe_groups"
+,"uid","pid","deleted","title","subgroup"
+,1,1,0,"Ok",""
+,2,1,1,"Ok - soft-deleted",""
+,3,1,0,"Not Ok - subgroup missing","1,2,99"
+"sys_category"
+,"uid","pid","deleted","title","parent"
+,1,0,0,"Ok",0
+,2,0,0,"Ok - parent exists",1
+,3,0,0,"Not Ok - parent missing",99
+"sys_file_metadata"
+,"uid","pid","file"
+# Handled by SysFileMetadataFileMissing
+,1,0,99
+"tx_dbdoctortestsselect_item"
+,"uid","pid","deleted","title","record_type","relations","relation_single","category_single","category_multi"
+,1,1,0,"Ok - relations to existing and soft-deleted pages, static items","0","1,2,-1,5",1,1,"1,2"
+,2,1,0,"Not Ok - relations to missing pages","0","1,3,pages_4,3",0,0,""
+,3,1,0,"Not Ok - single relation to missing page","0","",3,0,""
+,4,1,0,"Not Ok - relations to missing categories","0","",0,99,"1,98"
+# Items with another table name, invalid items and uid zero are not touched
+,5,1,0,"Ok - no valid relation","0","tt_content_3,foo,0",0,0,""
+# Soft-deleted records are handled as well
+,6,1,1,"Not Ok - soft-deleted with relation to missing page","0","3",0,0,""
+# Type "content" relates to tt_content: tt_content 4 exists, tt_content 6 does not
+,7,1,0,"Not Ok - type content, relation to missing content element","content","4,6",0,0,""
+# Type "not_shown" does not show the field: The core uses the base config, page 4 does not exist
+,8,1,0,"Not Ok - type not_shown, relation to missing page","not_shown","4",0,0,""
+# Type "type_changed" has no select field: Not touched
+,9,1,0,"Ok - type type_changed","type_changed","99",0,0,""
