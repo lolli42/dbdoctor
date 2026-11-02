@@ -16,8 +16,8 @@ namespace Lolli\Dbdoctor\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
-use Doctrine\DBAL\ParameterType;
 use Lolli\Dbdoctor\Database\PreparedStatements;
+use Lolli\Dbdoctor\Finding\FieldValue;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
@@ -99,42 +99,21 @@ final readonly class SysFileMetadataMissing extends AbstractHealthCheck implemen
      *
      * @param array<string, int|string> $fileRow
      * @param array<int, true> $localStorageUids
-     * @return array<string, array{value: int|string, type: ParameterType}>
+     * @return array<string, FieldValue>
      */
     private function getMetadataFields(array $fileRow, array $localStorageUids): array
     {
         $fields = [
-            'pid' => [
-                'value' => 0,
-                'type' => Connection::PARAM_INT,
-            ],
-            'file' => [
-                'value' => (int)$fileRow['uid'],
-                'type' => Connection::PARAM_INT,
-            ],
-            'crdate' => [
-                'value' => (int)$GLOBALS['EXEC_TIME'],
-                'type' => Connection::PARAM_INT,
-            ],
-            'tstamp' => [
-                'value' => (int)$GLOBALS['EXEC_TIME'],
-                'type' => Connection::PARAM_INT,
-            ],
-            'l10n_diffsource' => [
-                'value' => '',
-                'type' => Connection::PARAM_LOB,
-            ],
+            'pid' => new FieldValue(0, Connection::PARAM_INT),
+            'file' => new FieldValue((int)$fileRow['uid'], Connection::PARAM_INT),
+            'crdate' => new FieldValue((int)$GLOBALS['EXEC_TIME'], Connection::PARAM_INT),
+            'tstamp' => new FieldValue((int)$GLOBALS['EXEC_TIME'], Connection::PARAM_INT),
+            'l10n_diffsource' => new FieldValue('', Connection::PARAM_LOB),
         ];
         [$width, $height] = $this->getImageDimensions($fileRow, $localStorageUids);
         if ($width > 0 && $height > 0) {
-            $fields['width'] = [
-                'value' => $width,
-                'type' => Connection::PARAM_INT,
-            ];
-            $fields['height'] = [
-                'value' => $height,
-                'type' => Connection::PARAM_INT,
-            ];
+            $fields['width'] = new FieldValue($width, Connection::PARAM_INT);
+            $fields['height'] = new FieldValue($height, Connection::PARAM_INT);
         }
         return $fields;
     }

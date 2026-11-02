@@ -18,6 +18,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  */
 
 use Lolli\Dbdoctor\Database\PreparedStatements;
+use Lolli\Dbdoctor\Finding\FieldValue;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
@@ -95,7 +96,7 @@ final readonly class SysCategoryParentLoop extends AbstractHealthCheck implement
             $findings[] = new Finding(
                 new RecordKey('sys_category', $uid),
                 $pids[$uid],
-                [new RecordChange(RecordChangeType::Update, 'sys_category', $uid, ['parent' => ['value' => 0, 'type' => Connection::PARAM_INT]])],
+                [new RecordChange(RecordChangeType::Update, 'sys_category', $uid, ['parent' => new FieldValue(0, Connection::PARAM_INT)])],
                 new Reason(
                     'parent-loop',
                     'Parent loop: ' . implode(' -> ', [...$loop, $loop[0]]),

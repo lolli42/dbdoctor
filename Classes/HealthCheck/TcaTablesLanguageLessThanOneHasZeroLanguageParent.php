@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Database\PreparedStatements;
+use Lolli\Dbdoctor\Finding\FieldValue;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
@@ -66,10 +67,7 @@ final readonly class TcaTablesLanguageLessThanOneHasZeroLanguageParent extends A
                     (int)$row['pid'],
                     [
                         new RecordChange(RecordChangeType::Update, $tableName, (int)$row['uid'], [
-                            $translationParentField => [
-                                'value' => 0,
-                                'type' => Connection::PARAM_INT,
-                            ],
+                            $translationParentField => new FieldValue(0, Connection::PARAM_INT),
                         ]),
                     ],
                 );

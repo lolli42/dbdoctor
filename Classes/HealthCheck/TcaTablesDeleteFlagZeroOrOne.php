@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Database\PreparedStatements;
+use Lolli\Dbdoctor\Finding\FieldValue;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordChange;
 use Lolli\Dbdoctor\Finding\RecordChangeType;
@@ -69,10 +70,7 @@ final readonly class TcaTablesDeleteFlagZeroOrOne extends AbstractHealthCheck im
                     (int)$row['pid'],
                     [
                         new RecordChange(RecordChangeType::SoftDelete, $tableName, (int)$row['uid'], [
-                            $tableDeleteField => [
-                                'value' => 1,
-                                'type' => Connection::PARAM_INT,
-                            ],
+                            $tableDeleteField => new FieldValue(1, Connection::PARAM_INT),
                         ]),
                     ],
                 );

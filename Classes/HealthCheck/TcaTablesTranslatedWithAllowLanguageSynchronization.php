@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Database\PreparedStatements;
+use Lolli\Dbdoctor\Finding\FieldValue;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\Reason;
 use Lolli\Dbdoctor\Finding\RecordChange;
@@ -163,10 +164,7 @@ final readonly class TcaTablesTranslatedWithAllowLanguageSynchronization extends
                     (int)$row['pid'],
                     [
                         new RecordChange(RecordChangeType::Update, $tableName, (int)$row['uid'], [
-                            'l10n_state' => [
-                                'value' => (string)json_encode($states),
-                                'type' => Connection::PARAM_STR,
-                            ],
+                            'l10n_state' => new FieldValue((string)json_encode($states), Connection::PARAM_STR),
                         ]),
                     ],
                     new Reason(

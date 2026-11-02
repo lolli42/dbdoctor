@@ -18,6 +18,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\Helper;
  */
 use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\UnexpectedNumberOfAffectedRowsException;
+use Lolli\Dbdoctor\Finding\FieldValue;
 use Lolli\Dbdoctor\Helper\RecordsHelper;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -53,7 +54,7 @@ class RecordsHelperTest extends AbstractFunctionalTestCase
         $this->expectExceptionCode(1791484211);
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->get(RecordsHelper::class);
-        $recordsHelper->deleteMmRows(new PreparedStatements(), false, 'sys_category_record_mm', ['uid_local' => ['value' => 42, 'type' => Connection::PARAM_INT]]);
+        $recordsHelper->deleteMmRows(new PreparedStatements(), false, 'sys_category_record_mm', ['uid_local' => new FieldValue(42, Connection::PARAM_INT)]);
     }
 
     #[Test]
@@ -66,8 +67,8 @@ class RecordsHelperTest extends AbstractFunctionalTestCase
             true,
             'sys_category_record_mm',
             [
-                'uid_local' => ['value' => 42, 'type' => Connection::PARAM_INT],
-                'tablenames' => ['value' => 'tt_content', 'type' => Connection::PARAM_STR],
+                'uid_local' => new FieldValue(42, Connection::PARAM_INT),
+                'tablenames' => new FieldValue('tt_content', Connection::PARAM_STR),
             ]
         );
         self::assertStringContainsString('= 42', $sql);
@@ -83,7 +84,7 @@ class RecordsHelperTest extends AbstractFunctionalTestCase
         $this->expectExceptionMessageMatches('/^Update query /');
         /** @var RecordsHelper $recordsHelper */
         $recordsHelper = $this->get(RecordsHelper::class);
-        $recordsHelper->updateTcaRecord(new PreparedStatements(), false, 'pages', 42, ['hidden' => ['value' => 1, 'type' => Connection::PARAM_INT]]);
+        $recordsHelper->updateTcaRecord(new PreparedStatements(), false, 'pages', 42, ['hidden' => new FieldValue(1, Connection::PARAM_INT)]);
     }
 
     #[Test]
@@ -97,8 +98,8 @@ class RecordsHelperTest extends AbstractFunctionalTestCase
             'pages',
             42,
             [
-                'title' => ['value' => 'It\'s = ? $1 \\', 'type' => Connection::PARAM_STR],
-                'hidden' => ['value' => 1, 'type' => Connection::PARAM_INT],
+                'title' => new FieldValue('It\'s = ? $1 \\', Connection::PARAM_STR),
+                'hidden' => new FieldValue(1, Connection::PARAM_INT),
             ]
         );
         $quotedTitle = $this->get(ConnectionPool::class)->getConnectionForTable('pages')->quote('It\'s = ? $1 \\');
@@ -117,8 +118,8 @@ class RecordsHelperTest extends AbstractFunctionalTestCase
             true,
             'pages',
             [
-                'title' => ['value' => 'It\'s ? $1 \\', 'type' => Connection::PARAM_STR],
-                'pid' => ['value' => 42, 'type' => Connection::PARAM_INT],
+                'title' => new FieldValue('It\'s ? $1 \\', Connection::PARAM_STR),
+                'pid' => new FieldValue(42, Connection::PARAM_INT),
             ]
         );
         $quotedTitle = $this->get(ConnectionPool::class)->getConnectionForTable('pages')->quote('It\'s ? $1 \\');
