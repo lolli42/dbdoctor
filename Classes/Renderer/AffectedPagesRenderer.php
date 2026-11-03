@@ -19,6 +19,7 @@ namespace Lolli\Dbdoctor\Renderer;
 
 use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Helper\PagesRootlineHelper;
+use Lolli\Dbdoctor\Page\RootlinePage;
 
 final readonly class AffectedPagesRenderer
 {
@@ -62,7 +63,7 @@ final readonly class AffectedPagesRenderer
 
     /**
      * @param array<int, int<1, max>> $affectedPids
-     * @param array<int, array<int, array<string, int|string|bool>>> $rootlines
+     * @param array<int, list<RootlinePage>> $rootlines
      * @return array<int, array<int, int<1, max>|string>>
      */
     private function getRows(array $affectedPids, array $rootlines): array
@@ -72,20 +73,19 @@ final readonly class AffectedPagesRenderer
             $thisRootline = $rootlines[$pid];
             $row = [$count];
             foreach ($thisRootline as $rootlineItem) {
-                $rowParams = [$rootlineItem['uid']];
-                $isMissing = $rootlineItem['_isMissing'];
-                if ($isMissing) {
+                $rowParams = [$rootlineItem->uid];
+                if ($rootlineItem->missing) {
                     $rowParams[] = '<comment>missing</comment>';
                 }
-                if (!$isMissing && $rootlineItem['deleted']) {
+                if ($rootlineItem->deleted) {
                     $rowParams[] = '<info>deleted</info>';
                 }
-                if (!$isMissing && $rootlineItem['t3ver_wsid'] > 0) {
-                    $rowParams[] = '<info>ws-' . $rootlineItem['t3ver_wsid'] . '</info>';
+                if ($rootlineItem->workspaceId > 0) {
+                    $rowParams[] = '<info>ws-' . $rootlineItem->workspaceId . '</info>';
                 }
                 $rowItem = '[' . implode('|', $rowParams) . ']';
-                if (!$isMissing) {
-                    $rowItem .= $rootlineItem['title'];
+                if (!$rootlineItem->missing) {
+                    $rowItem .= $rootlineItem->title;
                 }
                 $row[] = $rowItem;
             }
