@@ -20,6 +20,8 @@ namespace Lolli\Dbdoctor\Helper;
 use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Exception\NoSuchRecordException;
 use Lolli\Dbdoctor\Finding\Reason;
+use TYPO3\CMS\Core\Database\Connection;
+use TYPO3\CMS\Core\Database\ConnectionPool;
 
 /**
  * Stateless service telling if the target record of a relation has a RelationProblem,
@@ -28,6 +30,7 @@ use Lolli\Dbdoctor\Finding\Reason;
 final readonly class RelationTargetHelper
 {
     public function __construct(
+        private ConnectionPool $connectionPool,
         private TcaHelper $tcaHelper,
         private RecordsHelper $recordsHelper,
         private TableHelper $tableHelper,
@@ -62,6 +65,47 @@ final readonly class RelationTargetHelper
             return true;
         }
         return false;
+    }
+
+    /**
+     * The uids having the problem, as hasProblem(), with one query per 100 uids instead of one per uid.
+     * Detection does not change records, the result is valid for the detection pass it is used in.
+     *
+     * @param array<int, int> $uids
+     * @return array<int, true>
+     */
+    public function getUidsWithProblem(RelationProblem $problem, string $tableName, array $uids): array
+    {
+        if ($uids === []
+            || !$this->tableHelper->tableExistsInDatabase($tableName)
+            || ($problem === RelationProblem::WorkspaceOverlay && $this->tcaHelper->getWorkspaceIdField($tableName) === null)
+        ) {
+            return [];
+        }
+        $uidsWithProblem = [];
+        foreach (array_chunk(array_values(array_unique($uids)), 100) as $chunk) {
+            $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
+            $queryBuilder->getRestrictions()->removeAll();
+            $queryBuilder->select('uid')->from($tableName)
+                ->where($queryBuilder->expr()->in('uid', $queryBuilder->createNamedParameter($chunk, Connection::PARAM_INT_ARRAY)));
+            if ($problem === RelationProblem::WorkspaceOverlay) {
+                $queryBuilder->addSelect('t3ver_oid');
+            }
+            $existing = [];
+            $result = $queryBuilder->executeQuery();
+            while ($row = $result->fetchAssociative()) {
+                /** @var array<string, int|string> $row */
+                $existing[(int)$row['uid']] = (int)($row['t3ver_oid'] ?? 0);
+            }
+            foreach ($chunk as $uid) {
+                if ($problem === RelationProblem::Missing && !isset($existing[$uid])) {
+                    $uidsWithProblem[$uid] = true;
+                } elseif ($problem === RelationProblem::WorkspaceOverlay && ($existing[$uid] ?? 0) > 0) {
+                    $uidsWithProblem[$uid] = true;
+                }
+            }
+        }
+        return $uidsWithProblem;
     }
 
     /**

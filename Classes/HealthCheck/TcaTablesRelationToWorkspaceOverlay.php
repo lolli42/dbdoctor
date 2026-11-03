@@ -95,7 +95,7 @@ final readonly class TcaTablesRelationToWorkspaceOverlay extends AbstractHealthC
             return [];
         }
         return [
-            ...$this->listRelationHelper->getFindings($statements, $this->getListFields(), RelationProblem::WorkspaceOverlay),
+            ...$this->listRelationHelper->getFindings($this->getListFields(), RelationProblem::WorkspaceOverlay),
             ...$this->mmRelationHelper->getFindings($statements, $this->getMmFields(), RelationProblem::WorkspaceOverlay),
             ...$this->getInlineChildrenFindings($statements),
         ];

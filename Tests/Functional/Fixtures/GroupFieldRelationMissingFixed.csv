@@ -22,3 +22,5 @@
 # Not allowed tables, invalid items and uid zero are not touched
 ,4,1,0,"Ok - no valid relation","sys_file_5,foo,pages_0"
 ,5,1,0,"Ok - empty",""
+# The same missing page with and without table name: Both items are removed
+,6,1,0,"Not Ok - missing page with and without table name","pages_1"
