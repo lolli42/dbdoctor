@@ -50,6 +50,6 @@ final readonly class InlineFieldUidListRelationMissing extends AbstractHealthChe
 
     public function detect(PreparedStatements $statements): array
     {
-        return $this->listRelationHelper->getFindings($statements, $this->tcaHelper->getNextInlineFieldWithUidList(), RelationProblem::Missing);
+        return $this->listRelationHelper->getFindings($this->tcaHelper->getNextInlineFieldWithUidList(), RelationProblem::Missing);
     }
 }

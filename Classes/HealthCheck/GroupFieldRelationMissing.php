@@ -50,7 +50,7 @@ final readonly class GroupFieldRelationMissing extends AbstractHealthCheck imple
 
     public function detect(PreparedStatements $statements): array
     {
-        return $this->listRelationHelper->getFindings($statements, $this->getGroupFields(), RelationProblem::Missing);
+        return $this->listRelationHelper->getFindings($this->getGroupFields(), RelationProblem::Missing);
     }
 
     /**

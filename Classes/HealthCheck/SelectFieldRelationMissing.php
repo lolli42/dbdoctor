@@ -51,7 +51,7 @@ final readonly class SelectFieldRelationMissing extends AbstractHealthCheck impl
 
     public function detect(PreparedStatements $statements): array
     {
-        return $this->listRelationHelper->getFindings($statements, $this->getSelectFields(), RelationProblem::Missing);
+        return $this->listRelationHelper->getFindings($this->getSelectFields(), RelationProblem::Missing);
     }
 
     /**

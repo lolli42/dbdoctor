@@ -17,7 +17,6 @@ namespace Lolli\Dbdoctor\Helper;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbdoctor\Database\PreparedStatements;
 use Lolli\Dbdoctor\Finding\FieldValue;
 use Lolli\Dbdoctor\Finding\Finding;
 use Lolli\Dbdoctor\Finding\RecordChange;
@@ -39,6 +38,8 @@ use TYPO3\CMS\Core\Utility\MathUtility;
  */
 final readonly class ListRelationHelper
 {
+    private const BATCH_SIZE = 100;
+
     public function __construct(
         private ConnectionPool $connectionPool,
         private TcaHelper $tcaHelper,
@@ -56,7 +57,7 @@ final readonly class ListRelationHelper
      * @param iterable<GroupField|ForeignTableListField> $listFields
      * @return list<Finding>
      */
-    public function getFindings(PreparedStatements $statements, iterable $listFields, RelationProblem $problem): array
+    public function getFindings(iterable $listFields, RelationProblem $problem): array
     {
         $findings = [];
         foreach ($listFields as $listField) {
@@ -95,9 +96,12 @@ final readonly class ListRelationHelper
             }
             $staticItemValues = $listField instanceof ForeignTableListField ? $listField->staticItemValues : [];
             $result = $queryBuilder->orderBy('uid')->executeQuery();
+            // Rows are handled in batches: The target records of all relations of a batch are looked up with
+            // one query per table, instead of one query per relation. Batch and lookup result are local to
+            // this pass and dropped after each batch: Detection does not change records.
+            $batch = [];
             while ($row = $result->fetchAssociative()) {
                 /** @var array<string, int|string|null> $row */
-                $fieldValue = (string)$row[$fieldName];
                 $allowedTables = $this->tcaHelper->getAllowedTablesOfRecordType(
                     $listField,
                     $typeField !== null && $row[$typeField] !== null ? (string)$row[$typeField] : null
@@ -106,46 +110,94 @@ final readonly class ListRelationHelper
                     // Relations of this record are ambiguous, they are left alone.
                     continue;
                 }
-                $relations = $this->getRelationsWithProblem($statements, $problem, $fieldValue, $allowedTables, $staticItemValues);
-                if (empty($relations)) {
+                $relations = $this->getRelations((string)$row[$fieldName], $allowedTables, $staticItemValues);
+                if ($relations === []) {
                     continue;
                 }
-                $remainingItems = [];
-                foreach (GeneralUtility::trimExplode(',', $fieldValue, true) as $item) {
-                    if (!in_array($item, $relations, true)) {
-                        $remainingItems[] = $item;
-                    }
+                $batch[] = ['row' => $row, 'relations' => $relations];
+                if (count($batch) === self::BATCH_SIZE) {
+                    $findings = [...$findings, ...$this->getFindingsOfBatch($problem, $listField, $isIntegerField, $batch)];
+                    $batch = [];
                 }
-                if (empty($remainingItems) && $isIntegerField) {
-                    $newValue = new FieldValue(0, Connection::PARAM_INT);
-                } else {
-                    $newValue = new FieldValue(implode(',', $remainingItems), Connection::PARAM_STR);
-                }
-                $findings[] = new Finding(
-                    new RecordFieldKey($tableName, (int)$row['uid'], $fieldName),
-                    (int)$row['pid'],
-                    [new RecordChange(RecordChangeType::Update, $tableName, (int)$row['uid'], [$fieldName => $newValue])],
-                    $this->relationTargetHelper->getReason($problem, $fieldName, array_keys($relations)),
-                );
             }
+            $findings = [...$findings, ...$this->getFindingsOfBatch($problem, $listField, $isIntegerField, $batch)];
+        }
+        return $findings;
+    }
+
+    /**
+     * Findings of the rows of a batch whose relations point to records with the given problem. They are
+     * removed from the list, duplicates too, other items keep their order.
+     *
+     * @param list<array{row: array<string, int|string|null>, relations: array<string, array{tableName: string, uid: int, items: list<string>}>}> $batch
+     * @return list<Finding>
+     */
+    private function getFindingsOfBatch(RelationProblem $problem, GroupField|ForeignTableListField $listField, bool $isIntegerField, array $batch): array
+    {
+        if ($batch === []) {
+            return [];
+        }
+        $uidsByTable = [];
+        foreach ($batch as $batchRow) {
+            foreach ($batchRow['relations'] as $relation) {
+                $uidsByTable[$relation['tableName']][$relation['uid']] = $relation['uid'];
+            }
+        }
+        $uidsWithProblemByTable = [];
+        foreach ($uidsByTable as $tableName => $uids) {
+            $uidsWithProblemByTable[$tableName] = $this->relationTargetHelper->getUidsWithProblem($problem, $tableName, array_values($uids));
+        }
+        $tableName = $listField->tableName;
+        $fieldName = $listField->fieldName;
+        $findings = [];
+        foreach ($batch as $batchRow) {
+            $row = $batchRow['row'];
+            $relationsWithProblem = [];
+            $itemsWithProblem = [];
+            foreach ($batchRow['relations'] as $key => $relation) {
+                if (isset($uidsWithProblemByTable[$relation['tableName']][$relation['uid']])) {
+                    $relationsWithProblem[] = $key;
+                    $itemsWithProblem = [...$itemsWithProblem, ...$relation['items']];
+                }
+            }
+            if ($relationsWithProblem === []) {
+                continue;
+            }
+            $remainingItems = [];
+            foreach (GeneralUtility::trimExplode(',', (string)$row[$fieldName], true) as $item) {
+                if (!in_array($item, $itemsWithProblem, true)) {
+                    $remainingItems[] = $item;
+                }
+            }
+            if (empty($remainingItems) && $isIntegerField) {
+                $newValue = new FieldValue(0, Connection::PARAM_INT);
+            } else {
+                $newValue = new FieldValue(implode(',', $remainingItems), Connection::PARAM_STR);
+            }
+            $findings[] = new Finding(
+                new RecordFieldKey($tableName, (int)$row['uid'], $fieldName),
+                (int)$row['pid'],
+                [new RecordChange(RecordChangeType::Update, $tableName, (int)$row['uid'], [$fieldName => $newValue])],
+                $this->relationTargetHelper->getReason($problem, $fieldName, $relationsWithProblem),
+            );
         }
         return $findings;
     }
 
     /**
      * Parse a comma separated list like core RelationHandler->readList() does, and return the items
-     * pointing to a record with the given problem. Items like "tt_content_42" point to a record of the
-     * given table, items like "42" point to a record of the first allowed table of the record type.
-     * Static items of select fields, items that can not be resolved to an allowed table and a positive
-     * uid, and items pointing to a table that does not exist are ignored and kept. The core
-     * RelationHandler handles negative values like "-1" of select fields as relation as well, but they
-     * can not point to a record.
+     * pointing to a record. Items like "tt_content_42" point to a record of the given table, items like
+     * "42" point to a record of the first allowed table of the record type. Static items of select
+     * fields, items that can not be resolved to an allowed table and a positive uid, and items pointing
+     * to a table without TCA are ignored and kept. The core RelationHandler handles negative values like
+     * "-1" of select fields as relation as well, but they can not point to a record.
      *
      * @param array<int, string> $allowedTables
      * @param array<int, string> $staticItemValues
-     * @return array<string, string> Key is "tableName:uid", value is the item as stored in the list
+     * @return array<string, array{tableName: string, uid: int, items: list<string>}> Key is "tableName:uid", items
+     *         are the items as stored in the list pointing to this record, like "42" and "pages_42"
      */
-    private function getRelationsWithProblem(PreparedStatements $statements, RelationProblem $problem, string $fieldValue, array $allowedTables, array $staticItemValues): array
+    private function getRelations(string $fieldValue, array $allowedTables, array $staticItemValues): array
     {
         $isAnyTableAllowed = in_array('*', $allowedTables, true);
         $firstTable = $isAnyTableAllowed ? '' : ($allowedTables[0] ?? '');
@@ -167,9 +219,8 @@ final readonly class ListRelationHelper
             ) {
                 continue;
             }
-            if ($this->relationTargetHelper->hasProblem($statements, $problem, $targetTableName, (int)$uid)) {
-                $relations[$targetTableName . ':' . (int)$uid] = $item;
-            }
+            $relations[$targetTableName . ':' . (int)$uid] ??= ['tableName' => $targetTableName, 'uid' => (int)$uid, 'items' => []];
+            $relations[$targetTableName . ':' . (int)$uid]['items'][] = $item;
         }
         return $relations;
     }

@@ -76,4 +76,14 @@ class GroupFieldRelationMissingTest extends AbstractFunctionalTestCase
         $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckMode::Execute, '');
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldRelationMissingRecordTypeFixed.csv');
     }
+
+    #[Test]
+    public function manyRecordsAreLookedUpInBatches(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldRelationMissingManyImport.csv');
+        /** @var GroupFieldRelationMissing $subject */
+        $subject = $this->get(GroupFieldRelationMissing::class);
+        $this->get(HealthCheckRunner::class)->handle($subject, self::createStub(SymfonyStyle::class), HealthCheckMode::Execute, '');
+        $this->assertCSVDataSet(__DIR__ . '/../Fixtures/GroupFieldRelationMissingManyFixed.csv');
+    }
 }
