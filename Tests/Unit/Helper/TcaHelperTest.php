@@ -2068,19 +2068,6 @@ class TcaHelperTest extends UnitTestCase
     }
 
     #[Test]
-    public function getCreateUserIdFieldReturnsField(): void
-    {
-        $GLOBALS['TCA']['foo']['ctrl']['cruser_id'] = 'cruserIdField';
-        self::assertSame('cruserIdField', (new TcaHelper())->getCreateUserIdField('foo'));
-    }
-
-    #[Test]
-    public function getCreateUserIdFieldReturnsNull(): void
-    {
-        self::assertNull((new TcaHelper())->getCreateUserIdField('foo'));
-    }
-
-    #[Test]
     public function getTimestampFieldReturnsField(): void
     {
         $GLOBALS['TCA']['foo']['ctrl']['tstamp'] = 'tstampField';
