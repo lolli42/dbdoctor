@@ -879,11 +879,6 @@ final readonly class TcaHelper
             && ($endTimeField === '' || (int)$row[$endTimeField] === 0 || (int)$row[$endTimeField] > $now);
     }
 
-    public function getCreateUserIdField(string $tableName): ?string
-    {
-        return ($GLOBALS['TCA'][$tableName]['ctrl']['cruser_id'] ?? null) ?: null;
-    }
-
     public function getTimestampField(string $tableName): ?string
     {
         return ($GLOBALS['TCA'][$tableName]['ctrl']['tstamp'] ?? null) ?: null;

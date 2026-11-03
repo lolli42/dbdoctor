@@ -80,7 +80,6 @@ final readonly class RecordsRenderer
                 }
             }
             $row = $this->humanReadableTimestamp($tableName, $row);
-            $row = $this->resolveCrUser($statements, $tableName, $row);
             $row = $this->resolveWorkspace($statements, $tableName, $row);
             $row = $this->resolvePid($statements, $row);
             $row = $this->resolveTranslationParentField($statements, $tableName, $row);
@@ -105,7 +104,6 @@ final readonly class RecordsRenderer
         $fields = $this->addField($fields, $this->tcaHelper->getTranslationParentField($tableName));
         $fields = $this->addFields($fields, $extraDbFields);
         $fields = $this->addField($fields, $this->tcaHelper->getDeletedField($tableName));
-        $fields = $this->addField($fields, $this->tcaHelper->getCreateUserIdField($tableName));
         $fields = $this->addField($fields, $this->tcaHelper->getTimestampField($tableName));
         $fields = $this->addField($fields, $this->tcaHelper->getTranslationSourceField($tableName));
         $fields = $this->addField($fields, $this->tcaHelper->getWorkspaceIdField($tableName));
@@ -152,32 +150,6 @@ final readonly class RecordsRenderer
             if ($timestampValue > 0) {
                 $date = new \DateTime('@' . $timestampValue);
                 $row[$timestampField] = $date->format('Y-m-d H:i') . ' UTC';
-            }
-        }
-        return $row;
-    }
-
-    /**
-     * @param array<string, int|string> $row
-     * @return array<string, int|string>
-     */
-    private function resolveCrUser(PreparedStatements $statements, string $tableName, array $row): array
-    {
-        $crUserField = $this->tcaHelper->getCreateUserIdField($tableName);
-        if ($crUserField) {
-            $crUserUid = (int)$row[$crUserField];
-            if ($crUserUid > 0) {
-                try {
-                    // Not checking TCA ctrl for be_users soft-delete-awareness here:
-                    // Hopefully nobody unsets this, and it is likely core would stumble on this, too.
-                    $user = $this->recordsHelper->getRecord($statements, 'be_users', ['username', 'deleted'], $crUserUid);
-                    $deletedString = $user['deleted'] ? '|<info>deleted</info>' : '';
-                    $row[$crUserField] = '[' . $crUserUid . $deletedString . ']' . $user['username'];
-                } catch (NoSuchRecordException) {
-                    $row[$crUserField] = '[' . $crUserUid . '|<comment>missing</comment>]';
-                }
-            } else {
-                $row[$crUserField] = '[<comment>0</comment>]';
             }
         }
         return $row;
