@@ -133,7 +133,7 @@ summary, not "unlimited". The filters work with `--output` as well.
   * `evidence`: Extra data of some checks, like the number of MM rows.
   * `record`: uid, pid and TCA control fields under names that are the same for all tables:
     `deleted`, `hidden`, `starttime`, `endtime`, `language`, `l10nParent`, `l10nSource`, `type`,
-    `tstamp`, `crdate`, `cruserId`, and `workspace` with `id`, `state` and `oid`. Only fields
+    `tstamp`, `crdate`, and `workspace` with `id`, `state` and `oid`. Only fields
     the table has. Workspace `id` 0 is live. `state` is the core's t3ver_state: 0 a changed
     version of the live record `oid` (or a live record), 1 a record new in the workspace,
     2 a delete placeholder, 4 a move pointer. `hidden` is the field value: A workspace

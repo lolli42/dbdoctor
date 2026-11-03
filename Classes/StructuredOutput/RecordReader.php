@@ -80,7 +80,6 @@ final readonly class RecordReader
             'type' => $this->tcaHelper->getTypeField($tableName),
             'tstamp' => $this->tcaHelper->getTimestampField($tableName),
             'crdate' => ($ctrl['crdate'] ?? null) ?: null,
-            'cruserId' => $this->tcaHelper->getCreateUserIdField($tableName),
         ];
         if ($this->tcaHelper->getWorkspaceIdField($tableName) !== null) {
             $roles['workspaceId'] = 't3ver_wsid';
