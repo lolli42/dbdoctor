@@ -82,23 +82,15 @@ final readonly class InlineForeignFieldChildrenParentDeleted extends AbstractHea
                 ->executeQuery();
             while ($inlineChildRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $inlineChildRow */
-                if (empty($inlineChildRow[$fieldNameOfParentTableName])
-                    || (int)($inlineChildRow[$fieldNameOfParentTableUid]) === 0
-                    // Parent TCA table must be defined and table must exist
-                    || !is_array($GLOBALS['TCA'][$inlineChildRow[$fieldNameOfParentTableName]] ?? false)
-                    || !$this->tableHelper->tableExistsInDatabase((string)$inlineChildRow[$fieldNameOfParentTableName])
-                ) {
-                    // This was handled by previous InlineForeignFieldChildrenParentMissing already.
-                    continue;
-                }
                 $parentTableName = (string)$inlineChildRow[$fieldNameOfParentTableName];
                 $parentTableDeleteField = $this->tcaHelper->getDeletedField($parentTableName);
                 if (!$parentTableDeleteField) {
-                    // Skip if parent table is not soft-delete aware
+                    // Skip if parent table is not soft-delete aware. A parent table without TCA
+                    // is handled by the earlier InlineForeignFieldChildrenParentMissing.
                     continue;
                 }
                 try {
-                    $parentRow = $this->recordsHelper->getRecord($statements, (string)$inlineChildRow[$fieldNameOfParentTableName], ['uid', $parentTableDeleteField], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
+                    $parentRow = $this->recordsHelper->getRecord($statements, $parentTableName, [$parentTableDeleteField], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
                     if ((bool)$parentRow[$parentTableDeleteField]) {
                         $parentUid = (int)$inlineChildRow[$fieldNameOfParentTableUid];
                         $findings[] = new Finding(
