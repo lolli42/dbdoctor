@@ -11,6 +11,9 @@
 ,5,1,0,0,0,1,0,"","Ok - empty uid, empty table"
 # @todo: intention is to insert a tablenames=null record here. does it work? tablenames in sys_file_reference is usually not nullable?
 ,6,1,0,0,0,1,0,,"Ok - empty uid, empty table"
+# table exists in database, but has no TCA
+,7,1,0,0,0,1,1,"sys_registry","Not Ok - table without TCA"
+,8,1,0,0,1,1,3,"tt_content","Not Ok - deleted, tt_content 3 missing"
 "tt_content"
 ,"uid","pid"
 ,1,1
