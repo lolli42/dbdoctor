@@ -59,7 +59,7 @@ final readonly class PagesTranslatedLanguageParentDeleted extends AbstractHealth
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
-                $parentRecord = $this->recordsHelper->getRecord($statements, 'pages', ['uid', 'deleted'], (int)$row['l10n_parent']);
+                $parentRecord = $this->recordsHelper->getRecord($statements, 'pages', ['deleted'], (int)$row['l10n_parent']);
                 if ((bool)$parentRecord['deleted']) {
                     $findings[] = new Finding(
                         new RecordKey('pages', (int)$row['uid']),
