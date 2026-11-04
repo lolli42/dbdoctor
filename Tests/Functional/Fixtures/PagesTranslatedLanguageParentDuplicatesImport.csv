@@ -37,3 +37,12 @@
 # Should be set to deleted=1
 ,25,1,0,1,0,0,1,24,0,"Not ok sub page 7 translated lang 1, hidden duplicate with lower uid"
 ,26,1,0,0,0,0,1,24,0,"Ok sub page 7 translated lang 1, visible"
+# Should be set to deleted=1 - duplicate translations of the page with uid 1
+,27,0,0,0,0,0,1,1,0,"Not ok site root translated lang 1, duplicate"
+,28,0,0,0,0,0,1,1,0,"Ok site root translated lang 1, visible with highest uid"
+# Translations without language parent are no duplicates
+,29,1,0,0,0,0,1,0,0,"Ok translated lang 1 without language parent"
+,30,1,0,0,0,0,1,0,0,"Ok translated lang 1 without language parent"
+# Default language pages with a language parent are handled by TcaTablesLanguageLessThanOneHasZeroLanguageParent
+,31,1,0,0,0,0,0,2,0,"Ok default language with language parent"
+,32,1,0,0,0,0,0,2,0,"Ok default language with language parent"
