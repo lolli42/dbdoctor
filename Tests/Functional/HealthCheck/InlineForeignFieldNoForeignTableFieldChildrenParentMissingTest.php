@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckMode;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\HealthCheck\InlineForeignFieldNoForeignTableFieldChildrenParentMissing;
@@ -35,6 +36,49 @@ class InlineForeignFieldNoForeignTableFieldChildrenParentMissingTest extends Abs
         $io->expects(self::atLeastOnce())->method('warning');
         $io->expects(self::atLeastOnce())->method('ask')->willReturn('p', 'd', 'a');
         $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckMode::Interactive, '');
+    }
+
+    #[Test]
+    public function findingsHaveReasons(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/InlineForeignFieldNoForeignTableFieldChildrenParentMissingTestImport.csv');
+        /** @var InlineForeignFieldNoForeignTableFieldChildrenParentMissing $subject */
+        $subject = $this->get(InlineForeignFieldNoForeignTableFieldChildrenParentMissing::class);
+        $findings = $this->get(HealthCheckRunner::class)->inspect($subject)->findings;
+        self::assertCount(7, $findings);
+        // Sorted by uid, although found by two parent fields
+        self::assertEquals(new RecordKey('tx_dbdoctortestsforeignfield_items', 2), $findings[0]->key);
+        self::assertSame('parent-missing', $findings[0]->reason?->code);
+        self::assertSame(['parentTable' => 'pages', 'parentUid' => 2], $findings[0]->reason->parameters);
+        self::assertEquals(new RecordKey('tx_dbdoctortestsforeignfield_items', 4), $findings[1]->key);
+        self::assertSame('parent-missing', $findings[1]->reason?->code);
+        self::assertSame(['parentTable' => 'tt_content', 'parentUid' => 6], $findings[1]->reason->parameters);
+        self::assertEquals(new RecordKey('tx_dbdoctortestsforeignfield_items', 6), $findings[2]->key);
+        self::assertSame('parent-missing', $findings[2]->reason?->code);
+        self::assertSame(['parentTable' => 'pages', 'parentUid' => 3], $findings[2]->reason->parameters);
+        self::assertEquals(new RecordKey('sys_file_metadata', 3), $findings[3]->key);
+        self::assertSame('parent-missing', $findings[3]->reason?->code);
+        self::assertSame(['parentTable' => 'sys_file', 'parentUid' => 2], $findings[3]->reason->parameters);
+        self::assertEquals(new RecordKey('sys_file_metadata', 4), $findings[4]->key);
+        self::assertSame('parent-missing', $findings[4]->reason?->code);
+        self::assertSame(['parentTable' => 'sys_file', 'parentUid' => 2], $findings[4]->reason->parameters);
+        self::assertEquals(new RecordKey('tx_dbdoctortestsforeignfield_hotels', 3), $findings[5]->key);
+        self::assertSame('parent-missing', $findings[5]->reason?->code);
+        self::assertSame(['parentTable' => 'tt_content', 'parentUid' => 2], $findings[5]->reason->parameters);
+        self::assertEquals(new RecordKey('tx_dbdoctortestsforeignfield_hotels', 4), $findings[6]->key);
+        self::assertSame('parent-missing', $findings[6]->reason?->code);
+        self::assertSame(['parentTable' => 'tt_content', 'parentUid' => 2], $findings[6]->reason->parameters);
+    }
+
+    #[Test]
+    public function childOfMissingParentWithUidOneIsFound(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/InlineForeignFieldNoForeignTableFieldChildrenParentMissingParentUidOneImport.csv');
+        /** @var InlineForeignFieldNoForeignTableFieldChildrenParentMissing $subject */
+        $subject = $this->get(InlineForeignFieldNoForeignTableFieldChildrenParentMissing::class);
+        $findings = $this->get(HealthCheckRunner::class)->inspect($subject)->findings;
+        self::assertCount(1, $findings);
+        self::assertEquals(new RecordKey('tx_dbdoctortestsforeignfield_hotels', 1), $findings[0]->key);
     }
 
     #[Test]
