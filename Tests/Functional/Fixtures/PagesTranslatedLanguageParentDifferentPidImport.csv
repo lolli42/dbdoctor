@@ -12,3 +12,9 @@
 ,10,1,0,0,0,1,4,8,"Ok sub page 2-2 moved in ws"
 # A moved translation that points to live in l10n_parent is ok. See core issue #106935
 ,11,1,0,1,8,1,4,9,"Ok sub page 2-2 translated moved in ws"
+# Deleted translations are found, too
+,12,1,1,1,6,0,0,0,"Not ok sub page 2-1 translated deleted, wrong pid"
+# Only moved workspace translations are ignored, new ones are found
+,13,1,0,1,6,1,1,0,"Not ok sub page 2-1 translated new in ws, wrong pid"
+# t3ver_state in live is fixed by the earlier WorkspacesT3verStateNotZeroInLive, this check does not rely on it
+,14,1,0,1,6,0,4,0,"Not ok sub page 2-1 translated live with move state, wrong pid"
