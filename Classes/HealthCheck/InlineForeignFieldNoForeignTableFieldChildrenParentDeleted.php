@@ -97,7 +97,7 @@ final readonly class InlineForeignFieldNoForeignTableFieldChildrenParentDeleted 
             while ($inlineChildRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $inlineChildRow */
                 try {
-                    $parentRow = $this->recordsHelper->getRecord($statements, $parentTableName, ['uid', $parentTableDeleteField], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
+                    $parentRow = $this->recordsHelper->getRecord($statements, $parentTableName, [$parentTableDeleteField], (int)$inlineChildRow[$fieldNameOfParentTableUid]);
                     if ((bool)$parentRow[$parentTableDeleteField]) {
                         $parentUid = (int)$inlineChildRow[$fieldNameOfParentTableUid];
                         // Keyed by uid: Two parent fields of the same parent table may select the same row.
