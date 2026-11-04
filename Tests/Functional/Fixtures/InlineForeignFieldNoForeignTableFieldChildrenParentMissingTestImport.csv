@@ -22,6 +22,8 @@
 ,4,1,0,0,0,0,0,6,"tt_content","tx_dbdoctortestsforeignfield_items2","Not Ok - tt_content 6 missing"
 # match fields of no parent field: Unknown parent, kept
 ,5,1,0,0,0,0,0,6,"tt_content","unknown","Ok - unknown parent field"
+# found by the pages parent field with uid 2, before uid 4 of the later tt_content parent field
+,6,1,0,0,0,0,0,3,"pages","tx_dbdoctortestsforeignfield_items","Not Ok - page 3 missing"
 "sys_file"
 ,"uid","pid","identifier"
 ,1,1,"a-file.txt"
