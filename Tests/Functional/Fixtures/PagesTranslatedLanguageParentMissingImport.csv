@@ -5,3 +5,5 @@
 ,3,1,0,1,2,0,"Ok sub page 1 translated"
 # uid 4 does not exist
 ,5,1,0,1,4,0,"Not ok sub page 2 translated"
+# uid 7 does not exist, deleted translations are found, too
+,6,1,1,1,7,0,"Not ok deleted sub page 3 translated"
