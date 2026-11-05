@@ -98,7 +98,7 @@ final readonly class TcaTablesTranslatedLanguageParentDifferentPid extends Abstr
             while ($localizedRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $localizedRow */
                 try {
-                    $parentRow = $this->recordsHelper->getRecord($statements, $tableName, ['uid', 'pid'], (int)$localizedRow[$translationParentField]);
+                    $parentRow = $this->recordsHelper->getRecord($statements, $tableName, ['pid'], (int)$localizedRow[$translationParentField]);
                 } catch (NoSuchRecordException $e) {
                     // Earlier test should have fixed this.
                     throw new EarlierCheckNotFixedException(
