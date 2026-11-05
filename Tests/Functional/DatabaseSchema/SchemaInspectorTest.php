@@ -26,6 +26,8 @@ use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\DependencyInjection\Container;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Event\AlterTableDefinitionStatementsEvent;
+use TYPO3\CMS\Core\Database\Schema\SchemaMigrator;
+use TYPO3\CMS\Core\Database\Schema\SqlReader;
 use TYPO3\CMS\Core\EventDispatcher\ListenerProvider;
 
 final class SchemaInspectorTest extends AbstractFunctionalTestCase
@@ -166,6 +168,19 @@ final class SchemaInspectorTest extends AbstractFunctionalTestCase
         $this->createDefinedTable();
         $this->executeStatement('ALTER TABLE tx_dbdoctortest_defined ADD zzz_deleted_extra INT');
         $this->assertChangesOfCategory($this->get(SchemaInspector::class)->getChanges(), SchemaChangeCategory::Obsolete, 'tx_dbdoctortest_defined');
+    }
+
+    #[Test]
+    public function getChangesIgnoresNumberDefaultsOfStringAndFloatColumns(): void
+    {
+        $this->addTableDefinition(
+            'CREATE TABLE tx_dbdoctortest_defined (uid INT(11) DEFAULT 0 NOT NULL, price double DEFAULT 0 NOT NULL,'
+            . ' rate float DEFAULT -1.5 NOT NULL, amount decimal(10,2) DEFAULT 0 NOT NULL, code varchar(6) DEFAULT 0 NOT NULL);'
+        );
+        // Create the table with the definition as is, as the core does
+        $sqlReader = $this->get(SqlReader::class);
+        $this->get(SchemaMigrator::class)->install($sqlReader->getCreateTableStatementArray($sqlReader->getTablesDefinitionString()), true);
+        self::assertSame([], $this->get(SchemaInspector::class)->getChanges());
     }
 
     #[Test]
