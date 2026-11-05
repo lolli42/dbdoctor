@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckMode;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\HealthCheck\TtContentPidDeleted;
@@ -36,6 +37,36 @@ class TtContentPidDeletedTest extends AbstractFunctionalTestCase
         $io->expects(self::atLeastOnce())->method('warning');
         $io->expects(self::atLeastOnce())->method('ask')->willReturn('p', 'd', 'a');
         $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckMode::Interactive, '');
+    }
+
+    #[Test]
+    public function findingsHaveReasons(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TtContentPidDeletedImport.csv');
+        /** @var TtContentPidDeleted $subject */
+        $subject = $this->get(TtContentPidDeleted::class);
+        $findings = $this->get(HealthCheckRunner::class)->inspect($subject)->findings;
+        self::assertCount(3, $findings);
+        self::assertEquals(new RecordKey('tt_content', 3), $findings[0]->key);
+        self::assertSame('page-deleted', $findings[0]->reason?->code);
+        self::assertSame(['pid' => 3], $findings[0]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 4), $findings[1]->key);
+        self::assertSame('page-deleted', $findings[1]->reason?->code);
+        self::assertSame(['pid' => 3], $findings[1]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 5), $findings[2]->key);
+        self::assertSame('page-deleted', $findings[2]->reason?->code);
+        self::assertSame(['pid' => 3], $findings[2]->reason->parameters);
+    }
+
+    #[Test]
+    public function contentOnDeletedPageWithUidOneIsFound(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TtContentPidDeletedPageUidOneImport.csv');
+        /** @var TtContentPidDeleted $subject */
+        $subject = $this->get(TtContentPidDeleted::class);
+        $findings = $this->get(HealthCheckRunner::class)->inspect($subject)->findings;
+        self::assertCount(1, $findings);
+        self::assertEquals(new RecordKey('tt_content', 1), $findings[0]->key);
     }
 
     #[Test]
