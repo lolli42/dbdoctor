@@ -14,3 +14,7 @@
 ,8,2,1,1,6,1,"Not ok localized deleted content ws-1"
 ,9,2,1,-1,0,0,"Ok content on sub page 1 sys_language_uid -1"
 ,10,2,1,-1,0,1,"Ok content on sub page 1 sys_language_uid -1 ws-1"
+# deleted localizations without language parent are no localizations of a missing record
+,11,2,1,1,0,0,"Ok localized deleted content without language parent"
+# default language records with language parent are handled by TcaTablesLanguageLessThanOneHasZeroLanguageParent
+,12,2,1,0,6,0,"Ok default language deleted content with language parent"
