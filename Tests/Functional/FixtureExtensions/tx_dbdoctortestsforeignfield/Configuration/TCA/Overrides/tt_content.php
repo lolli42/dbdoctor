@@ -43,6 +43,16 @@ ExtensionManagementUtility::addTCAcolumns(
                 ],
             ],
         ],
+        // Same child table with foreign_table_field: It is an inline child with and without foreign_table_field
+        'tx_dbdoctortestsforeignfield_items3' => [
+            'label' => 'Items 3',
+            'config' => [
+                'type' => 'inline',
+                'foreign_table' => 'tx_dbdoctortestsforeignfield_items',
+                'foreign_field' => 'parentid',
+                'foreign_table_field' => 'parenttable',
+            ],
+        ],
     ]
 );
 
