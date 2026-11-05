@@ -17,18 +17,15 @@ namespace Lolli\Dbdoctor\Commands;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbdoctor\DatabaseSchema\SchemaChange;
-use Lolli\Dbdoctor\DatabaseSchema\SchemaChangeCategory;
 use Lolli\Dbdoctor\DatabaseSchema\SchemaInspector;
 use Lolli\Dbdoctor\DatabaseSchema\SchemaLevel;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckResult;
+use Lolli\Dbdoctor\Renderer\SchemaChangesRenderer;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use TYPO3\CMS\Core\Database\ConnectionPool;
 
 /**
  * Compare the database schema with the table definitions.
@@ -37,6 +34,7 @@ final class SchemaCommand extends Command
 {
     public function __construct(
         private readonly SchemaInspector $schemaInspector,
+        private readonly SchemaChangesRenderer $schemaChangesRenderer,
     ) {
         parent::__construct();
     }
@@ -77,14 +75,12 @@ final class SchemaCommand extends Command
         $hidden = [];
         foreach ($this->schemaInspector->getChanges() as $change) {
             if ($this->schemaInspector->isInLevel($change->category, $level)) {
-                $shown[$change->category->value][] = $change;
+                $shown[] = $change;
             } else {
                 $hidden[$change->category->value] = ($hidden[$change->category->value] ?? 0) + 1;
             }
         }
-        foreach ($shown as $category => $changes) {
-            $this->outputCategory($io, SchemaChangeCategory::from($category), $changes);
-        }
+        $this->schemaChangesRenderer->render($io, $shown);
         if ($hidden !== []) {
             $counts = [];
             foreach ($hidden as $category => $count) {
@@ -97,35 +93,7 @@ final class SchemaCommand extends Command
             $io->success('Database schema is up to date with level "' . $level->value . '".');
             return HealthCheckResult::Ok->value;
         }
-        $io->warning('Statements to update the database schema with level "' . $level->value . '": ' . array_sum(array_map(count(...), $shown)) . '.');
+        $io->warning('Statements to update the database schema with level "' . $level->value . '": ' . count($shown) . '.');
         return HealthCheckResult::Broken->value;
-    }
-
-    /**
-     * @param list<SchemaChange> $changes
-     */
-    private function outputCategory(SymfonyStyle $io, SchemaChangeCategory $category, array $changes): void
-    {
-        $io->section(match ($category) {
-            SchemaChangeCategory::Missing => 'Missing tables, columns and indexes',
-            SchemaChangeCategory::Changed => 'Changed columns, indexes and table options',
-            SchemaChangeCategory::Unused => 'Unused tables and columns, to rename',
-            SchemaChangeCategory::Obsolete => 'Obsolete tables, columns and indexes, to drop',
-        });
-        foreach ($changes as $change) {
-            $lines = [];
-            if ($change->connectionName !== ConnectionPool::DEFAULT_CONNECTION_NAME) {
-                $lines[] = 'Connection: ' . $change->connectionName;
-            }
-            $lines[] = $change->statement;
-            if ($change->currentDefinition !== null) {
-                $lines[] = 'Current: ' . $change->currentDefinition;
-            }
-            if ($change->rowCount !== null) {
-                $lines[] = 'Rows: ' . $change->rowCount;
-            }
-            $io->writeln(' * ' . OutputFormatter::escape(implode("\n   ", $lines)));
-        }
-        $io->newLine();
     }
 }

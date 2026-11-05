@@ -17,13 +17,15 @@ namespace Lolli\Dbdoctor\Commands;
  * The TYPO3 project - inspiring people to share!
  */
 
-use Lolli\Dbdoctor\DatabaseSchema\DatabaseSchemaChecker;
+use Lolli\Dbdoctor\DatabaseSchema\SchemaInspector;
+use Lolli\Dbdoctor\DatabaseSchema\SchemaLevel;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInspection;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckMode;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckResult;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\HealthCheck\InspectionStatus;
 use Lolli\Dbdoctor\HealthFactory\HealthFactoryInterface;
+use Lolli\Dbdoctor\Renderer\SchemaChangesRenderer;
 use Lolli\Dbdoctor\StructuredOutput\JsonReportBuilder;
 use Lolli\Dbdoctor\StructuredOutput\ReportContext;
 use Lolli\Dbdoctor\StructuredOutput\ReportOptions;
@@ -44,7 +46,8 @@ final class HealthCommand extends Command
 {
     public function __construct(
         private readonly HealthFactoryInterface $healthFactory,
-        private readonly DatabaseSchemaChecker $databaseSchemaChecker,
+        private readonly SchemaInspector $schemaInspector,
+        private readonly SchemaChangesRenderer $schemaChangesRenderer,
         private readonly HealthCheckRunner $healthCheckRunner,
         private readonly JsonReportBuilder $jsonReportBuilder,
     ) {
@@ -258,11 +261,13 @@ final class HealthCommand extends Command
         if ($limit !== 'all' && !ctype_digit($limit)) {
             return $this->outputJsonError($input, $output, 'Invalid limit "' . $limit . '".');
         }
-        if ($this->databaseSchemaChecker->hasIncompleteTablesColumnsIndexes()) {
+        $missingSchemaChanges = $this->schemaInspector->getChanges(SchemaLevel::Required);
+        if ($missingSchemaChanges !== []) {
             return $this->outputJsonError(
                 $input,
                 $output,
-                'Current database schema is not in sync with TCA: Missing tables, missing or not adapted columns or indexes were detected.'
+                'Database schema is incomplete: ' . count($missingSchemaChanges) . ' statements to create tables, add columns'
+                . ' or indexes. Run "bin/typo3 dbdoctor:schema --level required" for details.'
             );
         }
         $filters = [];
@@ -462,21 +467,22 @@ final class HealthCommand extends Command
     }
 
     /**
-     * "Database analyzer" must be in a good shape: No missing tables,
-     * fields and indexes. If that is not the case, we stop early.
+     * Checks rely on all defined tables, columns and indexes to exist. If that is not the case,
+     * we stop early.
      */
     private function checkDatabaseSchema(SymfonyStyle $io): bool
     {
-        if ($this->databaseSchemaChecker->hasIncompleteTablesColumnsIndexes()) {
-            $io->error(
-                'Current database schema is not in sync with TCA: '
-                . 'Missing tables, missing or not adapted columns or indexes were detected. '
-                . 'Run "bin/typo3 extension:setup", or use the install tool "Database analyzer" '
-                . 'to fix this. Then run dbdoctor again.'
-            );
-            return false;
+        $missingSchemaChanges = $this->schemaInspector->getChanges(SchemaLevel::Required);
+        if ($missingSchemaChanges === []) {
+            return true;
         }
-        return true;
+        $this->schemaChangesRenderer->render($io, $missingSchemaChanges);
+        $io->error(
+            'Database schema is incomplete: Tables, columns or indexes are missing. '
+            . 'Run "bin/typo3 extension:setup", or use the install tool "Database analyzer" '
+            . 'to fix this. Then run dbdoctor again.'
+        );
+        return false;
     }
 
     /**
