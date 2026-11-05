@@ -8,6 +8,7 @@ TYPO3 DB doctor
 * [Installation via composer](#installation-via-composer)
 * [Usage](#usage)
   * [Preparation](#preparation)
+  * [Database schema](#database-schema)
   * [Agentic doctor](#agentic-doctor)
   * [Human interface](#human-interface)
     * [Interactive mode](#interactive-mode)
@@ -86,10 +87,32 @@ instance. As such, a few things should be kept in mind:
 
 * [!!!] Make sure the TYPO3 "Database analyzer" is happy and needs no new or changed columns or tables.
   An early check verifies missing tables and columns, but it is still a good idea to double-check
-  before running dbdoctor.
+  before running dbdoctor, see [Database schema](#database-schema).
 
 * [!!!] There should not be any pending core upgrade wizards. dbdoctor currently does not check
   up-front if all upgrade wizards have been executed.
+
+
+## Database schema
+
+`bin/typo3 dbdoctor:schema` compares the database schema with the table definitions of
+`ext_tables.sql` files and TCA, like the install tool "Analyze Database Structure" does, and
+shows the statements that would update the schema. It is read-only. The core CLI has no
+such thing: `extension:setup` applies changes silently, and it even reports success when
+statements failed.
+
+Statements come in four categories:
+
+* missing: create tables, add columns and indexes. `dbdoctor:health` refuses to run without.
+* changed: change columns, indexes and table options. Shows the current definition, too.
+* unused: rename tables and columns without definition to `zzz_deleted_*`.
+* obsolete: drop `zzz_deleted_*` tables and columns, and indexes without definition. Data is lost.
+
+`--level required` shows missing statements only, `--level recommended` (default) adds changed
+ones, `--level all` shows everything. Statements of other categories are counted. Exit value
+0 means nothing to do, 1 means statements are shown.
+
+On sqlite, a single change of a table needs several statements: The table is re-created.
 
 
 ## Agentic doctor
