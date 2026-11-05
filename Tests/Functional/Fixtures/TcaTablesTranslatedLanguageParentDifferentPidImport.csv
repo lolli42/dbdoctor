@@ -1,8 +1,10 @@
 "pages"
-,"uid","pid","deleted","t3ver_wsid","title"
-,1,0,0,0,"Ok site root"
-,2,1,0,0,"Ok sub page 1"
-,3,1,0,0,"Ok sub page 2"
+,"uid","pid","deleted","sys_language_uid","l10n_parent","t3ver_wsid","title"
+,1,0,0,0,0,0,"Ok site root"
+,2,1,0,0,0,0,"Ok sub page 1"
+,3,1,0,0,0,0,"Ok sub page 2"
+# pages are handled by PagesTranslatedLanguageParentDifferentPid
+,4,0,0,1,2,0,"Ok sub page 1 localized on different pid"
 "tt_content",,,,,,,,,,,,,,,,,
 ,"uid","pid","deleted","hidden","sys_language_uid","l18n_parent","t3ver_wsid","t3ver_state","t3ver_oid","header"
 # Set 0 ok
@@ -58,3 +60,18 @@
 ,37,2,0,0,0,0,0,0,0,"Content 12 for sub page 1"
 ,38,1,0,0,1,37,1,1,0,"Content 12 localized for sub page 1 but different pid ws-1"
 ,39,1,0,0,1,37,0,0,0,"Content 12 localized for sub page 1 but different pid"
+# Set 13 hidden localization on wrong pid - 41 should be set to pid=2, hidden translations are found, too
+,40,2,0,0,0,0,0,0,0,"Content 13 for sub page 1"
+,41,1,0,1,1,40,0,0,0,"Content 13 localized hidden for sub page 1 but different pid"
+# Set 14 localization on wrong pid having a hidden localization on pid 2 already - 44 should be set to pid=2 and deleted=1
+,42,2,0,0,0,0,0,0,0,"Content 14 for sub page 1"
+,43,2,0,1,1,42,0,0,0,"Content 14 localized hidden for sub page 1"
+,44,1,0,0,1,42,0,0,0,"Content 14 localized for sub page 1 but different pid and existing hidden localization"
+# Set 15 live localization with move state on wrong pid - 46 should be set to pid=2 and hidden=1, only workspace moves are ignored
+# t3ver_state in live is fixed by the earlier WorkspacesT3verStateNotZeroInLive, this check does not rely on it
+,45,2,0,0,0,0,0,0,0,"Content 15 for sub page 1"
+,46,1,0,0,1,45,0,4,0,"Content 15 localized live with move state for sub page 1 but different pid"
+# Set 16 ok: default language with language parent is handled by TcaTablesLanguageLessThanOneHasZeroLanguageParent,
+# localizations without language parent have no target pid
+,47,1,0,0,0,40,0,0,0,"Content 16 default language with language parent on different pid"
+,48,1,0,0,1,0,0,0,0,"Content 16 localized without language parent"
