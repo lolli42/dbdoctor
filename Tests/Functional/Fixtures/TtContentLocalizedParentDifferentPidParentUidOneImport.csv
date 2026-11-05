@@ -1,0 +1,4 @@
+"tt_content"
+,"uid","pid","deleted","sys_language_uid","l18n_parent","t3ver_wsid","t3ver_state","t3ver_oid","header"
+,1,2,0,0,0,0,0,0,"Content on page 2"
+,2,3,0,1,1,0,0,0,"Content localized on different pid"
