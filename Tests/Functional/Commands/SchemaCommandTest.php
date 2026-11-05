@@ -343,4 +343,43 @@ final class SchemaCommandTest extends AbstractFunctionalTestCase
         $commandTester->execute(['--mode' => 'interactive']);
         self::assertStringContainsString('n - NEXT category, do not execute these statements', $this->getNormalizedDisplay($commandTester));
     }
+
+    #[Test]
+    public function reportsRowsThatConflictWithChanges(): void
+    {
+        $file = $this->instancePath . '/dbdoctor-file';
+        $this->addTableDefinition('CREATE TABLE tx_dbdoctortest_defined (uid INT(11) DEFAULT 0 NOT NULL, title VARCHAR(10) DEFAULT \'\' NOT NULL);');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:schema'));
+        $commandTester->execute(['--mode' => 'execute', '--file' => $file]);
+        unlink($file);
+        $this->get(ConnectionPool::class)->getConnectionByName(ConnectionPool::DEFAULT_CONNECTION_NAME)
+            ->executeStatement('INSERT INTO tx_dbdoctortest_defined (uid, title) VALUES (1, \'same\'), (2, \'same\')');
+        $this->addTableDefinition('CREATE TABLE tx_dbdoctortest_defined (uid INT(11) DEFAULT 0 NOT NULL, title VARCHAR(10) DEFAULT \'\' NOT NULL, UNIQUE KEY tx_dbdoctortest_unique (title));');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:schema'));
+        $result = $commandTester->execute([]);
+        self::assertSame(HealthCheckResult::Broken->value, $result);
+        $display = $this->getNormalizedDisplay($commandTester);
+        self::assertStringContainsString('Rows that conflict with changes', $display);
+        self::assertStringContainsString('tx_dbdoctortest_defined.title: 2 rows share values, unique index "tx_dbdoctortest_unique', $display);
+    }
+
+    #[Test]
+    public function executeReportsRowsThatConflictWithChangesBeforeExecuting(): void
+    {
+        $file = $this->instancePath . '/dbdoctor-file';
+        $this->addTableDefinition('CREATE TABLE tx_dbdoctortest_defined (uid INT(11) DEFAULT 0 NOT NULL, title VARCHAR(10) DEFAULT \'\' NOT NULL);');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:schema'));
+        $commandTester->execute(['--mode' => 'execute', '--file' => $file]);
+        unlink($file);
+        $this->get(ConnectionPool::class)->getConnectionByName(ConnectionPool::DEFAULT_CONNECTION_NAME)
+            ->executeStatement('INSERT INTO tx_dbdoctortest_defined (uid, title) VALUES (1, \'same\'), (2, \'same\')');
+        $this->addTableDefinition('CREATE TABLE tx_dbdoctortest_defined (uid INT(11) DEFAULT 0 NOT NULL, title VARCHAR(10) DEFAULT \'\' NOT NULL, UNIQUE KEY tx_dbdoctortest_unique (title));');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:schema'));
+        $commandTester->execute(['--mode' => 'execute', '--file' => $file]);
+        $display = $this->getNormalizedDisplay($commandTester);
+        self::assertLessThan(
+            strpos($display, 'then a statement failed, execution stopped.'),
+            strpos($display, 'Rows that conflict with changes')
+        );
+    }
 }

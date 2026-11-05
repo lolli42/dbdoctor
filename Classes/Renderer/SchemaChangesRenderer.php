@@ -19,6 +19,8 @@ namespace Lolli\Dbdoctor\Renderer;
 
 use Lolli\Dbdoctor\DatabaseSchema\SchemaChange;
 use Lolli\Dbdoctor\DatabaseSchema\SchemaChangeCategory;
+use Lolli\Dbdoctor\DatabaseSchema\SchemaConflict;
+use Lolli\Dbdoctor\DatabaseSchema\SchemaConflictType;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\ConnectionPool;
@@ -58,6 +60,31 @@ final readonly class SchemaChangesRenderer
         if ($category !== null) {
             $io->newLine();
         }
+    }
+
+    /**
+     * @param list<SchemaConflict> $conflicts
+     */
+    public function renderConflicts(SymfonyStyle $io, array $conflicts): void
+    {
+        if ($conflicts === []) {
+            return;
+        }
+        $io->section('Rows that conflict with changes');
+        foreach ($conflicts as $conflict) {
+            $prefix = $conflict->connectionName !== ConnectionPool::DEFAULT_CONNECTION_NAME ? $conflict->connectionName . ': ' : '';
+            $line = match ($conflict->type) {
+                SchemaConflictType::NullValues => $conflict->rowCount . ' rows are NULL, the column becomes NOT NULL',
+                SchemaConflictType::NotNumericValues => $conflict->rowCount . ' rows are no numbers, the column becomes ' . $conflict->expected,
+                SchemaConflictType::TooLongValues => $conflict->rowCount . ' rows are longer than ' . $conflict->expected . ' characters',
+                SchemaConflictType::NegativeValues => $conflict->rowCount . ' rows are negative, the column becomes unsigned',
+                SchemaConflictType::DuplicateValues => $conflict->rowCount . ' rows share values, unique index "' . $conflict->expected . '" can not be created',
+            };
+            $io->writeln(' * ' . OutputFormatter::escape($prefix . $conflict->tableName . '.' . implode(',', $conflict->columnNames) . ': ' . $line));
+        }
+        $io->newLine();
+        $io->text('Depending on the DBMS and its strict mode, statements fail, or values are converted.');
+        $io->newLine();
     }
 
     private function getSectionTitle(SchemaChangeCategory $category): string

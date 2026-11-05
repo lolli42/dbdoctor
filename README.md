@@ -117,6 +117,13 @@ are executed in the order above, the statements are determined again before each
 Execution stops at the first failing statement, with the database error. A table or column renamed
 to `zzz_deleted_*` is dropped in a later run, not in the same one.
 
+Before showing or executing statements, the command looks for rows that conflict with them: NULL
+values in a column that becomes NOT NULL, values that are no numbers in a text column that becomes
+a number column, values longer than the new length, negative values in a column that becomes
+unsigned, and rows sharing values of a new unique index. Depending on the DBMS and its strict mode,
+such statements fail, or values are converted silently. sqlite enforces NOT NULL and unique
+indexes only.
+
 Exit values as with `dbdoctor:health`: 0 nothing to do, 1 statements shown or executed, 2 user
 abort, 4 error, for instance a failed statement.
 
