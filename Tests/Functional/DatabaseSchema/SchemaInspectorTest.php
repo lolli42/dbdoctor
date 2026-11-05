@@ -182,6 +182,30 @@ final class SchemaInspectorTest extends AbstractFunctionalTestCase
     }
 
     #[Test]
+    public function getChangesWithLevelRequiredReturnsMissingOnly(): void
+    {
+        $this->executeStatement('CREATE TABLE tx_dbdoctortest_undefined (uid INT)');
+        $this->addTableDefinition('CREATE TABLE tx_dbdoctortest_defined (uid INT(11) DEFAULT 0 NOT NULL, title VARCHAR(10) DEFAULT \'\' NOT NULL);');
+        $this->createDefinedTable();
+        $this->addTableDefinition('CREATE TABLE tx_dbdoctortest_defined (uid INT(11) DEFAULT 0 NOT NULL, title VARCHAR(20) DEFAULT \'\' NOT NULL);' . "\n" . 'CREATE TABLE pages (tx_dbdoctortest_field VARCHAR(10) DEFAULT \'\' NOT NULL);');
+        $this->assertChangesOfCategory($this->get(SchemaInspector::class)->getChanges(SchemaLevel::Required), SchemaChangeCategory::Missing, 'tx_dbdoctortest_field');
+    }
+
+    #[Test]
+    public function getChangesWithLevelRecommendedReturnsMissingAndChanged(): void
+    {
+        $this->executeStatement('CREATE TABLE tx_dbdoctortest_undefined (uid INT)');
+        $this->addTableDefinition('CREATE TABLE tx_dbdoctortest_defined (uid INT(11) DEFAULT 0 NOT NULL, title VARCHAR(10) DEFAULT \'\' NOT NULL);');
+        $this->createDefinedTable();
+        $this->addTableDefinition('CREATE TABLE tx_dbdoctortest_defined (uid INT(11) DEFAULT 0 NOT NULL, title VARCHAR(20) DEFAULT \'\' NOT NULL);' . "\n" . 'CREATE TABLE pages (tx_dbdoctortest_field VARCHAR(10) DEFAULT \'\' NOT NULL);');
+        $categories = array_values(array_unique(array_map(
+            static fn(SchemaChange $change): string => $change->category->value,
+            $this->get(SchemaInspector::class)->getChanges(SchemaLevel::Recommended)
+        )));
+        self::assertSame([SchemaChangeCategory::Missing->value, SchemaChangeCategory::Changed->value], $categories);
+    }
+
+    #[Test]
     public function isInLevelReturnsMissingOnlyForRequired(): void
     {
         $subject = $this->get(SchemaInspector::class);

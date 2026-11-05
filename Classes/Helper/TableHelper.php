@@ -26,8 +26,8 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 
 /**
  * Database schema details. The schema of a table is read lazily once per process and kept in
- * the core runtime cache: dbdoctor does not change the schema, and HealthCommand verifies it is
- * in sync with TCA before checks run.
+ * the core runtime cache: dbdoctor does not change the schema, and HealthCommand verifies all
+ * defined tables, columns and indexes exist before checks run.
  */
 final readonly class TableHelper
 {

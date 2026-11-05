@@ -20,8 +20,11 @@ use Lolli\Dbdoctor\HealthCheck\HealthCheckResult;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\DependencyInjection\Container;
 use TYPO3\CMS\Core\Console\CommandRegistry;
 use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Database\Event\AlterTableDefinitionStatementsEvent;
+use TYPO3\CMS\Core\EventDispatcher\ListenerProvider;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class HealthCommandJsonTest extends AbstractFunctionalTestCase
@@ -299,6 +302,31 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame(HealthCheckResult::Error->value, $result);
         self::assertSame('Option "--format json" is available with "--mode check" only.', $report['error']['message']);
+    }
+
+    #[Test]
+    public function reportsErrorIfDatabaseSchemaIsIncomplete(): void
+    {
+        // A column defined but missing in the database
+        /** @var Container $container */
+        $container = $this->get('service_container');
+        $container->set(
+            'health-command-json-test-schema',
+            static function (AlterTableDefinitionStatementsEvent $event): void {
+                $event->addSqlData('CREATE TABLE pages (some_field VARCHAR(10) DEFAULT \'\' NOT NULL);');
+            }
+        );
+        $container->get(ListenerProvider::class)->addListener(AlterTableDefinitionStatementsEvent::class, 'health-command-json-test-schema');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $result = $commandTester->execute([
+            '--format' => 'json',
+            '--mode' => 'check',
+        ]);
+        $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame(HealthCheckResult::Error->value, $result);
+        self::assertStringStartsWith('Database schema is incomplete: ', $report['error']['message']);
+        self::assertStringEndsWith(' statements to create tables, add columns or indexes. Run "bin/typo3 dbdoctor:schema --level required" for details.', $report['error']['message']);
+        self::assertArrayNotHasKey('checks', $report);
     }
 
     #[Test]

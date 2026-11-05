@@ -38,13 +38,16 @@ final readonly class SchemaInspector
     ) {}
 
     /**
+     * Changes of the categories in the given level. Unused and obsolete ones are determined with
+     * level "all" only: The core counts rows of renamed and dropped tables for them.
+     *
      * @return list<SchemaChange> Ordered by category
      */
-    public function getChanges(): array
+    public function getChanges(SchemaLevel $level = SchemaLevel::All): array
     {
         $statements = $this->sqlReader->getCreateTableStatementArray($this->sqlReader->getTablesDefinitionString());
         $add = $this->schemaMigrator->getUpdateSuggestions($statements);
-        $remove = $this->schemaMigrator->getUpdateSuggestions($statements, true);
+        $remove = $level === SchemaLevel::All ? $this->schemaMigrator->getUpdateSuggestions($statements, true) : [];
         $missing = $changed = $unused = $obsolete = [];
         foreach ($add as $connectionName => $suggestions) {
             $missing[] = $this->createChanges(SchemaChangeCategory::Missing, $connectionName, $suggestions['create_table'] ?? []);
@@ -58,6 +61,9 @@ final readonly class SchemaInspector
             $unused[] = $this->createChanges(SchemaChangeCategory::Unused, $connectionName, $suggestions['change_table'] ?? [], [], $rowCounts);
             $obsolete[] = $this->createChanges(SchemaChangeCategory::Obsolete, $connectionName, $suggestions['drop'] ?? []);
             $obsolete[] = $this->createChanges(SchemaChangeCategory::Obsolete, $connectionName, $suggestions['drop_table'] ?? [], [], $rowCounts);
+        }
+        if ($level === SchemaLevel::Required) {
+            $changed = [];
         }
         return array_merge(...$missing, ...$changed, ...$unused, ...$obsolete);
     }

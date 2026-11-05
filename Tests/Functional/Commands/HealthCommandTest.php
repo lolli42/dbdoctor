@@ -179,7 +179,7 @@ class HealthCommandTest extends AbstractFunctionalTestCase
     }
 
     #[Test]
-    public function reportsErrorIfDatabaseSchemaIsNotInSyncAndRunsNoCheck(): void
+    public function reportsMissingSchemaChangesAndRunsNoCheck(): void
     {
         // A column defined but missing in the database
         /** @var Container $container */
@@ -194,7 +194,10 @@ class HealthCommandTest extends AbstractFunctionalTestCase
         $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
         $result = $commandTester->execute(['--mode' => 'check']);
         self::assertSame(HealthCheckResult::Error->value, $result);
-        self::assertStringContainsString('Current database schema is not in sync with TCA', $this->getNormalizedDisplay($commandTester));
+        $display = $this->getNormalizedDisplay($commandTester);
+        self::assertStringContainsString('Missing tables, columns and indexes', $display);
+        self::assertStringContainsString('some_field', $display);
+        self::assertStringContainsString('Database schema is incomplete: Tables, columns or indexes are missing.', $display);
         self::assertStringNotContainsString('OK  ', $commandTester->getDisplay());
     }
 }
