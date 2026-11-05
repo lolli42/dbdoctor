@@ -325,7 +325,7 @@ class HealthCommandJsonTest extends AbstractFunctionalTestCase
         $report = json_decode($commandTester->getDisplay(), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame(HealthCheckResult::Error->value, $result);
         self::assertStringStartsWith('Database schema is incomplete: ', $report['error']['message']);
-        self::assertStringEndsWith(' statements to create tables, add columns or indexes. Run "bin/typo3 dbdoctor:schema --level required" for details.', $report['error']['message']);
+        self::assertStringEndsWith(' statements to create tables, add columns or indexes. Run "bin/typo3 dbdoctor:schema --level required" for details, and "bin/typo3 dbdoctor:schema --level required -m interactive" to fix this.', $report['error']['message']);
         self::assertArrayNotHasKey('checks', $report);
     }
 

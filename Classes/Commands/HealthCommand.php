@@ -267,7 +267,8 @@ final class HealthCommand extends Command
                 $input,
                 $output,
                 'Database schema is incomplete: ' . count($missingSchemaChanges) . ' statements to create tables, add columns'
-                . ' or indexes. Run "bin/typo3 dbdoctor:schema --level required" for details.'
+                . ' or indexes. Run "bin/typo3 dbdoctor:schema --level required" for details, and'
+                . ' "bin/typo3 dbdoctor:schema --level required -m interactive" to fix this.'
             );
         }
         $filters = [];
@@ -479,8 +480,8 @@ final class HealthCommand extends Command
         $this->schemaChangesRenderer->render($io, $missingSchemaChanges);
         $io->error(
             'Database schema is incomplete: Tables, columns or indexes are missing. '
-            . 'Run "bin/typo3 extension:setup", or use the install tool "Database analyzer" '
-            . 'to fix this. Then run dbdoctor again.'
+            . 'Run "bin/typo3 dbdoctor:schema --level required -m interactive" to fix this. '
+            . 'Then run dbdoctor again.'
         );
         return false;
     }
