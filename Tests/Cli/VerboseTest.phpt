@@ -1,5 +1,5 @@
 --TEST--
-dbdoctor:health -v shows title, actions and description of checks without affected records, too
+dbdoctor:health -v shows title, actions and description of checks without affected records, too. A warning on changed schema may come first, see HealthTest.phpt
 --ARGS--
 dbdoctor:health -v
 --FILE--
@@ -9,7 +9,7 @@ require_once __DIR__ . '/../../.Build/bin/typo3';
 Find and fix database inconsistencies
 =====================================
 
-Scan for workspace records when ext:workspaces is not loaded
+%AScan for workspace records when ext:workspaces is not loaded
 ------------------------------------------------------------
 
  Class: WorkspacesNotLoadedRecordsDangling

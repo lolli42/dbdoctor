@@ -1,15 +1,15 @@
 --TEST--
-dbdoctor:health, all health checks of the chain in their order
+dbdoctor:health, all health checks of the chain in their order. A warning on changed schema may come first: The core setup command creates tables with the collation of the database server on mysql and mariadb
 --ARGS--
 dbdoctor:health
 --FILE--
 <?php declare(strict_types=1);
 require_once __DIR__ . '/../../.Build/bin/typo3';
---EXPECT--
+--EXPECTF--
 Find and fix database inconsistencies
 =====================================
 
-OK  WorkspacesNotLoadedRecordsDangling
+%AOK  WorkspacesNotLoadedRecordsDangling
 OK  WorkspacesRecordsOfDeletedWorkspaces
 OK  TcaTablesDeleteFlagZeroOrOne
 OK  WorkspacesSoftDeletedRecords
