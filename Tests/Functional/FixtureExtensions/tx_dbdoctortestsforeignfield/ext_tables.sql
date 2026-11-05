@@ -17,7 +17,8 @@ CREATE TABLE pages
 CREATE TABLE tt_content
 (
     tx_dbdoctortestsforeignfield_items int(11) DEFAULT '0' NOT NULL,
-    tx_dbdoctortestsforeignfield_items2 int(11) DEFAULT '0' NOT NULL
+    tx_dbdoctortestsforeignfield_items2 int(11) DEFAULT '0' NOT NULL,
+    tx_dbdoctortestsforeignfield_items3 int(11) DEFAULT '0' NOT NULL
 );
 
 CREATE TABLE tx_dbdoctortestsforeignfield_items
