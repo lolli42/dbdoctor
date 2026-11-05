@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckMode;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedLanguageParentDuplicates;
@@ -35,6 +36,44 @@ class TcaTablesTranslatedLanguageParentDuplicatesTest extends AbstractFunctional
         $io->expects(self::atLeastOnce())->method('warning');
         $io->expects(self::atLeastOnce())->method('ask')->willReturn('p', 'd', 'a');
         $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckMode::Interactive, '');
+    }
+
+    #[Test]
+    public function findingsHaveReasons(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDuplicatesImport.csv');
+        /** @var TcaTablesTranslatedLanguageParentDuplicates $subject */
+        $subject = $this->get(TcaTablesTranslatedLanguageParentDuplicates::class);
+        $findings = $this->get(HealthCheckRunner::class)->inspect($subject)->findings;
+        self::assertCount(7, $findings);
+        self::assertEquals(new RecordKey('sys_file_reference', 3), $findings[0]->key);
+        self::assertSame('duplicate', $findings[0]->reason?->code);
+        self::assertSame(['kept' => 2], $findings[0]->reason->parameters);
+        self::assertSame(['kept' => 2], $findings[0]->evidence);
+        self::assertEquals(new RecordKey('sys_file_reference', 10), $findings[1]->key);
+        self::assertSame('duplicate', $findings[1]->reason?->code);
+        self::assertSame(['kept' => 8], $findings[1]->reason->parameters);
+        self::assertSame(['kept' => 8], $findings[1]->evidence);
+        self::assertEquals(new RecordKey('tx_dbdoctortestsforeignfield_hotels', 3), $findings[2]->key);
+        self::assertSame('duplicate', $findings[2]->reason?->code);
+        self::assertSame(['kept' => 2], $findings[2]->reason->parameters);
+        self::assertSame(['kept' => 2], $findings[2]->evidence);
+        self::assertEquals(new RecordKey('tx_dbdoctortestsforeignfield_hotels', 4), $findings[3]->key);
+        self::assertSame('duplicate', $findings[3]->reason?->code);
+        self::assertSame(['kept' => 2], $findings[3]->reason->parameters);
+        self::assertSame(['kept' => 2], $findings[3]->evidence);
+        self::assertEquals(new RecordKey('tx_dbdoctortestsforeignfield_hotels', 8), $findings[4]->key);
+        self::assertSame('duplicate', $findings[4]->reason?->code);
+        self::assertSame(['kept' => 9], $findings[4]->reason->parameters);
+        self::assertSame(['kept' => 9], $findings[4]->evidence);
+        self::assertEquals(new RecordKey('tx_dbdoctortestsforeignfield_hotels', 10), $findings[5]->key);
+        self::assertSame('duplicate', $findings[5]->reason?->code);
+        self::assertSame(['kept' => 9], $findings[5]->reason->parameters);
+        self::assertSame(['kept' => 9], $findings[5]->evidence);
+        self::assertEquals(new RecordKey('tx_dbdoctortestsforeignfield_hotels', 13), $findings[6]->key);
+        self::assertSame('duplicate', $findings[6]->reason?->code);
+        self::assertSame(['kept' => 12], $findings[6]->reason->parameters);
+        self::assertSame(['kept' => 12], $findings[6]->evidence);
     }
 
     #[Test]
