@@ -17,6 +17,9 @@ namespace Lolli\Dbdoctor\Commands;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Lolli\Dbdoctor\DatabaseSchema\SchemaChangeCategory;
+use Lolli\Dbdoctor\DatabaseSchema\SchemaConflict;
+use Lolli\Dbdoctor\DatabaseSchema\SchemaConflictDetector;
 use Lolli\Dbdoctor\DatabaseSchema\SchemaInspector;
 use Lolli\Dbdoctor\DatabaseSchema\SchemaLevel;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckInspection;
@@ -48,6 +51,7 @@ final class HealthCommand extends Command
         private readonly HealthFactoryInterface $healthFactory,
         private readonly SchemaInspector $schemaInspector,
         private readonly SchemaChangesRenderer $schemaChangesRenderer,
+        private readonly SchemaConflictDetector $schemaConflictDetector,
         private readonly HealthCheckRunner $healthCheckRunner,
         private readonly JsonReportBuilder $jsonReportBuilder,
     ) {
@@ -469,21 +473,52 @@ final class HealthCommand extends Command
 
     /**
      * Checks rely on all defined tables, columns and indexes to exist. If that is not the case,
-     * we stop early.
+     * we stop early. Other schema changes do not block checks, they are mentioned only.
      */
     private function checkDatabaseSchema(SymfonyStyle $io): bool
     {
-        $missingSchemaChanges = $this->schemaInspector->getChanges(SchemaLevel::Required);
-        if ($missingSchemaChanges === []) {
+        $counts = [];
+        $missingSchemaChanges = [];
+        foreach ($this->schemaInspector->getChanges() as $change) {
+            $counts[$change->category->value] = ($counts[$change->category->value] ?? 0) + 1;
+            if ($change->category === SchemaChangeCategory::Missing) {
+                $missingSchemaChanges[] = $change;
+            }
+        }
+        if ($missingSchemaChanges !== []) {
+            $this->schemaChangesRenderer->render($io, $missingSchemaChanges);
+            $io->error(
+                'Database schema is incomplete: Tables, columns or indexes are missing. '
+                . 'Run "bin/typo3 dbdoctor:schema --level required -m interactive" to fix this. '
+                . 'Then run dbdoctor again.'
+            );
+            return false;
+        }
+        if ($counts === []) {
             return true;
         }
-        $this->schemaChangesRenderer->render($io, $missingSchemaChanges);
-        $io->error(
-            'Database schema is incomplete: Tables, columns or indexes are missing. '
-            . 'Run "bin/typo3 dbdoctor:schema --level required -m interactive" to fix this. '
-            . 'Then run dbdoctor again.'
+        $parts = [];
+        if (isset($counts[SchemaChangeCategory::Changed->value])) {
+            $parts[] = $counts[SchemaChangeCategory::Changed->value] . ' statements to change columns, indexes or table options';
+            $conflictingRows = array_sum(array_map(
+                static fn(SchemaConflict $conflict): int => $conflict->rowCount,
+                $this->schemaConflictDetector->getConflicts(SchemaLevel::Recommended)
+            ));
+            if ($conflictingRows > 0) {
+                $parts[] = 'rows that conflict with them: ' . $conflictingRows;
+            }
+        }
+        if (isset($counts[SchemaChangeCategory::Unused->value])) {
+            $parts[] = $counts[SchemaChangeCategory::Unused->value] . ' statements to rename unused tables and columns';
+        }
+        if (isset($counts[SchemaChangeCategory::Obsolete->value])) {
+            $parts[] = $counts[SchemaChangeCategory::Obsolete->value] . ' statements to drop obsolete tables, columns and indexes';
+        }
+        $io->warning(
+            'Database schema: ' . implode(', ', $parts) . '. '
+            . 'Checks run anyway. Run "bin/typo3 dbdoctor:schema --level all" for details.'
         );
-        return false;
+        return true;
     }
 
     /**

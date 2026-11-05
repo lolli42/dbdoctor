@@ -103,6 +103,7 @@ shows or executes the statements that update the schema. The core CLI has no suc
 Statements come in four categories:
 
 * missing: create tables, add columns and indexes. `dbdoctor:health` refuses to run without.
+  It warns about statements of the other categories and conflicting rows, see below, but runs its checks.
 * changed: change columns, indexes and table options. Shows the current definition, too.
 * unused: rename tables and columns without definition to `zzz_deleted_*`.
 * obsolete: drop `zzz_deleted_*` tables and columns, and indexes without definition. Data is lost.

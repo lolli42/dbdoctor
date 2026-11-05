@@ -16,6 +16,8 @@ namespace Lolli\Dbdoctor\Tests\Functional\Commands;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\DatabaseSchema\SchemaChangeExecutor;
+use Lolli\Dbdoctor\DatabaseSchema\SchemaInspector;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckResult;
 use Lolli\Dbdoctor\HealthCheck\TcaTablesPidMissing;
 use Lolli\Dbdoctor\Tests\Functional\AbstractFunctionalTestCase;
@@ -23,6 +25,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\Container;
 use TYPO3\CMS\Core\Console\CommandRegistry;
+use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Event\AlterTableDefinitionStatementsEvent;
 use TYPO3\CMS\Core\EventDispatcher\ListenerProvider;
 
@@ -31,6 +34,13 @@ class HealthCommandTest extends AbstractFunctionalTestCase
     protected function tearDown(): void
     {
         @unlink($this->instancePath . '/dbdoctor-file');
+        // The test instance is shared with other test classes: Leave the schema as it was.
+        $this->get(ConnectionPool::class)->getConnectionByName(ConnectionPool::DEFAULT_CONNECTION_NAME)
+            ->executeStatement('DROP TABLE IF EXISTS tx_dbdoctortest_defined');
+        $this->get(ConnectionPool::class)->getConnectionByName(ConnectionPool::DEFAULT_CONNECTION_NAME)
+            ->executeStatement('DROP TABLE IF EXISTS tx_dbdoctortest_undefined');
+        $this->get(ConnectionPool::class)->getConnectionByName(ConnectionPool::DEFAULT_CONNECTION_NAME)
+            ->executeStatement('DROP TABLE IF EXISTS zzz_deleted_tx_dbdoctortest');
         parent::tearDown();
     }
 
@@ -109,6 +119,7 @@ class HealthCommandTest extends AbstractFunctionalTestCase
         self::assertSame(HealthCheckResult::Ok->value, $result);
         self::assertStringContainsString('OK  TcaTablesPidMissing', $commandTester->getDisplay());
         self::assertStringNotContainsString('referenceindex:update', $this->getNormalizedDisplay($commandTester));
+        self::assertStringNotContainsString('Database schema', $this->getNormalizedDisplay($commandTester));
     }
 
     #[Test]
@@ -199,5 +210,60 @@ class HealthCommandTest extends AbstractFunctionalTestCase
         self::assertStringContainsString('some_field', $display);
         self::assertStringContainsString('Database schema is incomplete: Tables, columns or indexes are missing.', $display);
         self::assertStringNotContainsString('OK  ', $commandTester->getDisplay());
+    }
+
+    private function addTableDefinition(string $sql): void
+    {
+        /** @var Container $container */
+        $container = $this->get('service_container');
+        $container->set(
+            'health-command-test-definition',
+            static function (AlterTableDefinitionStatementsEvent $event) use ($sql): void {
+                $event->addSqlData($sql);
+            }
+        );
+        $container->get(ListenerProvider::class)->addListener(AlterTableDefinitionStatementsEvent::class, 'health-command-test-definition');
+    }
+
+    #[Test]
+    public function warnsOnChangedSchemaAndRunsChecks(): void
+    {
+        $this->addTableDefinition('CREATE TABLE pages (title VARCHAR(20) DEFAULT \'\' NOT NULL);');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $result = $commandTester->execute(['--mode' => 'check']);
+        self::assertSame(HealthCheckResult::Ok->value, $result);
+        $display = $this->getNormalizedDisplay($commandTester);
+        self::assertMatchesRegularExpression('/Database schema: \\d+ statements to change columns, indexes or table options\\. Checks run anyway\\./', $display);
+        self::assertStringContainsString('Run "bin/typo3 dbdoctor:schema --level all" for details.', $display);
+        self::assertStringContainsString('OK  TcaTablesPidMissing', $commandTester->getDisplay());
+    }
+
+    #[Test]
+    public function warnsOnRowsThatConflictWithSchemaChanges(): void
+    {
+        $this->addTableDefinition('CREATE TABLE tx_dbdoctortest_defined (uid INT(11) DEFAULT 0 NOT NULL, title VARCHAR(10) DEFAULT NULL);');
+        $this->get(SchemaChangeExecutor::class)->execute($this->get(SchemaInspector::class)->getChanges(), '');
+        $this->get(ConnectionPool::class)->getConnectionByName(ConnectionPool::DEFAULT_CONNECTION_NAME)
+            ->executeStatement('INSERT INTO tx_dbdoctortest_defined (uid, title) VALUES (1, NULL), (2, NULL)');
+        $this->addTableDefinition('CREATE TABLE tx_dbdoctortest_defined (uid INT(11) DEFAULT 0 NOT NULL, title VARCHAR(10) DEFAULT \'\' NOT NULL);');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $commandTester->execute(['--mode' => 'check']);
+        self::assertStringContainsString(', rows that conflict with them: 2. Checks run anyway.', $this->getNormalizedDisplay($commandTester));
+    }
+
+    #[Test]
+    public function warnsOnUnusedAndObsoleteSchemaAndRunsChecks(): void
+    {
+        $connection = $this->get(ConnectionPool::class)->getConnectionByName(ConnectionPool::DEFAULT_CONNECTION_NAME);
+        $connection->executeStatement('CREATE TABLE tx_dbdoctortest_undefined (uid INT)');
+        $connection->executeStatement('CREATE TABLE zzz_deleted_tx_dbdoctortest (uid INT)');
+        $commandTester = new CommandTester($this->get(CommandRegistry::class)->get('dbdoctor:health'));
+        $result = $commandTester->execute(['--mode' => 'check']);
+        self::assertSame(HealthCheckResult::Ok->value, $result);
+        self::assertStringContainsString(
+            'Database schema: 1 statements to rename unused tables and columns, 1 statements to drop obsolete tables, columns and indexes. Checks run anyway.',
+            $this->getNormalizedDisplay($commandTester)
+        );
+        self::assertStringContainsString('OK  TcaTablesPidMissing', $commandTester->getDisplay());
     }
 }
