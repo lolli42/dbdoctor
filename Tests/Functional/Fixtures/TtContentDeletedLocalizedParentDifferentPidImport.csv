@@ -16,3 +16,7 @@
 ,7,3,1,1,2,1,"Not ok localized deleted content ws-1"
 ,8,2,0,-1,0,0,"Ok content 2 on pid 2 sys_language_uid -1"
 ,9,2,1,-1,0,0,"Ok content deleted 2 on pid 2 sys_language_uid -1"
+# deleted localizations without language parent have no target pid
+,10,3,1,1,0,0,"Ok localized deleted content without language parent"
+# default language records with language parent are handled by TcaTablesLanguageLessThanOneHasZeroLanguageParent
+,11,3,1,0,2,0,"Ok default language deleted content with language parent"
