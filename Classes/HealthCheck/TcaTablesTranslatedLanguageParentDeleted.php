@@ -73,12 +73,6 @@ final readonly class TcaTablesTranslatedLanguageParentDeleted extends AbstractHe
                 $selectFields[] = $workspaceIdField;
             }
 
-            $parentRowFields = [
-                'uid',
-                'pid',
-                $deletedField,
-            ];
-
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable($tableName);
             // Do not fetch deleted=1 records
             $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
@@ -95,7 +89,7 @@ final readonly class TcaTablesTranslatedLanguageParentDeleted extends AbstractHe
             while ($localizedRow = $result->fetchAssociative()) {
                 /** @var array<string, int|string> $localizedRow */
                 try {
-                    $parentRow = $this->recordsHelper->getRecord($statements, $tableName, $parentRowFields, (int)$localizedRow[$translationParentField]);
+                    $parentRow = $this->recordsHelper->getRecord($statements, $tableName, [$deletedField], (int)$localizedRow[$translationParentField]);
                     if ((int)$parentRow[$deletedField] === 1) {
                         $findings[] = new Finding(
                             new RecordKey($tableName, (int)$localizedRow['uid']),
