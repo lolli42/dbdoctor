@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckMode;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\HealthCheck\TtContentLocalizedParentExists;
@@ -35,6 +36,36 @@ class TtContentLocalizedParentExistsTest extends AbstractFunctionalTestCase
         $io->expects(self::atLeastOnce())->method('warning');
         $io->expects(self::atLeastOnce())->method('ask')->willReturn('p', 'd', 'a');
         $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckMode::Interactive, '');
+    }
+
+    #[Test]
+    public function findingsHaveReasons(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizedParentExistsImport.csv');
+        /** @var TtContentLocalizedParentExists $subject */
+        $subject = $this->get(TtContentLocalizedParentExists::class);
+        $findings = $this->get(HealthCheckRunner::class)->inspect($subject)->findings;
+        self::assertCount(3, $findings);
+        self::assertEquals(new RecordKey('tt_content', 7), $findings[0]->key);
+        self::assertSame('parent-missing', $findings[0]->reason?->code);
+        self::assertSame(['parent' => 6], $findings[0]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 8), $findings[1]->key);
+        self::assertSame('parent-missing', $findings[1]->reason?->code);
+        self::assertSame(['parent' => 6], $findings[1]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 11), $findings[2]->key);
+        self::assertSame('parent-missing', $findings[2]->reason?->code);
+        self::assertSame(['parent' => 6], $findings[2]->reason->parameters);
+    }
+
+    #[Test]
+    public function localizationOfMissingParentWithUidOneIsFound(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TtContentLocalizedParentExistsParentUidOneImport.csv');
+        /** @var TtContentLocalizedParentExists $subject */
+        $subject = $this->get(TtContentLocalizedParentExists::class);
+        $findings = $this->get(HealthCheckRunner::class)->inspect($subject)->findings;
+        self::assertCount(1, $findings);
+        self::assertEquals(new RecordKey('tt_content', 2), $findings[0]->key);
     }
 
     #[Test]
