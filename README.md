@@ -124,6 +124,10 @@ unsigned, and rows sharing values of a new unique index. Depending on the DBMS a
 such statements fail, or values are converted silently. sqlite enforces NOT NULL and unique
 indexes only.
 
+A number as default of a string or non-integer number column, like `price double DEFAULT 0`, is
+compared as string `'0'`: It is the same default, but the core comparator suggests to change such
+columns again and again on mysql, mariadb and sqlite otherwise.
+
 Exit values as with `dbdoctor:health`: 0 nothing to do, 1 statements shown or executed, 2 user
 abort, 4 error, for instance a failed statement.
 

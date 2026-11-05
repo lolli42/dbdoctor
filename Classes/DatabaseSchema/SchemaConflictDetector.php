@@ -36,7 +36,6 @@ use Doctrine\DBAL\Types\Type;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Schema\SchemaMigrator;
-use TYPO3\CMS\Core\Database\Schema\SqlReader;
 
 /**
  * Find rows that conflict with schema changes of the core schema migrator: A column becomes
@@ -52,7 +51,7 @@ final readonly class SchemaConflictDetector
     private const MAX_NUMBER_LENGTH = 40;
 
     public function __construct(
-        private SqlReader $sqlReader,
+        private SchemaDefinitionReader $schemaDefinitionReader,
         private SchemaMigrator $schemaMigrator,
         private ConnectionPool $connectionPool,
     ) {}
@@ -64,7 +63,7 @@ final readonly class SchemaConflictDetector
      */
     public function getConflicts(SchemaLevel $level): array
     {
-        $statements = $this->sqlReader->getCreateTableStatementArray($this->sqlReader->getTablesDefinitionString());
+        $statements = $this->schemaDefinitionReader->getCreateTableStatements();
         $missing = [];
         $changed = [];
         foreach ($this->schemaMigrator->getSchemaDiffs($statements) as $connectionName => $schemaDiff) {

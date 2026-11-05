@@ -18,7 +18,6 @@ namespace Lolli\Dbdoctor\DatabaseSchema;
  */
 
 use TYPO3\CMS\Core\Database\Schema\SchemaMigrator;
-use TYPO3\CMS\Core\Database\Schema\SqlReader;
 
 /**
  * Compare the database schema with the table definitions of ext_tables.sql files and TCA,
@@ -33,7 +32,7 @@ use TYPO3\CMS\Core\Database\Schema\SqlReader;
 final readonly class SchemaInspector
 {
     public function __construct(
-        private SqlReader $sqlReader,
+        private SchemaDefinitionReader $schemaDefinitionReader,
         private SchemaMigrator $schemaMigrator,
     ) {}
 
@@ -45,7 +44,7 @@ final readonly class SchemaInspector
      */
     public function getChanges(SchemaLevel $level = SchemaLevel::All): array
     {
-        $statements = $this->sqlReader->getCreateTableStatementArray($this->sqlReader->getTablesDefinitionString());
+        $statements = $this->schemaDefinitionReader->getCreateTableStatements();
         $add = $this->schemaMigrator->getUpdateSuggestions($statements);
         $remove = $level === SchemaLevel::All ? $this->schemaMigrator->getUpdateSuggestions($statements, true) : [];
         $missing = $changed = $unused = $obsolete = [];
