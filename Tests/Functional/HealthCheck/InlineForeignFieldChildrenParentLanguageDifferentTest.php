@@ -16,6 +16,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  *
  * The TYPO3 project - inspiring people to share!
  */
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckMode;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\HealthCheck\InlineForeignFieldChildrenParentLanguageDifferent;
@@ -35,6 +36,32 @@ class InlineForeignFieldChildrenParentLanguageDifferentTest extends AbstractFunc
         $io->expects(self::atLeastOnce())->method('warning');
         $io->expects(self::atLeastOnce())->method('ask')->willReturn('p', 'd', 'a');
         $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckMode::Interactive, '');
+    }
+
+    #[Test]
+    public function findingsHaveReasons(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/InlineForeignFieldChildrenParentLanguageDifferentTestImport.csv');
+        /** @var InlineForeignFieldChildrenParentLanguageDifferent $subject */
+        $subject = $this->get(InlineForeignFieldChildrenParentLanguageDifferent::class);
+        $findings = $this->get(HealthCheckRunner::class)->inspect($subject)->findings;
+        // Updates of a table before its deletes
+        self::assertCount(5, $findings);
+        self::assertEquals(new RecordKey('sys_file_reference', 15), $findings[0]->key);
+        self::assertSame('all-languages-parent-language', $findings[0]->reason?->code);
+        self::assertSame(['parentTable' => 'tt_content', 'parentUid' => 2, 'parentLanguage' => 1], $findings[0]->reason->parameters);
+        self::assertEquals(new RecordKey('sys_file_reference', 3), $findings[1]->key);
+        self::assertSame('parent-language-different', $findings[1]->reason?->code);
+        self::assertSame(['parentTable' => 'tt_content', 'parentUid' => 3, 'parentLanguage' => 1], $findings[1]->reason->parameters);
+        self::assertEquals(new RecordKey('sys_file_reference', 4), $findings[2]->key);
+        self::assertSame('parent-language-different', $findings[2]->reason?->code);
+        self::assertSame(['parentTable' => 'tt_content', 'parentUid' => 1, 'parentLanguage' => 0], $findings[2]->reason->parameters);
+        self::assertEquals(new RecordKey('sys_file_reference', 17), $findings[3]->key);
+        self::assertSame('parent-language-different', $findings[3]->reason?->code);
+        self::assertSame(['parentTable' => 'tt_content', 'parentUid' => 3, 'parentLanguage' => 1], $findings[3]->reason->parameters);
+        self::assertEquals(new RecordKey('sys_file_reference', 18), $findings[4]->key);
+        self::assertSame('parent-language-different', $findings[4]->reason?->code);
+        self::assertSame(['parentTable' => 'tt_content', 'parentUid' => 1, 'parentLanguage' => 0], $findings[4]->reason->parameters);
     }
 
     #[Test]
