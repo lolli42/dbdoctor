@@ -463,3 +463,9 @@ services:
       - name: 'console.command'
         command: 'dbdoctor:health'
         description: 'Find and fix database inconsistencies'
+
+  Lolli\Dbdoctor\Commands\SchemaCommand:
+    tags:
+      - name: 'console.command'
+        command: 'dbdoctor:schema'
+        description: 'Compare database schema with table definitions'
