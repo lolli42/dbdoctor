@@ -20,6 +20,7 @@ namespace Lolli\Dbdoctor\Commands;
 use Lolli\Dbdoctor\DatabaseSchema\SchemaChange;
 use Lolli\Dbdoctor\DatabaseSchema\SchemaChangeCategory;
 use Lolli\Dbdoctor\DatabaseSchema\SchemaChangeExecutor;
+use Lolli\Dbdoctor\DatabaseSchema\SchemaConflictDetector;
 use Lolli\Dbdoctor\DatabaseSchema\SchemaInspector;
 use Lolli\Dbdoctor\DatabaseSchema\SchemaLevel;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckMode;
@@ -41,6 +42,7 @@ final class SchemaCommand extends Command
         private readonly SchemaInspector $schemaInspector,
         private readonly SchemaChangesRenderer $schemaChangesRenderer,
         private readonly SchemaChangeExecutor $schemaChangeExecutor,
+        private readonly SchemaConflictDetector $schemaConflictDetector,
     ) {
         parent::__construct();
     }
@@ -145,6 +147,7 @@ final class SchemaCommand extends Command
             }
         }
         $this->schemaChangesRenderer->render($io, $shown);
+        $this->schemaChangesRenderer->renderConflicts($io, $this->schemaConflictDetector->getConflicts($level));
         if ($hidden !== []) {
             $counts = [];
             foreach ($hidden as $category => $count) {
@@ -175,6 +178,7 @@ final class SchemaCommand extends Command
             static fn(SchemaChange $change): string => $change->hash,
             $this->schemaInspector->getChanges($level)
         );
+        $this->schemaChangesRenderer->renderConflicts($io, $this->schemaConflictDetector->getConflicts($level));
         foreach (SchemaChangeCategory::cases() as $category) {
             if (!$this->schemaInspector->isInLevel($category, $level)) {
                 continue;
