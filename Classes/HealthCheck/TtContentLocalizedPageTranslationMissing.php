@@ -80,7 +80,7 @@ final readonly class TtContentLocalizedPageTranslationMissing extends AbstractHe
             $pid = (int)$row['pid'];
             if ($currentPid !== $pid) {
                 try {
-                    $pageRow = $this->recordsHelper->getRecord($statements, 'pages', ['uid', 'doktype', 'sys_language_uid'], $pid);
+                    $pageRow = $this->recordsHelper->getRecord($statements, 'pages', ['doktype', 'sys_language_uid'], $pid);
                 } catch (NoSuchRecordException $e) {
                     // Earlier test should have fixed this.
                     throw new EarlierCheckNotFixedException(

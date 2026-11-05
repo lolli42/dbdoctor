@@ -68,7 +68,7 @@ final readonly class TtContentLocalizedParentDifferentPid extends AbstractHealth
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
-                $languageParent = $this->recordsHelper->getRecord($statements, 'tt_content', ['uid', 'pid'], (int)$row['l18n_parent']);
+                $languageParent = $this->recordsHelper->getRecord($statements, 'tt_content', ['pid'], (int)$row['l18n_parent']);
             } catch (NoSuchRecordException $e) {
                 throw new EarlierCheckNotFixedException(
                     'tt_content record with uid="' . $row['uid'] . '" has l18n_parent="' . $row['l18n_parent'] . '",'

@@ -62,7 +62,7 @@ final readonly class TtContentLocalizedParentSoftDeleted extends AbstractHealthC
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
-                $languageParent = $this->recordsHelper->getRecord($statements, 'tt_content', ['uid', 'deleted'], (int)$row['l18n_parent']);
+                $languageParent = $this->recordsHelper->getRecord($statements, 'tt_content', ['deleted'], (int)$row['l18n_parent']);
                 if ((int)$languageParent['deleted'] === 1) {
                     $findings[] = new Finding(
                         new RecordKey('tt_content', (int)$row['uid']),
