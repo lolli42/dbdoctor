@@ -97,9 +97,8 @@ instance. As such, a few things should be kept in mind:
 
 `bin/typo3 dbdoctor:schema` compares the database schema with the table definitions of
 `ext_tables.sql` files and TCA, like the install tool "Analyze Database Structure" does, and
-shows the statements that would update the schema. It is read-only. The core CLI has no
-such thing: `extension:setup` applies changes silently, and it even reports success when
-statements failed.
+shows or executes the statements that update the schema. The core CLI has no such thing:
+`extension:setup` applies changes silently, and it even reports success when statements failed.
 
 Statements come in four categories:
 
@@ -108,11 +107,21 @@ Statements come in four categories:
 * unused: rename tables and columns without definition to `zzz_deleted_*`.
 * obsolete: drop `zzz_deleted_*` tables and columns, and indexes without definition. Data is lost.
 
-`--level required` shows missing statements only, `--level recommended` (default) adds changed
-ones, `--level all` shows everything. Statements of other categories are counted. Exit value
-0 means nothing to do, 1 means statements are shown.
+`--level required` handles missing statements only, `--level recommended` (default) adds changed
+ones, `--level all` handles everything.
 
-On sqlite, a single change of a table needs several statements: The table is re-created.
+`--mode check` (default) shows the statements, statements of other categories are counted.
+`--mode interactive` asks per category before executing its statements, `--mode execute` executes
+all of them, `--file` logs executed statements, it is mandatory with `--mode execute`. Categories
+are executed in the order above, the statements are determined again before each category.
+Execution stops at the first failing statement, with the database error. A table or column renamed
+to `zzz_deleted_*` is dropped in a later run, not in the same one.
+
+Exit values as with `dbdoctor:health`: 0 nothing to do, 1 statements shown or executed, 2 user
+abort, 4 error, for instance a failed statement.
+
+On sqlite, a single change of a table needs several statements: The table is re-created. Some
+changes need another run then.
 
 
 ## Agentic doctor
