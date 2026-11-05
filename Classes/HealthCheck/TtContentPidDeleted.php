@@ -64,7 +64,7 @@ final readonly class TtContentPidDeleted extends AbstractHealthCheck implements 
         while ($row = $result->fetchAssociative()) {
             /** @var array<string, int|string> $row */
             try {
-                $pageRow = $this->recordsHelper->getRecord($statements, 'pages', ['uid', 'deleted'], (int)$row['pid']);
+                $pageRow = $this->recordsHelper->getRecord($statements, 'pages', ['deleted'], (int)$row['pid']);
                 if ((int)$pageRow['deleted'] === 1) {
                     $findings[] = new Finding(
                         new RecordKey('tt_content', (int)$row['uid']),
