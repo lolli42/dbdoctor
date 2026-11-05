@@ -17,6 +17,7 @@ namespace Lolli\Dbdoctor\Tests\Functional\HealthCheck;
  * The TYPO3 project - inspiring people to share!
  */
 use Lolli\Dbdoctor\Exception\EarlierCheckNotFixedException;
+use Lolli\Dbdoctor\Finding\RecordKey;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckMode;
 use Lolli\Dbdoctor\HealthCheck\HealthCheckRunner;
 use Lolli\Dbdoctor\HealthCheck\TcaTablesTranslatedLanguageParentDifferentPid;
@@ -36,6 +37,81 @@ class TcaTablesTranslatedLanguageParentDifferentPidTest extends AbstractFunction
         $io->expects(self::atLeastOnce())->method('warning');
         $io->expects(self::atLeastOnce())->method('ask')->willReturn('p', 'd', 'a');
         $this->get(HealthCheckRunner::class)->handle($subject, $io, HealthCheckMode::Interactive, '');
+    }
+
+    #[Test]
+    public function findingsHaveReasons(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidImport.csv');
+        /** @var TcaTablesTranslatedLanguageParentDifferentPid $subject */
+        $subject = $this->get(TcaTablesTranslatedLanguageParentDifferentPid::class);
+        $findings = $this->get(HealthCheckRunner::class)->inspect($subject)->findings;
+        self::assertCount(18, $findings);
+        self::assertEquals(new RecordKey('tt_content', 6), $findings[0]->key);
+        self::assertSame('parent-different-pid', $findings[0]->reason?->code);
+        self::assertSame(['parent' => 5, 'parentPid' => 2], $findings[0]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 9), $findings[1]->key);
+        self::assertSame('parent-different-pid', $findings[1]->reason?->code);
+        self::assertSame(['parent' => 7, 'parentPid' => 2], $findings[1]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 11), $findings[2]->key);
+        self::assertSame('parent-different-pid', $findings[2]->reason?->code);
+        self::assertSame(['parent' => 10, 'parentPid' => 2], $findings[2]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 14), $findings[3]->key);
+        self::assertSame('parent-different-pid', $findings[3]->reason?->code);
+        self::assertSame(['parent' => 12, 'parentPid' => 2], $findings[3]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 17), $findings[4]->key);
+        self::assertSame('parent-different-pid', $findings[4]->reason?->code);
+        self::assertSame(['parent' => 15, 'parentPid' => 2], $findings[4]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 20), $findings[5]->key);
+        self::assertSame('parent-different-pid', $findings[5]->reason?->code);
+        self::assertSame(['parent' => 18, 'parentPid' => 2], $findings[5]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 23), $findings[6]->key);
+        self::assertSame('parent-different-pid', $findings[6]->reason?->code);
+        self::assertSame(['parent' => 21, 'parentPid' => 2], $findings[6]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 29), $findings[7]->key);
+        self::assertSame('parent-different-pid', $findings[7]->reason?->code);
+        self::assertSame(['parent' => 28, 'parentPid' => 2], $findings[7]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 30), $findings[8]->key);
+        self::assertSame('parent-different-pid', $findings[8]->reason?->code);
+        self::assertSame(['parent' => 28, 'parentPid' => 2], $findings[8]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 32), $findings[9]->key);
+        self::assertSame('parent-different-pid', $findings[9]->reason?->code);
+        self::assertSame(['parent' => 31, 'parentPid' => 2], $findings[9]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 33), $findings[10]->key);
+        self::assertSame('parent-different-pid', $findings[10]->reason?->code);
+        self::assertSame(['parent' => 31, 'parentPid' => 2], $findings[10]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 35), $findings[11]->key);
+        self::assertSame('parent-different-pid', $findings[11]->reason?->code);
+        self::assertSame(['parent' => 34, 'parentPid' => 2], $findings[11]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 36), $findings[12]->key);
+        self::assertSame('parent-different-pid', $findings[12]->reason?->code);
+        self::assertSame(['parent' => 34, 'parentPid' => 2], $findings[12]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 38), $findings[13]->key);
+        self::assertSame('parent-different-pid', $findings[13]->reason?->code);
+        self::assertSame(['parent' => 37, 'parentPid' => 2], $findings[13]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 39), $findings[14]->key);
+        self::assertSame('parent-different-pid', $findings[14]->reason?->code);
+        self::assertSame(['parent' => 37, 'parentPid' => 2], $findings[14]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 41), $findings[15]->key);
+        self::assertSame('parent-different-pid', $findings[15]->reason?->code);
+        self::assertSame(['parent' => 40, 'parentPid' => 2], $findings[15]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 44), $findings[16]->key);
+        self::assertSame('parent-different-pid', $findings[16]->reason?->code);
+        self::assertSame(['parent' => 42, 'parentPid' => 2], $findings[16]->reason->parameters);
+        self::assertEquals(new RecordKey('tt_content', 46), $findings[17]->key);
+        self::assertSame('parent-different-pid', $findings[17]->reason?->code);
+        self::assertSame(['parent' => 45, 'parentPid' => 2], $findings[17]->reason->parameters);
+    }
+
+    #[Test]
+    public function localizationOfParentWithUidOneIsFound(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/TcaTablesTranslatedLanguageParentDifferentPidParentUidOneImport.csv');
+        /** @var TcaTablesTranslatedLanguageParentDifferentPid $subject */
+        $subject = $this->get(TcaTablesTranslatedLanguageParentDifferentPid::class);
+        $findings = $this->get(HealthCheckRunner::class)->inspect($subject)->findings;
+        self::assertCount(1, $findings);
+        self::assertEquals(new RecordKey('tt_content', 2), $findings[0]->key);
     }
 
     #[Test]
