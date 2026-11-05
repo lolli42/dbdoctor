@@ -10,3 +10,5 @@
 ,1,0,0,0,"Ok content on pid 0"
 ,2,2,0,0,"Ok content on sub page 1"
 ,3,3,0,1,"Not ok content on not existing page"
+# deleted records on a not existing page are removed, too
+,4,5,1,0,"Not ok deleted content on not existing page"
